@@ -12,7 +12,7 @@ Built today:
 
 - Landing page
 - Paste-based email scan form
-- Local mocked/heuristic structured analysis
+- No-storage `/api/analyze` route using local heuristic structured analysis
 - Risk score, risk level, suspicious signals, detected links, explanation, recommended action, and required disclaimer
 
 Planned before v1:
@@ -20,7 +20,6 @@ Planned before v1:
 - English and Dutch UI
 - Screenshot OCR upload
 - `.eml` parsing
-- No-storage API route
 - Optional self-hosted AI mode
 - Evaluation fixtures for safer detection calibration
 
@@ -60,6 +59,7 @@ See `.env.example` for the full environment shape.
 ## Privacy Direction
 
 - Raw email content should be processed only for the current score.
+- The current paste flow sends scan content to `/api/analyze` for the current request only.
 - Pasted email text, screenshots, `.eml` files, OCR text, and scan results should not be stored by default.
 - Contributors should only share synthetic or fully sanitized examples in issues and tests.
 
