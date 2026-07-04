@@ -13,11 +13,11 @@ Built today:
 - Landing page
 - Paste-based email scan form
 - No-storage `/api/analyze` route using local heuristic structured analysis
+- English and Dutch UI foundation with manual language switching and browser-language initialization
 - Risk score, risk level, suspicious signals, detected links, explanation, recommended action, and required disclaimer
 
 Planned before v1:
 
-- English and Dutch UI
 - Screenshot OCR upload
 - `.eml` parsing
 - Optional self-hosted AI mode
