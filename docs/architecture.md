@@ -38,8 +38,8 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
 
 3. Input Processing Layer
    - Paste mode uses subject, sender email, and body text.
-   - Screenshot mode extracts visible text with OCR, then discards the uploaded image.
-   - `.eml` mode parses headers, sender, subject, text/html bodies, detected links, and attachment metadata, then discards the uploaded file.
+   - Screenshot mode extracts visible text with client-side OCR, then discards the uploaded image.
+   - `.eml` mode parses headers, sender, subject, text/html bodies, detected links, and attachment metadata in the browser, then discards the uploaded file.
    - Processing should happen in memory or temporary runtime storage only.
 
 4. Data Layer
@@ -88,7 +88,7 @@ docs/
   roadmap.md
 ```
 
-The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage heuristic analysis route, and English/Dutch UI foundation with browser-language initialization. Later issues can add `.eml` parsing, screenshot OCR, and optional self-hosted AI mode without changing the result contract.
+The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage heuristic analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, and `.eml` parsing input. Later issues can add optional self-hosted AI mode without changing the result contract.
 
 ## AI Result Contract
 

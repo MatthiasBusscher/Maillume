@@ -12,7 +12,7 @@ export const dictionaries = {
     app: {
       name: "Inbox Risk Scanner",
       status: "Prototype",
-      startScan: "Scan starten",
+      startScan: "Start scan",
       audience: "Built for freelancers and small teams",
       hero:
         "Paste a suspicious email and get a clear, structured risk assessment before clicking, replying, or forwarding sensitive details.",
@@ -23,6 +23,12 @@ export const dictionaries = {
     form: {
       eyebrow: "Email analysis",
       title: "Check a suspicious email",
+      inputModeLabel: "Input mode",
+      modes: {
+        paste: "Paste",
+        screenshot: "Screenshot",
+        eml: ".eml file",
+      },
       useSample: "Use sample",
       subject: "Subject",
       subjectPlaceholder: "Action required",
@@ -34,6 +40,24 @@ export const dictionaries = {
       analyze: "Analyze email",
       analyzing: "Analyzing",
       analysisFailed: "Analysis failed. Please try again.",
+      screenshotPrompt: "Upload a screenshot of the suspicious email.",
+      screenshotHelp:
+        "OCR runs in your browser. The image file is not stored after text is extracted.",
+      chooseScreenshot: "Choose screenshot",
+      emlPrompt: "Upload a .eml file exported from your mail app.",
+      emlHelp:
+        "Headers, body text, links, and attachment metadata are parsed locally before analysis.",
+      chooseEml: "Choose .eml file",
+      extracting: "Extracting text",
+      parsing: "Parsing email file",
+      extractedTextReady: "Extracted text is ready to analyze.",
+      parsedEmlReady: "Email file parsed and ready to analyze.",
+      unsupportedFile: "This file type is not supported.",
+      fileTooLarge: "This file is too large.",
+      extractionFailed: "Could not extract text from this file.",
+      noTextFound: "No readable email text was found.",
+      selectedFile: "Selected file",
+      fileLimits: "Limits: screenshots up to 5 MB, .eml files up to 2 MB.",
     },
     empty: {
       title: "Assessment appears here",
@@ -61,14 +85,14 @@ export const dictionaries = {
     upload: {
       screenshot: "Screenshot upload",
       eml: ".eml upload",
-      planned: "Planned for a later issue.",
+      planned: "Processed locally before analysis.",
     },
   },
   nl: {
     app: {
       name: "Inbox Risk Scanner",
       status: "Prototype",
-      startScan: "Start scan",
+      startScan: "Scan starten",
       audience: "Gebouwd voor freelancers en kleine teams",
       hero:
         "Plak een verdachte e-mail en krijg een duidelijke, gestructureerde risico-inschatting voordat u klikt, antwoordt of gevoelige gegevens deelt.",
@@ -79,6 +103,12 @@ export const dictionaries = {
     form: {
       eyebrow: "E-mailanalyse",
       title: "Controleer een verdachte e-mail",
+      inputModeLabel: "Invoermethode",
+      modes: {
+        paste: "Plakken",
+        screenshot: "Screenshot",
+        eml: ".eml-bestand",
+      },
       useSample: "Voorbeeld",
       subject: "Onderwerp",
       subjectPlaceholder: "Actie vereist",
@@ -90,6 +120,24 @@ export const dictionaries = {
       analyze: "E-mail analyseren",
       analyzing: "Analyseren",
       analysisFailed: "Analyse mislukt. Probeer het opnieuw.",
+      screenshotPrompt: "Upload een screenshot van de verdachte e-mail.",
+      screenshotHelp:
+        "OCR draait in uw browser. Het afbeeldingsbestand wordt niet opgeslagen nadat tekst is geëxtraheerd.",
+      chooseScreenshot: "Screenshot kiezen",
+      emlPrompt: "Upload een .eml-bestand dat uit uw mailapp is geëxporteerd.",
+      emlHelp:
+        "Headers, berichttekst, links en bijlagemetadata worden lokaal verwerkt voor analyse.",
+      chooseEml: ".eml-bestand kiezen",
+      extracting: "Tekst extraheren",
+      parsing: "E-mailbestand verwerken",
+      extractedTextReady: "Geëxtraheerde tekst is klaar voor analyse.",
+      parsedEmlReady: "E-mailbestand verwerkt en klaar voor analyse.",
+      unsupportedFile: "Dit bestandstype wordt niet ondersteund.",
+      fileTooLarge: "Dit bestand is te groot.",
+      extractionFailed: "Kon geen tekst uit dit bestand halen.",
+      noTextFound: "Er is geen leesbare e-mailtekst gevonden.",
+      selectedFile: "Geselecteerd bestand",
+      fileLimits: "Limieten: screenshots tot 5 MB, .eml-bestanden tot 2 MB.",
     },
     empty: {
       title: "De beoordeling verschijnt hier",
@@ -118,7 +166,7 @@ export const dictionaries = {
     upload: {
       screenshot: "Screenshot uploaden",
       eml: ".eml uploaden",
-      planned: "Gepland voor een latere issue.",
+      planned: "Lokaal verwerkt voor analyse.",
     },
   },
 } as const;
