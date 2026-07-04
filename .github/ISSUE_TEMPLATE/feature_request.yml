@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest a privacy-respecting improvement.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature ideas are welcome. Please keep the privacy-first launch goal in mind: scan content should not be stored by default.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the smallest useful version.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Paste analysis
+        - Screenshot OCR
+        - .eml parsing
+        - Multilingual UI
+        - Heuristic analysis
+        - Optional self-hosted AI
+        - Privacy/security
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Privacy considerations
+      description: Explain whether this touches email content, uploads, logging, AI prompts, or stored data.
+    validations:
+      required: true
+

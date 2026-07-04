@@ -1,0 +1,67 @@
+name: False positive or false negative
+description: Report a detection result that seems wrong using synthetic or sanitized examples only.
+title: "[Detection]: "
+labels:
+  - detection
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when PhishGuard scores a message too high or too low. Do not include real private email content, private screenshots, raw headers, tracking links, API keys, or `.eml` files.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I am using a synthetic or fully sanitized example.
+          required: true
+        - label: I removed names, email addresses, private domains, tracking links, account IDs, message IDs, phone numbers, and addresses.
+          required: true
+  - type: dropdown
+    id: result_type
+    attributes:
+      label: Result type
+      options:
+        - False negative: risky message scored too low
+        - False positive: legitimate message scored too high
+    validations:
+      required: true
+  - type: input
+    id: language
+    attributes:
+      label: Message language
+      placeholder: English, Dutch, German, Spanish
+    validations:
+      required: true
+  - type: textarea
+    id: sanitized_example
+    attributes:
+      label: Sanitized example
+      description: Replace all private details with placeholders before submitting.
+      placeholder: |
+        Subject: [synthetic subject]
+        Sender: example@example.test
+        Body:
+        [synthetic or sanitized body]
+    validations:
+      required: true
+  - type: input
+    id: actual_score
+    attributes:
+      label: Actual result
+      placeholder: Example: low, score 19
+    validations:
+      required: true
+  - type: input
+    id: expected_score
+    attributes:
+      label: Expected result
+      placeholder: Example: high, score 80+
+    validations:
+      required: true
+  - type: textarea
+    id: reasoning
+    attributes:
+      label: Why should it score differently?
+      description: Explain the suspicious or legitimate signals.
+

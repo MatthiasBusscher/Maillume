@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a problem with the app using synthetic or sanitized data only.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Do not paste real private email content, raw headers, screenshots from private inboxes, API keys, or `.eml` files.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I am using synthetic or fully sanitized data.
+          required: true
+        - label: I have not included private email content, private screenshots, API keys, or raw `.eml` files.
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Use synthetic or sanitized input only.
+      placeholder: |
+        1. Go to...
+        2. Paste synthetic input...
+        3. Click...
+        4. See...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: Chrome, Firefox, Safari, Edge
+  - type: input
+    id: version
+    attributes:
+      label: App version or commit
+      placeholder: Commit SHA or branch name
+

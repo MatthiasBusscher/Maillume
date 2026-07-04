@@ -1,0 +1,14 @@
+.next
+node_modules
+out
+dist
+build
+coverage
+.vercel
+.env
+.env.local
+.env.*.local
+*.log
+*.tsbuildinfo
+.DS_Store
+
