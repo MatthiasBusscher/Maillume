@@ -88,7 +88,7 @@ docs/
   roadmap.md
 ```
 
-Issue #1 implements the foundation, landing page, scan form, risk meter, and mocked analysis path. Later issues can add the no-storage API route, multilingual UI, `.eml` parsing, screenshot OCR, and optional self-hosted AI mode without changing the result contract.
+The initial implementation includes the foundation, landing page, scan form, risk meter, and no-storage heuristic analysis route. Later issues can add multilingual UI, `.eml` parsing, screenshot OCR, and optional self-hosted AI mode without changing the result contract.
 
 ## AI Result Contract
 
@@ -123,6 +123,25 @@ ANTHROPIC_API_KEY=
 The public hosted version should keep `ANALYSIS_MODE=heuristic` and leave provider keys unset. Self-hosters can set `ANALYSIS_MODE=ai`, choose a provider, and add their own key to their Vercel environment variables.
 
 Do not support a public shared AI endpoint backed by the project owner's API key unless the product later adds strong authentication, rate limits, quotas, billing controls, and abuse monitoring.
+
+## No-Storage API Contract
+
+`POST /api/analyze` accepts normalized scan input and returns a structured analysis envelope:
+
+```ts
+type AnalyzeResponse = {
+  result: EmailAnalysisResult;
+  analysis_mode: "heuristic";
+  disclaimer: string;
+  privacy: {
+    stored: false;
+    retention: "not_stored";
+    message: string;
+  };
+};
+```
+
+The route must not write raw scan content, OCR text, `.eml` data, prompts, or results to a database or logs. Responses use `Cache-Control: no-store`.
 
 ## Privacy Rules
 

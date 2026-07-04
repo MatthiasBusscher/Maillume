@@ -1,9 +1,20 @@
 export type RiskLevel = "low" | "medium" | "high";
 
+export const ANALYSIS_DISCLAIMER =
+  "This is an automated risk assessment and should not be considered a guarantee.";
+
+export const MAX_SCAN_BODY_LENGTH = 20_000;
+
+export type ScanSource = "paste" | "screenshot" | "eml";
+
 export type EmailAnalysisInput = {
   subject?: string;
   senderEmail?: string;
   body: string;
+};
+
+export type NormalizedScanInput = EmailAnalysisInput & {
+  source: ScanSource;
 };
 
 export type EmailAnalysisResult = {
@@ -15,3 +26,18 @@ export type EmailAnalysisResult = {
   short_explanation: string;
 };
 
+export type AnalyzeResponse = {
+  result: EmailAnalysisResult;
+  analysis_mode: "heuristic";
+  disclaimer: typeof ANALYSIS_DISCLAIMER;
+  privacy: {
+    stored: false;
+    retention: "not_stored";
+    message: string;
+  };
+};
+
+export type AnalyzeErrorResponse = {
+  error: string;
+  fieldErrors?: Partial<Record<keyof NormalizedScanInput, string>>;
+};

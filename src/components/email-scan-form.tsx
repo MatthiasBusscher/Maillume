@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
+  DatabaseZap,
   Info,
   Link2,
   Mail,
@@ -11,8 +12,12 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import { analyzeEmailMock } from "@/lib/mock-analysis";
-import type { EmailAnalysisResult } from "@/lib/types";
+import {
+  ANALYSIS_DISCLAIMER,
+  type AnalyzeErrorResponse,
+  type AnalyzeResponse,
+  type EmailAnalysisResult,
+} from "@/lib/types";
 import { RiskMeter } from "./risk-meter";
 
 const sampleEmail = `Hi,
@@ -31,8 +36,9 @@ export function EmailScanForm() {
   const [body, setBody] = useState("");
   const [result, setResult] = useState<EmailAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!body.trim()) {
@@ -40,10 +46,37 @@ export function EmailScanForm() {
     }
 
     setIsAnalyzing(true);
-    window.setTimeout(() => {
-      setResult(analyzeEmailMock({ subject, senderEmail, body }));
+    setError("");
+
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          source: "paste",
+          subject,
+          senderEmail,
+          body,
+        }),
+      });
+
+      const payload = (await response.json()) as AnalyzeResponse | AnalyzeErrorResponse;
+
+      if (!response.ok || "error" in payload) {
+        setResult(null);
+        setError("error" in payload ? payload.error : "Analysis failed. Please try again.");
+        return;
+      }
+
+      setResult(payload.result);
+    } catch {
+      setResult(null);
+      setError("Analysis failed. Please try again.");
+    } finally {
       setIsAnalyzing(false);
-    }, 420);
+    }
   }
 
   function loadSample() {
@@ -51,6 +84,7 @@ export function EmailScanForm() {
     setSenderEmail("security-alert@microsoft-support-login.click");
     setBody(sampleEmail);
     setResult(null);
+    setError("");
   }
 
   return (
@@ -108,8 +142,16 @@ export function EmailScanForm() {
           />
         </label>
 
+        {error ? (
+          <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm leading-6 text-rose-800">
+            {error}
+          </div>
+        ) : null}
+
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-500">This prototype uses local mocked analysis only.</p>
+          <p className="text-sm text-slate-500">
+            Processed for this score only. Scan content is not stored.
+          </p>
           <button
             type="submit"
             disabled={!body.trim() || isAnalyzing}
@@ -155,8 +197,16 @@ function EmptyResult() {
         </p>
       </div>
 
+      <div className="rounded-md border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
+        <div className="mb-2 flex items-center gap-2 font-semibold">
+          <DatabaseZap className="h-4 w-4" aria-hidden="true" />
+          Privacy-first processing
+        </div>
+        Scan content is sent to the local analysis API for this request only and is not stored.
+      </div>
+
       <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-        This is an automated risk assessment and should not be considered a guarantee.
+        {ANALYSIS_DISCLAIMER}
       </div>
     </div>
   );
@@ -231,9 +281,8 @@ function AnalysisResult({ result }: { result: EmailAnalysisResult }) {
       </div>
 
       <p className="rounded-md border border-slate-200 bg-white p-3 text-sm leading-6 text-slate-500">
-        This is an automated risk assessment and should not be considered a guarantee.
+        {ANALYSIS_DISCLAIMER}
       </p>
     </div>
   );
 }
-
