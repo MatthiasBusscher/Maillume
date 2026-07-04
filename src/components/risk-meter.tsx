@@ -3,6 +3,10 @@ import type { RiskLevel } from "@/lib/types";
 type RiskMeterProps = {
   score: number;
   level: RiskLevel;
+  labels: {
+    riskScore: string;
+    levels: Readonly<Record<RiskLevel, string>>;
+  };
 };
 
 const levelStyles: Record<RiskLevel, { bar: string; text: string; bg: string }> = {
@@ -23,20 +27,20 @@ const levelStyles: Record<RiskLevel, { bar: string; text: string; bg: string }> 
   },
 };
 
-export function RiskMeter({ score, level }: RiskMeterProps) {
+export function RiskMeter({ score, level, labels }: RiskMeterProps) {
   const styles = levelStyles[level];
 
   return (
     <div className="space-y-3">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-slate-500">Risk score</p>
+          <p className="text-sm font-medium text-slate-500">{labels.riskScore}</p>
           <p className="text-5xl font-semibold text-slate-950">{score}</p>
         </div>
         <span
           className={`rounded-md px-3 py-1.5 text-sm font-semibold uppercase ring-1 ${styles.bg} ${styles.text}`}
         >
-          {level}
+          {labels.levels[level]}
         </span>
       </div>
       <div className="h-3 overflow-hidden rounded-full bg-slate-200">
@@ -46,11 +50,10 @@ export function RiskMeter({ score, level }: RiskMeterProps) {
         />
       </div>
       <div className="flex justify-between text-xs font-medium text-slate-500">
-        <span>Low</span>
-        <span>Medium</span>
-        <span>High</span>
+        <span>{labels.levels.low}</span>
+        <span>{labels.levels.medium}</span>
+        <span>{labels.levels.high}</span>
       </div>
     </div>
   );
 }
-

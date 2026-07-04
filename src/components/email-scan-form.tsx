@@ -13,11 +13,11 @@ import {
 } from "lucide-react";
 
 import {
-  ANALYSIS_DISCLAIMER,
   type AnalyzeErrorResponse,
   type AnalyzeResponse,
   type EmailAnalysisResult,
 } from "@/lib/types";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 import { RiskMeter } from "./risk-meter";
 
 const sampleEmail = `Hi,
@@ -30,7 +30,11 @@ https://bit.ly/account-verify-now
 Thank you,
 IT Administrator`;
 
-export function EmailScanForm() {
+type EmailScanFormProps = {
+  dictionary: Dictionary;
+};
+
+export function EmailScanForm({ dictionary }: EmailScanFormProps) {
   const [subject, setSubject] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
   const [body, setBody] = useState("");
@@ -66,14 +70,14 @@ export function EmailScanForm() {
 
       if (!response.ok || "error" in payload) {
         setResult(null);
-        setError("error" in payload ? payload.error : "Analysis failed. Please try again.");
+        setError(dictionary.form.analysisFailed);
         return;
       }
 
       setResult(payload.result);
     } catch {
       setResult(null);
-      setError("Analysis failed. Please try again.");
+      setError(dictionary.form.analysisFailed);
     } finally {
       setIsAnalyzing(false);
     }
@@ -95,8 +99,12 @@ export function EmailScanForm() {
       >
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold uppercase text-sky-700">Email analysis</p>
-            <h2 className="mt-1 text-2xl font-semibold text-slate-950">Check a suspicious email</h2>
+            <p className="text-sm font-semibold uppercase text-sky-700">
+              {dictionary.form.eyebrow}
+            </p>
+            <h2 className="mt-1 text-2xl font-semibold text-slate-950">
+              {dictionary.form.title}
+            </h2>
           </div>
           <button
             type="button"
@@ -104,38 +112,38 @@ export function EmailScanForm() {
             className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50"
           >
             <Mail className="h-4 w-4" aria-hidden="true" />
-            Use sample
+            {dictionary.form.useSample}
           </button>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="grid gap-2 text-sm font-medium text-slate-700">
-            Subject
+            {dictionary.form.subject}
             <input
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
-              placeholder="Action required"
+              placeholder={dictionary.form.subjectPlaceholder}
               className="h-11 rounded-md border border-slate-300 bg-white px-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
             />
           </label>
 
           <label className="grid gap-2 text-sm font-medium text-slate-700">
-            Sender email
+            {dictionary.form.senderEmail}
             <input
               value={senderEmail}
               onChange={(event) => setSenderEmail(event.target.value)}
-              placeholder="sender@example.com"
+              placeholder={dictionary.form.senderPlaceholder}
               className="h-11 rounded-md border border-slate-300 bg-white px-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
             />
           </label>
         </div>
 
         <label className="mt-4 grid gap-2 text-sm font-medium text-slate-700">
-          Email content
+          {dictionary.form.emailContent}
           <textarea
             value={body}
             onChange={(event) => setBody(event.target.value)}
-            placeholder="Paste the email body here."
+            placeholder={dictionary.form.bodyPlaceholder}
             rows={13}
             required
             className="min-h-72 resize-y rounded-md border border-slate-300 bg-white px-3 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
@@ -149,9 +157,7 @@ export function EmailScanForm() {
         ) : null}
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-500">
-            Processed for this score only. Scan content is not stored.
-          </p>
+          <p className="text-sm text-slate-500">{dictionary.form.privacyNote}</p>
           <button
             type="submit"
             disabled={!body.trim() || isAnalyzing}
@@ -160,12 +166,12 @@ export function EmailScanForm() {
             {isAnalyzing ? (
               <>
                 <ShieldCheck className="h-4 w-4 animate-pulse" aria-hidden="true" />
-                Analyzing
+                {dictionary.form.analyzing}
               </>
             ) : (
               <>
                 <Send className="h-4 w-4" aria-hidden="true" />
-                Analyze email
+                {dictionary.form.analyze}
               </>
             )}
           </button>
@@ -174,53 +180,65 @@ export function EmailScanForm() {
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft sm:p-6">
         {result ? (
-          <AnalysisResult result={result} />
+          <AnalysisResult dictionary={dictionary} result={result} />
         ) : (
-          <EmptyResult />
+          <EmptyResult dictionary={dictionary} />
         )}
       </section>
     </div>
   );
 }
 
-function EmptyResult() {
+function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
   return (
     <div className="flex h-full min-h-96 flex-col justify-between gap-8">
       <div>
         <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-md bg-sky-50 text-sky-700 ring-1 ring-sky-100">
           <ShieldCheck className="h-6 w-6" aria-hidden="true" />
         </div>
-        <h2 className="text-2xl font-semibold text-slate-950">Assessment appears here</h2>
+        <h2 className="text-2xl font-semibold text-slate-950">{dictionary.empty.title}</h2>
         <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
-          Results will show risk level, risk score, suspicious signals, detected links, and a
-          recommended next action.
+          {dictionary.empty.description}
         </p>
       </div>
 
       <div className="rounded-md border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
         <div className="mb-2 flex items-center gap-2 font-semibold">
           <DatabaseZap className="h-4 w-4" aria-hidden="true" />
-          Privacy-first processing
+          {dictionary.empty.privacyTitle}
         </div>
-        Scan content is sent to the local analysis API for this request only and is not stored.
+        {dictionary.empty.privacyBody}
       </div>
 
       <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-        {ANALYSIS_DISCLAIMER}
+        {dictionary.result.disclaimer}
       </div>
     </div>
   );
 }
 
-function AnalysisResult({ result }: { result: EmailAnalysisResult }) {
+function AnalysisResult({
+  dictionary,
+  result,
+}: {
+  dictionary: Dictionary;
+  result: EmailAnalysisResult;
+}) {
   return (
     <div className="space-y-6">
-      <RiskMeter score={result.risk_score} level={result.risk_level} />
+      <RiskMeter
+        score={result.risk_score}
+        level={result.risk_level}
+        labels={{
+          riskScore: dictionary.result.riskScore,
+          levels: dictionary.result.levels,
+        }}
+      />
 
       <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
         <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800">
           <Info className="h-4 w-4 text-sky-700" aria-hidden="true" />
-          Explanation
+          {dictionary.result.explanation}
         </div>
         <p className="text-sm leading-6 text-slate-600">{result.short_explanation}</p>
       </div>
@@ -228,7 +246,7 @@ function AnalysisResult({ result }: { result: EmailAnalysisResult }) {
       <div>
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
           <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />
-          Suspicious signals
+          {dictionary.result.suspiciousSignals}
         </div>
         {result.suspicious_signals.length > 0 ? (
           <ul className="space-y-2">
@@ -244,7 +262,7 @@ function AnalysisResult({ result }: { result: EmailAnalysisResult }) {
           </ul>
         ) : (
           <p className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-            No obvious suspicious signals were found by the prototype checks.
+            {dictionary.result.noSignals}
           </p>
         )}
       </div>
@@ -252,7 +270,7 @@ function AnalysisResult({ result }: { result: EmailAnalysisResult }) {
       <div>
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
           <Link2 className="h-4 w-4 text-sky-700" aria-hidden="true" />
-          Detected links
+          {dictionary.result.detectedLinks}
         </div>
         {result.detected_links.length > 0 ? (
           <ul className="space-y-2">
@@ -267,7 +285,7 @@ function AnalysisResult({ result }: { result: EmailAnalysisResult }) {
           </ul>
         ) : (
           <p className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-            No links detected.
+            {dictionary.result.noLinks}
           </p>
         )}
       </div>
@@ -275,13 +293,13 @@ function AnalysisResult({ result }: { result: EmailAnalysisResult }) {
       <div className="rounded-md border border-sky-200 bg-sky-50 p-4">
         <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-sky-950">
           <ShieldCheck className="h-4 w-4 text-sky-700" aria-hidden="true" />
-          Recommended action
+          {dictionary.result.recommendedAction}
         </div>
         <p className="text-sm leading-6 text-sky-900">{result.recommended_action}</p>
       </div>
 
       <p className="rounded-md border border-slate-200 bg-white p-3 text-sm leading-6 text-slate-500">
-        {ANALYSIS_DISCLAIMER}
+        {dictionary.result.disclaimer}
       </p>
     </div>
   );

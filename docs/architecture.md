@@ -88,7 +88,7 @@ docs/
   roadmap.md
 ```
 
-The initial implementation includes the foundation, landing page, scan form, risk meter, and no-storage heuristic analysis route. Later issues can add multilingual UI, `.eml` parsing, screenshot OCR, and optional self-hosted AI mode without changing the result contract.
+The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage heuristic analysis route, and English/Dutch UI foundation with browser-language initialization. Later issues can add `.eml` parsing, screenshot OCR, and optional self-hosted AI mode without changing the result contract.
 
 ## AI Result Contract
 
