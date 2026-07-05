@@ -43,6 +43,7 @@ Run these before opening a pull request:
 ```bash
 npm run typecheck
 npm run lint
+npm run test:heuristics
 npm run build
 ```
 
