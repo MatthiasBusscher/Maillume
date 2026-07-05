@@ -1,10 +1,13 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
+  ClipboardPaste,
   DatabaseZap,
+  FileText,
+  ImageUp,
   Info,
   Link2,
   Mail,
@@ -16,9 +19,16 @@ import {
   type AnalyzeErrorResponse,
   type AnalyzeResponse,
   type EmailAnalysisResult,
+  type ScanSource,
 } from "@/lib/types";
+import { parseEml } from "@/lib/eml/parse-eml";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { extractTextFromImage } from "@/lib/ocr/extract-text";
 import { RiskMeter } from "./risk-meter";
+
+const MAX_SCREENSHOT_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_EML_SIZE_BYTES = 2 * 1024 * 1024;
+const SCREENSHOT_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 
 const sampleEmail = `Hi,
 
@@ -35,12 +45,16 @@ type EmailScanFormProps = {
 };
 
 export function EmailScanForm({ dictionary }: EmailScanFormProps) {
+  const [activeMode, setActiveMode] = useState<ScanSource>("paste");
   const [subject, setSubject] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
   const [body, setBody] = useState("");
   const [result, setResult] = useState<EmailAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [error, setError] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [fileStatus, setFileStatus] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,7 +73,7 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          source: "paste",
+          source: activeMode,
           subject,
           senderEmail,
           body,
@@ -84,11 +98,122 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
   }
 
   function loadSample() {
+    setActiveMode("paste");
     setSubject("Action required: mailbox access expiring");
     setSenderEmail("security-alert@microsoft-support-login.click");
     setBody(sampleEmail);
     setResult(null);
     setError("");
+    setFileName("");
+    setFileStatus("");
+  }
+
+  function switchMode(mode: ScanSource) {
+    setActiveMode(mode);
+    setSubject("");
+    setSenderEmail("");
+    setBody("");
+    setResult(null);
+    setError("");
+    setFileName("");
+    setFileStatus("");
+  }
+
+  async function handleScreenshotChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    setActiveMode("screenshot");
+    setResult(null);
+    setError("");
+    setFileName(file.name);
+    setFileStatus("");
+
+    if (!SCREENSHOT_TYPES.has(file.type)) {
+      setError(dictionary.form.unsupportedFile);
+      return;
+    }
+
+    if (file.size > MAX_SCREENSHOT_SIZE_BYTES) {
+      setError(dictionary.form.fileTooLarge);
+      return;
+    }
+
+    setIsExtracting(true);
+    setFileStatus(dictionary.form.extracting);
+
+    try {
+      const extractedText = await extractTextFromImage(file);
+
+      if (!extractedText) {
+        setError(dictionary.form.noTextFound);
+        setFileStatus("");
+        return;
+      }
+
+      setSubject(file.name.replace(/\.[^.]+$/, ""));
+      setSenderEmail("");
+      setBody(extractedText);
+      setFileStatus(dictionary.form.extractedTextReady);
+    } catch {
+      setError(dictionary.form.extractionFailed);
+      setFileStatus("");
+    } finally {
+      setIsExtracting(false);
+    }
+  }
+
+  async function handleEmlChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    setActiveMode("eml");
+    setResult(null);
+    setError("");
+    setFileName(file.name);
+    setFileStatus("");
+
+    if (!file.name.toLowerCase().endsWith(".eml") && file.type !== "message/rfc822") {
+      setError(dictionary.form.unsupportedFile);
+      return;
+    }
+
+    if (file.size > MAX_EML_SIZE_BYTES) {
+      setError(dictionary.form.fileTooLarge);
+      return;
+    }
+
+    setIsExtracting(true);
+    setFileStatus(dictionary.form.parsing);
+
+    try {
+      const rawEml = await file.text();
+      const parsed = parseEml(rawEml);
+
+      if (!parsed.body) {
+        setError(dictionary.form.noTextFound);
+        setFileStatus("");
+        return;
+      }
+
+      setSubject(parsed.subject ?? file.name.replace(/\.eml$/i, ""));
+      setSenderEmail(parsed.senderEmail ?? "");
+      setBody(parsed.body);
+      setFileStatus(dictionary.form.parsedEmlReady);
+    } catch {
+      setError(dictionary.form.extractionFailed);
+      setFileStatus("");
+    } finally {
+      setIsExtracting(false);
+    }
   }
 
   return (
@@ -115,6 +240,60 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
             {dictionary.form.useSample}
           </button>
         </div>
+
+        <div className="mb-5">
+          <p className="mb-2 text-sm font-medium text-slate-700">
+            {dictionary.form.inputModeLabel}
+          </p>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <ModeButton
+              active={activeMode === "paste"}
+              icon={<ClipboardPaste className="h-4 w-4" aria-hidden="true" />}
+              label={dictionary.form.modes.paste}
+              onClick={() => switchMode("paste")}
+            />
+            <ModeButton
+              active={activeMode === "screenshot"}
+              icon={<ImageUp className="h-4 w-4" aria-hidden="true" />}
+              label={dictionary.form.modes.screenshot}
+              onClick={() => switchMode("screenshot")}
+            />
+            <ModeButton
+              active={activeMode === "eml"}
+              icon={<FileText className="h-4 w-4" aria-hidden="true" />}
+              label={dictionary.form.modes.eml}
+              onClick={() => switchMode("eml")}
+            />
+          </div>
+        </div>
+
+        {activeMode === "screenshot" ? (
+          <UploadPanel
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            description={dictionary.form.screenshotHelp}
+            fileName={fileName}
+            fileStatus={fileStatus}
+            icon={<ImageUp className="h-5 w-5" aria-hidden="true" />}
+            label={dictionary.form.chooseScreenshot}
+            onChange={handleScreenshotChange}
+            title={dictionary.form.screenshotPrompt}
+            dictionary={dictionary}
+          />
+        ) : null}
+
+        {activeMode === "eml" ? (
+          <UploadPanel
+            accept=".eml,message/rfc822"
+            description={dictionary.form.emlHelp}
+            fileName={fileName}
+            fileStatus={fileStatus}
+            icon={<FileText className="h-5 w-5" aria-hidden="true" />}
+            label={dictionary.form.chooseEml}
+            onChange={handleEmlChange}
+            title={dictionary.form.emlPrompt}
+            dictionary={dictionary}
+          />
+        ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="grid gap-2 text-sm font-medium text-slate-700">
@@ -146,6 +325,7 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
             placeholder={dictionary.form.bodyPlaceholder}
             rows={13}
             required
+            readOnly={isExtracting}
             className="min-h-72 resize-y rounded-md border border-slate-300 bg-white px-3 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
           />
         </label>
@@ -160,7 +340,7 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
           <p className="text-sm text-slate-500">{dictionary.form.privacyNote}</p>
           <button
             type="submit"
-            disabled={!body.trim() || isAnalyzing}
+            disabled={!body.trim() || isAnalyzing || isExtracting}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {isAnalyzing ? (
@@ -185,6 +365,82 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
           <EmptyResult dictionary={dictionary} />
         )}
       </section>
+    </div>
+  );
+}
+
+function ModeButton({
+  active,
+  icon,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex h-11 items-center justify-center gap-2 rounded-md border px-3 text-sm font-semibold transition ${
+        active
+          ? "border-slate-950 bg-slate-950 text-white"
+          : "border-slate-300 bg-white text-slate-700 hover:border-sky-300 hover:bg-sky-50"
+      }`}
+      aria-pressed={active}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function UploadPanel({
+  accept,
+  description,
+  dictionary,
+  fileName,
+  fileStatus,
+  icon,
+  label,
+  onChange,
+  title,
+}: {
+  accept: string;
+  description: string;
+  dictionary: Dictionary;
+  fileName: string;
+  fileStatus: string;
+  icon: ReactNode;
+  label: string;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  title: string;
+}) {
+  return (
+    <div className="mb-4 rounded-md border border-sky-200 bg-sky-50 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-sky-950">
+            {icon}
+            {title}
+          </div>
+          <p className="mt-2 text-sm leading-6 text-sky-900">{description}</p>
+          <p className="mt-1 text-xs font-medium text-sky-800">{dictionary.form.fileLimits}</p>
+        </div>
+        <label className="inline-flex h-11 cursor-pointer items-center justify-center rounded-md bg-white px-3 text-sm font-semibold text-sky-900 ring-1 ring-sky-200 transition hover:bg-sky-100">
+          {label}
+          <input className="sr-only" type="file" accept={accept} onChange={onChange} />
+        </label>
+      </div>
+
+      {fileName ? (
+        <div className="mt-3 rounded-md border border-sky-200 bg-white px-3 py-2 text-sm text-sky-950">
+          <span className="font-semibold">{dictionary.form.selectedFile}:</span> {fileName}
+          {fileStatus ? <span className="mt-1 block text-sky-800">{fileStatus}</span> : null}
+        </div>
+      ) : null}
     </div>
   );
 }

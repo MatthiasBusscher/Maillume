@@ -12,14 +12,14 @@ Built today:
 
 - Landing page
 - Paste-based email scan form
+- Screenshot OCR input mode
+- `.eml` parsing input mode
 - No-storage `/api/analyze` route using local heuristic structured analysis
 - English and Dutch UI foundation with manual language switching and browser-language initialization
 - Risk score, risk level, suspicious signals, detected links, explanation, recommended action, and required disclaimer
 
 Planned before v1:
 
-- Screenshot OCR upload
-- `.eml` parsing
 - Optional self-hosted AI mode
 - Evaluation fixtures for safer detection calibration
 
@@ -61,6 +61,7 @@ See `.env.example` for the full environment shape.
 - Raw email content should be processed only for the current score.
 - The current paste flow sends scan content to `/api/analyze` for the current request only.
 - Pasted email text, screenshots, `.eml` files, OCR text, and scan results should not be stored by default.
+- Screenshot OCR and `.eml` parsing run in the browser before normalized text is sent for analysis.
 - Contributors should only share synthetic or fully sanitized examples in issues and tests.
 
 ## Local Development
