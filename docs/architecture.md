@@ -71,6 +71,11 @@ src/
     file-dropzone.tsx
     language-switcher.tsx
   lib/
+    analysis/
+      heuristic-analysis.ts
+      heuristic-analysis.test.ts
+      heuristic-fixtures.ts
+      validate-input.ts
     ai/
       analyze-email.ts
       providers.ts
@@ -81,14 +86,17 @@ src/
       extract-text.ts
     i18n/
       dictionary.ts
-    mock-analysis.ts
     types.ts
 docs/
   architecture.md
   roadmap.md
 ```
 
-The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage heuristic analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, and `.eml` parsing input. Later issues can add optional self-hosted AI mode without changing the result contract.
+The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage heuristic analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, `.eml` parsing input, and synthetic heuristic calibration fixtures. Later issues can add optional self-hosted AI mode without changing the result contract.
+
+## Heuristic Calibration
+
+The public demo uses local heuristic analysis so it can run without the maintainer's paid AI key. Calibration fixtures live in `src/lib/analysis/heuristic-fixtures.ts` and must use synthetic or fully sanitized examples only. Run `npm run test:heuristics` after changing scoring rules, parser output, or suspicious-signal copy.
 
 ## AI Result Contract
 

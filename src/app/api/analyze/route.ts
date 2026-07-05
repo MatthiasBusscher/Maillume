@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { analyzeEmailHeuristic } from "@/lib/analysis/heuristic-analysis";
 import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
-import { analyzeEmailMock } from "@/lib/mock-analysis";
 import { ANALYSIS_DISCLAIMER, type AnalyzeErrorResponse, type AnalyzeResponse } from "@/lib/types";
 
 const NO_STORE_HEADERS = {
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = analyzeEmailMock(validation.input);
+  const result = analyzeEmailHeuristic(validation.input);
 
   return NextResponse.json<AnalyzeResponse>(
     {

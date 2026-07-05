@@ -2,7 +2,7 @@
 
 Inbox Risk Scanner is an open-source, privacy-first app for checking whether email content appears likely to be phishing, spam, or legitimate.
 
-The current implementation covers Issue #1: a Next.js App Router project with a landing page, email input form, and mocked structured analysis results.
+The current implementation is a privacy-first Next.js app with paste, screenshot OCR, and `.eml` input modes backed by local heuristic analysis.
 
 The launch goal is to support pasted text, screenshots, and `.eml` files without storing scan content after scoring.
 
@@ -14,14 +14,15 @@ Built today:
 - Paste-based email scan form
 - Screenshot OCR input mode
 - `.eml` parsing input mode
-- No-storage `/api/analyze` route using local heuristic structured analysis
+- No-storage `/api/analyze` route using calibrated local heuristic structured analysis
 - English and Dutch UI foundation with manual language switching and browser-language initialization
 - Risk score, risk level, suspicious signals, detected links, explanation, recommended action, and required disclaimer
+- Synthetic English/Dutch heuristic calibration fixtures
 
 Planned before v1:
 
 - Optional self-hosted AI mode
-- Evaluation fixtures for safer detection calibration
+- Expanded evaluation fixtures for optional AI mode
 
 ## Tech Stack
 
@@ -78,6 +79,7 @@ Recommended checks:
 ```bash
 npm run typecheck
 npm run lint
+npm run test:heuristics
 npm run build
 ```
 

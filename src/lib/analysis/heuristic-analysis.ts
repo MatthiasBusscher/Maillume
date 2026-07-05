@@ -1,22 +1,26 @@
-import type { EmailAnalysisInput, EmailAnalysisResult, RiskLevel } from "./types";
+import type { EmailAnalysisInput, EmailAnalysisResult, RiskLevel } from "../types";
 
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 const HTML_HREF_PATTERN = /\bhref\s*=\s*["']([^"']+)["']/gi;
-const SHORT_LINK_DOMAINS = ["bit.ly", "tinyurl.com", "t.co", "rebrand.ly", "is.gd"];
+const SHORT_LINK_DOMAINS = ["bit.ly", "tinyurl.com", "t.co", "rebrand.ly", "is.gd", "ow.ly"];
 const RISKY_TLDS = [".zip", ".mov", ".click", ".top", ".xyz", ".ru"];
 const IMPERSONATED_BRANDS = [
   { name: "Amazon", domains: ["amazon.com"] },
   { name: "Apple", domains: ["apple.com"] },
+  { name: "Belastingdienst", domains: ["belastingdienst.nl"] },
   { name: "DHL", domains: ["dhl.com"] },
   { name: "Facebook", domains: ["facebook.com", "meta.com"] },
   { name: "FedEx", domains: ["fedex.com"] },
   { name: "Google", domains: ["google.com"] },
   { name: "Instagram", domains: ["instagram.com", "meta.com"] },
+  { name: "ING", domains: ["ing.nl"] },
   { name: "McAfee", domains: ["mcafee.com"] },
   { name: "Microsoft", domains: ["microsoft.com", "office.com", "outlook.com"] },
   { name: "Netflix", domains: ["netflix.com"] },
   { name: "Norton", domains: ["norton.com"] },
   { name: "PayPal", domains: ["paypal.com"] },
+  { name: "PostNL", domains: ["postnl.nl"] },
+  { name: "Rabobank", domains: ["rabobank.nl"] },
   { name: "UPS", domains: ["ups.com"] },
 ];
 
@@ -35,6 +39,8 @@ const keywordGroups = [
       /voor (middernacht|het einde van de dag)/i,
       /verloopt?/i,
       /laatste kans/i,
+      /direct (actie|handelen|bevestigen)/i,
+      /binnen \d{1,2} (uur|uren)/i,
     ],
   },
   {
@@ -52,6 +58,9 @@ const keywordGroups = [
       /account(update| bijwerken|gegevens)/i,
       /inloggen/i,
       /verifi[eë]ren/i,
+      /identiteit bevestigen/i,
+      /gegevens (controleren|bijwerken|bevestigen)/i,
+      /bevestig (uw|je) (account|gegevens|identiteit)/i,
     ],
   },
   {
@@ -69,12 +78,25 @@ const keywordGroups = [
       /niet betaald/i,
       /factuur/i,
       /terugbetaling/i,
+      /bankrekening/i,
+      /rekeningnummer/i,
+      /overschrijving/i,
+      /incasso/i,
     ],
   },
   {
     score: 14,
     label: "References an attachment or document that may be used as bait.",
-    patterns: [/attachment/i, /attached/i, /shared document/i, /docusign/i, /download/i],
+    patterns: [
+      /attachment/i,
+      /attached/i,
+      /shared document/i,
+      /docusign/i,
+      /download/i,
+      /bijlage/i,
+      /document (gedeeld|openen|downloaden)/i,
+      /open de bijlage/i,
+    ],
   },
   {
     score: 12,
@@ -90,6 +112,9 @@ const keywordGroups = [
       /norton/i,
       /antivirus/i,
       /internet security/i,
+      /belastingdienst/i,
+      /postnl/i,
+      /rabobank/i,
     ],
   },
   {
@@ -122,6 +147,7 @@ const keywordGroups = [
       /voltooi (uw|je) verlenging/i,
       /renew(al)? before/i,
       /beveiliging.*garanderen/i,
+      /betaalmethode bijwerken/i,
     ],
   },
   {
@@ -136,6 +162,21 @@ const keywordGroups = [
       /beveiligingssoftware/i,
       /systeem(poging|pogingen)/i,
       /system attempt/i,
+      /verdachte (inlog|activiteit|poging)/i,
+    ],
+  },
+  {
+    score: 14,
+    label: "Pushes the recipient toward a link or button as the next step.",
+    patterns: [
+      /click here/i,
+      /open this link/i,
+      /follow the link/i,
+      /sign in below/i,
+      /klik hier/i,
+      /open deze link/i,
+      /gebruik de knop/i,
+      /volg de link/i,
     ],
   },
   {
@@ -193,7 +234,7 @@ const keywordGroups = [
   },
 ];
 
-export function analyzeEmailMock(input: EmailAnalysisInput): EmailAnalysisResult {
+export function analyzeEmailHeuristic(input: EmailAnalysisInput): EmailAnalysisResult {
   const content = [input.subject, input.senderEmail, input.body].filter(Boolean).join("\n");
   const links = extractLinks(content);
   const signals: string[] = [];
@@ -221,7 +262,7 @@ export function analyzeEmailMock(input: EmailAnalysisInput): EmailAnalysisResult
     signals.push("Includes a link with a domain pattern often abused in suspicious campaigns.");
   }
 
-  if (hasMismatchedDisplayedLink(input.body)) {
+  if (hasMismatchedDisplayedLink(input.body) || hasParsedHiddenLinkMismatch(input.body)) {
     score += 18;
     signals.push("Displays one link destination but points to a different domain.");
   }
@@ -310,6 +351,21 @@ function hasMismatchedDisplayedLink(content: string): boolean {
   return false;
 }
 
+function hasParsedHiddenLinkMismatch(content: string): boolean {
+  const hiddenLinks = content.matchAll(/Hidden link:\s*(https?:\/\/[^\s]+)\s*->\s*(https?:\/\/[^\s]+)/gi);
+
+  for (const link of hiddenLinks) {
+    const displayedDomain = getDomain(cleanLink(link[1]));
+    const hrefDomain = getDomain(cleanLink(link[2]));
+
+    if (displayedDomain && hrefDomain && displayedDomain !== hrefDomain) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function hasExcessiveFormattingPressure(content: string): boolean {
   const words = content.match(/\b[A-Z]{5,}\b/g) ?? [];
   const hasRepeatedPunctuation = /[!?]{3,}/.test(content);
@@ -345,7 +401,12 @@ function hasSuspiciousDomainShape(domain: string): boolean {
 
 function looksLikeBrandImpersonation(domain: string): boolean {
   return IMPERSONATED_BRANDS.some((brand) => {
-    const domainMentionsBrand = domain.includes(brand.name.toLowerCase());
+    const normalizedDomain = domain.replace(/\./g, "-");
+    const normalizedBrand = brand.name.toLowerCase();
+    const domainMentionsBrand =
+      normalizedBrand.length <= 3
+        ? new RegExp(`(^|-)${normalizedBrand}($|-)`).test(normalizedDomain)
+        : normalizedDomain.includes(normalizedBrand);
     const isOfficialDomain = brand.domains.some(
       (officialDomain) => domain === officialDomain || domain.endsWith(`.${officialDomain}`),
     );
