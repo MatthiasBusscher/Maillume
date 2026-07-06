@@ -1,6 +1,6 @@
 export type RiskLevel = "low" | "medium" | "high";
 export type AnalysisMode = "heuristic" | "ai";
-export type AiProviderName = "openai" | "anthropic";
+export type AiProviderName = "openai" | "anthropic" | "openai-compatible";
 export type AnalysisProviderName = "heuristic" | AiProviderName;
 
 export const ANALYSIS_DISCLAIMER =

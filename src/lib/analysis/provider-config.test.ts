@@ -54,6 +54,47 @@ async function main() {
   );
 
   assert.throws(
+    () => getAnalysisConfig({ ANALYSIS_MODE: "ai", AI_PROVIDER: "openai-compatible" }),
+    AnalysisConfigError,
+    "OpenAI-compatible mode requires a generic AI key",
+  );
+
+  assert.throws(
+    () =>
+      getAnalysisConfig({
+        ANALYSIS_MODE: "ai",
+        AI_PROVIDER: "openai-compatible",
+        AI_API_KEY: "fake-compatible-key",
+      }),
+    AnalysisConfigError,
+    "OpenAI-compatible mode requires a base URL",
+  );
+
+  assert.throws(
+    () =>
+      getAnalysisConfig({
+        ANALYSIS_MODE: "ai",
+        AI_PROVIDER: "openai-compatible",
+        AI_API_KEY: "fake-compatible-key",
+        AI_BASE_URL: "not a url",
+      }),
+    AnalysisConfigError,
+    "OpenAI-compatible base URL should be validated",
+  );
+
+  assert.throws(
+    () =>
+      getAnalysisConfig({
+        ANALYSIS_MODE: "ai",
+        AI_PROVIDER: "openai-compatible",
+        AI_API_KEY: "fake-compatible-key",
+        AI_BASE_URL: "https://api.deepseek.com",
+      }),
+    AnalysisConfigError,
+    "OpenAI-compatible mode requires AI_MODEL",
+  );
+
+  assert.throws(
     () =>
       getAnalysisConfig({
         ANALYSIS_MODE: "ai",
@@ -88,6 +129,29 @@ async function main() {
   assert.equal(anthropicConfig.mode, "ai");
   assert.equal(anthropicConfig.provider, "anthropic");
   assert.equal(anthropicConfig.model, "anthropic-test-model");
+
+  const compatibleConfig = getAnalysisConfig({
+    ANALYSIS_MODE: "ai",
+    AI_PROVIDER: "openai-compatible",
+    AI_API_KEY: "fake-compatible-key-for-tests",
+    AI_BASE_URL: "https://api.deepseek.com/",
+    AI_MODEL: "deepseek-test-model",
+  });
+
+  assert.equal(compatibleConfig.mode, "ai");
+  assert.equal(compatibleConfig.provider, "openai-compatible");
+  assert.equal(compatibleConfig.apiKey, "fake-compatible-key-for-tests");
+  assert.equal(compatibleConfig.baseUrl, "https://api.deepseek.com");
+  assert.equal(compatibleConfig.model, "deepseek-test-model");
+
+  const openAiGenericKeyConfig = getAnalysisConfig({
+    ANALYSIS_MODE: "ai",
+    AI_PROVIDER: "openai",
+    AI_API_KEY: "fake-generic-openai-key-for-tests",
+  });
+
+  assert.equal(openAiGenericKeyConfig.provider, "openai");
+  assert.equal(openAiGenericKeyConfig.apiKey, "fake-generic-openai-key-for-tests");
 
   const heuristicProvider = createAnalysisProvider(defaultConfig);
   const heuristicResult = await heuristicProvider.analyze({
@@ -151,6 +215,38 @@ async function main() {
 
   assert.equal(anthropicResult.risk_level, "high", "risk level should be normalized from score");
 
+  let compatibleRequestUrl = "";
+  let compatibleRequestBody: Record<string, unknown> | undefined;
+  const compatibleProvider = createAnalysisProvider(compatibleConfig, {
+    fetcher: async (url, init) => {
+      compatibleRequestUrl = String(url);
+      compatibleRequestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+
+      return jsonResponse({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify(VALID_AI_RESULT),
+            },
+          },
+        ],
+      });
+    },
+  });
+
+  const compatibleResult = await compatibleProvider.analyze({
+    body: "Synthetic phishing-like message body.",
+  });
+
+  assert.equal(compatibleProvider.provider, "openai-compatible");
+  assert.equal(compatibleResult.risk_score, 82);
+  assert.equal(compatibleRequestUrl, "https://api.deepseek.com/chat/completions");
+  assert.ok(compatibleRequestBody, "OpenAI-compatible request body should be captured");
+  assert.equal(compatibleRequestBody.model, "deepseek-test-model");
+  assert.equal(compatibleRequestBody.max_tokens, 800);
+  assert.equal(compatibleRequestBody.stream, false);
+  assert.deepEqual(compatibleRequestBody.response_format, { type: "json_object" });
+
   const malformedProvider = createAnalysisProvider(openAiConfig, {
     fetcher: async () => jsonResponse({ output_text: JSON.stringify({ risk_score: 50 }) }),
   });
@@ -169,6 +265,35 @@ async function main() {
     () => failingProvider.analyze({ body: "Synthetic message body." }),
     AiProviderRequestError,
     "provider HTTP failures should return controlled errors",
+  );
+
+  const compatibleMalformedProvider = createAnalysisProvider(compatibleConfig, {
+    fetcher: async () =>
+      jsonResponse({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({ risk_score: 50 }),
+            },
+          },
+        ],
+      }),
+  });
+
+  await assert.rejects(
+    () => compatibleMalformedProvider.analyze({ body: "Synthetic message body." }),
+    AiResponseValidationError,
+    "malformed OpenAI-compatible output should fail validation",
+  );
+
+  const compatibleFailingProvider = createAnalysisProvider(compatibleConfig, {
+    fetcher: async () => jsonResponse({ error: "rate_limited" }, 429),
+  });
+
+  await assert.rejects(
+    () => compatibleFailingProvider.analyze({ body: "Synthetic message body." }),
+    AiProviderRequestError,
+    "OpenAI-compatible provider HTTP failures should return controlled errors",
   );
 
   const invalidJsonProvider = createAnalysisProvider(openAiConfig, {

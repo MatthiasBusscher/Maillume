@@ -45,10 +45,17 @@ function createSelfHostedAiProvider(config: AiAnalysisConfig, fetcher: Fetcher):
   return {
     mode: "ai",
     provider: config.provider,
-    analyze: async (input) =>
-      config.provider === "openai"
-        ? analyzeWithOpenAi(config, input, fetcher)
-        : analyzeWithAnthropic(config, input, fetcher),
+    analyze: async (input) => {
+      if (config.provider === "openai") {
+        return analyzeWithOpenAi(config, input, fetcher);
+      }
+
+      if (config.provider === "anthropic") {
+        return analyzeWithAnthropic(config, input, fetcher);
+      }
+
+      return analyzeWithOpenAiCompatible(config, input, fetcher);
+    },
   };
 }
 
@@ -144,6 +151,57 @@ async function analyzeWithAnthropic(
   return parseAiAnalysisJson(content);
 }
 
+async function analyzeWithOpenAiCompatible(
+  config: AiAnalysisConfig,
+  input: EmailAnalysisInput,
+  fetcher: Fetcher,
+): Promise<EmailAnalysisResult> {
+  const response = await fetchProvider("OpenAI-compatible provider", () =>
+    fetcher(`${getOpenAiCompatibleBaseUrl(config)}/chat/completions`, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          {
+            role: "system",
+            content: [
+              AI_ANALYSIS_SYSTEM_PROMPT,
+              "Return only valid JSON matching this schema:",
+              JSON.stringify(AI_ANALYSIS_SCHEMA),
+            ].join("\n"),
+          },
+          {
+            role: "user",
+            content: buildAiAnalysisUserPrompt(input),
+          },
+        ],
+        max_tokens: config.maxOutputTokens,
+        response_format: {
+          type: "json_object",
+        },
+        stream: false,
+        temperature: 0,
+      }),
+    }),
+  );
+
+  if (!response.ok) {
+    throw new AiProviderRequestError(
+      `OpenAI-compatible provider request failed with status ${response.status}.`,
+    );
+  }
+
+  const payload = await readProviderJson(response);
+  const content = extractChatCompletionText(payload);
+
+  return parseAiAnalysisJson(content);
+}
+
 async function fetchProvider(provider: string, request: () => Promise<Response>): Promise<Response> {
   try {
     return await request();
@@ -204,6 +262,38 @@ function extractOpenAiText(payload: unknown): string {
   throw new AiResponseValidationError();
 }
 
+function extractChatCompletionText(payload: unknown): string {
+  if (!payload || typeof payload !== "object") {
+    throw new AiResponseValidationError();
+  }
+
+  const choices = (payload as { choices?: unknown }).choices;
+
+  if (!Array.isArray(choices)) {
+    throw new AiResponseValidationError();
+  }
+
+  for (const choice of choices) {
+    if (!choice || typeof choice !== "object") {
+      continue;
+    }
+
+    const message = (choice as { message?: unknown }).message;
+
+    if (!message || typeof message !== "object") {
+      continue;
+    }
+
+    const content = (message as { content?: unknown }).content;
+
+    if (typeof content === "string" && content.trim()) {
+      return content;
+    }
+  }
+
+  throw new AiResponseValidationError();
+}
+
 function extractAnthropicText(payload: unknown): string {
   if (!payload || typeof payload !== "object") {
     throw new AiResponseValidationError();
@@ -230,4 +320,12 @@ function extractAnthropicText(payload: unknown): string {
   }
 
   return (textBlock as { text: string }).text;
+}
+
+function getOpenAiCompatibleBaseUrl(config: AiAnalysisConfig): string {
+  if (!config.baseUrl) {
+    throw new AiProviderRequestError("OpenAI-compatible provider requires AI_BASE_URL.");
+  }
+
+  return config.baseUrl;
 }
