@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { analyzeEmailHeuristic } from "@/lib/analysis/heuristic-analysis";
+import { analyzeEmail } from "@/lib/analysis/analyze-email";
+import { AnalysisConfigError } from "@/lib/analysis/config";
 import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
+import { AnalysisProviderUnavailableError } from "@/lib/analysis/providers";
 import { ANALYSIS_DISCLAIMER, type AnalyzeErrorResponse, type AnalyzeResponse } from "@/lib/types";
 
 const NO_STORE_HEADERS = {
@@ -32,12 +34,27 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = analyzeEmailHeuristic(validation.input);
+  let analysis;
+
+  try {
+    analysis = await analyzeEmail(validation.input);
+  } catch (error) {
+    if (error instanceof AnalysisConfigError) {
+      return jsonError(error.message, 500);
+    }
+
+    if (error instanceof AnalysisProviderUnavailableError) {
+      return jsonError(error.message, 501);
+    }
+
+    throw error;
+  }
 
   return NextResponse.json<AnalyzeResponse>(
     {
-      result,
-      analysis_mode: "heuristic",
+      result: analysis.result,
+      analysis_mode: analysis.mode,
+      analysis_provider: analysis.provider,
       disclaimer: ANALYSIS_DISCLAIMER,
       privacy: {
         stored: false,

@@ -14,6 +14,10 @@
     "src/lib/analysis/heuristic-analysis.test.ts",
     "src/lib/analysis/heuristic-fixtures.ts",
     "src/lib/analysis/heuristic-analysis.ts",
+    "src/lib/analysis/provider-config.test.ts",
+    "src/lib/analysis/analyze-email.ts",
+    "src/lib/analysis/config.ts",
+    "src/lib/analysis/providers.ts",
     "src/lib/types.ts"
   ]
 }

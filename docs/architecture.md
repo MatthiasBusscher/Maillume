@@ -31,8 +31,9 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
 
 2. API Layer
    - `POST /api/analyze` accepts normalized scan input from pasted text, OCR, or `.eml` parsing.
+   - Uses the server-side `analyzeEmail` provider interface.
    - Uses local heuristics in public demo mode.
-   - Calls the selected AI provider only when self-hosted AI mode is enabled.
+   - Selects AI mode only when self-hosted environment variables are set.
    - Validates and normalizes the model response before returning it.
    - Does not persist raw scan content or scan results.
 
@@ -72,14 +73,14 @@ src/
     language-switcher.tsx
   lib/
     analysis/
+      analyze-email.ts
+      config.ts
       heuristic-analysis.ts
       heuristic-analysis.test.ts
       heuristic-fixtures.ts
-      validate-input.ts
-    ai/
-      analyze-email.ts
+      provider-config.test.ts
       providers.ts
-      schema.ts
+      validate-input.ts
     eml/
       parse-eml.ts
     ocr/
@@ -92,11 +93,22 @@ docs/
   roadmap.md
 ```
 
-The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage heuristic analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, `.eml` parsing input, and synthetic heuristic calibration fixtures. Later issues can add optional self-hosted AI mode without changing the result contract.
+The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage heuristic analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, `.eml` parsing input, synthetic heuristic calibration fixtures, and a server-side provider abstraction for optional self-hosted AI mode. Later issues can add the concrete provider calls without changing the result contract.
 
 ## Heuristic Calibration
 
 The public demo uses local heuristic analysis so it can run without the maintainer's paid AI key. Calibration fixtures live in `src/lib/analysis/heuristic-fixtures.ts` and must use synthetic or fully sanitized examples only. Run `npm run test:heuristics` after changing scoring rules, parser output, or suspicious-signal copy.
+
+## Provider Selection
+
+`src/lib/analysis/analyze-email.ts` is the server-side entrypoint for analysis. It reads `ANALYSIS_MODE`, `AI_PROVIDER`, `OPENAI_API_KEY`, and `ANTHROPIC_API_KEY` through `getAnalysisConfig`, then creates the selected provider.
+
+- `ANALYSIS_MODE=heuristic` uses the local heuristic provider and does not require AI keys.
+- `ANALYSIS_MODE=ai` requires `AI_PROVIDER=openai|anthropic` and the matching server-side key.
+- AI provider keys are held only in server-side config objects and are not returned from `/api/analyze`.
+- Until the AI route issue is implemented, AI mode returns a controlled unavailable-provider error instead of making provider calls.
+
+Run `npm run test:analysis` after changing provider selection or scoring logic.
 
 ## AI Result Contract
 
@@ -139,7 +151,8 @@ Do not support a public shared AI endpoint backed by the project owner's API key
 ```ts
 type AnalyzeResponse = {
   result: EmailAnalysisResult;
-  analysis_mode: "heuristic";
+  analysis_mode: "heuristic" | "ai";
+  analysis_provider: "heuristic" | "openai" | "anthropic";
   disclaimer: string;
   privacy: {
     stored: false;
