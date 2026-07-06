@@ -9,6 +9,8 @@ export type AiAnalysisConfig = {
   mode: "ai";
   provider: AiProviderName;
   apiKey: string;
+  model: string;
+  maxOutputTokens: number;
 };
 
 export type AnalysisConfig = HeuristicAnalysisConfig | AiAnalysisConfig;
@@ -16,6 +18,10 @@ export type AnalysisConfig = HeuristicAnalysisConfig | AiAnalysisConfig;
 type AnalysisEnv = Record<string, string | undefined>;
 
 const AI_PROVIDERS = new Set<AiProviderName>(["openai", "anthropic"]);
+const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
+const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5";
+const DEFAULT_MAX_OUTPUT_TOKENS = 800;
+const MAX_OUTPUT_TOKEN_LIMIT = 2_000;
 
 export class AnalysisConfigError extends Error {
   constructor(message: string) {
@@ -55,6 +61,8 @@ export function getAnalysisConfig(env: AnalysisEnv = process.env): AnalysisConfi
     mode,
     provider,
     apiKey,
+    model: getAiModel(provider, env),
+    maxOutputTokens: getMaxOutputTokens(env.AI_MAX_OUTPUT_TOKENS),
   };
 }
 
@@ -69,4 +77,39 @@ function isAnalysisMode(value: string): value is AnalysisMode {
 
 function isAiProvider(value: string): value is AiProviderName {
   return AI_PROVIDERS.has(value as AiProviderName);
+}
+
+function getAiModel(provider: AiProviderName, env: AnalysisEnv): string {
+  const providerModel =
+    provider === "openai"
+      ? normalizeModelName(env.OPENAI_MODEL)
+      : normalizeModelName(env.ANTHROPIC_MODEL);
+  const sharedModel = normalizeModelName(env.AI_MODEL);
+
+  return providerModel ?? sharedModel ?? getDefaultModel(provider);
+}
+
+function normalizeModelName(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+  return normalized ? normalized : undefined;
+}
+
+function getDefaultModel(provider: AiProviderName): string {
+  return provider === "openai" ? DEFAULT_OPENAI_MODEL : DEFAULT_ANTHROPIC_MODEL;
+}
+
+function getMaxOutputTokens(value: string | undefined): number {
+  if (!value?.trim()) {
+    return DEFAULT_MAX_OUTPUT_TOKENS;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < 200 || parsed > MAX_OUTPUT_TOKEN_LIMIT) {
+    throw new AnalysisConfigError(
+      `AI_MAX_OUTPUT_TOKENS must be an integer between 200 and ${MAX_OUTPUT_TOKEN_LIMIT}.`,
+    );
+  }
+
+  return parsed;
 }

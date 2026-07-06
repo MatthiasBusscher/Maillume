@@ -74,6 +74,8 @@ src/
   lib/
     analysis/
       analyze-email.ts
+      ai-prompt.ts
+      ai-schema.ts
       config.ts
       heuristic-analysis.ts
       heuristic-analysis.test.ts
@@ -93,7 +95,7 @@ docs/
   roadmap.md
 ```
 
-The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage heuristic analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, `.eml` parsing input, synthetic heuristic calibration fixtures, and a server-side provider abstraction for optional self-hosted AI mode. Later issues can add the concrete provider calls without changing the result contract.
+The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, `.eml` parsing input, synthetic heuristic calibration fixtures, and optional self-hosted AI provider calls behind server environment variables.
 
 ## Heuristic Calibration
 
@@ -101,12 +103,13 @@ The public demo uses local heuristic analysis so it can run without the maintain
 
 ## Provider Selection
 
-`src/lib/analysis/analyze-email.ts` is the server-side entrypoint for analysis. It reads `ANALYSIS_MODE`, `AI_PROVIDER`, `OPENAI_API_KEY`, and `ANTHROPIC_API_KEY` through `getAnalysisConfig`, then creates the selected provider.
+`src/lib/analysis/analyze-email.ts` is the server-side entrypoint for analysis. It reads `ANALYSIS_MODE`, `AI_PROVIDER`, provider keys, optional model overrides, and `AI_MAX_OUTPUT_TOKENS` through `getAnalysisConfig`, then creates the selected provider.
 
 - `ANALYSIS_MODE=heuristic` uses the local heuristic provider and does not require AI keys.
 - `ANALYSIS_MODE=ai` requires `AI_PROVIDER=openai|anthropic` and the matching server-side key.
-- AI provider keys are held only in server-side config objects and are not returned from `/api/analyze`.
-- Until the AI route issue is implemented, AI mode returns a controlled unavailable-provider error instead of making provider calls.
+- AI mode sends normalized scan text to the selected provider and asks for strict structured JSON.
+- AI provider keys are held only in server-side config objects and are never returned from `/api/analyze`.
+- Provider failures or malformed AI responses return controlled no-store API errors.
 
 Run `npm run test:analysis` after changing provider selection or scoring logic.
 
@@ -138,9 +141,13 @@ ANALYSIS_MODE=heuristic
 AI_PROVIDER=
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
+AI_MODEL=
+OPENAI_MODEL=
+ANTHROPIC_MODEL=
+AI_MAX_OUTPUT_TOKENS=800
 ```
 
-The public hosted version should keep `ANALYSIS_MODE=heuristic` and leave provider keys unset. Self-hosters can set `ANALYSIS_MODE=ai`, choose a provider, and add their own key to their Vercel environment variables.
+The public hosted version should keep `ANALYSIS_MODE=heuristic` and leave provider keys unset. Self-hosters can set `ANALYSIS_MODE=ai`, choose a provider, add their own key to their Vercel environment variables, and optionally pin a provider-specific model.
 
 Do not support a public shared AI endpoint backed by the project owner's API key unless the product later adds strong authentication, rate limits, quotas, billing controls, and abuse monitoring.
 
