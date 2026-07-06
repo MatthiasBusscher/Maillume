@@ -18,10 +18,11 @@ Built today:
 - English and Dutch UI foundation with manual language switching and browser-language initialization
 - Risk score, risk level, suspicious signals, detected links, explanation, recommended action, and required disclaimer
 - Synthetic English/Dutch heuristic calibration fixtures
+- Server-side analysis provider abstraction for heuristic mode and future self-hosted AI mode
 
 Planned before v1:
 
-- Optional self-hosted AI mode
+- AI-backed structured analysis for self-hosters who provide their own key
 - Expanded evaluation fixtures for optional AI mode
 
 ## Tech Stack
@@ -37,7 +38,7 @@ Planned before v1:
 Inbox Risk Scanner should not ship with the maintainer's paid AI API key in the public hosted version.
 
 - Public demo mode: local heuristic analysis only, no AI provider key, no stored scan data.
-- Self-hosted AI mode: installers deploy their own copy and configure their own server-side provider key.
+- Self-hosted AI mode: installers deploy their own copy and configure their own server-side provider key. The provider abstraction is in place; actual provider calls are implemented in the next AI route issue.
 
 Provider keys must live only in environment variables on the server. They should never be committed to GitHub and never sent to the browser.
 
@@ -79,7 +80,7 @@ Recommended checks:
 ```bash
 npm run typecheck
 npm run lint
-npm run test:heuristics
+npm run test:analysis
 npm run build
 ```
 

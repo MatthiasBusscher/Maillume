@@ -24,7 +24,7 @@ For the public/demo mode, no AI key is needed:
 ANALYSIS_MODE=heuristic
 ```
 
-Self-hosted AI mode is planned for later. When it exists, self-hosters will provide their own server-side provider key. Maintainer-owned keys must not be used in public deployments.
+Self-hosted AI mode is server-configured. Self-hosters provide their own server-side provider key, and maintainer-owned keys must not be used in public deployments. Do not expose provider keys through client-side code or `NEXT_PUBLIC_` variables.
 
 ## Branches
 
@@ -43,7 +43,7 @@ Run these before opening a pull request:
 ```bash
 npm run typecheck
 npm run lint
-npm run test:heuristics
+npm run test:analysis
 npm run build
 ```
 

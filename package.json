@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test:analysis": "tsc -p tsconfig.heuristics.json && node .heuristic-tests/src/lib/analysis/heuristic-analysis.test.js && node .heuristic-tests/src/lib/analysis/provider-config.test.js",
     "test:heuristics": "tsc -p tsconfig.heuristics.json && node .heuristic-tests/src/lib/analysis/heuristic-analysis.test.js",
     "typecheck": "tsc --noEmit"
   },

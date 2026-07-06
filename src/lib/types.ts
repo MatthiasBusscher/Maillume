@@ -1,4 +1,7 @@
 export type RiskLevel = "low" | "medium" | "high";
+export type AnalysisMode = "heuristic" | "ai";
+export type AiProviderName = "openai" | "anthropic";
+export type AnalysisProviderName = "heuristic" | AiProviderName;
 
 export const ANALYSIS_DISCLAIMER =
   "This is an automated risk assessment and should not be considered a guarantee.";
@@ -28,7 +31,8 @@ export type EmailAnalysisResult = {
 
 export type AnalyzeResponse = {
   result: EmailAnalysisResult;
-  analysis_mode: "heuristic";
+  analysis_mode: AnalysisMode;
+  analysis_provider: AnalysisProviderName;
   disclaimer: typeof ANALYSIS_DISCLAIMER;
   privacy: {
     stored: false;
