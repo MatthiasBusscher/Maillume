@@ -18,7 +18,7 @@ Built today:
 - English and Dutch UI foundation with manual language switching and browser-language initialization
 - Risk score, risk level, suspicious signals, detected links, explanation, recommended action, and required disclaimer
 - Synthetic English/Dutch heuristic calibration fixtures
-- Server-side analysis provider abstraction for heuristic mode and future self-hosted AI mode
+- Server-side analysis provider abstraction for heuristic mode and self-hosted AI mode
 
 Planned before v1:
 
@@ -30,7 +30,7 @@ Planned before v1:
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
-- Optional OpenAI or Anthropic API for self-hosted structured analysis
+- Optional OpenAI, Anthropic, or OpenAI-compatible API for self-hosted structured analysis
 - Vercel deployment
 
 ## Analysis Modes
@@ -48,7 +48,7 @@ Example public/demo configuration:
 ANALYSIS_MODE=heuristic
 ```
 
-Example future self-hosted AI configuration:
+Example self-hosted OpenAI configuration:
 
 ```bash
 ANALYSIS_MODE=ai
@@ -56,6 +56,18 @@ AI_PROVIDER=openai
 OPENAI_API_KEY=your-own-server-side-key
 OPENAI_MODEL=gpt-4o-mini
 ```
+
+Example self-hosted OpenAI-compatible configuration:
+
+```bash
+ANALYSIS_MODE=ai
+AI_PROVIDER=openai-compatible
+AI_BASE_URL=https://api.deepseek.com
+AI_API_KEY=your-own-provider-key
+AI_MODEL=deepseek-v4-pro
+```
+
+For Perplexity, use `AI_BASE_URL=https://api.perplexity.ai` and a Sonar model such as `sonar-pro`.
 
 See `.env.example` for the full environment shape.
 

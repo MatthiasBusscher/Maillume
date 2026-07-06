@@ -18,7 +18,7 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
 
 2. Self-Hosted AI Mode
    - Enabled by the installer with server-side environment variables.
-   - The self-hoster provides their own OpenAI or Anthropic API key.
+   - The self-hoster provides their own OpenAI, Anthropic, or OpenAI-compatible provider key.
    - API keys are never committed to GitHub and never exposed to the browser.
    - Rate limiting is still recommended so the self-hoster can control cost.
 
@@ -51,7 +51,7 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
 5. Deployment
    - Vercel hosts the Next.js app.
    - Public deployment uses `ANALYSIS_MODE=heuristic` and no AI provider key.
-   - Self-hosters can use `ANALYSIS_MODE=ai`, `AI_PROVIDER=openai|anthropic`, and their own server-side provider key.
+   - Self-hosters can use `ANALYSIS_MODE=ai`, `AI_PROVIDER=openai|anthropic|openai-compatible`, and their own server-side provider key.
 
 ## Recommended Folder Structure
 
@@ -106,7 +106,8 @@ The public demo uses local heuristic analysis so it can run without the maintain
 `src/lib/analysis/analyze-email.ts` is the server-side entrypoint for analysis. It reads `ANALYSIS_MODE`, `AI_PROVIDER`, provider keys, optional model overrides, and `AI_MAX_OUTPUT_TOKENS` through `getAnalysisConfig`, then creates the selected provider.
 
 - `ANALYSIS_MODE=heuristic` uses the local heuristic provider and does not require AI keys.
-- `ANALYSIS_MODE=ai` requires `AI_PROVIDER=openai|anthropic` and the matching server-side key.
+- `ANALYSIS_MODE=ai` requires `AI_PROVIDER=openai|anthropic|openai-compatible` and the matching server-side key.
+- `AI_PROVIDER=openai-compatible` requires `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`, then sends requests to `{AI_BASE_URL}/chat/completions`.
 - AI mode sends normalized scan text to the selected provider and asks for strict structured JSON.
 - AI provider keys are held only in server-side config objects and are never returned from `/api/analyze`.
 - Provider failures or malformed AI responses return controlled no-store API errors.
@@ -139,6 +140,8 @@ Server-side validation should enforce:
 ```text
 ANALYSIS_MODE=heuristic
 AI_PROVIDER=
+AI_API_KEY=
+AI_BASE_URL=
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 AI_MODEL=
@@ -148,6 +151,22 @@ AI_MAX_OUTPUT_TOKENS=800
 ```
 
 The public hosted version should keep `ANALYSIS_MODE=heuristic` and leave provider keys unset. Self-hosters can set `ANALYSIS_MODE=ai`, choose a provider, add their own key to their Vercel environment variables, and optionally pin a provider-specific model.
+
+OpenAI-compatible examples:
+
+```text
+AI_PROVIDER=openai-compatible
+AI_BASE_URL=https://api.deepseek.com
+AI_API_KEY=your-own-deepseek-key
+AI_MODEL=deepseek-v4-pro
+```
+
+```text
+AI_PROVIDER=openai-compatible
+AI_BASE_URL=https://api.perplexity.ai
+AI_API_KEY=your-own-perplexity-key
+AI_MODEL=sonar-pro
+```
 
 Do not support a public shared AI endpoint backed by the project owner's API key unless the product later adds strong authentication, rate limits, quotas, billing controls, and abuse monitoring.
 
@@ -159,7 +178,7 @@ Do not support a public shared AI endpoint backed by the project owner's API key
 type AnalyzeResponse = {
   result: EmailAnalysisResult;
   analysis_mode: "heuristic" | "ai";
-  analysis_provider: "heuristic" | "openai" | "anthropic";
+  analysis_provider: "heuristic" | "openai" | "anthropic" | "openai-compatible";
   disclaimer: string;
   privacy: {
     stored: false;
