@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 
 import { analyzeEmail } from "@/lib/analysis/analyze-email";
 import { AnalysisConfigError } from "@/lib/analysis/config";
+import { AiResponseValidationError } from "@/lib/analysis/ai-schema";
 import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
-import { AnalysisProviderUnavailableError } from "@/lib/analysis/providers";
+import { AiProviderRequestError } from "@/lib/analysis/providers";
 import { ANALYSIS_DISCLAIMER, type AnalyzeErrorResponse, type AnalyzeResponse } from "@/lib/types";
 
 const NO_STORE_HEADERS = {
@@ -43,8 +44,8 @@ export async function POST(request: Request) {
       return jsonError(error.message, 500);
     }
 
-    if (error instanceof AnalysisProviderUnavailableError) {
-      return jsonError(error.message, 501);
+    if (error instanceof AiProviderRequestError || error instanceof AiResponseValidationError) {
+      return jsonError(error.message, 502);
     }
 
     throw error;

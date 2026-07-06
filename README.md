@@ -22,7 +22,7 @@ Built today:
 
 Planned before v1:
 
-- AI-backed structured analysis for self-hosters who provide their own key
+- Expanded calibration and abuse controls for AI-enabled self-hosted deployments
 - Expanded evaluation fixtures for optional AI mode
 
 ## Tech Stack
@@ -38,7 +38,7 @@ Planned before v1:
 Inbox Risk Scanner should not ship with the maintainer's paid AI API key in the public hosted version.
 
 - Public demo mode: local heuristic analysis only, no AI provider key, no stored scan data.
-- Self-hosted AI mode: installers deploy their own copy and configure their own server-side provider key. The provider abstraction is in place; actual provider calls are implemented in the next AI route issue.
+- Self-hosted AI mode: installers deploy their own copy and configure their own server-side provider key. In this mode, normalized scan text is sent to their selected AI provider for structured analysis.
 
 Provider keys must live only in environment variables on the server. They should never be committed to GitHub and never sent to the browser.
 
@@ -54,6 +54,7 @@ Example future self-hosted AI configuration:
 ANALYSIS_MODE=ai
 AI_PROVIDER=openai
 OPENAI_API_KEY=your-own-server-side-key
+OPENAI_MODEL=gpt-4o-mini
 ```
 
 See `.env.example` for the full environment shape.
