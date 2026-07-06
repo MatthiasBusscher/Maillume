@@ -100,6 +100,7 @@ npm run build
 ## Project Docs
 
 - Architecture: `docs/architecture.md`
+- Evaluation fixtures: `docs/evaluation.md`
 - Roadmap: `docs/roadmap.md`
 
 ## Contributing

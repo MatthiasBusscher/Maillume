@@ -15,6 +15,14 @@ for (const fixture of heuristicCalibrationFixtures) {
     `${context}: expected risk level ${fixture.expectedRiskLevel}`,
   );
 
+  if (fixture.category === "phishing" || fixture.category === "spam") {
+    assert.notEqual(result.risk_level, "low", `${context}: suspicious fixture should not be low risk`);
+  }
+
+  if (fixture.category === "legitimate") {
+    assert.notEqual(result.risk_level, "high", `${context}: legitimate fixture should not be high risk`);
+  }
+
   if (fixture.minScore !== undefined) {
     assert.ok(result.risk_score >= fixture.minScore, `${context}: score below ${fixture.minScore}`);
   }

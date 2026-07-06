@@ -83,6 +83,9 @@ src/
       provider-config.test.ts
       providers.ts
       validate-input.ts
+    evaluation/
+      email-fixtures.ts
+      email-fixtures.test.ts
     eml/
       parse-eml.ts
     ocr/
@@ -95,11 +98,13 @@ docs/
   roadmap.md
 ```
 
-The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, `.eml` parsing input, synthetic heuristic calibration fixtures, and optional self-hosted AI provider calls behind server environment variables.
+The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, `.eml` parsing input, shared synthetic evaluation fixtures, and optional self-hosted AI provider calls behind server environment variables.
 
-## Heuristic Calibration
+## Evaluation And Calibration
 
-The public demo uses local heuristic analysis so it can run without the maintainer's paid AI key. Calibration fixtures live in `src/lib/analysis/heuristic-fixtures.ts` and must use synthetic or fully sanitized examples only. Run `npm run test:heuristics` after changing scoring rules, parser output, or suspicious-signal copy.
+The public demo uses local heuristic analysis so it can run without the maintainer's paid AI key. Shared evaluation fixtures live in `src/lib/evaluation/email-fixtures.ts` and must use synthetic or fully sanitized examples only. The heuristic analyzer consumes those fixtures today, and AI prompt/validation checks can reuse them as provider support grows.
+
+Run `npm run test:analysis` after changing scoring rules, parser output, prompt copy, response validation, or suspicious-signal copy.
 
 ## Provider Selection
 

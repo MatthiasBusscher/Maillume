@@ -6,7 +6,7 @@
     "module": "CommonJS",
     "moduleResolution": "Node",
     "noEmit": false,
-    "outDir": ".heuristic-tests",
+    "outDir": ".analysis-tests",
     "rootDir": ".",
     "target": "ES2020"
   },
@@ -20,6 +20,8 @@
     "src/lib/analysis/ai-schema.ts",
     "src/lib/analysis/config.ts",
     "src/lib/analysis/providers.ts",
+    "src/lib/evaluation/email-fixtures.test.ts",
+    "src/lib/evaluation/email-fixtures.ts",
     "src/lib/types.ts"
   ]
 }
