@@ -1,4 +1,5 @@
 .next
+.analysis-tests
 .heuristic-tests
 node_modules
 out

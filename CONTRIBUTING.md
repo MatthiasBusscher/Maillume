@@ -69,3 +69,5 @@ For false positives or false negatives, use a synthetic reproduction. If you sta
 - Tracking links
 - Screenshots from private inboxes
 - Message IDs and routing headers
+
+Reusable scoring examples live in `src/lib/evaluation/email-fixtures.ts`. Read `docs/evaluation.md` before adding fixtures, and run `npm run test:analysis` before opening a pull request.
