@@ -69,6 +69,16 @@ AI_MODEL=deepseek-v4-pro
 
 For Perplexity, use `AI_BASE_URL=https://api.perplexity.ai` and a Sonar model such as `sonar-pro`.
 
+Optional AI mode has built-in best-effort rate limiting:
+
+```bash
+AI_RATE_LIMIT_ENABLED=true
+AI_RATE_LIMIT_MAX_REQUESTS=10
+AI_RATE_LIMIT_WINDOW_SECONDS=60
+```
+
+Self-hosters should also configure provider budgets, usage alerts, and deployment-level rate limits before exposing AI mode publicly.
+
 See `.env.example` for the full environment shape.
 
 ## Privacy Direction
@@ -100,6 +110,7 @@ npm run build
 ## Project Docs
 
 - Architecture: `docs/architecture.md`
+- AI cost controls: `docs/cost-controls.md`
 - Evaluation fixtures: `docs/evaluation.md`
 - Roadmap: `docs/roadmap.md`
 

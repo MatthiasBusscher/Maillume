@@ -12,9 +12,16 @@ export type AiAnalysisConfig = {
   baseUrl?: string;
   model: string;
   maxOutputTokens: number;
+  rateLimit: AiRateLimitConfig;
 };
 
 export type AnalysisConfig = HeuristicAnalysisConfig | AiAnalysisConfig;
+
+export type AiRateLimitConfig = {
+  enabled: boolean;
+  maxRequests: number;
+  windowMs: number;
+};
 
 type AnalysisEnv = Record<string, string | undefined>;
 
@@ -23,6 +30,10 @@ const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
 const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5";
 const DEFAULT_MAX_OUTPUT_TOKENS = 800;
 const MAX_OUTPUT_TOKEN_LIMIT = 2_000;
+const DEFAULT_AI_RATE_LIMIT_MAX_REQUESTS = 10;
+const DEFAULT_AI_RATE_LIMIT_WINDOW_SECONDS = 60;
+const MAX_AI_RATE_LIMIT_REQUESTS = 1_000;
+const MAX_AI_RATE_LIMIT_WINDOW_SECONDS = 86_400;
 
 export class AnalysisConfigError extends Error {
   constructor(message: string) {
@@ -70,6 +81,7 @@ export function getAnalysisConfig(env: AnalysisEnv = process.env): AnalysisConfi
     ...(baseUrl ? { baseUrl } : {}),
     model,
     maxOutputTokens: getMaxOutputTokens(env.AI_MAX_OUTPUT_TOKENS),
+    rateLimit: getAiRateLimitConfig(env),
   };
 }
 
@@ -176,6 +188,65 @@ function getMaxOutputTokens(value: string | undefined): number {
     throw new AnalysisConfigError(
       `AI_MAX_OUTPUT_TOKENS must be an integer between 200 and ${MAX_OUTPUT_TOKEN_LIMIT}.`,
     );
+  }
+
+  return parsed;
+}
+
+function getAiRateLimitConfig(env: AnalysisEnv): AiRateLimitConfig {
+  return {
+    enabled: getBooleanEnv(env.AI_RATE_LIMIT_ENABLED, true, "AI_RATE_LIMIT_ENABLED"),
+    maxRequests: getBoundedIntegerEnv(
+      env.AI_RATE_LIMIT_MAX_REQUESTS,
+      DEFAULT_AI_RATE_LIMIT_MAX_REQUESTS,
+      1,
+      MAX_AI_RATE_LIMIT_REQUESTS,
+      "AI_RATE_LIMIT_MAX_REQUESTS",
+    ),
+    windowMs:
+      getBoundedIntegerEnv(
+        env.AI_RATE_LIMIT_WINDOW_SECONDS,
+        DEFAULT_AI_RATE_LIMIT_WINDOW_SECONDS,
+        1,
+        MAX_AI_RATE_LIMIT_WINDOW_SECONDS,
+        "AI_RATE_LIMIT_WINDOW_SECONDS",
+      ) * 1_000,
+  };
+}
+
+function getBooleanEnv(value: string | undefined, fallback: boolean, name: string): boolean {
+  const normalized = normalizeEnvValue(value);
+
+  if (!normalized) {
+    return fallback;
+  }
+
+  if (["1", "true", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+
+  if (["0", "false", "no", "off"].includes(normalized)) {
+    return false;
+  }
+
+  throw new AnalysisConfigError(`${name} must be true or false.`);
+}
+
+function getBoundedIntegerEnv(
+  value: string | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+  name: string,
+): number {
+  if (!value?.trim()) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
+    throw new AnalysisConfigError(`${name} must be an integer between ${min} and ${max}.`);
   }
 
   return parsed;
