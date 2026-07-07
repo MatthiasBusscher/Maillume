@@ -20,7 +20,8 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Enabled by the installer with server-side environment variables.
    - The self-hoster provides their own OpenAI, Anthropic, or OpenAI-compatible provider key.
    - API keys are never committed to GitHub and never exposed to the browser.
-   - Rate limiting is still recommended so the self-hoster can control cost.
+   - AI requests pass through a best-effort in-app rate limit before provider calls.
+   - Deployment-level rate limiting and provider budgets are still recommended so the self-hoster can control cost.
 
 ## Application Layers
 
@@ -82,6 +83,7 @@ src/
       heuristic-fixtures.ts
       provider-config.test.ts
       providers.ts
+      rate-limit.ts
       validate-input.ts
     evaluation/
       email-fixtures.ts
@@ -95,6 +97,7 @@ src/
     types.ts
 docs/
   architecture.md
+  cost-controls.md
   roadmap.md
 ```
 
@@ -115,6 +118,7 @@ Run `npm run test:analysis` after changing scoring rules, parser output, prompt 
 - `AI_PROVIDER=openai-compatible` requires `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`, then sends requests to `{AI_BASE_URL}/chat/completions`.
 - AI mode sends normalized scan text to the selected provider and asks for strict structured JSON.
 - AI provider keys are held only in server-side config objects and are never returned from `/api/analyze`.
+- AI mode uses `AI_RATE_LIMIT_ENABLED`, `AI_RATE_LIMIT_MAX_REQUESTS`, and `AI_RATE_LIMIT_WINDOW_SECONDS` to block excess requests before provider calls.
 - Provider failures or malformed AI responses return controlled no-store API errors.
 
 Run `npm run test:analysis` after changing provider selection or scoring logic.
@@ -153,9 +157,12 @@ AI_MODEL=
 OPENAI_MODEL=
 ANTHROPIC_MODEL=
 AI_MAX_OUTPUT_TOKENS=800
+AI_RATE_LIMIT_ENABLED=true
+AI_RATE_LIMIT_MAX_REQUESTS=10
+AI_RATE_LIMIT_WINDOW_SECONDS=60
 ```
 
-The public hosted version should keep `ANALYSIS_MODE=heuristic` and leave provider keys unset. Self-hosters can set `ANALYSIS_MODE=ai`, choose a provider, add their own key to their Vercel environment variables, and optionally pin a provider-specific model.
+The public hosted version should keep `ANALYSIS_MODE=heuristic` and leave provider keys unset. Self-hosters can set `ANALYSIS_MODE=ai`, choose a provider, add their own key to their Vercel environment variables, optionally pin a provider-specific model, and tune the AI rate limit.
 
 OpenAI-compatible examples:
 
@@ -174,6 +181,8 @@ AI_MODEL=sonar-pro
 ```
 
 Do not support a public shared AI endpoint backed by the project owner's API key unless the product later adds strong authentication, rate limits, quotas, billing controls, and abuse monitoring.
+
+See `docs/cost-controls.md` for the launch cost-control guidance.
 
 ## No-Storage API Contract
 

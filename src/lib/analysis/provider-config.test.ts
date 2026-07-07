@@ -118,6 +118,11 @@ async function main() {
   assert.equal(openAiConfig.provider, "openai");
   assert.equal(openAiConfig.model, "openai-test-model");
   assert.equal(openAiConfig.maxOutputTokens, 700);
+  assert.deepEqual(openAiConfig.rateLimit, {
+    enabled: true,
+    maxRequests: 10,
+    windowMs: 60_000,
+  });
 
   const anthropicConfig = getAnalysisConfig({
     ANALYSIS_MODE: "ai",
@@ -152,6 +157,58 @@ async function main() {
 
   assert.equal(openAiGenericKeyConfig.provider, "openai");
   assert.equal(openAiGenericKeyConfig.apiKey, "fake-generic-openai-key-for-tests");
+
+  const customRateLimitConfig = getAnalysisConfig({
+    ANALYSIS_MODE: "ai",
+    AI_PROVIDER: "openai",
+    OPENAI_API_KEY: "fake-openai-key-for-tests",
+    AI_RATE_LIMIT_ENABLED: "false",
+    AI_RATE_LIMIT_MAX_REQUESTS: "25",
+    AI_RATE_LIMIT_WINDOW_SECONDS: "120",
+  });
+
+  assert.equal(customRateLimitConfig.mode, "ai");
+  assert.deepEqual(customRateLimitConfig.rateLimit, {
+    enabled: false,
+    maxRequests: 25,
+    windowMs: 120_000,
+  });
+
+  assert.throws(
+    () =>
+      getAnalysisConfig({
+        ANALYSIS_MODE: "ai",
+        AI_PROVIDER: "openai",
+        OPENAI_API_KEY: "fake-openai-key-for-tests",
+        AI_RATE_LIMIT_ENABLED: "maybe",
+      }),
+    AnalysisConfigError,
+    "AI_RATE_LIMIT_ENABLED should be boolean-like",
+  );
+
+  assert.throws(
+    () =>
+      getAnalysisConfig({
+        ANALYSIS_MODE: "ai",
+        AI_PROVIDER: "openai",
+        OPENAI_API_KEY: "fake-openai-key-for-tests",
+        AI_RATE_LIMIT_MAX_REQUESTS: "0",
+      }),
+    AnalysisConfigError,
+    "AI_RATE_LIMIT_MAX_REQUESTS should be bounded",
+  );
+
+  assert.throws(
+    () =>
+      getAnalysisConfig({
+        ANALYSIS_MODE: "ai",
+        AI_PROVIDER: "openai",
+        OPENAI_API_KEY: "fake-openai-key-for-tests",
+        AI_RATE_LIMIT_WINDOW_SECONDS: "0",
+      }),
+    AnalysisConfigError,
+    "AI_RATE_LIMIT_WINDOW_SECONDS should be bounded",
+  );
 
   const heuristicProvider = createAnalysisProvider(defaultConfig);
   const heuristicResult = await heuristicProvider.analyze({

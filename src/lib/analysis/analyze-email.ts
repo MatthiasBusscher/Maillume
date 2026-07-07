@@ -1,5 +1,5 @@
 import type { AnalysisProviderName, EmailAnalysisInput, EmailAnalysisResult } from "../types";
-import { getAnalysisConfig } from "./config";
+import { type AnalysisConfig, getAnalysisConfig } from "./config";
 import { createAnalysisProvider } from "./providers";
 
 export type AnalyzeEmailResult = {
@@ -8,8 +8,15 @@ export type AnalyzeEmailResult = {
   provider: AnalysisProviderName;
 };
 
-export async function analyzeEmail(input: EmailAnalysisInput): Promise<AnalyzeEmailResult> {
-  const provider = createAnalysisProvider(getAnalysisConfig());
+type AnalyzeEmailOptions = {
+  config?: AnalysisConfig;
+};
+
+export async function analyzeEmail(
+  input: EmailAnalysisInput,
+  options: AnalyzeEmailOptions = {},
+): Promise<AnalyzeEmailResult> {
+  const provider = createAnalysisProvider(options.config ?? getAnalysisConfig());
   const result = await provider.analyze(input);
 
   return {

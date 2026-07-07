@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { analyzeEmail } from "@/lib/analysis/analyze-email";
-import { AnalysisConfigError } from "@/lib/analysis/config";
+import { AnalysisConfigError, getAnalysisConfig } from "@/lib/analysis/config";
 import { AiResponseValidationError } from "@/lib/analysis/ai-schema";
 import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
 import { AiProviderRequestError } from "@/lib/analysis/providers";
+import { enforceAiRateLimit, RateLimitError } from "@/lib/analysis/rate-limit";
 import { ANALYSIS_DISCLAIMER, type AnalyzeErrorResponse, type AnalyzeResponse } from "@/lib/types";
 
 const NO_STORE_HEADERS = {
@@ -38,10 +39,19 @@ export async function POST(request: Request) {
   let analysis;
 
   try {
-    analysis = await analyzeEmail(validation.input);
+    const config = getAnalysisConfig();
+
+    enforceAiRateLimit(request, config);
+    analysis = await analyzeEmail(validation.input, { config });
   } catch (error) {
     if (error instanceof AnalysisConfigError) {
       return jsonError(error.message, 500);
+    }
+
+    if (error instanceof RateLimitError) {
+      return jsonError(error.message, 429, {
+        "Retry-After": String(error.retryAfterSeconds),
+      });
     }
 
     if (error instanceof AiProviderRequestError || error instanceof AiResponseValidationError) {
@@ -69,12 +79,15 @@ export async function POST(request: Request) {
   );
 }
 
-function jsonError(error: string, status: number) {
+function jsonError(error: string, status: number, headers: HeadersInit = {}) {
   return NextResponse.json<AnalyzeErrorResponse>(
     { error },
     {
       status,
-      headers: NO_STORE_HEADERS,
+      headers: {
+        ...NO_STORE_HEADERS,
+        ...headers,
+      },
     },
   );
 }

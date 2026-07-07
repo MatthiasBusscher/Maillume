@@ -26,6 +26,8 @@ ANALYSIS_MODE=heuristic
 
 Self-hosted AI mode is server-configured. Self-hosters provide their own server-side provider key and optional provider base URL, and maintainer-owned keys must not be used in public deployments. Do not expose provider keys or base URLs through client-side code or `NEXT_PUBLIC_` variables.
 
+AI-related changes must preserve cost controls. Keep provider keys server-only, keep the public demo usable without a paid key, and update `docs/cost-controls.md` when changing AI limits, provider calls, or deployment expectations.
+
 ## Branches
 
 Use short, descriptive branch names:
