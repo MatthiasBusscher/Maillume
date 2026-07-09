@@ -42,6 +42,7 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Paste mode uses subject, sender email, and body text.
    - Screenshot mode extracts visible text with client-side OCR, then discards the uploaded image.
    - `.eml` mode parses headers, sender, subject, text/html bodies, detected links, and attachment metadata in the browser, then discards the uploaded file.
+   - Upload type and size limits are centralized in `src/lib/scan-limits.ts`.
    - Processing should happen in memory or temporary runtime storage only.
 
 4. Data Layer
@@ -92,6 +93,7 @@ src/
       parse-eml.ts
     ocr/
       extract-text.ts
+    scan-limits.ts
     i18n/
       dictionary.ts
     types.ts
@@ -99,6 +101,7 @@ docs/
   architecture.md
   cost-controls.md
   roadmap.md
+  security-privacy-review.md
 ```
 
 The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, `.eml` parsing input, shared synthetic evaluation fixtures, and optional self-hosted AI provider calls behind server environment variables.
@@ -119,6 +122,7 @@ Run `npm run test:analysis` after changing scoring rules, parser output, prompt 
 - AI mode sends normalized scan text to the selected provider and asks for strict structured JSON.
 - AI provider keys are held only in server-side config objects and are never returned from `/api/analyze`.
 - AI mode uses `AI_RATE_LIMIT_ENABLED`, `AI_RATE_LIMIT_MAX_REQUESTS`, and `AI_RATE_LIMIT_WINDOW_SECONDS` to block excess requests before provider calls.
+- Provider-specific request bodies and response extraction live behind provider adapters. The UI and `/api/analyze` should use the shared `EmailAnalysisInput` and `EmailAnalysisResult` contracts instead of hardcoding provider payload shapes.
 - Provider failures or malformed AI responses return controlled no-store API errors.
 
 Run `npm run test:analysis` after changing provider selection or scoring logic.

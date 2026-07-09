@@ -24,11 +24,16 @@ import {
 import { parseEml } from "@/lib/eml/parse-eml";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { extractTextFromImage } from "@/lib/ocr/extract-text";
+import {
+  EML_ACCEPT,
+  isSupportedEmlFile,
+  isSupportedScreenshotFile,
+  isWithinFileSizeLimit,
+  MAX_EML_SIZE_BYTES,
+  MAX_SCREENSHOT_SIZE_BYTES,
+  SCREENSHOT_ACCEPT,
+} from "@/lib/scan-limits";
 import { RiskMeter } from "./risk-meter";
-
-const MAX_SCREENSHOT_SIZE_BYTES = 5 * 1024 * 1024;
-const MAX_EML_SIZE_BYTES = 2 * 1024 * 1024;
-const SCREENSHOT_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 
 const sampleEmail = `Hi,
 
@@ -133,12 +138,12 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
     setFileName(file.name);
     setFileStatus("");
 
-    if (!SCREENSHOT_TYPES.has(file.type)) {
+    if (!isSupportedScreenshotFile(file)) {
       setError(dictionary.form.unsupportedFile);
       return;
     }
 
-    if (file.size > MAX_SCREENSHOT_SIZE_BYTES) {
+    if (!isWithinFileSizeLimit(file, MAX_SCREENSHOT_SIZE_BYTES)) {
       setError(dictionary.form.fileTooLarge);
       return;
     }
@@ -181,12 +186,12 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
     setFileName(file.name);
     setFileStatus("");
 
-    if (!file.name.toLowerCase().endsWith(".eml") && file.type !== "message/rfc822") {
+    if (!isSupportedEmlFile(file)) {
       setError(dictionary.form.unsupportedFile);
       return;
     }
 
-    if (file.size > MAX_EML_SIZE_BYTES) {
+    if (!isWithinFileSizeLimit(file, MAX_EML_SIZE_BYTES)) {
       setError(dictionary.form.fileTooLarge);
       return;
     }
@@ -269,7 +274,7 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
 
         {activeMode === "screenshot" ? (
           <UploadPanel
-            accept="image/png,image/jpeg,image/webp,image/gif"
+            accept={SCREENSHOT_ACCEPT}
             description={dictionary.form.screenshotHelp}
             fileName={fileName}
             fileStatus={fileStatus}
@@ -283,7 +288,7 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
 
         {activeMode === "eml" ? (
           <UploadPanel
-            accept=".eml,message/rfc822"
+            accept={EML_ACCEPT}
             description={dictionary.form.emlHelp}
             fileName={fileName}
             fileStatus={fileStatus}
