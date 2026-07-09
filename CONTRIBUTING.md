@@ -46,6 +46,7 @@ Run these before opening a pull request:
 npm run typecheck
 npm run lint
 npm run test:analysis
+npm run test:security
 npm run build
 ```
 

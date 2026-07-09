@@ -13,5 +13,6 @@ Describe the change and why it is needed.
 
 - [ ] `npm run typecheck`
 - [ ] `npm run lint`
+- [ ] `npm run test:analysis`
+- [ ] `npm run test:security`
 - [ ] `npm run build`
-

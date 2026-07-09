@@ -2,6 +2,8 @@
 
 Inbox Risk Scanner handles sensitive inputs by design. Even though the launch goal is to avoid storing scan content, contributors should treat pasted emails, screenshots, OCR text, `.eml` files, headers, and AI prompts as sensitive.
 
+The current launch review checklist lives in `docs/security-privacy-review.md`.
+
 ## Reporting a Vulnerability
 
 Use GitHub private vulnerability reporting when it is available for the repository. If private reporting is not available yet, open a minimal public issue asking for a private disclosure channel without including exploit details, private email content, API keys, or sensitive logs.

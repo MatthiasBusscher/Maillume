@@ -24,6 +24,9 @@
     "src/lib/analysis/providers.ts",
     "src/lib/evaluation/email-fixtures.test.ts",
     "src/lib/evaluation/email-fixtures.ts",
+    "src/lib/security/privacy-review.test.ts",
+    "src/lib/scan-limits.test.ts",
+    "src/lib/scan-limits.ts",
     "src/lib/types.ts"
   ]
 }

@@ -36,7 +36,8 @@ export const dictionaries = {
       senderPlaceholder: "sender@example.com",
       emailContent: "Email content",
       bodyPlaceholder: "Paste the email body here.",
-      privacyNote: "Processed for this score only. Scan content is not stored.",
+      privacyNote:
+        "Processed for this score only. Files are parsed in your browser; scan content is not stored.",
       analyze: "Analyze email",
       analyzing: "Analyzing",
       analysisFailed: "Analysis failed. Please try again.",
@@ -46,7 +47,7 @@ export const dictionaries = {
       chooseScreenshot: "Choose screenshot",
       emlPrompt: "Upload a .eml file exported from your mail app.",
       emlHelp:
-        "Headers, body text, links, and attachment metadata are parsed locally before analysis.",
+        "Headers, body text, links, and attachment metadata are parsed in your browser. The raw file is not uploaded.",
       chooseEml: "Choose .eml file",
       extracting: "Extracting text",
       parsing: "Parsing email file",
@@ -65,7 +66,7 @@ export const dictionaries = {
         "Results will show risk level, risk score, suspicious signals, detected links, and a recommended next action.",
       privacyTitle: "Privacy-first processing",
       privacyBody:
-        "Scan content is sent to the local analysis API for this request only and is not stored.",
+        "Pasted text and extracted file text are sent to the analysis API for this request only. Screenshot and .eml files are parsed in your browser and are not uploaded as files.",
     },
     result: {
       riskScore: "Risk score",
@@ -116,7 +117,8 @@ export const dictionaries = {
       senderPlaceholder: "afzender@example.com",
       emailContent: "E-mailinhoud",
       bodyPlaceholder: "Plak hier de inhoud van de e-mail.",
-      privacyNote: "Alleen verwerkt voor deze score. Scaninhoud wordt niet opgeslagen.",
+      privacyNote:
+        "Alleen verwerkt voor deze score. Bestanden worden in uw browser verwerkt; scaninhoud wordt niet opgeslagen.",
       analyze: "E-mail analyseren",
       analyzing: "Analyseren",
       analysisFailed: "Analyse mislukt. Probeer het opnieuw.",
@@ -126,7 +128,7 @@ export const dictionaries = {
       chooseScreenshot: "Screenshot kiezen",
       emlPrompt: "Upload een .eml-bestand dat uit uw mailapp is geëxporteerd.",
       emlHelp:
-        "Headers, berichttekst, links en bijlagemetadata worden lokaal verwerkt voor analyse.",
+        "Headers, berichttekst, links en bijlagemetadata worden in uw browser verwerkt. Het ruwe bestand wordt niet geüpload.",
       chooseEml: ".eml-bestand kiezen",
       extracting: "Tekst extraheren",
       parsing: "E-mailbestand verwerken",
@@ -145,7 +147,7 @@ export const dictionaries = {
         "Resultaten tonen risiconiveau, risicoscore, verdachte signalen, gevonden links en een aanbevolen vervolgstap.",
       privacyTitle: "Privacygerichte verwerking",
       privacyBody:
-        "Scaninhoud wordt alleen voor deze aanvraag naar de lokale analyse-API gestuurd en wordt niet opgeslagen.",
+        "Geplakte tekst en geëxtraheerde bestandstekst worden alleen voor deze aanvraag naar de analyse-API gestuurd. Screenshots en .eml-bestanden worden in uw browser verwerkt en niet als bestand geüpload.",
     },
     result: {
       riskScore: "Risicoscore",

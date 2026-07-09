@@ -113,6 +113,7 @@ npm run build
 - AI cost controls: `docs/cost-controls.md`
 - Evaluation fixtures: `docs/evaluation.md`
 - Roadmap: `docs/roadmap.md`
+- Security and privacy review: `docs/security-privacy-review.md`
 
 ## Contributing
 
