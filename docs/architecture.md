@@ -46,9 +46,10 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Processing should happen in memory or temporary runtime storage only.
 
 4. Data Layer
-   - No database is required for the launch MVP.
+   - No database is required for scanning.
    - Ordinary scans never become training or evaluation data.
-   - If feedback is added later, it must be optional, separate from scanning, and must not include message content, senders, subjects, or links.
+   - Optional feedback uses a separate strict schema containing labels and high-level categories only.
+   - Production feedback storage uses a server-only Supabase service-role key, Row Level Security, and automatic expiry. The scanner remains available when feedback is disabled.
    - If accounts are added later, they may store identity, preferences, quota counters, entitlements, and billing references, but not scan history or assessment content.
 
 5. Deployment
@@ -92,6 +93,12 @@ src/
       email-fixtures.test.ts
     eml/
       parse-eml.ts
+    feedback/
+      config.ts
+      rate-limit.ts
+      storage.ts
+      types.ts
+      validation.ts
     ocr/
       extract-text.ts
     scan-limits.ts
@@ -102,8 +109,13 @@ docs/
   architecture.md
   cost-controls.md
   deployment.md
+  feedback.md
+  hosted-service.md
   roadmap.md
   security-privacy-review.md
+supabase/
+  migrations/
+    20260710150000_create_detection_feedback.sql
 ```
 
 The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, `.eml` parsing input, shared synthetic evaluation fixtures, and optional self-hosted AI provider calls behind server environment variables.
@@ -211,6 +223,7 @@ The route must not write raw scan content, OCR text, `.eml` data, prompts, or re
 - Uploaded files must be parsed for the current request and discarded.
 - Public issue templates must tell contributors to submit synthetic or fully sanitized examples only.
 - Improvement reports should contain user-selected labels and high-level signal categories only. Maintainers should turn those patterns into synthetic fixtures.
+- `/api/feedback` must reject unknown fields, use server-only storage credentials, and keep feedback unavailable when storage is not configured.
 - Any future real-message research program or scan history feature requires a separate privacy, legal, security, and retention review.
 
 ## Future-Ready Boundaries

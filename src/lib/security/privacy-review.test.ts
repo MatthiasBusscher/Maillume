@@ -8,6 +8,7 @@ const SERVER_SECRET_NAMES = [
   "OPENAI_API_KEY",
   "ANTHROPIC_API_KEY",
   "AI_API_KEY",
+  "SUPABASE_SECRET_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
   "SERVICE_ROLE_KEY",
 ];
@@ -43,10 +44,35 @@ function main() {
   }
 
   const routeContent = readProjectFile("src/app/api/analyze/route.ts");
+  const feedbackRouteContent = readProjectFile("src/app/api/feedback/route.ts");
+  const feedbackMigration = readProjectFile(
+    "supabase/migrations/20260710150000_create_detection_feedback.sql",
+  );
   const nextConfigContent = readProjectFile("next.config.ts");
 
   assert.match(routeContent, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(routeContent, /console\./);
+  assert.match(feedbackRouteContent, /"Cache-Control": "no-store"/);
+  assert.doesNotMatch(feedbackRouteContent, /console\./);
+  assert.match(feedbackMigration, /enable row level security/i);
+  assert.match(feedbackMigration, /purge_expired_detection_feedback/);
+
+  for (const forbiddenColumn of [
+    "body",
+    "subject",
+    "sender_email",
+    "message_text",
+    "links",
+    "attachments",
+    "free_text",
+    "ip_address",
+  ]) {
+    assert.doesNotMatch(
+      feedbackMigration,
+      new RegExp(`^\\s*${forbiddenColumn}\\s+`, "im"),
+      `feedback storage must not define ${forbiddenColumn}`,
+    );
+  }
   assert.match(nextConfigContent, /X-Content-Type-Options/);
   assert.match(nextConfigContent, /X-Frame-Options/);
   assert.match(nextConfigContent, /Referrer-Policy/);
