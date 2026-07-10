@@ -100,6 +100,7 @@ src/
 docs/
   architecture.md
   cost-controls.md
+  deployment.md
   roadmap.md
   security-privacy-review.md
 ```
@@ -114,10 +115,10 @@ Run `npm run test:analysis` after changing scoring rules, parser output, prompt 
 
 ## Provider Selection
 
-`src/lib/analysis/analyze-email.ts` is the server-side entrypoint for analysis. It reads `ANALYSIS_MODE`, `AI_PROVIDER`, provider keys, optional model overrides, and `AI_MAX_OUTPUT_TOKENS` through `getAnalysisConfig`, then creates the selected provider.
+`src/lib/analysis/analyze-email.ts` is the server-side entrypoint for analysis. It reads `ANALYSIS_MODE`, `AI_PROVIDER`, provider keys, an explicit model ID, and `AI_MAX_OUTPUT_TOKENS` through `getAnalysisConfig`, then creates the selected provider.
 
 - `ANALYSIS_MODE=heuristic` uses the local heuristic provider and does not require AI keys.
-- `ANALYSIS_MODE=ai` requires `AI_PROVIDER=openai|anthropic|openai-compatible` and the matching server-side key.
+- `ANALYSIS_MODE=ai` requires `AI_PROVIDER=openai|anthropic|openai-compatible`, the matching server-side key, and an explicit model ID.
 - `AI_PROVIDER=openai-compatible` requires `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`, then sends requests to `{AI_BASE_URL}/chat/completions`.
 - AI mode sends normalized scan text to the selected provider and asks for strict structured JSON.
 - AI provider keys are held only in server-side config objects and are never returned from `/api/analyze`.
@@ -166,27 +167,20 @@ AI_RATE_LIMIT_MAX_REQUESTS=10
 AI_RATE_LIMIT_WINDOW_SECONDS=60
 ```
 
-The public hosted version should keep `ANALYSIS_MODE=heuristic` and leave provider keys unset. Self-hosters can set `ANALYSIS_MODE=ai`, choose a provider, add their own key to their Vercel environment variables, optionally pin a provider-specific model, and tune the AI rate limit.
+The public hosted version should keep `ANALYSIS_MODE=heuristic` and leave provider keys unset. Self-hosters can set `ANALYSIS_MODE=ai`, choose a provider, add their own key and model ID to their Vercel environment variables, and tune the AI rate limit.
 
 OpenAI-compatible examples:
 
 ```text
 AI_PROVIDER=openai-compatible
-AI_BASE_URL=https://api.deepseek.com
-AI_API_KEY=your-own-deepseek-key
-AI_MODEL=deepseek-v4-pro
-```
-
-```text
-AI_PROVIDER=openai-compatible
-AI_BASE_URL=https://api.perplexity.ai
-AI_API_KEY=your-own-perplexity-key
-AI_MODEL=sonar-pro
+AI_BASE_URL=https://your-provider.example/v1
+AI_API_KEY=your-own-provider-key
+AI_MODEL=your-provider-model-id
 ```
 
 Do not support a public shared AI endpoint backed by the project owner's API key unless the product later adds strong authentication, rate limits, quotas, billing controls, and abuse monitoring.
 
-See `docs/cost-controls.md` for the launch cost-control guidance.
+See `docs/deployment.md` and `docs/cost-controls.md` for deployment and cost-control guidance.
 
 ## No-Storage API Contract
 

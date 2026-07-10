@@ -6,6 +6,8 @@ out
 dist
 build
 coverage
+playwright-report
+test-results
 .vercel
 .env
 .env.local

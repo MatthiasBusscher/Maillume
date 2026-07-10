@@ -20,6 +20,7 @@ Self-hosters can enable AI mode with their own provider key:
 ANALYSIS_MODE=ai
 AI_PROVIDER=openai
 OPENAI_API_KEY=your-own-server-side-key
+OPENAI_MODEL=your-provider-model-id
 ```
 
 Provider keys must be configured only as server-side environment variables. Do not commit keys, expose them through `NEXT_PUBLIC_` variables, or send them to browser code.

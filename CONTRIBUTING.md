@@ -47,6 +47,7 @@ npm run typecheck
 npm run lint
 npm run test:analysis
 npm run test:security
+npm run test:smoke
 npm run build
 ```
 

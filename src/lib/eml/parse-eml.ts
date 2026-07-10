@@ -26,9 +26,8 @@ export function parseEml(raw: string): ParsedEml {
   const attachmentNames: string[] = [];
 
   for (const section of sections) {
-    const [sectionHeadersRaw, ...sectionBodyParts] = section.split(HEADER_BODY_SEPARATOR);
-    const sectionHeaders = parseHeaders(sectionHeadersRaw);
-    const sectionBody = sectionBodyParts.length > 0 ? sectionBodyParts.join("\n\n") : section;
+    const sectionHeaders = boundary ? getSectionHeaders(section) : headers;
+    const sectionBody = boundary ? getSectionBody(section) : section;
     const sectionContentType = sectionHeaders.get("content-type") ?? "text/plain";
     const disposition = sectionHeaders.get("content-disposition") ?? "";
     const transferEncoding = sectionHeaders.get("content-transfer-encoding") ?? "";
@@ -64,6 +63,18 @@ export function parseEml(raw: string): ParsedEml {
     links,
     attachmentNames,
   };
+}
+
+function getSectionHeaders(section: string): Map<string, string> {
+  const [sectionHeadersRaw] = section.split(HEADER_BODY_SEPARATOR);
+
+  return parseHeaders(sectionHeadersRaw);
+}
+
+function getSectionBody(section: string): string {
+  const [, ...sectionBodyParts] = section.split(HEADER_BODY_SEPARATOR);
+
+  return sectionBodyParts.length > 0 ? sectionBodyParts.join("\n\n") : section;
 }
 
 function extractLinks(content: string): string[] {

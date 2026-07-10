@@ -15,4 +15,5 @@ Describe the change and why it is needed.
 - [ ] `npm run lint`
 - [ ] `npm run test:analysis`
 - [ ] `npm run test:security`
+- [ ] `npm run test:smoke`
 - [ ] `npm run build`

@@ -19,11 +19,12 @@ Built today:
 - Risk score, risk level, suspicious signals, detected links, explanation, recommended action, and required disclaimer
 - Synthetic English/Dutch heuristic calibration fixtures
 - Server-side analysis provider abstraction for heuristic mode and self-hosted AI mode
+- Abuse controls, security/privacy guardrails, and browser smoke tests
+- Vercel and local self-hosting documentation
 
 Planned before v1:
 
-- Expanded calibration and abuse controls for AI-enabled self-hosted deployments
-- Expanded evaluation fixtures for optional AI mode
+- Final visual, metadata, and accessibility polish
 
 ## Tech Stack
 
@@ -54,7 +55,7 @@ Example self-hosted OpenAI configuration:
 ANALYSIS_MODE=ai
 AI_PROVIDER=openai
 OPENAI_API_KEY=your-own-server-side-key
-OPENAI_MODEL=gpt-4o-mini
+OPENAI_MODEL=your-provider-model-id
 ```
 
 Example self-hosted OpenAI-compatible configuration:
@@ -62,12 +63,10 @@ Example self-hosted OpenAI-compatible configuration:
 ```bash
 ANALYSIS_MODE=ai
 AI_PROVIDER=openai-compatible
-AI_BASE_URL=https://api.deepseek.com
+AI_BASE_URL=https://your-provider.example/v1
 AI_API_KEY=your-own-provider-key
-AI_MODEL=deepseek-v4-pro
+AI_MODEL=your-provider-model-id
 ```
-
-For Perplexity, use `AI_BASE_URL=https://api.perplexity.ai` and a Sonar model such as `sonar-pro`.
 
 Optional AI mode has built-in best-effort rate limiting:
 
@@ -104,6 +103,8 @@ Recommended checks:
 npm run typecheck
 npm run lint
 npm run test:analysis
+npm run test:security
+npm run test:smoke
 npm run build
 ```
 
@@ -111,6 +112,7 @@ npm run build
 
 - Architecture: `docs/architecture.md`
 - AI cost controls: `docs/cost-controls.md`
+- Deployment and self-hosting: `docs/deployment.md`
 - Evaluation fixtures: `docs/evaluation.md`
 - Roadmap: `docs/roadmap.md`
 - Security and privacy review: `docs/security-privacy-review.md`

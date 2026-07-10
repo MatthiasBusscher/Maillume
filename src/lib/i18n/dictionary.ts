@@ -41,6 +41,9 @@ export const dictionaries = {
       analyze: "Analyze email",
       analyzing: "Analyzing",
       analysisFailed: "Analysis failed. Please try again.",
+      rateLimited: "Too many AI analyses were requested. Please wait and try again.",
+      serviceUnavailable:
+        "Analysis is temporarily unavailable. Check the server configuration and try again.",
       screenshotPrompt: "Upload a screenshot of the suspicious email.",
       screenshotHelp:
         "OCR runs in your browser. The image file is not stored after text is extracted.",
@@ -122,6 +125,9 @@ export const dictionaries = {
       analyze: "E-mail analyseren",
       analyzing: "Analyseren",
       analysisFailed: "Analyse mislukt. Probeer het opnieuw.",
+      rateLimited: "Er zijn te veel AI-analyses aangevraagd. Wacht even en probeer het opnieuw.",
+      serviceUnavailable:
+        "De analyse is tijdelijk niet beschikbaar. Controleer de serverconfiguratie en probeer het opnieuw.",
       screenshotPrompt: "Upload een screenshot van de verdachte e-mail.",
       screenshotHelp:
         "OCR draait in uw browser. Het afbeeldingsbestand wordt niet opgeslagen nadat tekst is geëxtraheerd.",
