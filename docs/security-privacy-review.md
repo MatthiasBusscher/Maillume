@@ -55,3 +55,15 @@ Different AI providers expect different request payloads, auth headers, response
 - Output: `EmailAnalysisResult`
 
 Provider-specific payloads should stay behind provider adapters in `src/lib/analysis/providers.ts`. The UI and `/api/analyze` should not know provider request shapes. If an OpenAI-compatible service needs a meaningfully different body or response parser, add a new adapter or a provider profile instead of spreading conditional payload logic across the app.
+
+## Dataset And Feedback Boundary
+
+The current service does not use scanned messages to build a dataset. This includes anonymous scans and any future free or paid account scans.
+
+- Standard scan content is processed for the current assessment only.
+- Product-improvement participation must be separate, optional, and never preselected.
+- The first feedback implementation should accept non-content labels and high-level pattern categories only.
+- Email text, sender, subject, links, files, and prompts must not enter analytics or evaluation storage.
+- Maintainers should create synthetic fixtures from aggregate patterns rather than copy production messages.
+
+A future system that accepts real or auto-redacted messages requires its own legal basis, third-party-data review, access controls, withdrawal and deletion behavior, retention schedule, and security review. It is not approved by this review.

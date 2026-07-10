@@ -5,6 +5,8 @@ Inbox Risk Scanner supports two deployment shapes:
 - A public heuristic demo with no paid AI key.
 - A self-hosted AI deployment where the installer supplies and pays for their own provider key.
 
+The proposed official account-based hosted AI service is not implemented. Its privacy, quota, cost, and release gates are documented in `docs/hosted-service.md`.
+
 Vercel provides zero-configuration support for Next.js projects. Environment variables can be scoped to Development, Preview, and Production, and changes apply only to new deployments. See the official [Next.js on Vercel](https://vercel.com/frameworks/nextjs) and [Vercel environment variable](https://vercel.com/docs/environment-variables) documentation.
 
 ## Public Demo on Vercel

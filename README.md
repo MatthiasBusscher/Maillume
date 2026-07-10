@@ -23,7 +23,7 @@ The repository is a v1 launch candidate. Implemented today:
 - Vercel and local self-hosting documentation
 - Launch metadata, generated favicon/social image, and accessibility basics
 
-The technical roadmap is implemented. The remaining release steps are operational: choose the final public name/domain, deploy the heuristic demo, run the post-deploy checklist, and create the first release tag.
+The technical launch roadmap is implemented. The next product phase is documented separately and keeps anonymous heuristic scanning free while hosted accounts, AI allowances, and billing remain behind explicit go/no-go gates.
 
 ## Tech Stack
 
@@ -84,8 +84,12 @@ See `.env.example` for the full environment shape.
 - Raw email content should be processed only for the current score.
 - The current paste flow sends scan content to `/api/analyze` for the current request only.
 - Pasted email text, screenshots, `.eml` files, OCR text, and scan results should not be stored by default.
+- Normal free or paid scans must not be reused as training data or evaluation fixtures.
+- Future improvement feedback must be optional, separate from scanning, and exclude message content, senders, subjects, and links.
 - Screenshot OCR and `.eml` parsing run in the browser before normalized text is sent for analysis.
 - Contributors should only share synthetic or fully sanitized examples in issues and tests.
+
+The proposed hosted product boundaries, cost model, retention targets, privacy disclosures, and launch gates are in `docs/hosted-service.md`. They are architecture decisions, not implemented account or payment features.
 
 ## Local Development
 
@@ -113,6 +117,7 @@ npm run build
 - AI cost controls: `docs/cost-controls.md`
 - Deployment and self-hosting: `docs/deployment.md`
 - Evaluation fixtures: `docs/evaluation.md`
+- Hosted service architecture: `docs/hosted-service.md`
 - Roadmap: `docs/roadmap.md`
 - Security and privacy review: `docs/security-privacy-review.md`
 

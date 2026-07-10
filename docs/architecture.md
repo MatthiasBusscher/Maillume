@@ -47,8 +47,9 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
 
 4. Data Layer
    - No database is required for the launch MVP.
-   - If telemetry or feedback is added later, it must be explicit opt-in and must not include raw email content.
-   - If accounts are added later, they should store preferences only unless the user explicitly opts into saving scans.
+   - Ordinary scans never become training or evaluation data.
+   - If feedback is added later, it must be optional, separate from scanning, and must not include message content, senders, subjects, or links.
+   - If accounts are added later, they may store identity, preferences, quota counters, entitlements, and billing references, but not scan history or assessment content.
 
 5. Deployment
    - Vercel hosts the Next.js app.
@@ -206,10 +207,12 @@ The route must not write raw scan content, OCR text, `.eml` data, prompts, or re
 
 - Do not write raw email bodies, screenshots, `.eml` files, OCR text, or AI prompts to logs.
 - Do not save scan content or scan results in a database by default.
+- Do not reuse ordinary anonymous, free-account, paid-account, or self-hosted scans as a training dataset.
 - Uploaded files must be parsed for the current request and discarded.
 - Public issue templates must tell contributors to submit synthetic or fully sanitized examples only.
-- Any future scan history feature must be opt-in and separate from the privacy-first launch MVP.
+- Improvement reports should contain user-selected labels and high-level signal categories only. Maintainers should turn those patterns into synthetic fixtures.
+- Any future real-message research program or scan history feature requires a separate privacy, legal, security, and retention review.
 
 ## Future-Ready Boundaries
 
-The design leaves room for forwarded email ingestion, team accounts, and paid hosted plans, but none of those are implemented in the launch MVP.
+The design leaves room for forwarded email ingestion, team accounts, and paid hosted plans, but none of those are implemented in the launch MVP. See `docs/hosted-service.md` for the approved planning boundaries and launch gates for accounts, hosted AI, and billing.
