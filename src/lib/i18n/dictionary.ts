@@ -14,6 +14,8 @@ export const dictionaries = {
       status: "Open source",
       startScan: "Start scan",
       skipToScanner: "Skip to scanner",
+      privacyStatus: "Scans stored",
+      assessmentStatus: "Assessment",
       audience: "Built for freelancers and small teams",
       hero:
         "Paste a suspicious email and get a clear, structured risk assessment before clicking, replying, or forwarding sensitive details.",
@@ -65,6 +67,7 @@ export const dictionaries = {
       fileLimits: "Limits: screenshots up to 5 MB, .eml files up to 2 MB.",
     },
     empty: {
+      status: "Waiting for input",
       title: "Assessment appears here",
       description:
         "Results will show risk level, risk score, suspicious signals, detected links, and a recommended next action.",
@@ -73,6 +76,8 @@ export const dictionaries = {
         "Pasted text and extracted file text are sent to the analysis API for this request only. Screenshot and .eml files are parsed in your browser and are not uploaded as files.",
     },
     result: {
+      title: "Assessment report",
+      summaryTitle: "Analysis complete",
       riskScore: "Risk score",
       levels: {
         low: "Low",
@@ -99,6 +104,8 @@ export const dictionaries = {
       status: "Open source",
       startScan: "Scan starten",
       skipToScanner: "Ga naar de scanner",
+      privacyStatus: "Scans opgeslagen",
+      assessmentStatus: "Beoordeling",
       audience: "Gebouwd voor freelancers en kleine teams",
       hero:
         "Plak een verdachte e-mail en krijg een duidelijke, gestructureerde risico-inschatting voordat u klikt, antwoordt of gevoelige gegevens deelt.",
@@ -150,6 +157,7 @@ export const dictionaries = {
       fileLimits: "Limieten: screenshots tot 5 MB, .eml-bestanden tot 2 MB.",
     },
     empty: {
+      status: "Wachten op invoer",
       title: "De beoordeling verschijnt hier",
       description:
         "Resultaten tonen risiconiveau, risicoscore, verdachte signalen, gevonden links en een aanbevolen vervolgstap.",
@@ -158,6 +166,8 @@ export const dictionaries = {
         "Geplakte tekst en geëxtraheerde bestandstekst worden alleen voor deze aanvraag naar de analyse-API gestuurd. Screenshots en .eml-bestanden worden in uw browser verwerkt en niet als bestand geüpload.",
     },
     result: {
+      title: "Beoordelingsrapport",
+      summaryTitle: "Analyse voltooid",
       riskScore: "Risicoscore",
       levels: {
         low: "Laag",
