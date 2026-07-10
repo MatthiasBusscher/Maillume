@@ -2,6 +2,8 @@
 
 Inbox Risk Scanner is an open-source, privacy-first app for checking whether email content appears likely to be phishing, spam, or legitimate.
 
+Use the official scanner without an account or run the same core yourself. The hosted service is designed to sell managed convenience later, not access to the core safety workflow.
+
 The current implementation is a privacy-first Next.js app with paste, screenshot OCR, and `.eml` input modes backed by local heuristic analysis.
 
 The launch goal is to support pasted text, screenshots, and `.eml` files without storing scan content after scoring.
@@ -120,6 +122,8 @@ npm run build
 - Evaluation fixtures: `docs/evaluation.md`
 - Privacy-safe feedback: `docs/feedback.md`
 - Hosted service architecture: `docs/hosted-service.md`
+- Product positioning: `docs/product-positioning.md`
+- Direct dependency license review: `docs/dependency-licenses.md`
 - Roadmap: `docs/roadmap.md`
 - Security and privacy review: `docs/security-privacy-review.md`
 
@@ -135,4 +139,6 @@ Read `SECURITY.md` for vulnerability reporting and sensitive data rules.
 
 ## License
 
-MIT. See `LICENSE`.
+GNU AGPL-3.0-only. See `LICENSE` and `NOTICE`.
+
+If you offer a modified version over a network, review the AGPL source-availability obligations that apply to your deployment. This is a plain-language reminder, not legal advice.

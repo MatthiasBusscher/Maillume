@@ -60,6 +60,12 @@ Good pull requests should:
 - Explain privacy implications if the change touches scan content, uploads, OCR, `.eml` parsing, logging, or AI prompts.
 - Avoid certainty claims. Inbox Risk Scanner provides risk assessments, not guarantees.
 
+## Contributor License
+
+Contributions are accepted under the repository's GNU AGPL-3.0-only license. By submitting a contribution, you confirm that you have the right to provide it under that license.
+
+The project does not currently use a contributor license agreement or offer a dual-license program. Do not submit code copied from sources with incompatible or unclear terms. Include required attribution when adding a dependency, asset, fixture, or substantial adapted code.
+
 ## Detection Examples
 
 For false positives or false negatives, use a synthetic reproduction. If you start from a real message, remove or replace:

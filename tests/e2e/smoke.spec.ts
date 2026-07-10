@@ -109,6 +109,17 @@ test("launch metadata and generated assets are available", async ({ page, reques
   expect(openGraphResponse.headers()["content-type"]).toContain("image/png");
   expect(manifestResponse.ok()).toBe(true);
   expect(manifestResponse.headers()["content-type"]).toContain("application/manifest+json");
+
+  const sourceLinks = page.getByRole("link", { name: "Source code" });
+  await expect(sourceLinks.first()).toHaveAttribute(
+    "href",
+    "https://github.com/MatthiasBusscher/inbox-risk-scanner",
+  );
+  await expect(page.getByRole("link", { name: "License" })).toHaveAttribute(
+    "href",
+    "https://github.com/MatthiasBusscher/inbox-risk-scanner/blob/main/LICENSE",
+  );
+  await expect(page.getByText(/AGPL-3.0 free software/)).toBeVisible();
 });
 
 test("optional feedback sends labels without scan content", async ({ page }) => {

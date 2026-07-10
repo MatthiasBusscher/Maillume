@@ -186,11 +186,11 @@ The hosted AI action must fail closed if the deployment cannot identify the prov
 
 ## License Decision
 
-The repository currently uses the MIT License. MIT supports broad adoption and allows commercial use, modification, redistribution, sublicensing, and competing hosted versions.
+The repository uses GNU AGPL-3.0-only for the public beta. The license is designed for network applications and requires operators of modified network-hosted versions to offer the corresponding source to their users under its terms.
 
-Decision for v1 and the hosted beta: keep MIT. The official hosted service competes on trust, convenience, managed provider costs, integrations, reliability, and support rather than source exclusivity.
+The official hosted service still competes on trust, convenience, managed provider costs, integrations, reliability, and support rather than withholding the core scanner.
 
-Before accepting substantial outside contributions, maintainers must confirm whether MIT remains the long-term choice. Moving to AGPL or dual licensing later may require permission from contributors and legal review. No license change is part of this issue.
+No dual-license or enterprise license program exists. Adding one later may require contributor permissions, a contributor agreement, and legal review. See `docs/product-positioning.md` for the complete public-beta decision. This documentation is not legal advice.
 
 ## Go Or No-Go Record
 

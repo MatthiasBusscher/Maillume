@@ -7,8 +7,10 @@ Implementation status: all 13 roadmap items are complete in the v1 launch-candid
 1. Issue #27: Visual Identity and Scanner Workspace Redesign. Complete.
 2. Issue #29: Hosted Service Architecture and Plan Boundaries. Decide privacy, cost, quota, pricing, license, and launch gates before implementation.
 3. Issue #31: Privacy-Safe Detection Feedback and Synthetic Dataset Pipeline. Add optional label feedback and synthetic calibration without retaining scanned messages.
-4. Issue #30: Mail Client Integration Feasibility Spike. Compare Gmail, Outlook, and Chrome using synthetic messages, then select one first platform.
-5. Optional authentication, hosted AI, and billing issues may be created only after the Issue #29 go/no-go gates are satisfied.
+4. Issue #34: Brand, License, and Public Beta Positioning. Complete the beta identity and hosted-by-us-or-you model before going public.
+5. Issue #35: Public Beta Deployment and Trust Pages. Deploy the heuristic beta, verify trust controls, then make the repository public.
+6. Issue #30: Mail Client Integration Feasibility Spike. Compare Gmail, Outlook, and Chrome using synthetic messages, then select one first platform.
+7. Optional authentication, hosted AI, and billing issues may be created only after the Issue #29 go/no-go gates are satisfied.
 
 The public heuristic scanner and self-hosted bring-your-own-key mode remain the launch product. See `docs/hosted-service.md` for the approved hosted-service planning baseline.
 
@@ -47,7 +49,7 @@ Prepare the repository for public collaboration and self-hosting.
 
 Definition of Done:
 
-- `LICENSE` is added, with MIT as the default recommendation unless project goals require stronger copyleft.
+- `LICENSE` contains the current AGPL-3.0 text selected for the hosted-by-us-or-you model.
 - `CONTRIBUTING.md` explains local setup, branch naming, coding standards, and how to propose changes.
 - `SECURITY.md` explains responsible disclosure and reminds contributors not to include real sensitive email content in issues.
 - `.env.example` documents optional self-hosted AI environment variables without secrets.

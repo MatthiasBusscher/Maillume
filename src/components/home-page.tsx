@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDown, Database, ScanSearch } from "lucide-react";
+import { ArrowDown, Database, Github, Scale, ScanSearch } from "lucide-react";
 
 import { EmailScanForm } from "@/components/email-scan-form";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -11,6 +11,7 @@ import {
   getBrowserLocale,
   type Locale,
 } from "@/lib/i18n/dictionary";
+import { LICENSE_URL, SOURCE_REPOSITORY_URL } from "@/lib/project-links";
 
 export function HomePage({ feedbackEnabled }: { feedbackEnabled: boolean }) {
   const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
@@ -56,6 +57,16 @@ export function HomePage({ feedbackEnabled }: { feedbackEnabled: boolean }) {
               locale={locale}
               onLocaleChange={setLocale}
             />
+            <a
+              href={SOURCE_REPOSITORY_URL}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={dictionary.legal.source}
+              title={dictionary.legal.source}
+              className="inline-flex h-10 w-10 items-center justify-center border border-white/30 text-white transition hover:border-[#d8ff3e] hover:text-[#d8ff3e]"
+            >
+              <Github className="h-4 w-4" aria-hidden="true" />
+            </a>
             <a
               href="#scanner"
               className="inline-flex h-10 items-center gap-2 border border-white/30 px-3 text-sm font-semibold text-white transition hover:border-[#d8ff3e] hover:text-[#d8ff3e]"
@@ -108,6 +119,37 @@ export function HomePage({ feedbackEnabled }: { feedbackEnabled: boolean }) {
       >
         <EmailScanForm dictionary={dictionary} feedbackEnabled={feedbackEnabled} locale={locale} />
       </section>
+
+      <footer className="border-t border-[#c5cbd1] bg-[#f7f8f9]">
+        <div className="mx-auto flex max-w-[1480px] flex-col gap-4 px-5 py-5 text-xs leading-5 text-[#59646f] sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <div>
+            <p>{dictionary.legal.notice}</p>
+            <p className="mt-1 font-mono text-[10px] uppercase text-[#737d86]">
+              {dictionary.legal.copyright}
+            </p>
+          </div>
+          <nav className="flex items-center gap-4" aria-label={dictionary.legal.license}>
+            <a
+              href={SOURCE_REPOSITORY_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 font-semibold text-[#26313b] hover:text-[#087b87]"
+            >
+              <Github className="h-4 w-4" aria-hidden="true" />
+              {dictionary.legal.source}
+            </a>
+            <a
+              href={LICENSE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 font-semibold text-[#26313b] hover:text-[#087b87]"
+            >
+              <Scale className="h-4 w-4" aria-hidden="true" />
+              {dictionary.legal.license}
+            </a>
+          </nav>
+        </div>
+      </footer>
     </main>
   );
 }
