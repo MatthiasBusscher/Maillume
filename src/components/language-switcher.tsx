@@ -14,7 +14,11 @@ export function LanguageSwitcher({
   onLocaleChange,
 }: LanguageSwitcherProps) {
   return (
-    <div className="flex items-center gap-2" aria-label={dictionary.language.label}>
+    <div
+      role="group"
+      className="flex items-center gap-2"
+      aria-label={dictionary.language.label}
+    >
       <Globe2 className="h-4 w-4 text-slate-500" aria-hidden="true" />
       <div className="inline-flex rounded-md border border-slate-300 bg-white p-1">
         {supportedLocales.map((option) => {
@@ -41,4 +45,3 @@ export function LanguageSwitcher({
     </div>
   );
 }
-

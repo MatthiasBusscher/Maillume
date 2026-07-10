@@ -1,5 +1,7 @@
 # Inbox Risk Scanner GitHub Issue Roadmap
 
+Implementation status: all 13 roadmap items are complete in the v1 launch-candidate codebase. GitHub issues remain the source of truth for release follow-ups.
+
 ## Recommended Order
 
 1. Project Setup & Initial Scan Page

@@ -250,7 +250,11 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
           <p className="mb-2 text-sm font-medium text-slate-700">
             {dictionary.form.inputModeLabel}
           </p>
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div
+            role="group"
+            aria-label={dictionary.form.inputModeLabel}
+            className="grid gap-2 sm:grid-cols-3"
+          >
             <ModeButton
               active={activeMode === "paste"}
               icon={<ClipboardPaste className="h-4 w-4" aria-hidden="true" />}
@@ -349,7 +353,7 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
           <button
             type="submit"
             disabled={!body.trim() || isAnalyzing || isExtracting}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="inline-flex h-11 min-w-36 flex-none items-center justify-center gap-2 whitespace-nowrap rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {isAnalyzing ? (
               <>
@@ -366,7 +370,11 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
         </div>
       </form>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft sm:p-6">
+      <section
+        aria-live="polite"
+        aria-busy={isAnalyzing}
+        className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
+      >
         {result ? (
           <AnalysisResult dictionary={dictionary} result={result} />
         ) : (

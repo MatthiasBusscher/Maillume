@@ -11,8 +11,9 @@ export const dictionaries = {
   en: {
     app: {
       name: "Inbox Risk Scanner",
-      status: "Prototype",
+      status: "Open source",
       startScan: "Start scan",
+      skipToScanner: "Skip to scanner",
       audience: "Built for freelancers and small teams",
       hero:
         "Paste a suspicious email and get a clear, structured risk assessment before clicking, replying, or forwarding sensitive details.",
@@ -80,7 +81,7 @@ export const dictionaries = {
       },
       explanation: "Explanation",
       suspiciousSignals: "Suspicious signals",
-      noSignals: "No obvious suspicious signals were found by the prototype checks.",
+      noSignals: "No obvious suspicious signals were found by the automated checks.",
       detectedLinks: "Detected links",
       noLinks: "No links detected.",
       recommendedAction: "Recommended action",
@@ -95,8 +96,9 @@ export const dictionaries = {
   nl: {
     app: {
       name: "Inbox Risk Scanner",
-      status: "Prototype",
+      status: "Open source",
       startScan: "Scan starten",
+      skipToScanner: "Ga naar de scanner",
       audience: "Gebouwd voor freelancers en kleine teams",
       hero:
         "Plak een verdachte e-mail en krijg een duidelijke, gestructureerde risico-inschatting voordat u klikt, antwoordt of gevoelige gegevens deelt.",
@@ -164,7 +166,7 @@ export const dictionaries = {
       },
       explanation: "Uitleg",
       suspiciousSignals: "Verdachte signalen",
-      noSignals: "De prototypecontroles vonden geen duidelijke verdachte signalen.",
+      noSignals: "De geautomatiseerde controles vonden geen duidelijke verdachte signalen.",
       detectedLinks: "Gevonden links",
       noLinks: "Geen links gevonden.",
       recommendedAction: "Aanbevolen actie",
