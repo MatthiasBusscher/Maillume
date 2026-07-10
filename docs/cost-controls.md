@@ -52,3 +52,11 @@ For any public AI-enabled deployment, also configure controls outside this app:
 - Short output token limits with `AI_MAX_OUTPUT_TOKENS`.
 
 The safest open-source default remains heuristic mode for the hosted demo and bring-your-own-key AI mode for self-hosters.
+
+## Future Official Hosted AI
+
+An official hosted AI option is still on hold. Before enabling a maintainer-funded provider key, the service needs persistent per-account quotas, idempotent reservations, a global monthly budget and kill switch, provider retention review, clear user disclosure, and measured cost tests.
+
+The current planning hypothesis is a 5-scan monthly free allowance, a 100-scan capped Plus allowance, a target typical provider cost of no more than EUR 0.005 per scan, and a hard planning ceiling of EUR 0.02 per scan. These are validation inputs rather than public commitments.
+
+See `docs/hosted-service.md` for the complete product boundary, cost formula, failure behavior, and go/no-go checklist.
