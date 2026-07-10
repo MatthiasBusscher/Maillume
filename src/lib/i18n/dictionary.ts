@@ -23,6 +23,13 @@ export const dictionaries = {
     language: {
       label: "Language",
     },
+    legal: {
+      source: "Source code",
+      license: "License",
+      notice:
+        "AGPL-3.0 free software. You may share and modify it under the license. Provided without warranty.",
+      copyright: "Copyright 2026 Inbox Risk Scanner contributors.",
+    },
     form: {
       eyebrow: "Email analysis",
       title: "Check a suspicious email",
@@ -150,6 +157,13 @@ export const dictionaries = {
     },
     language: {
       label: "Taal",
+    },
+    legal: {
+      source: "Broncode",
+      license: "Licentie",
+      notice:
+        "Vrije software onder AGPL-3.0. U mag deze delen en aanpassen volgens de licentie. Zonder garantie geleverd.",
+      copyright: "Copyright 2026 bijdragers aan Inbox Risk Scanner.",
     },
     form: {
       eyebrow: "E-mailanalyse",

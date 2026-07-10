@@ -48,6 +48,10 @@ function main() {
   const feedbackMigration = readProjectFile(
     "supabase/migrations/20260710150000_create_detection_feedback.sql",
   );
+  const licenseContent = readProjectFile("LICENSE");
+  const packageMetadata = JSON.parse(readProjectFile("package.json")) as {
+    license?: string;
+  };
   const nextConfigContent = readProjectFile("next.config.ts");
 
   assert.match(routeContent, /"Cache-Control": "no-store"/);
@@ -77,6 +81,9 @@ function main() {
   assert.match(nextConfigContent, /X-Frame-Options/);
   assert.match(nextConfigContent, /Referrer-Policy/);
   assert.match(nextConfigContent, /Permissions-Policy/);
+  assert.match(licenseContent, /GNU AFFERO GENERAL PUBLIC LICENSE/);
+  assert.match(licenseContent, /13\. Remote Network Interaction/);
+  assert.equal(packageMetadata.license, "AGPL-3.0-only");
 
   const analyzeResponseType = getAnalyzeResponseType();
 
