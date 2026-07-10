@@ -16,11 +16,13 @@ Fixtures live in `src/lib/evaluation/email-fixtures.ts` and are shared by heuris
 
 ## Production Feedback Boundary
 
-Ordinary scans are not evaluation fixtures and must not be retained for later analysis. A future feedback feature may collect optional non-content labels such as false positive or false negative, expected classification, score band, language, input mode, analyzer version, and high-level suspicious-signal categories.
+Ordinary scans are not evaluation fixtures and must not be retained for later analysis. The optional feedback feature collects non-content labels such as false positive or false negative, expected classification, score band, language, input mode, analyzer version, and high-level suspicious-signal categories.
 
 Feedback must not include message text, sender addresses, subjects, links, attachments, screenshots, `.eml` files, or prompts. Maintainers should use reported patterns to author new synthetic fixtures instead of copying production messages into the repository.
 
 Accepting real or auto-redacted messages requires a separate approved research-data design and is not part of the current roadmap.
+
+See `docs/feedback.md` for the API allowlist, retention behavior, and synthetic-fixture workflow.
 
 ## Running Checks
 

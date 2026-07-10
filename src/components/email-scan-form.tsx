@@ -22,7 +22,7 @@ import {
   type ScanSource,
 } from "@/lib/types";
 import { parseEml } from "@/lib/eml/parse-eml";
-import type { Dictionary } from "@/lib/i18n/dictionary";
+import type { Dictionary, Locale } from "@/lib/i18n/dictionary";
 import { extractTextFromImage } from "@/lib/ocr/extract-text";
 import {
   EML_ACCEPT,
@@ -33,6 +33,7 @@ import {
   MAX_SCREENSHOT_SIZE_BYTES,
   SCREENSHOT_ACCEPT,
 } from "@/lib/scan-limits";
+import { AnalysisFeedback } from "./analysis-feedback";
 import { RiskMeter } from "./risk-meter";
 
 const sampleEmail = `Hi,
@@ -47,14 +48,17 @@ IT Administrator`;
 
 type EmailScanFormProps = {
   dictionary: Dictionary;
+  feedbackEnabled: boolean;
+  locale: Locale;
 };
 
-export function EmailScanForm({ dictionary }: EmailScanFormProps) {
+export function EmailScanForm({ dictionary, feedbackEnabled, locale }: EmailScanFormProps) {
   const [activeMode, setActiveMode] = useState<ScanSource>("paste");
   const [subject, setSubject] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
   const [body, setBody] = useState("");
   const [result, setResult] = useState<EmailAnalysisResult | null>(null);
+  const [analysisVersion, setAnalysisVersion] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [error, setError] = useState("");
@@ -94,6 +98,7 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
       }
 
       setResult(payload.result);
+      setAnalysisVersion(payload.analysis_version);
     } catch {
       setResult(null);
       setError(dictionary.form.analysisFailed);
@@ -387,7 +392,14 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
         className="min-w-0 bg-[#f7f8f9] p-5 sm:p-7"
       >
         {result ? (
-          <AnalysisResult dictionary={dictionary} result={result} />
+          <AnalysisResult
+            analysisVersion={analysisVersion}
+            dictionary={dictionary}
+            feedbackEnabled={feedbackEnabled}
+            locale={locale}
+            result={result}
+            source={activeMode}
+          />
         ) : (
           <EmptyResult dictionary={dictionary} />
         )}
@@ -542,11 +554,19 @@ function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
 }
 
 function AnalysisResult({
+  analysisVersion,
   dictionary,
+  feedbackEnabled,
+  locale,
   result,
+  source,
 }: {
+  analysisVersion: string;
   dictionary: Dictionary;
+  feedbackEnabled: boolean;
+  locale: Locale;
   result: EmailAnalysisResult;
+  source: ScanSource;
 }) {
   return (
     <div>
@@ -638,6 +658,16 @@ function AnalysisResult({
         </h3>
         <p className="text-sm leading-6 text-[#d9dfe3]">{result.recommended_action}</p>
       </section>
+
+      {feedbackEnabled && analysisVersion ? (
+        <AnalysisFeedback
+          analyzerVersion={analysisVersion}
+          dictionary={dictionary}
+          locale={locale}
+          scoreBand={result.risk_level}
+          source={source}
+        />
+      ) : null}
 
       <p className="border-t border-[#d5d9de] pt-4 text-xs leading-5 text-[#69737d]">
         {dictionary.result.disclaimer}

@@ -18,6 +18,7 @@ export default defineConfig({
     command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
     env: {
       ANALYSIS_MODE: "heuristic",
+      FEEDBACK_STORAGE: "memory",
     },
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

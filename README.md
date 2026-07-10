@@ -20,6 +20,7 @@ The repository is a v1 launch candidate. Implemented today:
 - Synthetic English/Dutch heuristic calibration fixtures
 - Server-side analysis provider abstraction for heuristic mode and self-hosted AI mode
 - Abuse controls, security/privacy guardrails, and browser smoke tests
+- Optional non-content result feedback with a strict allowlist and Supabase retention schema
 - Vercel and local self-hosting documentation
 - Launch metadata, generated favicon/social image, and accessibility basics
 
@@ -117,6 +118,7 @@ npm run build
 - AI cost controls: `docs/cost-controls.md`
 - Deployment and self-hosting: `docs/deployment.md`
 - Evaluation fixtures: `docs/evaluation.md`
+- Privacy-safe feedback: `docs/feedback.md`
 - Hosted service architecture: `docs/hosted-service.md`
 - Roadmap: `docs/roadmap.md`
 - Security and privacy review: `docs/security-privacy-review.md`

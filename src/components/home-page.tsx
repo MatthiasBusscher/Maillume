@@ -12,7 +12,7 @@ import {
   type Locale,
 } from "@/lib/i18n/dictionary";
 
-export function HomePage() {
+export function HomePage({ feedbackEnabled }: { feedbackEnabled: boolean }) {
   const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
   const dictionary = useMemo(() => dictionaries[locale], [locale]);
 
@@ -106,7 +106,7 @@ export function HomePage() {
         tabIndex={-1}
         className="mx-auto max-w-[1480px] scroll-mt-6 px-5 py-6 outline-none sm:px-6 lg:px-8 lg:py-8"
       >
-        <EmailScanForm dictionary={dictionary} />
+        <EmailScanForm dictionary={dictionary} feedbackEnabled={feedbackEnabled} locale={locale} />
       </section>
     </main>
   );

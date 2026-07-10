@@ -7,6 +7,8 @@ Inbox Risk Scanner supports two deployment shapes:
 
 The proposed official account-based hosted AI service is not implemented. Its privacy, quota, cost, and release gates are documented in `docs/hosted-service.md`.
 
+Optional non-content feedback can use Supabase without enabling accounts or scan storage. It is disabled by default; see `docs/feedback.md` for the migration, server-only environment variables, retention job, and deployment checks.
+
 Vercel provides zero-configuration support for Next.js projects. Environment variables can be scoped to Development, Preview, and Production, and changes apply only to new deployments. See the official [Next.js on Vercel](https://vercel.com/frameworks/nextjs) and [Vercel environment variable](https://vercel.com/docs/environment-variables) documentation.
 
 ## Public Demo on Vercel
@@ -117,5 +119,6 @@ Use synthetic data only.
 - Confirm browser network responses from `/api/analyze` include `Cache-Control: no-store`.
 - Inspect the `/api/analyze` response and confirm `analysis_mode` is `heuristic`; also confirm the Vercel project has no provider keys configured.
 - If AI mode is enabled, confirm the selected provider works and rate-limit errors are understandable.
+- If feedback is enabled, submit a synthetic result label, confirm `/api/feedback` contains no scan fields, and verify the Supabase expiry job is active.
 
 Raw emails, real inbox screenshots, real `.eml` files, and provider keys must never be used in public test reports or GitHub issues.

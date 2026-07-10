@@ -6,7 +6,12 @@ import { AiResponseValidationError } from "@/lib/analysis/ai-schema";
 import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
 import { AiProviderRequestError } from "@/lib/analysis/providers";
 import { enforceAiRateLimit, RateLimitError } from "@/lib/analysis/rate-limit";
-import { ANALYSIS_DISCLAIMER, type AnalyzeErrorResponse, type AnalyzeResponse } from "@/lib/types";
+import {
+  ANALYSIS_DISCLAIMER,
+  ANALYSIS_PIPELINE_VERSION,
+  type AnalyzeErrorResponse,
+  type AnalyzeResponse,
+} from "@/lib/types";
 
 const NO_STORE_HEADERS = {
   "Cache-Control": "no-store",
@@ -66,6 +71,7 @@ export async function POST(request: Request) {
       result: analysis.result,
       analysis_mode: analysis.mode,
       analysis_provider: analysis.provider,
+      analysis_version: ANALYSIS_PIPELINE_VERSION,
       disclaimer: ANALYSIS_DISCLAIMER,
       privacy: {
         stored: false,

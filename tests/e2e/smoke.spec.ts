@@ -27,6 +27,9 @@ test("language switching updates the scanner", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("lang", "nl");
   await expect(page.getByRole("heading", { name: "Controleer een verdachte e-mail" })).toBeVisible();
   await expect(page.getByRole("button", { name: "E-mail analyseren" })).toBeVisible();
+  await page.getByRole("button", { name: "Voorbeeld" }).click();
+  await page.getByRole("button", { name: "E-mail analyseren" }).click();
+  await expect(page.getByRole("heading", { name: "Help de detectie verbeteren" })).toBeVisible();
 
   await page.getByTitle("English").click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
@@ -106,4 +109,77 @@ test("launch metadata and generated assets are available", async ({ page, reques
   expect(openGraphResponse.headers()["content-type"]).toContain("image/png");
   expect(manifestResponse.ok()).toBe(true);
   expect(manifestResponse.headers()["content-type"]).toContain("application/manifest+json");
+});
+
+test("optional feedback sends labels without scan content", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Use sample" }).click();
+  await page.getByRole("button", { name: "Analyze email" }).click();
+
+  await page.getByRole("button", { name: "No", exact: true }).click();
+  await page.getByRole("button", { name: "Legitimate", exact: true }).click();
+  await page.getByRole("button", { name: "Safe email marked risky" }).click();
+  await page.getByRole("checkbox", { name: "Urgency or pressure" }).check();
+
+  const requestPromise = page.waitForRequest((request) => request.url().endsWith("/api/feedback"));
+  await page.getByRole("button", { name: "Send feedback" }).click();
+  const feedbackRequest = await requestPromise;
+  const payload = feedbackRequest.postDataJSON() as Record<string, unknown>;
+
+  expect(payload).toEqual({
+    helpful: false,
+    expectedClassification: "legitimate",
+    feedbackKind: "false_positive",
+    locale: "en",
+    source: "paste",
+    analyzerVersion: "analysis-v1",
+    scoreBand: "high",
+    signalCategories: ["urgency"],
+  });
+
+  for (const forbiddenField of ["body", "subject", "senderEmail", "links", "file"]) {
+    expect(payload).not.toHaveProperty(forbiddenField);
+  }
+
+  await expect(page.getByText("Feedback received")).toBeVisible();
+});
+
+test("feedback controls work from the keyboard and reject content fields", async ({ page, request }) => {
+  const rejected = await request.post("/api/feedback", {
+    data: {
+      helpful: false,
+      expectedClassification: "legitimate",
+      feedbackKind: "false_positive",
+      locale: "en",
+      source: "paste",
+      analyzerVersion: "analysis-v1",
+      scoreBand: "high",
+      signalCategories: [],
+      body: "must never be accepted",
+    },
+  });
+
+  expect(rejected.status()).toBe(400);
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Use sample" }).click();
+  await page.getByRole("button", { name: "Analyze email" }).click();
+
+  const notHelpful = page.getByRole("button", { name: "No", exact: true });
+  await notHelpful.focus();
+  await page.keyboard.press("Enter");
+
+  const expectedSpam = page.getByRole("button", { name: "Spam", exact: true });
+  await expectedSpam.focus();
+  await page.keyboard.press("Space");
+
+  const falseNegative = page.getByRole("button", { name: "Risky email marked safe" });
+  await falseNegative.focus();
+  await page.keyboard.press("Enter");
+
+  const submit = page.getByRole("button", { name: "Send feedback" });
+  await submit.focus();
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByText("Feedback received")).toBeVisible();
 });

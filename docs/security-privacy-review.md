@@ -4,7 +4,7 @@ Review date: 2026-07-09
 
 ## Scope
 
-This review covers the launch data flow for pasted text, screenshot OCR, `.eml` parsing, `/api/analyze`, heuristic analysis, and optional self-hosted AI mode.
+This review covers the launch data flow for pasted text, screenshot OCR, `.eml` parsing, `/api/analyze`, optional non-content `/api/feedback`, heuristic analysis, and optional self-hosted AI mode.
 
 ## Data Flow
 
@@ -67,3 +67,13 @@ The current service does not use scanned messages to build a dataset. This inclu
 - Maintainers should create synthetic fixtures from aggregate patterns rather than copy production messages.
 
 A future system that accepts real or auto-redacted messages requires its own legal basis, third-party-data review, access controls, withdrawal and deletion behavior, retention schedule, and security review. It is not approved by this review.
+
+### Feedback Implementation
+
+- `/api/feedback` rejects unknown fields and payloads over 4 KB.
+- The payload has no free-text field and contains labels, version data, score band, language, input mode, and high-level categories only.
+- The server uses an ephemeral hashed abuse key that is never written to feedback storage.
+- Supabase access uses a server-only service-role key. Client components cannot reference it.
+- Row Level Security has no browser-facing policy for the feedback table.
+- Records expire after 89 days and an hourly database job removes expired rows before the 90-day limit.
+- The feedback route and Supabase request use `Cache-Control: no-store` and no source file logs payloads.

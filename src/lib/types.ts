@@ -5,6 +5,7 @@ export type AnalysisProviderName = "heuristic" | AiProviderName;
 
 export const ANALYSIS_DISCLAIMER =
   "This is an automated risk assessment and should not be considered a guarantee.";
+export const ANALYSIS_PIPELINE_VERSION = "analysis-v1";
 
 export const MAX_SCAN_BODY_LENGTH = 20_000;
 
@@ -33,6 +34,7 @@ export type AnalyzeResponse = {
   result: EmailAnalysisResult;
   analysis_mode: AnalysisMode;
   analysis_provider: AnalysisProviderName;
+  analysis_version: typeof ANALYSIS_PIPELINE_VERSION;
   disclaimer: typeof ANALYSIS_DISCLAIMER;
   privacy: {
     stored: false;
