@@ -19,8 +19,8 @@ export function LanguageSwitcher({
       className="flex items-center gap-2"
       aria-label={dictionary.language.label}
     >
-      <Globe2 className="h-4 w-4 text-slate-500" aria-hidden="true" />
-      <div className="inline-flex rounded-md border border-slate-300 bg-white p-1">
+      <Globe2 className="h-4 w-4 text-[#aeb6bf]" aria-hidden="true" />
+      <div className="inline-flex border border-white/25 bg-[#0f1114] p-1">
         {supportedLocales.map((option) => {
           const isActive = option.locale === locale;
 
@@ -29,10 +29,10 @@ export function LanguageSwitcher({
               key={option.locale}
               type="button"
               onClick={() => onLocaleChange(option.locale)}
-              className={`h-8 min-w-10 rounded px-2 text-xs font-semibold transition ${
+              className={`h-8 min-w-10 px-2 text-xs font-semibold transition ${
                 isActive
-                  ? "bg-slate-950 text-white"
-                  : "text-slate-600 hover:bg-sky-50 hover:text-sky-800"
+                  ? "bg-[#d8ff3e] text-[#171a1f]"
+                  : "text-[#c8ced4] hover:bg-white/10 hover:text-white"
               }`}
               aria-pressed={isActive}
               title={option.label}

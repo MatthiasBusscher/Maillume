@@ -3,7 +3,6 @@
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import {
   AlertTriangle,
-  CheckCircle2,
   ClipboardPaste,
   DatabaseZap,
   FileText,
@@ -11,6 +10,7 @@ import {
   Info,
   Link2,
   Mail,
+  ScanLine,
   Send,
   ShieldCheck,
 } from "lucide-react";
@@ -222,38 +222,46 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
+    <div className="overflow-hidden border border-[#aeb6bf] bg-white lg:grid lg:grid-cols-[minmax(0,1.06fr)_minmax(390px,0.94fr)]">
       <form
         onSubmit={handleSubmit}
-        className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
+        className="min-w-0 border-b border-[#aeb6bf] p-5 sm:p-7 lg:border-b-0 lg:border-r"
       >
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold uppercase text-sky-700">
-              {dictionary.form.eyebrow}
-            </p>
-            <h2 className="mt-1 text-2xl font-semibold text-slate-950">
-              {dictionary.form.title}
-            </h2>
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-[#d5d9de] pb-5">
+          <div className="flex items-start gap-3">
+            <span
+              className="flex h-8 w-8 flex-none items-center justify-center bg-[#d8ff3e] font-mono text-xs font-bold text-[#171a1f]"
+              aria-hidden="true"
+            >
+              01
+            </span>
+            <div>
+              <p className="font-mono text-[11px] uppercase text-[#087b87]">
+                {dictionary.form.eyebrow}
+              </p>
+              <h2 className="mt-1 text-xl font-semibold text-[#171a1f] sm:text-2xl">
+                {dictionary.form.title}
+              </h2>
+            </div>
           </div>
           <button
             type="button"
             onClick={loadSample}
-            className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50"
+            className="inline-flex h-9 items-center gap-2 border border-[#aeb6bf] bg-white px-3 text-sm font-semibold text-[#37414b] transition hover:border-[#171a1f] hover:bg-[#f2f4f5]"
           >
             <Mail className="h-4 w-4" aria-hidden="true" />
             {dictionary.form.useSample}
           </button>
         </div>
 
-        <div className="mb-5">
-          <p className="mb-2 text-sm font-medium text-slate-700">
+        <div className="mb-6">
+          <p className="mb-2 font-mono text-[11px] uppercase text-[#58636e]">
             {dictionary.form.inputModeLabel}
           </p>
           <div
             role="group"
             aria-label={dictionary.form.inputModeLabel}
-            className="grid gap-2 sm:grid-cols-3"
+            className="grid grid-cols-3 divide-x divide-[#aeb6bf] border border-[#aeb6bf]"
           >
             <ModeButton
               active={activeMode === "paste"}
@@ -305,28 +313,28 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
         ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="grid gap-2 text-sm font-medium text-slate-700">
+          <label className="grid gap-2 font-mono text-[11px] uppercase text-[#58636e]">
             {dictionary.form.subject}
             <input
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
               placeholder={dictionary.form.subjectPlaceholder}
-              className="h-11 rounded-md border border-slate-300 bg-white px-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+              className="h-11 border border-[#b7bec5] bg-[#fafbfb] px-3 font-sans text-sm normal-case text-[#171a1f] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b87] focus:ring-2 focus:ring-[#bdebf0]"
             />
           </label>
 
-          <label className="grid gap-2 text-sm font-medium text-slate-700">
+          <label className="grid gap-2 font-mono text-[11px] uppercase text-[#58636e]">
             {dictionary.form.senderEmail}
             <input
               value={senderEmail}
               onChange={(event) => setSenderEmail(event.target.value)}
               placeholder={dictionary.form.senderPlaceholder}
-              className="h-11 rounded-md border border-slate-300 bg-white px-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+              className="h-11 border border-[#b7bec5] bg-[#fafbfb] px-3 font-sans text-sm normal-case text-[#171a1f] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b87] focus:ring-2 focus:ring-[#bdebf0]"
             />
           </label>
         </div>
 
-        <label className="mt-4 grid gap-2 text-sm font-medium text-slate-700">
+        <label className="mt-4 grid gap-2 font-mono text-[11px] uppercase text-[#58636e]">
           {dictionary.form.emailContent}
           <textarea
             value={body}
@@ -335,25 +343,28 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
             rows={13}
             required
             readOnly={isExtracting}
-            className="min-h-72 resize-y rounded-md border border-slate-300 bg-white px-3 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+            className="min-h-72 resize-y border border-[#b7bec5] bg-[#fafbfb] px-3 py-3 font-sans text-sm leading-6 normal-case text-[#171a1f] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b87] focus:ring-2 focus:ring-[#bdebf0]"
           />
         </label>
 
         {error ? (
           <div
             role="alert"
-            className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm leading-6 text-rose-800"
+            className="mt-4 border-l-4 border-[#e84f3d] bg-[#fff1ef] px-4 py-3 text-sm leading-6 text-[#8f251b]"
           >
             {error}
           </div>
         ) : null}
 
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-500">{dictionary.form.privacyNote}</p>
+        <div className="mt-5 flex flex-col gap-4 border-t border-[#d5d9de] pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="flex max-w-xl items-start gap-2 text-xs leading-5 text-[#5d6670]">
+            <DatabaseZap className="mt-0.5 h-4 w-4 flex-none text-[#087b87]" aria-hidden="true" />
+            <span>{dictionary.form.privacyNote}</span>
+          </p>
           <button
             type="submit"
             disabled={!body.trim() || isAnalyzing || isExtracting}
-            className="inline-flex h-11 min-w-36 flex-none items-center justify-center gap-2 whitespace-nowrap rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="inline-flex h-11 min-w-40 flex-none items-center justify-center gap-2 whitespace-nowrap border-l-4 border-[#d8ff3e] bg-[#171a1f] px-4 text-sm font-semibold text-white transition hover:bg-[#087b87] disabled:cursor-not-allowed disabled:border-[#cbd1d6] disabled:bg-[#cbd1d6] disabled:text-[#77818b]"
           >
             {isAnalyzing ? (
               <>
@@ -373,7 +384,7 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
       <section
         aria-live="polite"
         aria-busy={isAnalyzing}
-        className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
+        className="min-w-0 bg-[#f7f8f9] p-5 sm:p-7"
       >
         {result ? (
           <AnalysisResult dictionary={dictionary} result={result} />
@@ -412,10 +423,10 @@ function ModeButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-11 items-center justify-center gap-2 rounded-md border px-3 text-sm font-semibold transition ${
+      className={`inline-flex h-12 min-w-0 items-center justify-center gap-2 px-2 text-xs font-semibold transition sm:px-3 sm:text-sm ${
         active
-          ? "border-slate-950 bg-slate-950 text-white"
-          : "border-slate-300 bg-white text-slate-700 hover:border-sky-300 hover:bg-sky-50"
+          ? "bg-[#171a1f] text-white shadow-[inset_0_3px_0_#d8ff3e]"
+          : "bg-white text-[#4e5965] hover:bg-[#eef2f3] hover:text-[#171a1f]"
       }`}
       aria-pressed={active}
     >
@@ -447,26 +458,28 @@ function UploadPanel({
   title: string;
 }) {
   return (
-    <div className="mb-4 rounded-md border border-sky-200 bg-sky-50 p-4">
+    <div className="mb-5 border border-dashed border-[#8c969f] bg-[#f3f6f6] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm font-semibold text-sky-950">
-            {icon}
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#171a1f]">
+            <span className="text-[#087b87]">{icon}</span>
             {title}
           </div>
-          <p className="mt-2 text-sm leading-6 text-sky-900">{description}</p>
-          <p className="mt-1 text-xs font-medium text-sky-800">{dictionary.form.fileLimits}</p>
+          <p className="mt-2 text-sm leading-6 text-[#4e5965]">{description}</p>
+          <p className="mt-2 font-mono text-[10px] uppercase text-[#6a747e]">
+            {dictionary.form.fileLimits}
+          </p>
         </div>
-        <label className="inline-flex h-11 cursor-pointer items-center justify-center rounded-md bg-white px-3 text-sm font-semibold text-sky-900 ring-1 ring-sky-200 transition hover:bg-sky-100">
+        <label className="inline-flex h-10 cursor-pointer items-center justify-center border border-[#171a1f] bg-white px-3 text-sm font-semibold text-[#171a1f] transition hover:bg-[#171a1f] hover:text-white">
           {label}
           <input className="sr-only" type="file" accept={accept} onChange={onChange} />
         </label>
       </div>
 
       {fileName ? (
-        <div className="mt-3 rounded-md border border-sky-200 bg-white px-3 py-2 text-sm text-sky-950">
+        <div className="mt-3 border-l-4 border-[#087b87] bg-white px-3 py-2 text-sm text-[#26313b]">
           <span className="font-semibold">{dictionary.form.selectedFile}:</span> {fileName}
-          {fileStatus ? <span className="mt-1 block text-sky-800">{fileStatus}</span> : null}
+          {fileStatus ? <span className="mt-1 block text-[#087b87]">{fileStatus}</span> : null}
         </div>
       ) : null}
     </div>
@@ -475,26 +488,53 @@ function UploadPanel({
 
 function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
   return (
-    <div className="flex h-full min-h-96 flex-col justify-between gap-8">
-      <div>
-        <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-md bg-sky-50 text-sky-700 ring-1 ring-sky-100">
-          <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+    <div className="flex h-full min-h-[34rem] flex-col">
+      <div className="flex items-start gap-3 border-b border-[#d5d9de] pb-5">
+        <span
+          className="flex h-8 w-8 flex-none items-center justify-center bg-[#bdebf0] font-mono text-xs font-bold text-[#173b40]"
+          aria-hidden="true"
+        >
+          02
+        </span>
+        <div>
+          <p className="font-mono text-[11px] uppercase text-[#087b87]">
+            {dictionary.result.title}
+          </p>
+          <h2 className="mt-1 text-xl font-semibold text-[#171a1f] sm:text-2xl">
+            {dictionary.empty.title}
+          </h2>
         </div>
-        <h2 className="text-2xl font-semibold text-slate-950">{dictionary.empty.title}</h2>
-        <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
+      </div>
+
+      <div className="border-b border-[#d5d9de] py-8">
+        <div className="flex items-end justify-between gap-5">
+          <div>
+            <p className="font-mono text-[10px] uppercase text-[#69737d]">
+              {dictionary.empty.status}
+            </p>
+            <p className="mt-2 font-mono text-6xl font-semibold text-[#aeb6bf]">--</p>
+          </div>
+          <ScanLine className="h-14 w-14 text-[#aeb6bf]" strokeWidth={1.25} aria-hidden="true" />
+        </div>
+        <div className="mt-6 grid h-3 grid-cols-3 gap-1" aria-hidden="true">
+          <span className="bg-[#bfc7c2]" />
+          <span className="bg-[#d4c9ae]" />
+          <span className="bg-[#d6bbb7]" />
+        </div>
+        <p className="mt-5 max-w-lg text-sm leading-6 text-[#59646f]">
           {dictionary.empty.description}
         </p>
       </div>
 
-      <div className="rounded-md border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
-        <div className="mb-2 flex items-center gap-2 font-semibold">
+      <div className="my-6 border-l-4 border-[#087b87] bg-[#eaf6f5] px-4 py-4 text-sm leading-6 text-[#204e51]">
+        <div className="mb-2 flex items-center gap-2 font-semibold text-[#173b40]">
           <DatabaseZap className="h-4 w-4" aria-hidden="true" />
           {dictionary.empty.privacyTitle}
         </div>
         {dictionary.empty.privacyBody}
       </div>
 
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+      <div className="mt-auto border-t border-[#d5d9de] pt-4 text-xs leading-5 text-[#69737d]">
         {dictionary.result.disclaimer}
       </div>
     </div>
@@ -509,7 +549,24 @@ function AnalysisResult({
   result: EmailAnalysisResult;
 }) {
   return (
-    <div className="space-y-6">
+    <div>
+      <div className="mb-6 flex items-start gap-3 border-b border-[#d5d9de] pb-5">
+        <span
+          className="flex h-8 w-8 flex-none items-center justify-center bg-[#bdebf0] font-mono text-xs font-bold text-[#173b40]"
+          aria-hidden="true"
+        >
+          02
+        </span>
+        <div>
+          <p className="font-mono text-[11px] uppercase text-[#087b87]">
+            {dictionary.result.title}
+          </p>
+          <h2 className="mt-1 text-xl font-semibold text-[#171a1f] sm:text-2xl">
+            {dictionary.result.summaryTitle}
+          </h2>
+        </div>
+      </div>
+
       <RiskMeter
         score={result.risk_score}
         level={result.risk_level}
@@ -519,70 +576,70 @@ function AnalysisResult({
         }}
       />
 
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <Info className="h-4 w-4 text-sky-700" aria-hidden="true" />
+      <section className="border-b border-[#d5d9de] py-5">
+        <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#26313b]">
+          <Info className="h-4 w-4 text-[#087b87]" aria-hidden="true" />
           {dictionary.result.explanation}
-        </div>
-        <p className="text-sm leading-6 text-slate-600">{result.short_explanation}</p>
-      </div>
+        </h3>
+        <p className="text-sm leading-6 text-[#59646f]">{result.short_explanation}</p>
+      </section>
 
-      <div>
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />
+      <section className="border-b border-[#d5d9de] py-5">
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#26313b]">
+          <AlertTriangle className="h-4 w-4 text-[#d76b16]" aria-hidden="true" />
           {dictionary.result.suspiciousSignals}
-        </div>
+        </h3>
         {result.suspicious_signals.length > 0 ? (
-          <ul className="space-y-2">
+          <ul className="divide-y divide-[#d5d9de] border-y border-[#d5d9de] bg-white">
             {result.suspicious_signals.map((signal) => (
               <li
                 key={signal}
-                className="flex gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm leading-6 text-slate-700"
+                className="flex gap-3 px-3 py-3 text-sm leading-6 text-[#414c57]"
               >
-                <CheckCircle2 className="mt-1 h-4 w-4 flex-none text-sky-700" aria-hidden="true" />
+                <span className="mt-2 h-2 w-2 flex-none bg-[#ff6b57]" aria-hidden="true" />
                 <span>{signal}</span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+          <p className="border-y border-[#d5d9de] bg-white px-3 py-3 text-sm text-[#59646f]">
             {dictionary.result.noSignals}
           </p>
         )}
-      </div>
+      </section>
 
-      <div>
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <Link2 className="h-4 w-4 text-sky-700" aria-hidden="true" />
+      <section className="border-b border-[#d5d9de] py-5">
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#26313b]">
+          <Link2 className="h-4 w-4 text-[#087b87]" aria-hidden="true" />
           {dictionary.result.detectedLinks}
-        </div>
+        </h3>
         {result.detected_links.length > 0 ? (
-          <ul className="space-y-2">
+          <ul className="divide-y divide-[#d5d9de] border-y border-[#d5d9de] bg-white">
             {result.detected_links.map((link) => (
               <li
                 key={link}
-                className="break-all rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                className="break-all px-3 py-3 font-mono text-xs leading-5 text-[#245b61]"
               >
                 {link}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+          <p className="border-y border-[#d5d9de] bg-white px-3 py-3 text-sm text-[#59646f]">
             {dictionary.result.noLinks}
           </p>
         )}
-      </div>
+      </section>
 
-      <div className="rounded-md border border-sky-200 bg-sky-50 p-4">
-        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-sky-950">
-          <ShieldCheck className="h-4 w-4 text-sky-700" aria-hidden="true" />
+      <section className="my-6 border-l-4 border-[#d8ff3e] bg-[#171a1f] px-4 py-5 text-white">
+        <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+          <ShieldCheck className="h-4 w-4 text-[#d8ff3e]" aria-hidden="true" />
           {dictionary.result.recommendedAction}
-        </div>
-        <p className="text-sm leading-6 text-sky-900">{result.recommended_action}</p>
-      </div>
+        </h3>
+        <p className="text-sm leading-6 text-[#d9dfe3]">{result.recommended_action}</p>
+      </section>
 
-      <p className="rounded-md border border-slate-200 bg-white p-3 text-sm leading-6 text-slate-500">
+      <p className="border-t border-[#d5d9de] pt-4 text-xs leading-5 text-[#69737d]">
         {dictionary.result.disclaimer}
       </p>
     </div>

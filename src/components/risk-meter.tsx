@@ -9,26 +9,24 @@ type RiskMeterProps = {
   };
 };
 
-const levelStyles: Record<RiskLevel, { bar: string; text: string; bg: string }> = {
+const levelStyles: Record<RiskLevel, { badge: string; marker: string }> = {
   low: {
-    bar: "bg-emerald-500",
-    text: "text-emerald-700",
-    bg: "bg-emerald-50 ring-emerald-200",
+    badge: "border-[#2c8b65] bg-[#daf3e7] text-[#14563d]",
+    marker: "bg-[#2c8b65]",
   },
   medium: {
-    bar: "bg-amber-500",
-    text: "text-amber-700",
-    bg: "bg-amber-50 ring-amber-200",
+    badge: "border-[#c38122] bg-[#fff0cf] text-[#714812]",
+    marker: "bg-[#c38122]",
   },
   high: {
-    bar: "bg-rose-600",
-    text: "text-rose-700",
-    bg: "bg-rose-50 ring-rose-200",
+    badge: "border-[#d94b3b] bg-[#ffe3df] text-[#8f251b]",
+    marker: "bg-[#d94b3b]",
   },
 };
 
 export function RiskMeter({ score, level, labels }: RiskMeterProps) {
   const styles = levelStyles[level];
+  const markerPosition = Math.min(99, Math.max(1, score));
 
   return (
     <div
@@ -37,29 +35,40 @@ export function RiskMeter({ score, level, labels }: RiskMeterProps) {
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={score}
-      className="space-y-3"
+      className="border-b border-[#d5d9de] pb-6"
     >
-      <div className="flex items-end justify-between gap-4">
+      <div className="grid gap-5 sm:grid-cols-[130px_minmax(0,1fr)] sm:items-end">
         <div>
-          <p className="text-sm font-medium text-slate-500">{labels.riskScore}</p>
-          <p className="text-5xl font-semibold text-slate-950">{score}</p>
+          <p className="font-mono text-[10px] uppercase text-[#69737d]">{labels.riskScore}</p>
+          <p className="mt-1 font-mono text-6xl font-semibold leading-none text-[#171a1f]">
+            {score}
+          </p>
         </div>
-        <span
-          className={`rounded-md px-3 py-1.5 text-sm font-semibold uppercase ring-1 ${styles.bg} ${styles.text}`}
-        >
-          {labels.levels[level]}
-        </span>
-      </div>
-      <div className="h-3 overflow-hidden rounded-full bg-slate-200">
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${styles.bar}`}
-          style={{ width: `${score}%` }}
-        />
-      </div>
-      <div className="flex justify-between text-xs font-medium text-slate-500">
-        <span>{labels.levels.low}</span>
-        <span>{labels.levels.medium}</span>
-        <span>{labels.levels.high}</span>
+        <div>
+          <div className="flex items-center justify-between gap-4">
+            <span className={`border px-3 py-1.5 text-xs font-bold uppercase ${styles.badge}`}>
+              {labels.levels[level]}
+            </span>
+            <span className={`h-3 w-3 ${styles.marker}`} aria-hidden="true" />
+          </div>
+          <div className="relative mt-5">
+            <div className="grid h-3 grid-cols-3 gap-1" aria-hidden="true">
+              <span className="bg-[#42a87d]" />
+              <span className="bg-[#e0a13f]" />
+              <span className="bg-[#e05a4a]" />
+            </div>
+            <span
+              className="absolute -top-2 h-7 w-0.5 -translate-x-1/2 bg-[#171a1f] transition-[left] duration-500"
+              style={{ left: `${markerPosition}%` }}
+              aria-hidden="true"
+            />
+          </div>
+          <div className="mt-3 flex justify-between font-mono text-[10px] uppercase text-[#69737d]">
+            <span>{labels.levels.low}</span>
+            <span>{labels.levels.medium}</span>
+            <span>{labels.levels.high}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
