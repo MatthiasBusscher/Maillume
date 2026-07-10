@@ -31,7 +31,14 @@ export function RiskMeter({ score, level, labels }: RiskMeterProps) {
   const styles = levelStyles[level];
 
   return (
-    <div className="space-y-3">
+    <div
+      role="meter"
+      aria-label={`${labels.riskScore}: ${score}, ${labels.levels[level]}`}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={score}
+      className="space-y-3"
+    >
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-slate-500">{labels.riskScore}</p>

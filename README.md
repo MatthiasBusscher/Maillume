@@ -8,7 +8,7 @@ The launch goal is to support pasted text, screenshots, and `.eml` files without
 
 ## Current Status
 
-Built today:
+The repository is a v1 launch candidate. Implemented today:
 
 - Landing page
 - Paste-based email scan form
@@ -21,10 +21,9 @@ Built today:
 - Server-side analysis provider abstraction for heuristic mode and self-hosted AI mode
 - Abuse controls, security/privacy guardrails, and browser smoke tests
 - Vercel and local self-hosting documentation
+- Launch metadata, generated favicon/social image, and accessibility basics
 
-Planned before v1:
-
-- Final visual, metadata, and accessibility polish
+The technical roadmap is implemented. The remaining release steps are operational: choose the final public name/domain, deploy the heuristic demo, run the post-deploy checklist, and create the first release tag.
 
 ## Tech Stack
 

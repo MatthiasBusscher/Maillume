@@ -15,6 +15,7 @@ test("paste analysis renders a structured result and disclaimer", async ({ page 
 
   await expect(page.getByText("Risk score")).toBeVisible();
   await expect(page.getByText("Suspicious signals")).toBeVisible();
+  await expect(page.getByRole("meter")).toHaveAttribute("aria-valuenow", /\d+/);
   await expect(
     page.getByText("This is an automated risk assessment and should not be considered a guarantee."),
   ).toBeVisible();
@@ -23,11 +24,22 @@ test("paste analysis renders a structured result and disclaimer", async ({ page 
 test("language switching updates the scanner", async ({ page }) => {
   await page.getByTitle("Nederlands").click();
 
+  await expect(page.locator("html")).toHaveAttribute("lang", "nl");
   await expect(page.getByRole("heading", { name: "Controleer een verdachte e-mail" })).toBeVisible();
   await expect(page.getByRole("button", { name: "E-mail analyseren" })).toBeVisible();
 
   await page.getByTitle("English").click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByRole("heading", { name: "Check a suspicious email" })).toBeVisible();
+});
+
+test("keyboard users can skip directly to the scanner", async ({ page }) => {
+  await page.keyboard.press("Tab");
+
+  const skipLink = page.getByRole("link", { name: "Skip to scanner" });
+  await expect(skipLink).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#scanner")).toBeFocused();
 });
 
 test("eml upload is parsed and can be analyzed", async ({ page }) => {
@@ -73,4 +85,25 @@ test("rate-limited analysis shows a clear localized error", async ({ page }) => 
   await expect(page.locator("form [role='alert']")).toContainText(
     "Too many AI analyses were requested. Please wait and try again.",
   );
+});
+
+test("launch metadata and generated assets are available", async ({ page, request }) => {
+  await expect(page).toHaveTitle("Inbox Risk Scanner");
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    /privacy-first automated risk assessment/i,
+  );
+
+  const [iconResponse, openGraphResponse, manifestResponse] = await Promise.all([
+    request.get("/icon"),
+    request.get("/opengraph-image"),
+    request.get("/manifest.webmanifest"),
+  ]);
+
+  expect(iconResponse.ok()).toBe(true);
+  expect(iconResponse.headers()["content-type"]).toContain("image/png");
+  expect(openGraphResponse.ok()).toBe(true);
+  expect(openGraphResponse.headers()["content-type"]).toContain("image/png");
+  expect(manifestResponse.ok()).toBe(true);
+  expect(manifestResponse.headers()["content-type"]).toContain("application/manifest+json");
 });

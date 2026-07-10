@@ -456,5 +456,5 @@ function getExplanation(level: RiskLevel, signalCount: number, linkCount: number
     return `This message has some warning signs worth reviewing before taking action. ${linkCount > 0 ? "Pay special attention to the link destination." : "The text itself carries most of the risk."}`;
   }
 
-  return "This message does not strongly match the basic phishing or spam patterns checked in this prototype.";
+  return "This message does not strongly match the phishing or spam patterns checked by this assessment.";
 }

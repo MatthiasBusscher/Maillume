@@ -20,8 +20,18 @@ export function HomePage() {
     setLocale(getBrowserLocale(window.navigator.language));
   }, []);
 
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   return (
     <main className="min-h-screen">
+      <a
+        href="#scanner"
+        className="fixed left-4 top-4 z-50 -translate-y-20 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-lg transition focus:translate-y-0"
+      >
+        {dictionary.app.skipToScanner}
+      </a>
       <header className="border-b border-white/80 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
@@ -36,7 +46,7 @@ export function HomePage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
             <LanguageSwitcher
               dictionary={dictionary}
               locale={locale}
@@ -66,10 +76,13 @@ export function HomePage() {
         </div>
       </section>
 
-      <section id="scanner" className="mx-auto max-w-7xl px-5 pb-16 sm:px-6 lg:px-8">
+      <section
+        id="scanner"
+        tabIndex={-1}
+        className="mx-auto max-w-7xl scroll-mt-6 px-5 pb-16 outline-none sm:px-6 lg:px-8"
+      >
         <EmailScanForm dictionary={dictionary} />
       </section>
     </main>
   );
 }
-
