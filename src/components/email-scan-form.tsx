@@ -89,7 +89,7 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
 
       if (!response.ok || "error" in payload) {
         setResult(null);
-        setError(dictionary.form.analysisFailed);
+        setError(getAnalysisErrorMessage(response.status, dictionary));
         return;
       }
 
@@ -336,7 +336,10 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
         </label>
 
         {error ? (
-          <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm leading-6 text-rose-800">
+          <div
+            role="alert"
+            className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm leading-6 text-rose-800"
+          >
             {error}
           </div>
         ) : null}
@@ -372,6 +375,18 @@ export function EmailScanForm({ dictionary }: EmailScanFormProps) {
       </section>
     </div>
   );
+}
+
+function getAnalysisErrorMessage(status: number, dictionary: Dictionary): string {
+  if (status === 429) {
+    return dictionary.form.rateLimited;
+  }
+
+  if (status >= 500) {
+    return dictionary.form.serviceUnavailable;
+  }
+
+  return dictionary.form.analysisFailed;
 }
 
 function ModeButton({

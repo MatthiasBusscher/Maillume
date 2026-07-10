@@ -26,8 +26,6 @@ export type AiRateLimitConfig = {
 type AnalysisEnv = Record<string, string | undefined>;
 
 const AI_PROVIDERS = new Set<AiProviderName>(["openai", "anthropic", "openai-compatible"]);
-const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
-const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5";
 const DEFAULT_MAX_OUTPUT_TOKENS = 800;
 const MAX_OUTPUT_TOKEN_LIMIT = 2_000;
 const DEFAULT_AI_RATE_LIMIT_MAX_REQUESTS = 10;
@@ -123,32 +121,32 @@ function getProviderApiKey(provider: AiProviderName, env: AnalysisEnv): string |
 }
 
 function getAiModel(provider: AiProviderName, env: AnalysisEnv): string {
-  if (provider === "openai-compatible") {
-    const model = normalizeModelName(env.AI_MODEL);
-
-    if (!model) {
-      throw new AnalysisConfigError("AI mode with openai-compatible requires AI_MODEL.");
-    }
-
-    return model;
-  }
-
   const providerModel =
     provider === "openai"
       ? normalizeModelName(env.OPENAI_MODEL)
-      : normalizeModelName(env.ANTHROPIC_MODEL);
+      : provider === "anthropic"
+        ? normalizeModelName(env.ANTHROPIC_MODEL)
+        : undefined;
   const sharedModel = normalizeModelName(env.AI_MODEL);
+  const model = providerModel ?? sharedModel;
 
-  return providerModel ?? sharedModel ?? getDefaultModel(provider);
+  if (!model) {
+    const providerModelName =
+      provider === "openai"
+        ? "OPENAI_MODEL or AI_MODEL"
+        : provider === "anthropic"
+          ? "ANTHROPIC_MODEL or AI_MODEL"
+          : "AI_MODEL";
+
+    throw new AnalysisConfigError(`AI mode with ${provider} requires ${providerModelName}.`);
+  }
+
+  return model;
 }
 
 function normalizeModelName(value: string | undefined): string | undefined {
   const normalized = value?.trim();
   return normalized ? normalized : undefined;
-}
-
-function getDefaultModel(provider: AiProviderName): string {
-  return provider === "openai" ? DEFAULT_OPENAI_MODEL : DEFAULT_ANTHROPIC_MODEL;
 }
 
 function getAiBaseUrl(provider: AiProviderName, env: AnalysisEnv): string | undefined {

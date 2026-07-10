@@ -1,0 +1,10 @@
+From: Security Team <security@microsoft-login-alert.example>
+To: recipient@example.test
+Subject: Action required: mailbox access expires today
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+
+Your mailbox access expires today. Verify your password immediately at
+https://microsoft-login-alert.example/verify to prevent suspension.
+
+This is synthetic test data and contains no real account information.

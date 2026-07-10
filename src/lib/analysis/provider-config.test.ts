@@ -54,6 +54,28 @@ async function main() {
   );
 
   assert.throws(
+    () =>
+      getAnalysisConfig({
+        ANALYSIS_MODE: "ai",
+        AI_PROVIDER: "openai",
+        OPENAI_API_KEY: "fake-openai-key-for-tests",
+      }),
+    AnalysisConfigError,
+    "OpenAI mode requires an explicit model",
+  );
+
+  assert.throws(
+    () =>
+      getAnalysisConfig({
+        ANALYSIS_MODE: "ai",
+        AI_PROVIDER: "anthropic",
+        ANTHROPIC_API_KEY: "fake-anthropic-key-for-tests",
+      }),
+    AnalysisConfigError,
+    "Anthropic mode requires an explicit model",
+  );
+
+  assert.throws(
     () => getAnalysisConfig({ ANALYSIS_MODE: "ai", AI_PROVIDER: "openai-compatible" }),
     AnalysisConfigError,
     "OpenAI-compatible mode requires a generic AI key",
@@ -100,6 +122,7 @@ async function main() {
         ANALYSIS_MODE: "ai",
         AI_PROVIDER: "openai",
         OPENAI_API_KEY: "fake-openai-key-for-tests",
+        OPENAI_MODEL: "openai-test-model",
         AI_MAX_OUTPUT_TOKENS: "20",
       }),
     AnalysisConfigError,
@@ -153,6 +176,7 @@ async function main() {
     ANALYSIS_MODE: "ai",
     AI_PROVIDER: "openai",
     AI_API_KEY: "fake-generic-openai-key-for-tests",
+    AI_MODEL: "shared-test-model",
   });
 
   assert.equal(openAiGenericKeyConfig.provider, "openai");
@@ -162,6 +186,7 @@ async function main() {
     ANALYSIS_MODE: "ai",
     AI_PROVIDER: "openai",
     OPENAI_API_KEY: "fake-openai-key-for-tests",
+    OPENAI_MODEL: "openai-test-model",
     AI_RATE_LIMIT_ENABLED: "false",
     AI_RATE_LIMIT_MAX_REQUESTS: "25",
     AI_RATE_LIMIT_WINDOW_SECONDS: "120",
@@ -180,6 +205,7 @@ async function main() {
         ANALYSIS_MODE: "ai",
         AI_PROVIDER: "openai",
         OPENAI_API_KEY: "fake-openai-key-for-tests",
+        OPENAI_MODEL: "openai-test-model",
         AI_RATE_LIMIT_ENABLED: "maybe",
       }),
     AnalysisConfigError,
@@ -192,6 +218,7 @@ async function main() {
         ANALYSIS_MODE: "ai",
         AI_PROVIDER: "openai",
         OPENAI_API_KEY: "fake-openai-key-for-tests",
+        OPENAI_MODEL: "openai-test-model",
         AI_RATE_LIMIT_MAX_REQUESTS: "0",
       }),
     AnalysisConfigError,
@@ -204,6 +231,7 @@ async function main() {
         ANALYSIS_MODE: "ai",
         AI_PROVIDER: "openai",
         OPENAI_API_KEY: "fake-openai-key-for-tests",
+        OPENAI_MODEL: "openai-test-model",
         AI_RATE_LIMIT_WINDOW_SECONDS: "0",
       }),
     AnalysisConfigError,

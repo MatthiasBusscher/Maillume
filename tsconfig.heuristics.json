@@ -22,6 +22,8 @@
     "src/lib/analysis/config.ts",
     "src/lib/analysis/rate-limit.ts",
     "src/lib/analysis/providers.ts",
+    "src/lib/eml/parse-eml.test.ts",
+    "src/lib/eml/parse-eml.ts",
     "src/lib/evaluation/email-fixtures.test.ts",
     "src/lib/evaluation/email-fixtures.ts",
     "src/lib/security/privacy-review.test.ts",

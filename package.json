@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test:analysis": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/evaluation/email-fixtures.test.js && node .analysis-tests/src/lib/analysis/heuristic-analysis.test.js && node .analysis-tests/src/lib/analysis/provider-config.test.js && node .analysis-tests/src/lib/analysis/rate-limit.test.js && node .analysis-tests/src/lib/scan-limits.test.js",
+    "test:analysis": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/evaluation/email-fixtures.test.js && node .analysis-tests/src/lib/analysis/heuristic-analysis.test.js && node .analysis-tests/src/lib/analysis/provider-config.test.js && node .analysis-tests/src/lib/analysis/rate-limit.test.js && node .analysis-tests/src/lib/eml/parse-eml.test.js && node .analysis-tests/src/lib/scan-limits.test.js",
     "test:heuristics": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/analysis/heuristic-analysis.test.js",
     "test:security": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/security/privacy-review.test.js",
+    "test:smoke": "playwright test",
+    "test:smoke:ui": "playwright test --ui",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -21,14 +23,18 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.3",
-    "postcss": "^8.4.49",
+    "postcss": "^8.5.16",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2"
+  },
+  "overrides": {
+    "postcss": "$postcss"
   }
 }
