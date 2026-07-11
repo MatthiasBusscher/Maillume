@@ -1,0 +1,119 @@
+"use client";
+
+import { AlertTriangle, CheckCircle2, KeyRound, ScanSearch } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import type { EmailAnalysisResult } from "@/lib/types";
+
+type OfficeAsyncResult = { status: string; value?: string; error?: { message?: string } };
+type OutlookItem = {
+  body: { getAsync: (coercion: string, callback: (result: OfficeAsyncResult) => void) => void };
+  from?: { emailAddress?: string };
+  sender?: { emailAddress?: string };
+  subject?: string;
+};
+type OfficeApi = {
+  AsyncResultStatus: { Succeeded: string };
+  CoercionType: { Text: string };
+  context: { mailbox?: { item?: OutlookItem } };
+  onReady: (callback: (info: { host?: string }) => void) => void;
+};
+
+declare global { interface Window { Office?: OfficeApi } }
+
+export function OutlookIntegration() {
+  const [ready, setReady] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const [status, setStatus] = useState("Connecting to Outlook...");
+  const [result, setResult] = useState<EmailAnalysisResult>();
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setApiKey(window.localStorage.getItem("maillume-outlook-api-key") ?? "");
+    let attempts = 0;
+    const connect = () => {
+      if (window.Office) {
+        window.Office.onReady(() => {
+          const hasMessage = Boolean(window.Office?.context.mailbox?.item);
+          setReady(hasMessage);
+          setStatus(hasMessage ? "Ready. Nothing has been sent." : "Open this pane from a message in Outlook.");
+        });
+      } else if (attempts < 40) {
+        attempts += 1;
+        window.setTimeout(connect, 100);
+      } else {
+        setStatus("Outlook could not initialize this add-in.");
+      }
+    };
+    connect();
+  }, []);
+
+  function saveKey() {
+    if (!/^mlm_[A-Za-z0-9_-]{43}$/.test(apiKey.trim())) return setStatus("Enter a valid Maillume API key.");
+    window.localStorage.setItem("maillume-outlook-api-key", apiKey.trim());
+    setStatus("API key saved in this Outlook add-in profile.");
+  }
+
+  async function analyzeMessage() {
+    const office = window.Office;
+    const item = office?.context.mailbox?.item;
+    const key = apiKey.trim();
+    if (!office || !item || !key) return setStatus("Open a message and configure an API key first.");
+
+    setBusy(true); setResult(undefined); setStatus("Reading the open message after your confirmation...");
+    try {
+      const body = await new Promise<string>((resolve, reject) => {
+        item.body.getAsync(office.CoercionType.Text, (response) => {
+          if (response.status === office.AsyncResultStatus.Succeeded && typeof response.value === "string") resolve(response.value);
+          else reject(new Error(response.error?.message || "Outlook could not read this message."));
+        });
+      });
+
+      setStatus("Sending this message to app.maillume.io for a one-time assessment...");
+      const response = await fetch("/api/v1/analyze", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: "paste",
+          subject: item.subject?.slice(0, 300),
+          senderEmail: (item.from?.emailAddress ?? item.sender?.emailAddress)?.slice(0, 320),
+          body: body.slice(0, 20000),
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Maillume analysis failed.");
+      setResult(payload.result);
+      setStatus("Assessment complete. The message and result were not saved.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Maillume analysis failed.");
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="mx-auto max-w-xl p-4 sm:p-6">
+      <header className="flex items-center gap-3 border border-[#111711] bg-[#111711] p-4 text-white">
+        <span className="grid h-10 w-10 place-items-center border-2 border-[#dfff52] font-bold text-[#dfff52]">M</span>
+        <div><h1 className="font-semibold">Maillume for Outlook</h1><p className="mt-1 font-mono text-[9px] uppercase text-[#bac4b8]">Current-message assessment</p></div>
+      </header>
+
+      <section className="border-x border-b border-[#aeb6ac] bg-white p-5">
+        <p className="text-sm leading-6 text-[#59655a]">Maillume reads the open message only after you press Analyze this message. It does not scan your mailbox in the background.</p>
+        <details className="mt-5 border-y border-[#d8dcd3] py-4">
+          <summary className="cursor-pointer text-sm font-semibold"><KeyRound className="mr-2 inline h-4 w-4" /> API key</summary>
+          <div className="mt-4 flex gap-2"><input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} placeholder="mlm_..." className="h-10 min-w-0 flex-1 border border-[#aeb6ac] px-3 text-sm" /><button type="button" onClick={saveKey} className="h-10 bg-[#111711] px-3 text-sm font-semibold text-white">Save</button></div>
+        </details>
+        <button type="button" onClick={analyzeMessage} disabled={!ready || !apiKey || busy} className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 bg-[#dfff52] px-4 text-sm font-bold text-[#111711] disabled:opacity-50"><ScanSearch className="h-4 w-4" /> {busy ? "Analyzing..." : "Analyze this message"}</button>
+        <p role="status" className="mt-3 min-h-6 text-xs leading-5 text-[#59655a]">{status}</p>
+      </section>
+
+      {result ? <section className="border-x border-b border-[#111711] bg-white p-5">
+        <div className="flex items-end justify-between border-b border-[#aeb6ac] pb-4"><div><p className="font-mono text-[9px] uppercase text-[#687268]">Risk score</p><p className="font-mono text-5xl font-semibold">{result.risk_score}</p></div><span className="border border-[#d84c3c] bg-[#ffe2dd] px-2 py-1 text-[10px] font-bold uppercase text-[#8f251b]">{result.risk_level}</span></div>
+        <p className="mt-4 text-sm leading-6 text-[#4f5b50]">{result.short_explanation}</p>
+        <h2 className="mt-5 text-sm font-semibold"><AlertTriangle className="mr-2 inline h-4 w-4 text-[#ff705f]" /> Suspicious signals</h2>
+        <ul className="mt-2 space-y-2 text-xs leading-5 text-[#59655a]">{result.suspicious_signals.map((signal) => <li key={signal}>{signal}</li>)}</ul>
+        <h2 className="mt-5 text-sm font-semibold"><CheckCircle2 className="mr-2 inline h-4 w-4 text-[#087b72]" /> Recommended action</h2><p className="mt-2 text-xs leading-5 text-[#59655a]">{result.recommended_action}</p>
+        <p className="mt-5 border-t border-[#aeb6ac] pt-4 text-[10px] leading-4 text-[#687268]">This is an automated risk assessment and should not be considered a guarantee.</p>
+      </section> : null}
+    </div>
+  );
+}

@@ -1,0 +1,36 @@
+{
+  "timeZone": "Europe/Amsterdam",
+  "dependencies": {},
+  "exceptionLogging": "NONE",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/gmail.addons.execute",
+    "https://www.googleapis.com/auth/gmail.addons.current.message.readonly",
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "urlFetchWhitelist": [
+    "https://app.maillume.io/"
+  ],
+  "addOns": {
+    "common": {
+      "name": "Maillume",
+      "logoUrl": "https://maillume.io/integration-icons/icon-80.png",
+      "layoutProperties": {
+        "primaryColor": "#111711",
+        "secondaryColor": "#dfff52"
+      },
+      "homepageTrigger": {
+        "runFunction": "buildHomeCard"
+      },
+      "useLocaleFromApp": true
+    },
+    "gmail": {
+      "contextualTriggers": [
+        {
+          "unconditional": {},
+          "onTriggerFunction": "buildMessageCard"
+        }
+      ]
+    }
+  }
+}

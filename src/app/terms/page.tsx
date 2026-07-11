@@ -30,6 +30,7 @@ export default function TermsPage() {
 
       <TrustSection title="Accounts">
         <p>An account is not required for the free scanner. If you use Google sign-in, you are responsible for maintaining control of that Google account and for activity performed through your session. Production deployments must provide self-service deletion of the authentication identity.</p>
+        <p>Integration API keys are credentials. Keep them private, revoke keys you no longer use or suspect are exposed, and do not attempt to evade monthly or abuse limits. Beta quotas may change before commercial launch.</p>
       </TrustSection>
 
       <TrustSection title="Availability and changes">

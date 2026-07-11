@@ -8,11 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test:analysis": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/evaluation/email-fixtures.test.js && node .analysis-tests/src/lib/analysis/heuristic-analysis.test.js && node .analysis-tests/src/lib/analysis/provider-config.test.js && node .analysis-tests/src/lib/analysis/rate-limit.test.js && node .analysis-tests/src/lib/analysis/concurrency.test.js && node .analysis-tests/src/lib/eml/parse-eml.test.js && node .analysis-tests/src/lib/feedback/feedback.test.js && node .analysis-tests/src/lib/supabase/config.test.js && node .analysis-tests/src/lib/scan-limits.test.js",
+    "test:analysis": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/evaluation/email-fixtures.test.js && node .analysis-tests/src/lib/analysis/heuristic-analysis.test.js && node .analysis-tests/src/lib/analysis/provider-config.test.js && node .analysis-tests/src/lib/analysis/rate-limit.test.js && node .analysis-tests/src/lib/analysis/concurrency.test.js && node .analysis-tests/src/lib/eml/parse-eml.test.js && node .analysis-tests/src/lib/feedback/feedback.test.js && node .analysis-tests/src/lib/supabase/config.test.js && node .analysis-tests/src/lib/scan-limits.test.js && node .analysis-tests/src/lib/api-keys.test.js",
     "test:heuristics": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/analysis/heuristic-analysis.test.js",
     "test:security": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/security/privacy-review.test.js",
     "test:smoke": "playwright test",
     "test:smoke:ui": "playwright test --ui",
+    "package:extension": "./scripts/package-browser-extension.sh",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -2,7 +2,7 @@ import { AlertTriangle, Check, Link2, Mail, ScanSearch } from "lucide-react";
 
 export function ScannerPreview() {
   return (
-    <div className="overflow-hidden border border-white/30 bg-[#eef1eb] text-[#111711] shadow-[0_32px_90px_rgba(0,0,0,0.42)]">
+    <div data-testid="scanner-preview" className="overflow-hidden border border-white/30 bg-[#eef1eb] text-[#111711] shadow-[0_32px_90px_rgba(0,0,0,0.42)]">
       <div className="flex h-11 items-center justify-between border-b border-[#aeb6ac] bg-white px-4">
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 bg-[#ff705f]" />
@@ -11,8 +11,8 @@ export function ScannerPreview() {
         </div>
         <span className="font-mono text-[9px] uppercase text-[#687268]">app.maillume.io</span>
       </div>
-      <div className="grid min-h-[360px] grid-cols-[1.05fr_0.95fr]">
-        <div className="border-r border-[#bfc5bc] bg-white p-5">
+      <div className="grid sm:grid-cols-[1.05fr_0.95fr]">
+        <div className="border-b border-[#bfc5bc] bg-white p-4 sm:min-h-[360px] sm:border-b-0 sm:border-r sm:p-5">
           <div className="flex items-center justify-between border-b border-[#d6dad3] pb-4">
             <div>
               <p className="font-mono text-[9px] uppercase text-[#087b72]">Email analysis</p>
@@ -20,7 +20,7 @@ export function ScannerPreview() {
             </div>
             <Mail className="h-5 w-5 text-[#536053]" aria-hidden="true" />
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid gap-3 min-[440px]:grid-cols-2">
             <PreviewField label="Subject" value="Invoice overdue: action required" />
             <PreviewField label="Sender" value="billing@vendor-check.example" />
           </div>
@@ -37,7 +37,7 @@ export function ScannerPreview() {
             </span>
           </div>
         </div>
-        <div className="bg-[#f5f7f2] p-5">
+        <div data-testid="scanner-preview-result" className="bg-[#f5f7f2] p-4 sm:p-5">
           <div className="flex items-end justify-between border-b border-[#cbd0c7] pb-4">
             <div>
               <p className="font-mono text-[9px] uppercase text-[#687268]">Risk score</p>

@@ -33,6 +33,12 @@ export default function PrivacyPage() {
       <TrustSection title="Optional accounts">
         <p>Google sign-in is optional and is provided through Supabase when enabled. The account may include your email address, display name, provider identifier, session cookies, and basic authentication metadata.</p>
         <p>Signing in does not create scan history. Authentication cookies are used to maintain the signed-in session. When production authentication is enabled, the account page provides confirmation-gated deletion of the Supabase identity.</p>
+        <p>When you create an integration API key, Maillume stores its owner, name, short prefix, SHA-256 hash, quota, timestamps, UTC billing month, and aggregate request count. The plaintext key is shown once. API usage records exclude message content, results, links, IP addresses, and message identifiers.</p>
+      </TrustSection>
+
+      <TrustSection title="Browser and mail integrations">
+        <p>The browser extension captures only text you explicitly select. The Gmail and Outlook add-ons access only the currently open message after you press their Analyze action. They send the reviewed or current message fields to the displayed or fixed Maillume deployment for that assessment.</p>
+        <p>The integrations do not perform background mailbox scanning and do not persist message content or results. Their local credential storage is controlled by the browser, Google, or Microsoft host environment.</p>
       </TrustSection>
 
       <TrustSection title="Service providers">

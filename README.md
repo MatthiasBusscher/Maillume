@@ -25,6 +25,8 @@ The repository is a v1 launch candidate. Implemented today:
 - Server-side analysis provider abstraction for heuristic mode and self-hosted AI mode
 - Abuse controls, security/privacy guardrails, and browser smoke tests
 - Optional non-content result feedback with a strict allowlist and Supabase retention schema
+- Authenticated hosted API keys with atomic monthly quotas and aggregate-only usage metadata
+- Source-available Manifest V3 browser extension, Gmail Workspace add-on, and Outlook read-mode add-in
 - Portable Docker, Hostinger VPS, Cloudflare Tunnel, and local self-hosting documentation
 - Launch metadata, generated favicon/social image, and accessibility basics
 
@@ -95,7 +97,7 @@ See `.env.example` for the full environment shape.
 - Screenshot OCR and `.eml` parsing run in the browser before normalized text is sent for analysis.
 - Contributors should only share synthetic or fully sanitized examples in issues and tests.
 
-The proposed hosted product boundaries, cost model, retention targets, privacy disclosures, and launch gates are in `docs/hosted-service.md`. Google sign-in exists, but account preferences, hosted AI allowances, and payment features are not implemented.
+The hosted product boundaries, cost model, retention targets, privacy disclosures, and launch gates are in `docs/hosted-service.md`. Google sign-in and quota-limited integration API keys exist; hosted AI allowances, account preferences, and payments remain unimplemented.
 
 ## Local Development
 
@@ -126,6 +128,8 @@ npm run build
 - Deployment and self-hosting: `docs/deployment.md`
 - Production operations: `docs/operations.md`
 - Private beta checklist: `docs/launch-checklist.md`
+- Integrations and hosted API: `docs/integrations.md`
+- Integration marketplace publication: `docs/integration-publication.md`
 - Evaluation fixtures: `docs/evaluation.md`
 - Privacy-safe feedback: `docs/feedback.md`
 - Hosted service architecture: `docs/hosted-service.md`

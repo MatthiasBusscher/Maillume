@@ -29,6 +29,8 @@ export default function SecurityPage() {
           "Application and edge rate limits reject abusive analysis traffic before provider invocation.",
           "Analysis and feedback responses use no-store caching behavior.",
           "Optional feedback uses an allowlist that rejects email-content fields.",
+          "Integration API keys are shown once and stored only as SHA-256 hashes with revocable, atomic quotas.",
+          "Gmail uses temporary current-message scope, Outlook uses ReadItem, and the browser extension uses activeTab selection access.",
           "Public hosted analysis remains heuristic-only until explicit AI privacy and cost gates pass.",
         ]} />
       </TrustSection>

@@ -267,4 +267,4 @@ The route must not write raw scan content, OCR text, `.eml` data, prompts, or re
 
 ## Future-Ready Boundaries
 
-The design leaves room for forwarded email ingestion, account preferences, team accounts, and paid hosted plans. Google authentication now exists as an optional identity foundation, but hosted AI, billing, scan history, teams, and mail-client integration are not implemented. See `docs/hosted-service.md` for the approved planning boundaries and launch gates.
+The design leaves room for forwarded email ingestion, account preferences, team accounts, and paid hosted plans. Google authentication, hashed API keys, atomic quotas, and explicit-action Chrome/Gmail/Outlook integrations are implemented. Hosted AI, billing, scan history, and teams remain unimplemented. See `docs/hosted-service.md` for the approved launch gates.

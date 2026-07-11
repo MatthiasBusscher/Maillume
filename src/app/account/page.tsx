@@ -3,6 +3,7 @@ import Link from "next/link";
 import { LogOut, ScanSearch, ShieldCheck, UserRound } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
+import { ApiKeyManager } from "@/components/api-key-manager";
 import { getAppHref, getMarketingHref } from "@/lib/site";
 import { getSupabaseAdminConfig } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -63,9 +64,11 @@ export default async function AccountPage() {
           <div className="border border-[#aeb6ac] bg-[#dfff52] p-6">
             <ShieldCheck className="h-5 w-5 text-[#087b72]" aria-hidden="true" />
             <h2 className="mt-5 text-xl font-semibold text-[#111711]">Account scope</h2>
-            <p className="mt-3 text-sm leading-6 text-[#455045]">Accounts currently provide authentication only. Preferences, managed allowances, and integrations remain roadmap items.</p>
+            <p className="mt-3 text-sm leading-6 text-[#455045]">Accounts provide authentication and revocable, quota-limited API keys for integrations. They never create scan history.</p>
           </div>
         </div>
+
+        {deletionConfigured ? <ApiKeyManager /> : null}
 
         <section className="mt-10 border-t border-[#aeb6ac] pt-8">
           <p className="font-mono text-[10px] uppercase text-[#b2382b]">Account control</p>

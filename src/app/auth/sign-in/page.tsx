@@ -26,7 +26,7 @@ export default function SignInPage() {
           <p className="font-mono text-[10px] uppercase text-[#dfff52]">Optional account</p>
           <h1 className="mt-4 text-4xl font-semibold leading-tight sm:text-5xl">Sign in for the services around the scanner.</h1>
           <p className="mt-5 text-base leading-7 text-[#c8d1c6]">
-            Anonymous email checks remain available without an account. Sign-in is the foundation for future preferences, managed allowances, and integrations, not scan history.
+            Anonymous email checks remain available without an account. Sign-in lets you create revocable API keys for the browser, Gmail, and Outlook integrations, never scan history.
           </p>
         </div>
         <div className="flex items-center gap-3 border-t border-white/20 pt-5 text-xs text-[#93a091]">

@@ -58,6 +58,16 @@ function main() {
   const nextConfigContent = readProjectFile("next.config.ts");
   const dockerfileContent = readProjectFile("Dockerfile");
   const composeContent = readProjectFile("docker-compose.production.yml");
+  const apiAccessMigration = readProjectFile(
+    "supabase/migrations/20260711120000_create_api_access.sql",
+  );
+  const hostedApiRoute = readProjectFile("src/app/api/v1/analyze/route.ts");
+  const extensionManifest = readProjectFile("integrations/browser-extension/manifest.json");
+  const extensionPanel = readProjectFile("integrations/browser-extension/sidepanel.js");
+  const gmailManifest = readProjectFile("integrations/gmail-addon/appsscript.json");
+  const gmailCode = readProjectFile("integrations/gmail-addon/Code.gs");
+  const outlookManifest = readProjectFile("public/outlook-manifest.xml");
+  const outlookComponent = readProjectFile("src/components/outlook-integration.tsx");
 
   assert.match(routeContent, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(routeContent, /console\./);
@@ -107,6 +117,26 @@ function main() {
   assert.match(composeContent, /read_only: true/);
   assert.match(composeContent, /no-new-privileges:true/);
   assert.match(composeContent, /max-size: 10m/);
+  assert.match(apiAccessMigration, /enable row level security/gi);
+  assert.match(apiAccessMigration, /secret_hash char\(64\)/);
+  assert.match(apiAccessMigration, /consume_api_quota/);
+  assert.match(apiAccessMigration, /purge_expired_api_usage/);
+  assert.doesNotMatch(apiAccessMigration, /^\s*(body|subject|sender_email|message_text|links|result|ip_address)\s+/im);
+  assert.doesNotMatch(hostedApiRoute, /console\.|writeFile|appendFile|createWriteStream/);
+  assert.match(hostedApiRoute, /hashApiKey\(token\)/);
+  assert.match(hostedApiRoute, /consume_api_quota/);
+  assert.match(extensionManifest, /"activeTab"/);
+  assert.doesNotMatch(extensionManifest, /"content_scripts"|"tabs"|mail\.google\.com|outlook\.office\.com/);
+  assert.doesNotMatch(extensionPanel, /storage\.local\.set\([^)]*(?:body|result)[\s\S]*?\)/);
+  assert.match(gmailManifest, /gmail\.addons\.current\.message\.readonly/);
+  assert.doesNotMatch(gmailManifest, /auth\/gmail\.readonly|auth\/gmail\.modify|auth\/gmail\"/);
+  assert.ok(
+    gmailCode.indexOf("Analyze this message") < gmailCode.indexOf("message.getPlainBody()"),
+    "Gmail UI must require an explicit analysis action before message reading",
+  );
+  assert.match(outlookManifest, /<Permissions>ReadItem<\/Permissions>/);
+  assert.doesNotMatch(outlookManifest, /ReadWriteMailbox/);
+  assert.doesNotMatch(outlookComponent, /localStorage\.setItem\([^)]*(?:body|result|subject|sender)[\s\S]*?\)/);
   assert.match(licenseContent, /GNU AFFERO GENERAL PUBLIC LICENSE/);
   assert.match(licenseContent, /13\. Remote Network Interaction/);
   assert.equal(packageMetadata.license, "AGPL-3.0-only");

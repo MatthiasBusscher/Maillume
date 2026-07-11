@@ -56,17 +56,13 @@ export default function MarketingHomePage() {
     <main className="min-h-screen bg-[#f7f8f4]">
       <SiteHeader />
 
-      <section className="relative h-[calc(100svh-7rem)] min-h-[560px] max-h-[760px] overflow-hidden border-b border-black bg-[#111711] text-white">
+      <section className="relative overflow-hidden border-b border-black bg-[#111711] text-white">
         <div className="pointer-events-none absolute inset-y-0 left-[8%] w-px bg-white/10" />
         <div className="pointer-events-none absolute inset-y-0 right-[13%] w-px bg-white/10" />
         <div className="pointer-events-none absolute inset-x-0 top-[30%] h-px bg-white/10" />
 
-        <div className="absolute left-5 top-[500px] w-[720px] sm:left-[36%] sm:top-[330px] lg:left-auto lg:right-[-110px] lg:top-16 lg:w-[780px] xl:right-[-40px] xl:w-[820px]">
-          <ScannerPreview />
-        </div>
-
-        <div className="relative z-10 mx-auto flex h-full max-w-[1440px] items-start px-5 pt-14 sm:px-6 sm:pt-16 lg:px-8 lg:pt-24">
-          <div className="max-w-[680px] lg:max-w-[430px] xl:max-w-[520px]">
+        <div className="relative z-10 mx-auto grid min-h-[calc(100svh-7rem)] max-w-[1440px] gap-12 px-5 pb-0 pt-14 sm:px-6 sm:pt-16 lg:min-h-[660px] lg:grid-cols-[minmax(340px,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:gap-12 lg:px-8 lg:py-16 xl:grid-cols-[minmax(420px,0.78fr)_minmax(0,1.22fr)] xl:gap-16">
+          <div className="max-w-[680px] lg:max-w-[520px] lg:self-center">
             <div className="flex items-center gap-3 font-mono text-[11px] uppercase text-[#dfff52]">
               <span className="h-px w-8 bg-[#dfff52]" aria-hidden="true" />
               Open-source email risk assessment
@@ -98,6 +94,10 @@ export default function MarketingHomePage() {
             <p className="mt-5 font-mono text-[10px] uppercase leading-5 text-[#93a091]">
               Free heuristic checks. No account required. No scan history.
             </p>
+          </div>
+
+          <div className="min-w-0 self-end lg:self-center">
+            <ScannerPreview />
           </div>
         </div>
       </section>

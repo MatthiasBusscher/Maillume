@@ -8,14 +8,14 @@ import { SOURCE_REPOSITORY_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Platform",
-  description: "The Maillume platform roadmap for APIs, browser extensions, and mail-client integrations.",
+  description: "Maillume hosted API, browser extension, Gmail add-on, and Outlook add-in.",
 };
 
 const roadmap = [
-  { status: "Available", title: "Structured analysis route", description: "Self-hosted deployments can call the same JSON endpoint used by the web scanner." },
-  { status: "Research", title: "Browser extension", description: "A low-friction way to send selected email content to a chosen Maillume deployment." },
-  { status: "Research", title: "Gmail and Outlook integration", description: "Mail-client surfaces with explicit user action and tightly scoped permissions." },
-  { status: "Planned", title: "Hosted API access", description: "Authenticated, quota-aware access after privacy, abuse, and cost controls are proven." },
+  { status: "Available", title: "Hosted API access", description: "Authenticated, revocable keys with a 100-call monthly beta quota and aggregate-only usage counters." },
+  { status: "Source beta", title: "Browser extension", description: "A Manifest V3 side panel that sends only text the user explicitly selects to a chosen deployment." },
+  { status: "Source beta", title: "Gmail add-on", description: "A current-message-only Workspace add-on that reads content after the user presses Analyze." },
+  { status: "Source beta", title: "Outlook add-in", description: "A ReadItem task pane for the open message, with no read/write mailbox permission or background scan." },
 ];
 
 export default function PlatformPage() {
@@ -25,7 +25,7 @@ export default function PlatformPage() {
       <PageIntro
         eyebrow="Maillume Platform"
         title="Bring a clear email risk report into the tools people already use."
-        description="The platform direction covers APIs, browser extensions, and mail-client integrations. This page distinguishes the working self-hosted endpoint from the integrations still being researched."
+        description="The platform now includes a quota-aware API and source-available integrations for Chrome, Gmail, and Outlook. Marketplace publication remains a release operation, not unfinished product design."
         actions={
           <>
             <a href="#today" className="inline-flex h-12 items-center gap-2 bg-[#dfff52] px-5 text-sm font-bold text-[#111711] hover:bg-white">See what works today <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
@@ -38,9 +38,9 @@ export default function PlatformPage() {
         <div className="mx-auto grid max-w-[1440px] gap-12 px-5 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
           <div>
             <p className="font-mono text-[10px] uppercase text-[#087b72]">Available today</p>
-            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">A predictable JSON contract in your own deployment.</h2>
+            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">A predictable, quota-aware JSON contract.</h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
-              The scanner posts normalized message content to `/api/analyze` and receives a score, level, signals, links, explanation, and recommended action. It is currently an internal/self-hosted endpoint, not a supported public SaaS API.
+              Integrations post normalized message content to `/api/v1/analyze` with a revocable account key and receive the same structured assessment as the scanner.
             </p>
             <ul className="mt-7 space-y-3">
               <PlatformCheck>Strict request size and field validation</PlatformCheck>
@@ -48,28 +48,32 @@ export default function PlatformPage() {
               <PlatformCheck>No-store response headers</PlatformCheck>
               <PlatformCheck>Automated-assessment disclaimer in every result</PlatformCheck>
             </ul>
+            <a href="/openapi.json" className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">OpenAPI specification <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
           </div>
 
           <div className="overflow-hidden border border-[#111711] bg-[#111711] text-white">
             <div className="flex h-11 items-center justify-between border-b border-white/20 px-4">
-              <span className="font-mono text-[10px] uppercase text-[#dfff52]">POST /api/analyze</span>
-              <span className="font-mono text-[9px] text-[#849083]">self-hosted</span>
+              <span className="font-mono text-[10px] uppercase text-[#dfff52]">POST /api/v1/analyze</span>
+              <span className="font-mono text-[9px] text-[#849083]">authenticated beta</span>
             </div>
-            <pre className="overflow-x-auto p-5 text-xs leading-6 text-[#d8e0d6]"><code>{`{
+            <pre className="overflow-x-auto p-5 text-xs leading-6 text-[#d8e0d6]"><code>{`Authorization: Bearer mlm_...
+
+{
   "source": "paste",
   "subject": "Action required",
   "senderEmail": "notice@example.test",
   "body": "Review this synthetic message..."
 }
 
-// result
+// response
 {
-  "risk_level": "high",
-  "risk_score": 82,
-  "suspicious_signals": ["..."],
-  "detected_links": ["..."],
-  "recommended_action": "...",
-  "short_explanation": "..."
+  "result": {
+    "risk_level": "high",
+    "risk_score": 82,
+    "suspicious_signals": ["..."],
+    "recommended_action": "..."
+  },
+  "privacy": { "stored": false }
 }`}</code></pre>
           </div>
         </div>
@@ -83,7 +87,7 @@ export default function PlatformPage() {
               <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">Convenient without becoming invisible.</h2>
             </div>
             <p className="max-w-3xl text-xl leading-8 text-[#d2e6e2]">
-              Mail integrations should analyze only after a clear user action, request the smallest practical permission scope, and show exactly which deployment receives the content.
+              Every integration analyzes only after a clear user action, requests the smallest practical permission scope, and shows or fixes the exact deployment receiving the content.
             </p>
           </div>
 
@@ -99,14 +103,14 @@ export default function PlatformPage() {
         <div className="mx-auto max-w-[1440px] px-5 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr]">
             <div>
-              <p className="font-mono text-[10px] uppercase text-[#087b72]">Open roadmap</p>
+              <p className="font-mono text-[10px] uppercase text-[#087b72]">Implemented surfaces</p>
               <h2 className="mt-4 text-3xl font-semibold text-[#111711]">From endpoint to inbox.</h2>
             </div>
             <div className="border-t border-[#aeb6ac]">
               {roadmap.map((item, index) => (
                 <div key={item.title} className="grid gap-3 border-b border-[#cbd0c5] py-6 sm:grid-cols-[54px_120px_0.7fr_1fr] sm:items-start sm:gap-5">
                   <span className="font-mono text-[10px] text-[#778177]">0{index + 1}</span>
-                  <span className={`w-fit border px-2 py-1 font-mono text-[9px] uppercase ${item.status === "Available" ? "border-[#087b72] bg-[#e2f4ef] text-[#165f57]" : "border-[#c78c32] bg-[#fff0cf] text-[#714812]"}`}>{item.status}</span>
+                  <span className={`w-fit border px-2 py-1 font-mono text-[9px] uppercase ${item.status === "Available" ? "border-[#087b72] bg-[#e2f4ef] text-[#165f57]" : "border-[#111711] bg-[#eef1eb] text-[#374238]"}`}>{item.status}</span>
                   <h3 className="font-semibold text-[#111711]">{item.title}</h3>
                   <p className="text-sm leading-6 text-[#59655a]">{item.description}</p>
                 </div>

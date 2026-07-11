@@ -21,6 +21,8 @@
 
 - [ ] Supabase production migrations and RLS are verified.
 - [ ] Google OAuth permits only the production callback and account deletion works.
+- [ ] API-key creation, one-time display, revocation, quota exhaustion, and account-deletion cascade pass against production Supabase.
+- [ ] Chrome extension, Gmail add-on, and Outlook add-in pass provider validation using synthetic messages and published privacy disclosures.
 - [ ] Uptime and VPS alerts reach the operator without including scan content.
 - [ ] DDoS, credential rotation, rollback, and compromised-host runbooks are rehearsed.
 - [ ] A small invited beta completes successfully before broad anonymous traffic is announced.

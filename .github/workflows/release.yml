@@ -29,6 +29,12 @@ jobs:
         env:
           ANALYSIS_MODE: heuristic
       - run: npm run test:smoke
+      - run: npm run package:extension
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maillume-browser-extension
+          path: dist/maillume-browser-extension.zip
+          if-no-files-found: error
 
   image:
     needs: verify

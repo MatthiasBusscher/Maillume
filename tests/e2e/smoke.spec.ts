@@ -202,7 +202,7 @@ test("feedback controls work from the keyboard and reject content fields", async
   await expect(page.getByText("Feedback received")).toBeVisible();
 });
 
-test("marketing routes present the product without claiming roadmap features are live", async ({ page }) => {
+test("marketing routes accurately distinguish available and source-beta features", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "Maillume", exact: true })).toBeVisible();
@@ -221,7 +221,8 @@ test("marketing routes present the product without claiming roadmap features are
 
   await page.goto("/platform");
   await expect(page.getByText("Available today").first()).toBeVisible();
-  await expect(page.getByText("Research", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Available", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Source beta", { exact: true }).first()).toBeVisible();
 });
 
 test("Google sign-in degrades safely when Supabase auth is not configured", async ({ page }) => {
@@ -309,7 +310,9 @@ test("the sourced Odido incident resource states Maillume's limits", async ({ pa
 test("primary pages fit mobile and desktop viewports without horizontal overflow", async ({ page }) => {
   for (const viewport of [
     { width: 390, height: 844 },
+    { width: 1024, height: 768 },
     { width: 1440, height: 900 },
+    { width: 1570, height: 1599 },
   ]) {
     await page.setViewportSize(viewport);
 
@@ -321,6 +324,39 @@ test("primary pages fit mobile and desktop viewports without horizontal overflow
         scrollWidth: document.documentElement.scrollWidth,
       }));
       expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
+
+      if (path === "/") {
+        for (const testId of ["scanner-preview", "scanner-preview-result"]) {
+          const box = await page.getByTestId(testId).boundingBox();
+          expect(box).not.toBeNull();
+          expect(box!.x).toBeGreaterThanOrEqual(0);
+          expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width + 1);
+        }
+      }
     }
   }
+});
+
+test("hosted API requires a valid API key before reading scan content", async ({ request }) => {
+  const response = await request.post("/api/v1/analyze", {
+    data: { source: "paste", body: "Synthetic message" },
+  });
+
+  expect(response.status()).toBe(401);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+});
+
+test("hosted API publishes its machine-readable contract", async ({ request }) => {
+  const response = await request.get("/openapi.json");
+  expect(response.ok()).toBe(true);
+  const specification = await response.json();
+  expect(specification.openapi).toBe("3.1.0");
+  expect(specification.paths["/api/v1/analyze"].post.security).toEqual([{ apiKey: [] }]);
+});
+
+test("Outlook task pane explains explicit current-message access", async ({ page }) => {
+  await page.goto("/integrations/outlook");
+  await expect(page.getByRole("heading", { name: "Maillume for Outlook" })).toBeVisible();
+  await expect(page.getByText(/reads the open message only after/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Analyze this message" })).toBeDisabled();
 });
