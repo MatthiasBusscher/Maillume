@@ -380,3 +380,43 @@ test("Outlook task pane explains explicit current-message access", async ({ page
   await expect(page.getByText(/reads the open message only after/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Analyze this message" })).toBeDisabled();
 });
+
+test("Outlook reads only after confirmation and can be embedded by Office", async ({ page, request }) => {
+  const paneResponse = await request.get("/integrations/outlook");
+  expect(paneResponse.headers()["x-frame-options"]).toBeUndefined();
+  expect(paneResponse.headers()["content-security-policy"]).toContain("https://*.office.com");
+
+  await page.addInitScript(() => {
+    const state = window as typeof window & { __outlookReads: number; Office: unknown };
+    state.__outlookReads = 0;
+    window.localStorage.setItem("maillume-outlook-api-key", `mlm_${"a".repeat(43)}`);
+    state.Office = {
+      AsyncResultStatus: { Succeeded: "succeeded" },
+      CoercionType: { Text: "text" },
+      onReady: (callback: (info: { host: string }) => void) => callback({ host: "Outlook" }),
+      context: { mailbox: { item: {
+        subject: "Synthetic Outlook message",
+        from: { emailAddress: "sender@example.com" },
+        body: { getAsync: (_type: string, callback: (result: { status: string; value?: string; error?: { message?: string } }) => void) => {
+          state.__outlookReads += 1;
+          callback({ status: "succeeded", value: "Synthetic message body" });
+        } },
+      } } },
+    };
+  });
+  let submitted: Record<string, unknown> | undefined;
+  await page.route("**/api/v1/analyze", async (route) => {
+    submitted = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({ contentType: "application/json", json: { result: {
+      risk_level: "low", risk_score: 10, suspicious_signals: [], detected_links: [],
+      recommended_action: "Continue with normal caution.", short_explanation: "No major warning signs.",
+    } } });
+  });
+  await page.goto("/nl/integrations/outlook");
+  await expect.poll(() => page.evaluate(() => (window as typeof window & { __outlookReads: number }).__outlookReads)).toBe(0);
+  const analyze = page.getByRole("button", { name: "Dit bericht analyseren" });
+  await expect(analyze).toBeEnabled();
+  await analyze.click();
+  await expect.poll(() => page.evaluate(() => (window as typeof window & { __outlookReads: number }).__outlookReads)).toBe(1);
+  expect(submitted).toMatchObject({ body: "Synthetic message body", locale: "nl", subject: "Synthetic Outlook message" });
+});

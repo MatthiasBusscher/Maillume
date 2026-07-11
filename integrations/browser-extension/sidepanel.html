@@ -11,7 +11,7 @@
       <div class="mark" aria-hidden="true">M</div>
       <div>
         <h1>Maillume</h1>
-        <p>Selected-text assessment</p>
+        <p data-nl="Beoordeling van geselecteerde tekst">Selected-text assessment</p>
       </div>
     </header>
 
@@ -19,47 +19,48 @@
       <section class="step">
         <span class="number">01</span>
         <div>
-          <h2>Select the email text</h2>
-          <p>Highlight only the message you want to inspect, then keep this panel open.</p>
-          <button id="capture" type="button">Use current selection</button>
+          <h2 data-nl="Selecteer de e-mailtekst">Select the email text</h2>
+          <p data-nl="Markeer alleen het bericht dat u wilt controleren en houd dit paneel open.">Highlight only the message you want to inspect, then keep this panel open.</p>
+          <button id="capture" type="button" data-nl="Huidige selectie gebruiken">Use current selection</button>
         </div>
       </section>
 
       <section class="step">
         <span class="number">02</span>
         <div class="fields">
-          <h2>Review before sending</h2>
-          <label>Subject <input id="subject" maxlength="300" autocomplete="off" /></label>
-          <label>Sender <input id="sender" maxlength="320" autocomplete="off" /></label>
-          <label>Selected text <textarea id="body" maxlength="20000" rows="9"></textarea></label>
+          <h2 data-nl="Controleer vóór verzending">Review before sending</h2>
+          <label><span data-nl="Onderwerp">Subject</span> <input id="subject" maxlength="300" autocomplete="off" /></label>
+          <label><span data-nl="Afzender">Sender</span> <input id="sender" maxlength="320" autocomplete="off" /></label>
+          <label><span data-nl="Geselecteerde tekst">Selected text</span> <textarea id="body" maxlength="20000" rows="9"></textarea></label>
         </div>
       </section>
 
       <details>
-        <summary>Connection settings</summary>
+        <summary data-nl="Verbindingsinstellingen">Connection settings</summary>
         <div class="settings fields">
-          <label>Maillume deployment <input id="endpoint" type="url" value="https://app.maillume.io" /></label>
-          <label>API key <input id="apiKey" type="password" autocomplete="off" placeholder="mlm_..." /></label>
-          <button id="save" type="button" class="secondary">Save on this device</button>
-          <p class="small">The API key stays in extension storage. Message content is never stored by the extension.</p>
+          <label><span data-nl="Maillume-installatie">Maillume deployment</span> <input id="endpoint" type="url" value="https://app.maillume.io" /></label>
+          <label><span data-nl="API-sleutel">API key</span> <input id="apiKey" type="password" autocomplete="off" placeholder="mlm_..." /></label>
+          <button id="save" type="button" class="secondary" data-nl="Opslaan op dit apparaat">Save on this device</button>
+          <button id="reset" type="button" class="danger" data-nl="Opgeslagen verbinding verwijderen">Remove saved connection</button>
+          <p class="small" data-nl="De API-sleutel blijft in de opslag van de extensie. De extensie slaat berichtinhoud nooit op.">The API key stays in extension storage. Message content is never stored by the extension.</p>
         </div>
       </details>
 
       <div id="destination" class="destination"></div>
-      <button id="analyze" type="button" disabled>Analyze selected text</button>
+      <button id="analyze" type="button" disabled data-nl="Geselecteerde tekst analyseren">Analyze selected text</button>
       <p id="status" role="status" aria-live="polite"></p>
 
       <section id="result" class="result" hidden>
         <div class="score-row">
-          <div><span>Risk score</span><strong id="score"></strong></div>
+          <div><span data-nl="Risicoscore">Risk score</span><strong id="score"></strong></div>
           <span id="level" class="level"></span>
         </div>
         <p id="explanation"></p>
-        <h2>Suspicious signals</h2>
+        <h2 data-nl="Verdachte signalen">Suspicious signals</h2>
         <ul id="signals"></ul>
-        <h2>Recommended action</h2>
+        <h2 data-nl="Aanbevolen vervolgstap">Recommended action</h2>
         <p id="action"></p>
-        <p class="disclaimer">This is an automated risk assessment and should not be considered a guarantee.</p>
+        <p class="disclaimer" data-nl="Dit is een geautomatiseerde risicobeoordeling en biedt geen garantie.">This is an automated risk assessment and should not be considered a guarantee.</p>
       </section>
     </main>
     <script src="sidepanel.js"></script>

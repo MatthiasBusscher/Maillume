@@ -1,4 +1,4 @@
-import { MAX_SCAN_BODY_LENGTH, type AnalysisLocale, type NormalizedScanInput, type ScanSource } from "@/lib/types";
+import { MAX_SCAN_BODY_LENGTH, type AnalysisLocale, type NormalizedScanInput, type ScanSource } from "../types";
 
 type ValidationResult =
   | {
@@ -23,6 +23,12 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
   }
 
   const data = payload as Record<string, unknown>;
+  const unsupportedFields = Object.keys(data).filter(
+    (field) => !["source", "subject", "senderEmail", "body", "locale"].includes(field),
+  );
+  if (unsupportedFields.length > 0) {
+    return { ok: false, error: "Request contains unsupported fields." };
+  }
   const source = data.source;
   const subject = normalizeOptionalString(data.subject);
   const senderEmail = normalizeOptionalString(data.senderEmail);

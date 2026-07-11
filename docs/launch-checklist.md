@@ -13,7 +13,7 @@
 - [ ] Cloudflare is authoritative for both domains and the VPS IP is absent from public DNS.
 - [ ] `.nl` and `www` redirects preserve paths and use HTTP 301.
 - [ ] Ports 80/443 are closed and only required SSH access remains.
-- [ ] Cloudflare DDoS, managed WAF, and `/api/analyze` rate limiting are enabled.
+- [ ] Cloudflare DDoS, managed WAF, and `/api/` rate limiting for anonymous and authenticated analysis are enabled.
 - [ ] Hostinger backups are current and a restore rehearsal is recorded.
 - [ ] Production environment approval, immutable deployment, health check, and rollback are tested.
 

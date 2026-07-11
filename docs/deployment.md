@@ -25,7 +25,7 @@ Visitor
 3. Add public hostnames for `maillume.io`, `www.maillume.io`, and `app.maillume.io`, each targeting `http://maillume:3000`.
 4. Create redirect rules for `www.maillume.io` and `maillume.nl`, preserving path and query string. Use HTTP 301.
 5. Enable automatic DDoS protection and the Free Managed Ruleset.
-6. Use the free rate-limiting rule for path `/api/analyze`, initially 10 requests per 10 seconds per visitor, with a managed challenge. Tune it from observed non-content traffic.
+6. Use the free rate-limiting rule for paths beginning `/api/`, covering both `/api/analyze` and `/api/v1/analyze`. Start at 10 requests per 10 seconds per visitor, with a managed challenge, and tune it from observed non-content traffic.
 7. Do not add an A or AAAA record containing the VPS address.
 
 Store the Tunnel token only in `/opt/maillume/.env.production`. Turnstile is deliberately deferred until measured abuse shows it is necessary.
@@ -100,7 +100,7 @@ Use synthetic data only.
 1. Check `/api/health`, marketing, scanner, trust, auth, and resource routes through Cloudflare.
 2. Confirm `maillume.nl` and `www.maillume.io` preserve paths while redirecting to canonical `.io` URLs.
 3. Confirm direct requests to the VPS IP cannot reach the app.
-4. Confirm `/api/analyze` returns `Cache-Control: no-store`, rejects oversized requests with `413`, and rejects excess requests with `429` before analysis.
+4. Confirm `/api/analyze` and `/api/v1/analyze` return `Cache-Control: no-store`, reject oversized requests with `413`, and reject excess requests with `429` before analysis.
 5. Confirm production reports `analysis_mode: heuristic` and has no provider key.
 6. Confirm screenshot and `.eml` source files remain browser-side.
 7. Test Google authentication and account deletion with a dedicated test account.

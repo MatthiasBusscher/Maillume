@@ -29,7 +29,7 @@ Initial thresholds:
 ## DDoS or Abuse Response
 
 1. Confirm Cloudflare remains the only web ingress and inspect Security Events without exporting payloads.
-2. Tighten the `/api/analyze` rate-limit action or temporarily enable Under Attack Mode.
+2. Tighten the `/api/` rate-limit action covering anonymous and authenticated analysis, or temporarily enable Under Attack Mode.
 3. Reduce application analysis/concurrency limits if origin CPU is affected.
 4. Add Turnstile to analysis submission only if managed challenges and rate limits are insufficient.
 5. Never expose the VPS IP as a workaround. Rotate the origin IP if it becomes public and targeted.

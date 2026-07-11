@@ -16,6 +16,8 @@
     "src/lib/analysis/heuristic-analysis.ts",
     "src/lib/analysis/provider-config.test.ts",
     "src/lib/analysis/rate-limit.test.ts",
+    "src/lib/analysis/validate-input.test.ts",
+    "src/lib/analysis/validate-input.ts",
     "src/lib/analysis/analyze-email.ts",
     "src/lib/analysis/ai-prompt.ts",
     "src/lib/analysis/ai-schema.ts",

@@ -32,6 +32,7 @@
           "401": { "$ref": "#/components/responses/Error" },
           "413": { "$ref": "#/components/responses/Error" },
           "429": { "$ref": "#/components/responses/Error" },
+          "500": { "$ref": "#/components/responses/Error" },
           "502": { "$ref": "#/components/responses/Error" },
           "503": { "$ref": "#/components/responses/Error" }
         }
@@ -51,6 +52,7 @@
           "source": { "type": "string", "enum": ["paste", "screenshot", "eml"] },
           "subject": { "type": "string", "maxLength": 300 },
           "senderEmail": { "type": "string", "maxLength": 320 },
+          "locale": { "type": "string", "enum": ["en", "nl"], "default": "en" },
           "body": { "type": "string", "minLength": 1, "maxLength": 20000 }
         }
       },
@@ -77,6 +79,7 @@
           "disclaimer": { "type": "string" },
           "privacy": {
             "type": "object",
+            "required": ["stored", "retention", "message"],
             "properties": {
               "stored": { "const": false },
               "retention": { "const": "not_stored" },
@@ -88,12 +91,21 @@
       "Error": {
         "type": "object",
         "required": ["error"],
-        "properties": { "error": { "type": "string" } }
+        "properties": {
+          "error": { "type": "string" },
+          "fieldErrors": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
       }
     },
     "responses": {
       "Error": {
         "description": "Request failed",
+        "headers": {
+          "Retry-After": { "schema": { "type": "integer" } }
+        },
         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
       }
     }

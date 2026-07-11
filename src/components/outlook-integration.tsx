@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import type { EmailAnalysisResult } from "@/lib/types";
 import type { AccountDictionary } from "@/lib/i18n/account-en";
+import type { SiteLocale } from "@/lib/i18n/site-locale";
 
 type OfficeAsyncResult = { status: string; value?: string; error?: { message?: string } };
 type OutlookItem = {
@@ -22,7 +23,7 @@ type OfficeApi = {
 
 declare global { interface Window { Office?: OfficeApi } }
 
-export function OutlookIntegration({ labels }: { labels: AccountDictionary["outlook"] }) {
+export function OutlookIntegration({ labels, locale }: { labels: AccountDictionary["outlook"]; locale: SiteLocale }) {
   const [ready, setReady] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [status, setStatus] = useState<string>(labels.connecting);
@@ -79,6 +80,7 @@ export function OutlookIntegration({ labels }: { labels: AccountDictionary["outl
           subject: item.subject?.slice(0, 300),
           senderEmail: (item.from?.emailAddress ?? item.sender?.emailAddress)?.slice(0, 320),
           body: body.slice(0, 20000),
+          locale,
         }),
       });
       const payload = await response.json();

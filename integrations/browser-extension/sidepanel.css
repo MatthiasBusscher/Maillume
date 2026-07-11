@@ -19,6 +19,7 @@ button { width: 100%; border: 1px solid #111711; border-radius: 0; background: #
 button:hover { background: #087b72; }
 button:disabled { cursor: not-allowed; opacity: .45; }
 .secondary { background: white; color: #111711; }
+.danger { border-color: #d08b82; background: white; color: #8f251b; }
 details { border-bottom: 1px solid #bfc5bc; padding: 16px 0; }
 summary { cursor: pointer; font-size: 13px; font-weight: 700; }
 .settings { padding-top: 14px; }

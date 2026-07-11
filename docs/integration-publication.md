@@ -16,7 +16,7 @@ Terms: `https://maillume.io/terms`
 
 ## Chrome Web Store
 
-Package: `dist/maillume-browser-extension.zip`, produced by `npm run package:extension`.
+Package: `dist/maillume-browser-extension.zip`, produced with the other signed-off integration artifacts by `npm run package:integrations`.
 
 Permission justifications:
 
@@ -25,6 +25,8 @@ Permission justifications:
 - `sidePanel`: keeps the review and result interface beside the email.
 - `storage`: stores deployment URL and API key only; never message content or results.
 - Optional host access: requested interactively for the exact Maillume deployment selected by the user so the extension can call its API.
+
+Changing deployments revokes the previous origin grant. Removing the saved connection clears the API key and revokes the active origin grant. The English and Dutch interfaces request assessment output in the browser UI language.
 
 The package declares no content scripts, persistent Gmail/Outlook host access, tabs permission, cookies permission, webRequest permission, or background mailbox behavior.
 
@@ -37,6 +39,7 @@ Before submission:
 ## Google Workspace Marketplace
 
 Source: `integrations/gmail-addon`.
+Release artifact: `dist/maillume-gmail-addon.zip`.
 
 OAuth scope justifications:
 
@@ -45,6 +48,7 @@ OAuth scope justifications:
 - `script.external_request`: sends the user-initiated assessment to the fixed Maillume endpoint.
 
 The contextual trigger builds a ready card without reading the message. `getPlainBody()` is called only from the Analyze button handler. The manifest allowlists only `https://app.maillume.io/`.
+The add-on follows Gmail's English or Dutch locale, requests analysis in that language, never redisplays a saved key, and provides a key-removal action. A self-hosted operator must publish a separate add-on build because Google requires outbound destinations to be declared in the add-on manifest.
 
 Before submission:
 
@@ -56,12 +60,14 @@ Before submission:
 ## Microsoft AppSource
 
 Manifest: `public/outlook-manifest.xml`.
+Release artifact: `dist/maillume-outlook-manifest.xml`.
 
 Permission justification:
 
 - `ReadItem`: reads subject, sender, and body of the currently open message after the user presses Analyze.
 
 The add-in does not request `ReadWriteMailbox`, Graph mailbox scopes, event-based activation, or send-time activation. Message text and results are not stored in task-pane local storage.
+The manifest includes Dutch labels and opens the Dutch task pane for `nl-NL`. The task pane permits framing only by Microsoft Office hosts; the rest of Maillume remains non-frameable.
 
 Before submission:
 
@@ -79,3 +85,5 @@ Store the following with the release record:
 - permissions shown during installation;
 - successful key revocation and quota-exhaustion tests;
 - confirmation that monitoring and logs contain no message content or results.
+
+`dist/integration-SHA256SUMS` records reproducible SHA-256 checksums for all three submitted artifacts.

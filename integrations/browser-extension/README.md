@@ -10,4 +10,4 @@ This unpacked Manifest V3 extension analyzes only text the user explicitly selec
 4. In Connection settings, enter a Maillume deployment and API key. Chrome asks for access to that deployment only.
 5. Review the captured text and press **Analyze selected text**.
 
-The destination and API key are stored in extension-local storage. Selected message content and results are kept only in the open side panel and are not written to extension storage.
+The destination and API key are stored in extension-local storage. Selected message content and results are kept only in the open side panel and are not written to extension storage. Changing deployments revokes the previous origin permission; **Remove saved connection** clears the key and revokes the active origin permission. The interface and assessment output support English and Dutch.

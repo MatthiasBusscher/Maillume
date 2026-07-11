@@ -61,6 +61,9 @@ function main() {
   const apiAccessMigration = readProjectFile(
     "supabase/migrations/20260711120000_create_api_access.sql",
   );
+  const quotaRefundMigration = readProjectFile(
+    "supabase/migrations/20260711180000_refund_api_quota.sql",
+  );
   const hostedApiRoute = readProjectFile("src/app/api/v1/analyze/route.ts");
   const extensionManifest = readProjectFile("integrations/browser-extension/manifest.json");
   const extensionPanel = readProjectFile("integrations/browser-extension/sidepanel.js");
@@ -109,6 +112,8 @@ function main() {
   }
   assert.match(nextConfigContent, /X-Content-Type-Options/);
   assert.match(nextConfigContent, /X-Frame-Options/);
+  assert.match(nextConfigContent, /source: "\/integrations\/outlook"/);
+  assert.match(nextConfigContent, /frame-ancestors https:\/\/\*\.office\.com/);
   assert.match(nextConfigContent, /Referrer-Policy/);
   assert.match(nextConfigContent, /Permissions-Policy/);
   assert.match(nextConfigContent, /output: "standalone"/);
@@ -121,6 +126,8 @@ function main() {
   assert.match(apiAccessMigration, /secret_hash char\(64\)/);
   assert.match(apiAccessMigration, /consume_api_quota/);
   assert.match(apiAccessMigration, /purge_expired_api_usage/);
+  assert.match(quotaRefundMigration, /greatest\(0, request_count - 1\)/);
+  assert.match(hostedApiRoute, /refund_api_quota/);
   assert.doesNotMatch(apiAccessMigration, /^\s*(body|subject|sender_email|message_text|links|result|ip_address)\s+/im);
   assert.doesNotMatch(hostedApiRoute, /console\.|writeFile|appendFile|createWriteStream/);
   assert.match(hostedApiRoute, /hashApiKey\(token\)/);

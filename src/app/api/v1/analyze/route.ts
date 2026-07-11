@@ -17,7 +17,9 @@ import {
 } from "@/lib/types";
 
 const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
-const MAX_REQUEST_BYTES = 32 * 1024;
+const DEFAULT_MAX_REQUEST_BYTES = 32 * 1024;
+const DEFAULT_REQUEST_LIMIT = 20;
+const DEFAULT_REQUEST_WINDOW_SECONDS = 60;
 
 type QuotaRow = {
   api_key_id: string;
@@ -31,7 +33,10 @@ export async function POST(request: Request) {
   if (!token || !isApiKeyFormat(token)) return jsonError("A valid Maillume API key is required.", 401);
 
   try {
-    enforceRequestRateLimit(request, { maxRequests: 20, windowMs: 60_000 });
+    enforceRequestRateLimit(request, {
+      maxRequests: readPositiveInteger("ANALYSIS_REQUEST_LIMIT", DEFAULT_REQUEST_LIMIT, 1_000),
+      windowMs: readPositiveInteger("ANALYSIS_REQUEST_WINDOW_SECONDS", DEFAULT_REQUEST_WINDOW_SECONDS, 86_400) * 1_000,
+    });
   } catch (error) {
     if (error instanceof RateLimitError) return jsonError(error.message, 429, { "Retry-After": String(error.retryAfterSeconds) });
     throw error;
@@ -41,12 +46,12 @@ export async function POST(request: Request) {
   if (!admin) return jsonError("Hosted API access is not configured.", 503);
 
   const contentLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) return jsonError("Request body is too large.", 413);
+  if (Number.isFinite(contentLength) && contentLength > getMaxRequestBytes()) return jsonError("Request body is too large.", 413);
 
   let payload: unknown;
   try {
     const raw = await request.text();
-    if (new TextEncoder().encode(raw).byteLength > MAX_REQUEST_BYTES) return jsonError("Request body is too large.", 413);
+    if (new TextEncoder().encode(raw).byteLength > getMaxRequestBytes()) return jsonError("Request body is too large.", 413);
     payload = JSON.parse(raw) as unknown;
   } catch {
     return jsonError("Invalid JSON request body.", 400);
@@ -56,18 +61,20 @@ export async function POST(request: Request) {
   if (!validation.ok) return NextResponse.json<AnalyzeErrorResponse>({ error: validation.error, fieldErrors: validation.fieldErrors }, { status: 400, headers: NO_STORE_HEADERS });
 
   const secretHash = hashApiKey(token);
-  const { data: quotaData, error: quotaError } = await admin.rpc("consume_api_quota", { p_secret_hash: secretHash });
-  if (quotaError) return jsonError("API quota validation is temporarily unavailable.", 503);
-
-  const quota = (quotaData as QuotaRow[] | null)?.[0];
-  if (!quota) {
-    const { data: existing } = await admin.from("api_keys").select("id").eq("secret_hash", secretHash).is("revoked_at", null).maybeSingle();
-    return existing ? jsonError("Monthly API quota exhausted.", 429, { "Retry-After": secondsUntilNextMonth() }) : jsonError("API key is invalid or revoked.", 401);
-  }
-
+  let quota: QuotaRow | undefined;
+  let reservedApiKeyId: string | undefined;
   try {
     const config = getAnalysisConfig();
     enforceAiRateLimit(request, config);
+    const { data: quotaData, error: quotaError } = await admin.rpc("consume_api_quota", { p_secret_hash: secretHash });
+    if (quotaError) return jsonError("API quota validation is temporarily unavailable.", 503);
+
+    quota = (quotaData as QuotaRow[] | null)?.[0];
+    if (!quota) {
+      const { data: existing } = await admin.from("api_keys").select("id").eq("secret_hash", secretHash).is("revoked_at", null).maybeSingle();
+      return existing ? jsonError("Monthly API quota exhausted.", 429, { "Retry-After": secondsUntilNextMonth() }) : jsonError("API key is invalid or revoked.", 401);
+    }
+    reservedApiKeyId = quota.api_key_id;
     const analysis = await withAnalysisCapacity(config, () => analyzeEmail(validation.input, { config }));
 
     return NextResponse.json<AnalyzeResponse>({
@@ -91,12 +98,24 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    if (reservedApiKeyId) await admin.rpc("refund_api_quota", { p_api_key_id: reservedApiKeyId });
     if (error instanceof RateLimitError) return jsonError(error.message, 429, { "Retry-After": String(error.retryAfterSeconds) });
     if (error instanceof AnalysisCapacityError) return jsonError(error.message, 429, { "Retry-After": "5" });
     if (error instanceof AnalysisConfigError) return jsonError(error.message, 500);
     if (error instanceof AiProviderRequestError || error instanceof AiResponseValidationError) return jsonError(error.message, 502);
     throw error;
   }
+}
+
+function getMaxRequestBytes() {
+  return readPositiveInteger("ANALYSIS_MAX_REQUEST_BYTES", DEFAULT_MAX_REQUEST_BYTES, 256 * 1024);
+}
+
+function readPositiveInteger(name: string, fallback: number, maximum: number) {
+  const value = process.env[name]?.trim();
+  if (!value) return fallback;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 && parsed <= maximum ? parsed : fallback;
 }
 
 function getBearerToken(request: Request) {

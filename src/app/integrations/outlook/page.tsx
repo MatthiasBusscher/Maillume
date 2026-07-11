@@ -12,11 +12,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function OutlookIntegrationPage() {
-  const dictionary = (await getRequestSiteLocale()) === "nl" ? accountNl : accountEn;
+  const locale = await getRequestSiteLocale();
+  const dictionary = locale === "nl" ? accountNl : accountEn;
   return (
     <main className="min-h-screen bg-[#eef1eb]">
       <Script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" strategy="afterInteractive" />
-      <OutlookIntegration labels={dictionary.outlook} />
+      <OutlookIntegration labels={dictionary.outlook} locale={locale} />
     </main>
   );
 }
