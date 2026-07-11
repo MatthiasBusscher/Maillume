@@ -1,6 +1,6 @@
 # AI Cost Controls
 
-Inbox Risk Scanner is designed so the public hosted demo can run without a maintainer-owned AI API key.
+Maillume is designed so the public hosted demo can run without a maintainer-owned AI API key.
 
 ## Recommended Public Demo Setup
 

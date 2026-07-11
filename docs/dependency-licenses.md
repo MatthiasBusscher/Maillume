@@ -8,6 +8,8 @@ This is a lightweight engineering review of direct npm dependency metadata befor
 
 | Package | Declared license |
 | --- | --- |
+| `@supabase/ssr` | MIT |
+| `@supabase/supabase-js` | MIT |
 | `lucide-react` | ISC |
 | `next` | MIT |
 | `react` | MIT |

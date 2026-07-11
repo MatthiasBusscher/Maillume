@@ -1,6 +1,6 @@
 # Evaluation Fixtures
 
-Inbox Risk Scanner uses synthetic evaluation fixtures to keep risk scoring useful while protecting privacy.
+Maillume uses synthetic evaluation fixtures to keep risk scoring useful while protecting privacy.
 
 Fixtures live in `src/lib/evaluation/email-fixtures.ts` and are shared by heuristic tests today. The same set is designed to be reused for AI prompt and response-validation checks as the self-hosted AI mode matures.
 

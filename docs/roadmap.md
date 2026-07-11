@@ -1,4 +1,4 @@
-# Inbox Risk Scanner GitHub Issue Roadmap
+# Maillume GitHub Issue Roadmap
 
 Implementation status: all 13 roadmap items are complete in the v1 launch-candidate codebase. GitHub issues remain the source of truth for release follow-ups.
 
@@ -9,8 +9,9 @@ Implementation status: all 13 roadmap items are complete in the v1 launch-candid
 3. Issue #31: Privacy-Safe Detection Feedback and Synthetic Dataset Pipeline. Add optional label feedback and synthetic calibration without retaining scanned messages.
 4. Issue #34: Brand, License, and Public Beta Positioning. Complete the beta identity and hosted-by-us-or-you model before going public.
 5. Issue #35: Public Beta Deployment and Trust Pages. Deploy the heuristic beta, verify trust controls, then make the repository public.
-6. Issue #30: Mail Client Integration Feasibility Spike. Compare Gmail, Outlook, and Chrome using synthetic messages, then select one first platform.
-7. Optional authentication, hosted AI, and billing issues may be created only after the Issue #29 go/no-go gates are satisfied.
+6. Issue #30: Mail Client Integration Feasibility Spike. Complete: Chrome, Gmail, and Outlook use explicit-action, minimum-permission designs.
+7. Browser extension, Gmail add-on, Outlook add-in, and authenticated hosted API. Implemented in source; marketplace review and production configuration remain launch gates.
+8. Hosted AI and billing remain gated by the Issue #29 privacy, cost, and legal decisions.
 
 The public heuristic scanner and self-hosted bring-your-own-key mode remain the launch product. See `docs/hosted-service.md` for the approved hosted-service planning baseline.
 
@@ -27,8 +28,12 @@ The public heuristic scanner and self-hosted bring-your-own-key mode remain the 
 9. Evaluation Samples and Risk Calibration
 10. Abuse Protection and Cost Controls
 11. Security and Privacy Review
-12. Vercel Deployment and Self-Hosting Docs
+12. Portable Deployment and Self-Hosting Docs
 13. v1 Launch Polish
+14. Browser Extension
+15. Gmail and Outlook Add-ins
+16. Hosted API Keys and Quotas
+17. Integration Publication and Release Verification
 
 ## Issue #1: Project Setup & Initial Scan Page
 
@@ -37,7 +42,7 @@ Build the first usable version of the app without external services.
 Definition of Done:
 
 - Next.js App Router, TypeScript, and Tailwind CSS are configured.
-- Landing page introduces Inbox Risk Scanner and puts the scanner in the primary flow.
+- Landing page introduces Maillume and puts the scanner in the primary flow.
 - Email scan form supports subject, sender email address, and email body.
 - Form returns mocked structured analysis results.
 - Result UI displays risk score, risk level, explanation, suspicious signals, detected links, recommended action, and the required disclaimer.
@@ -107,7 +112,7 @@ Definition of Done:
 
 ## Issue #7: Optional Self-Hosted AI Provider Abstraction
 
-Allow people who install Inbox Risk Scanner themselves to use their own AI provider key.
+Allow people who install Maillume themselves to use their own AI provider key.
 
 Definition of Done:
 
@@ -167,15 +172,15 @@ Definition of Done:
 - Temporary file handling is reviewed and minimized.
 - Security review confirms no AI key, service role key, or uploaded content reaches the browser unintentionally.
 
-## Issue #12: Vercel Deployment and Self-Hosting Docs
+## Issue #12: Portable Deployment and Self-Hosting Docs
 
 Prepare both the public demo and self-hosted installations.
 
 Definition of Done:
 
-- Public Vercel deployment builds successfully in heuristic mode.
+- Public standalone container deployment builds successfully in heuristic mode.
 - `.env.example` documents heuristic mode and optional self-hosted AI mode.
-- Self-hosting docs explain how to configure provider keys safely in Vercel.
+- Self-hosting docs explain how to configure provider keys safely as server-only environment variables.
 - Smoke test covers paste, screenshot, `.eml`, language switching, and result rendering.
 - Documentation clearly states that the public demo does not use the maintainer's paid AI key.
 
@@ -190,3 +195,43 @@ Definition of Done:
 - Accessibility basics pass keyboard and screen reader checks.
 - Copy avoids certainty claims and keeps the required disclaimer.
 - README explains setup, architecture, no-storage behavior, optional AI mode, and current limitations.
+
+## Issue #14: Browser Extension
+
+Definition of Done:
+
+- Manifest V3 side panel uses temporary `activeTab` access and no persistent webmail host permission.
+- Only user-selected text is captured after an explicit action.
+- The user reviews content and destination before submission.
+- A chosen deployment receives the shared authenticated API request.
+- Message content and results are not written to extension storage.
+
+## Issue #15: Gmail and Outlook Add-ins
+
+Definition of Done:
+
+- Gmail requests temporary current-message read access only.
+- Outlook requests `ReadItem`, not read/write mailbox access.
+- Both integrations read content only after an explicit Analyze action.
+- Both render the structured result and required disclaimer.
+- Marketplace manifests and sideloading instructions are included.
+
+## Issue #16: Hosted API Keys and Quotas
+
+Definition of Done:
+
+- Signed-in users can create, copy once, list, and revoke API keys.
+- Only SHA-256 key hashes and display prefixes are stored.
+- Monthly quota consumption is atomic and returns useful limit headers.
+- Usage storage contains aggregate counts only, with no scan content, result, IP, or message identifier.
+- Account deletion cascades through keys and usage metadata.
+
+## Issue #17: Integration Publication and Release Verification
+
+Definition of Done:
+
+- Browser extension is packaged and reviewed against Chrome Web Store privacy requirements.
+- Gmail and Outlook add-ons pass provider validation using synthetic messages.
+- Production OAuth, API quotas, monitoring, DDoS controls, and zero-retention checks pass.
+- Mobile/desktop responsive screenshots show no clipped content.
+- Release documentation lists requested permissions and exact data flow.

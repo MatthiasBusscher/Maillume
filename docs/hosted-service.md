@@ -1,14 +1,14 @@
 # Hosted Service Architecture
 
-Status: approved planning baseline. Authentication, hosted AI, and payments are not implemented.
+Status: active architecture record. Optional Google authentication, hashed integration API keys, aggregate quotas, and source-beta Chrome/Gmail/Outlook integrations are implemented. Hosted AI, paid entitlements, and payments are not implemented.
 
 ## Decision Summary
 
-Inbox Risk Scanner remains an open-source, privacy-first scanner first and a hosted service second.
+Maillume remains an open-source, privacy-first scanner first and a hosted service second.
 
 - Anonymous heuristic scans stay free and do not require an account.
 - Normal scans are processed for the current assessment only. They are not reused for analytics, model training, or evaluation fixtures.
-- A free account is optional and is only needed for a small hosted AI allowance or saved preferences.
+- A free account is optional and is currently needed only to create revocable integration API keys. Hosted AI allowances and saved preferences remain future features.
 - A paid hosted plan may sell managed AI capacity, integrations, and convenience. It must have explicit usage limits.
 - Self-hosting and bring-your-own-key AI remain free under the repository license.
 - Raw email content, screenshots, `.eml` files, OCR text, links, and assessment results are not retained after scoring.
@@ -19,7 +19,7 @@ Inbox Risk Scanner remains an open-source, privacy-first scanner first and a hos
 | Mode | Account | Analyzer | Planning limit | Content retention |
 | --- | --- | --- | --- | --- |
 | Anonymous free | No | Hosted heuristic runtime | No monthly entitlement; fair-use request rate limits | Request lifetime only |
-| Free account | Optional | Heuristic plus a small hosted AI allowance | Hypothesis: 2 AI scans/day and 5/month | Request lifetime only |
+| Free account API | Yes | Hosted heuristic runtime | 100 authenticated integration calls/month during beta | Request lifetime only |
 | Plus account | Yes | Heuristic plus hosted AI | Hypothesis: 20 AI scans/day and 100/month | Request lifetime only |
 | Self-hosted | Determined by installer | Heuristic or installer-selected AI provider | Determined and paid by installer | Determined by installer; no-storage remains the project default |
 
@@ -47,13 +47,13 @@ Screenshot OCR and `.eml` parsing happen in the browser. The hosted API receives
 
 ### Data Inventory
 
-| Data | Processed where | Retained by Inbox Risk Scanner | Target retention |
+| Data | Processed where | Retained by Maillume | Target retention |
 | --- | --- | --- | --- |
 | Raw screenshot or `.eml` file | Browser memory | No | Cleared after parsing or page close |
 | Subject, sender, body, OCR text, links | Request memory; selected AI provider in hosted AI mode | No | Discarded after the response |
 | Structured assessment | Browser state and response memory | No | Discarded on refresh or navigation |
 | Account identity and preferences | Supabase Auth and application database | Yes, for account features only | Account lifetime; deletion workflow removes application data |
-| Entitlement and quota counters | Application database | Yes | Current billing period plus 90 days for disputes and reconciliation |
+| Integration API key and quota counters | Application database | Yes | Key metadata until revocation/account deletion; aggregate monthly counts for up to 13 months |
 | Billing customer and subscription references | Application database and payment provider | Yes, without payment-card data | Required account and financial retention periods |
 | Operational request metadata | Hosting and security systems | Yes, without message content or query strings | Target maximum 14 days |
 | Optional non-content feedback | Feedback store | Yes | Maximum 90 days before aggregation or deletion |
@@ -134,8 +134,8 @@ The application database is authoritative for entitlements and hard quota enforc
 | Plan | Monthly price hypothesis | Included service |
 | --- | --- | --- |
 | Anonymous | EUR 0 | Heuristic scanning without an account |
-| Free account | EUR 0 | Heuristic scanning plus 5 hosted AI scans/month |
-| Plus | EUR 9/month | 100 hosted AI scans/month, higher daily limit, and future first-party mail integration access |
+| Free account | EUR 0 | Heuristic scanning plus 100 authenticated integration API calls/month during beta |
+| Plus | EUR 9/month | Planning hypothesis for hosted AI, higher API limits, managed integration convenience, and support |
 | Self-hosted | EUR 0 from the project | Full source code and bring-your-own-key provider usage |
 
 The Plus price is a validation target, not final public copy. Launch pricing requires measured cost, payment fees, hosting costs, tax handling, support expectations, and user interviews. Team plans remain out of scope.
@@ -176,7 +176,7 @@ The Plus price is a validation target, not final public copy. Launch pricing req
 
 Hosted AI disclosure shown immediately before the first hosted AI scan:
 
-> When you choose hosted AI analysis, the subject, sender, and message text shown in the scanner are sent to the named AI provider only to produce this assessment. Inbox Risk Scanner does not save this content or use it to build a training dataset. The provider and its current processing terms are shown before you continue. You can always use heuristic scanning without an account or AI provider.
+> When you choose hosted AI analysis, the subject, sender, and message text shown in the scanner are sent to the named AI provider only to produce this assessment. Maillume does not save this content or use it to build a training dataset. The provider and its current processing terms are shown before you continue. You can always use heuristic scanning without an account or AI provider.
 
 Optional feedback disclosure:
 
@@ -197,8 +197,8 @@ No dual-license or enterprise license program exists. Adding one later may requi
 - **Go:** public anonymous heuristic launch.
 - **Go:** free self-hosting and bring-your-own-key AI.
 - **Go:** privacy-preserving, non-content feedback design as a separate issue.
-- **Go:** mail-client feasibility research using synthetic messages.
-- **Hold:** authentication implementation.
+- **Go:** explicit-action Chrome, Gmail, and Outlook source-beta integrations using minimum practical permissions.
+- **Go:** optional authentication and quota-limited heuristic integration API.
 - **Hold:** maintainer-funded hosted AI.
 - **Hold:** payment implementation.
 

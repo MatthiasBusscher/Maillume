@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Maillume</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header>
+      <div class="mark" aria-hidden="true">M</div>
+      <div>
+        <h1>Maillume</h1>
+        <p>Selected-text assessment</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="step">
+        <span class="number">01</span>
+        <div>
+          <h2>Select the email text</h2>
+          <p>Highlight only the message you want to inspect, then keep this panel open.</p>
+          <button id="capture" type="button">Use current selection</button>
+        </div>
+      </section>
+
+      <section class="step">
+        <span class="number">02</span>
+        <div class="fields">
+          <h2>Review before sending</h2>
+          <label>Subject <input id="subject" maxlength="300" autocomplete="off" /></label>
+          <label>Sender <input id="sender" maxlength="320" autocomplete="off" /></label>
+          <label>Selected text <textarea id="body" maxlength="20000" rows="9"></textarea></label>
+        </div>
+      </section>
+
+      <details>
+        <summary>Connection settings</summary>
+        <div class="settings fields">
+          <label>Maillume deployment <input id="endpoint" type="url" value="https://app.maillume.io" /></label>
+          <label>API key <input id="apiKey" type="password" autocomplete="off" placeholder="mlm_..." /></label>
+          <button id="save" type="button" class="secondary">Save on this device</button>
+          <p class="small">The API key stays in extension storage. Message content is never stored by the extension.</p>
+        </div>
+      </details>
+
+      <div id="destination" class="destination"></div>
+      <button id="analyze" type="button" disabled>Analyze selected text</button>
+      <p id="status" role="status" aria-live="polite"></p>
+
+      <section id="result" class="result" hidden>
+        <div class="score-row">
+          <div><span>Risk score</span><strong id="score"></strong></div>
+          <span id="level" class="level"></span>
+        </div>
+        <p id="explanation"></p>
+        <h2>Suspicious signals</h2>
+        <ul id="signals"></ul>
+        <h2>Recommended action</h2>
+        <p id="action"></p>
+        <p class="disclaimer">This is an automated risk assessment and should not be considered a guarantee.</p>
+      </section>
+    </main>
+    <script src="sidepanel.js"></script>
+  </body>
+</html>

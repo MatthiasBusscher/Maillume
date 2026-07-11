@@ -4,13 +4,15 @@ Status: public-beta decision record.
 
 ## Public-Beta Identity
 
-- Product name: **Inbox Risk Scanner**
+- Product name: **Maillume**
 - Repository: `inbox-risk-scanner`
+- Target marketing domain: `maillume.io` (pending registration)
+- Target scanner domain: `app.maillume.io`
 - Category: privacy-first email risk assessment
 - Short promise: **A second opinion before you click, reply, or pay.**
 - Open-source message: **Use it here. Run it yourself.**
 
-The earlier PhishGuard working name is not used because similar names already exist. Inbox Risk Scanner remains the beta name until real user feedback justifies a future rename. A domain is selected in the public-beta deployment issue.
+The earlier PhishGuard working name is not used because similar names already exist. Maillume is the selected launch identity. `maillume.io` and defensive domain `maillume.nl` are owned for the project; `maillume.com` belongs to another party. This is a preliminary collision screen, not trademark clearance.
 
 ## Product Principle
 
@@ -26,12 +28,12 @@ The official hosted service and the self-hosted project share the same scanner c
 | Mode | Account | Permanently available | Possible future paid value |
 | --- | --- | --- | --- |
 | Anonymous official cloud | No | Heuristic scanning, paste, screenshot OCR, `.eml`, English/Dutch, result explanation | None required for the core flow |
-| Optional free account | Yes | Anonymous features plus a small hosted AI allowance | Higher managed AI quota |
+| Optional free account | Yes | Anonymous features plus account identity | Future preferences and a small hosted AI allowance after launch gates pass |
 | Plus | Yes | All free features | Managed AI capacity, official mail integration, convenience, and support |
 | Business | Yes | Core scanner access | Team policy, administration, reporting, and higher support level |
 | Self-hosted | Chosen by operator | Complete scanner and bring-your-own-key AI | Optional commercial support may be offered later |
 
-Planning hypotheses remain five hosted AI scans per free account and 100 per EUR 9 Plus subscription. They are not launch promises and must pass the cost and demand gates in `docs/hosted-service.md`.
+Google authentication is implemented as an optional foundation. It does not create scan history or enable hosted AI today. Planning hypotheses remain five hosted AI scans per free account and 100 per EUR 9 Plus subscription. They are not launch promises and must pass the cost and demand gates in `docs/hosted-service.md`.
 
 ## Permanently Free Core
 
@@ -62,7 +64,7 @@ There are no unlimited AI promises, paid scan history, advertising, data resale,
 
 ## License Decision
 
-Inbox Risk Scanner uses **GNU AGPL-3.0-only** for the public beta.
+Maillume uses **GNU AGPL-3.0-only** for the public beta.
 
 The license keeps the source available when modified versions are offered to users over a network. The application provides visible Source and License links. This choice supports a hosted-by-us-or-you model while still allowing commercial hosting, paid support, and paid managed services under the license terms.
 
@@ -83,7 +85,7 @@ The repository history currently has one recorded author, so the beta transition
 
 The repository remains private until the public-beta issue confirms:
 
-- the production domain and Vercel project are ready;
+- the production domains, Cloudflare edge, and Hostinger container deployment are ready;
 - git history and current files contain no secrets or private email data;
 - the privacy policy, terms, processor list, security contact, source notice, and disclaimer are public;
 - the Supabase migration and expiry job are verified before feedback is enabled;

@@ -12,8 +12,8 @@ export default function Icon() {
     <div
       style={{
         alignItems: "center",
-        background: "#020617",
-        color: "white",
+        background: "#111711",
+        color: "#dfff52",
         display: "flex",
         fontSize: 21,
         fontWeight: 700,
@@ -23,7 +23,7 @@ export default function Icon() {
         width: "100%",
       }}
     >
-      IR
+      ML
     </div>,
     size,
   );

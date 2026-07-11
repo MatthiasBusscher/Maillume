@@ -1,0 +1,101 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Maillume Hosted API",
+    "version": "0.1.0-beta",
+    "description": "Authenticated email risk assessment. Scan content and results are processed for the request and are not stored. Results are automated assessments, not guarantees."
+  },
+  "servers": [{ "url": "https://app.maillume.io" }],
+  "paths": {
+    "/api/v1/analyze": {
+      "post": {
+        "summary": "Analyze normalized email content",
+        "security": [{ "apiKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnalyzeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assessment completed",
+            "headers": {
+              "X-RateLimit-Limit": { "schema": { "type": "integer" } },
+              "X-RateLimit-Remaining": { "schema": { "type": "integer" } }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AnalyzeResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" },
+          "413": { "$ref": "#/components/responses/Error" },
+          "429": { "$ref": "#/components/responses/Error" },
+          "502": { "$ref": "#/components/responses/Error" },
+          "503": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": { "type": "http", "scheme": "bearer", "bearerFormat": "mlm_..." }
+    },
+    "schemas": {
+      "AnalyzeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["body"],
+        "properties": {
+          "source": { "type": "string", "enum": ["paste", "screenshot", "eml"] },
+          "subject": { "type": "string", "maxLength": 300 },
+          "senderEmail": { "type": "string", "maxLength": 320 },
+          "body": { "type": "string", "minLength": 1, "maxLength": 20000 }
+        }
+      },
+      "AnalysisResult": {
+        "type": "object",
+        "required": ["risk_level", "risk_score", "suspicious_signals", "detected_links", "recommended_action", "short_explanation"],
+        "properties": {
+          "risk_level": { "type": "string", "enum": ["low", "medium", "high"] },
+          "risk_score": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "suspicious_signals": { "type": "array", "items": { "type": "string" } },
+          "detected_links": { "type": "array", "items": { "type": "string", "format": "uri" } },
+          "recommended_action": { "type": "string" },
+          "short_explanation": { "type": "string" }
+        }
+      },
+      "AnalyzeResponse": {
+        "type": "object",
+        "required": ["result", "analysis_mode", "analysis_provider", "analysis_version", "disclaimer", "privacy"],
+        "properties": {
+          "result": { "$ref": "#/components/schemas/AnalysisResult" },
+          "analysis_mode": { "type": "string", "enum": ["heuristic", "ai"] },
+          "analysis_provider": { "type": "string" },
+          "analysis_version": { "type": "string" },
+          "disclaimer": { "type": "string" },
+          "privacy": {
+            "type": "object",
+            "properties": {
+              "stored": { "const": false },
+              "retention": { "const": "not_stored" },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": { "error": { "type": "string" } }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Request failed",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    }
+  }
+}

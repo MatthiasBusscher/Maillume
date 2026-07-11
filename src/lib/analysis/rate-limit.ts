@@ -13,14 +13,14 @@ type AiRateLimitOptions = {
 };
 
 declare global {
-  var __inboxRiskScannerAiRateLimitStore: AiRateLimitStore | undefined;
+  var __maillumeAnalysisRateLimitStore: AiRateLimitStore | undefined;
 }
 
 export class RateLimitError extends Error {
   readonly retryAfterSeconds: number;
 
   constructor(retryAfterSeconds: number) {
-    super(`AI analysis is temporarily rate-limited. Try again in ${retryAfterSeconds} seconds.`);
+    super(`Analysis is temporarily rate-limited. Try again in ${retryAfterSeconds} seconds.`);
     this.name = "RateLimitError";
     this.retryAfterSeconds = retryAfterSeconds;
   }
@@ -59,18 +59,40 @@ export function enforceAiRateLimit(
   bucket.count += 1;
 }
 
-function getGlobalRateLimitStore(): AiRateLimitStore {
-  globalThis.__inboxRiskScannerAiRateLimitStore ??= new Map<string, AiRateLimitBucket>();
+export function enforceRequestRateLimit(
+  request: Request,
+  options: AiRateLimitOptions & { maxRequests: number; windowMs: number },
+): void {
+  const now = options.now?.() ?? Date.now();
+  const store = options.store ?? getGlobalRateLimitStore();
+  const key = `request:${getClientIdentifier(request.headers)}`;
+  const bucket = store.get(key);
 
-  return globalThis.__inboxRiskScannerAiRateLimitStore;
+  if (!bucket || bucket.resetAt <= now) {
+    store.set(key, { count: 1, resetAt: now + options.windowMs });
+    return;
+  }
+
+  if (bucket.count >= options.maxRequests) {
+    throw new RateLimitError(Math.max(1, Math.ceil((bucket.resetAt - now) / 1_000)));
+  }
+
+  bucket.count += 1;
+}
+
+function getGlobalRateLimitStore(): AiRateLimitStore {
+  globalThis.__maillumeAnalysisRateLimitStore ??= new Map<string, AiRateLimitBucket>();
+
+  return globalThis.__maillumeAnalysisRateLimitStore;
 }
 
 function getClientIdentifier(headers: Headers): string {
+  const cloudflareClient = headers.get("cf-connecting-ip")?.trim();
   const forwardedFor = getFirstHeaderValue(headers.get("x-forwarded-for"));
 
   return (
+    cloudflareClient ??
     forwardedFor ??
-    headers.get("cf-connecting-ip")?.trim() ??
     headers.get("x-real-ip")?.trim() ??
     "anonymous"
   );

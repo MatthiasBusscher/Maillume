@@ -40,7 +40,7 @@ export function RiskMeter({ score, level, labels }: RiskMeterProps) {
       <div className="grid gap-5 sm:grid-cols-[130px_minmax(0,1fr)] sm:items-end">
         <div>
           <p className="font-mono text-[10px] uppercase text-[#69737d]">{labels.riskScore}</p>
-          <p className="mt-1 font-mono text-6xl font-semibold leading-none text-[#171a1f]">
+          <p className="mt-1 font-mono text-6xl font-semibold leading-none text-[#111711]">
             {score}
           </p>
         </div>
@@ -58,7 +58,7 @@ export function RiskMeter({ score, level, labels }: RiskMeterProps) {
               <span className="bg-[#e05a4a]" />
             </div>
             <span
-              className="absolute -top-2 h-7 w-0.5 -translate-x-1/2 bg-[#171a1f] transition-[left] duration-500"
+              className="absolute -top-2 h-7 w-0.5 -translate-x-1/2 bg-[#111711] transition-[left] duration-500"
               style={{ left: `${markerPosition}%` }}
               aria-hidden="true"
             />

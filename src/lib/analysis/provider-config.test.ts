@@ -141,6 +141,7 @@ async function main() {
   assert.equal(openAiConfig.provider, "openai");
   assert.equal(openAiConfig.model, "openai-test-model");
   assert.equal(openAiConfig.maxOutputTokens, 700);
+  assert.equal(openAiConfig.maxConcurrentRequests, 2);
   assert.deepEqual(openAiConfig.rateLimit, {
     enabled: true,
     maxRequests: 10,
@@ -190,6 +191,7 @@ async function main() {
     AI_RATE_LIMIT_ENABLED: "false",
     AI_RATE_LIMIT_MAX_REQUESTS: "25",
     AI_RATE_LIMIT_WINDOW_SECONDS: "120",
+    AI_MAX_CONCURRENT_REQUESTS: "4",
   });
 
   assert.equal(customRateLimitConfig.mode, "ai");
@@ -198,6 +200,7 @@ async function main() {
     maxRequests: 25,
     windowMs: 120_000,
   });
+  assert.equal(customRateLimitConfig.maxConcurrentRequests, 4);
 
   assert.throws(
     () =>

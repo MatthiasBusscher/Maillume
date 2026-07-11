@@ -10,15 +10,19 @@ export const supportedLocales: Array<{ locale: Locale; label: string; shortLabel
 export const dictionaries = {
   en: {
     app: {
-      name: "Inbox Risk Scanner",
-      status: "Open source",
-      startScan: "Start scan",
+      name: "Maillume",
+      status: "Privacy-first beta",
+      startScan: "New scan",
       skipToScanner: "Skip to scanner",
       privacyStatus: "Scans stored",
       assessmentStatus: "Assessment",
-      audience: "Built for freelancers and small teams",
+      audience: "Email risk workspace",
+      workspaceTitle: "Inspect a suspicious email",
+      website: "Website",
+      signIn: "Sign in",
+      account: "Account",
       hero:
-        "Paste a suspicious email and get a clear, structured risk assessment before clicking, replying, or forwarding sensitive details.",
+        "Paste a message, scan a screenshot, or open an .eml file for a clear, structured second opinion.",
     },
     language: {
       label: "Language",
@@ -28,7 +32,7 @@ export const dictionaries = {
       license: "License",
       notice:
         "AGPL-3.0 free software. You may share and modify it under the license. Provided without warranty.",
-      copyright: "Copyright 2026 Inbox Risk Scanner contributors.",
+      copyright: "Copyright 2026 Maillume contributors.",
     },
     form: {
       eyebrow: "Email analysis",
@@ -145,15 +149,19 @@ export const dictionaries = {
   },
   nl: {
     app: {
-      name: "Inbox Risk Scanner",
-      status: "Open source",
-      startScan: "Scan starten",
+      name: "Maillume",
+      status: "Privacygerichte beta",
+      startScan: "Nieuwe scan",
       skipToScanner: "Ga naar de scanner",
       privacyStatus: "Scans opgeslagen",
       assessmentStatus: "Beoordeling",
-      audience: "Gebouwd voor freelancers en kleine teams",
+      audience: "Werkruimte voor e-mailrisico",
+      workspaceTitle: "Onderzoek een verdachte e-mail",
+      website: "Website",
+      signIn: "Inloggen",
+      account: "Account",
       hero:
-        "Plak een verdachte e-mail en krijg een duidelijke, gestructureerde risico-inschatting voordat u klikt, antwoordt of gevoelige gegevens deelt.",
+        "Plak een bericht, scan een screenshot of open een .eml-bestand voor een duidelijke, gestructureerde second opinion.",
     },
     language: {
       label: "Taal",
@@ -163,7 +171,7 @@ export const dictionaries = {
       license: "Licentie",
       notice:
         "Vrije software onder AGPL-3.0. U mag deze delen en aanpassen volgens de licentie. Zonder garantie geleverd.",
-      copyright: "Copyright 2026 bijdragers aan Inbox Risk Scanner.",
+      copyright: "Copyright 2026 bijdragers aan Maillume.",
     },
     form: {
       eyebrow: "E-mailanalyse",

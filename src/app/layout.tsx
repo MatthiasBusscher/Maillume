@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const title = "Inbox Risk Scanner";
+const title = "Maillume";
 const description =
-  "Check suspicious email text, screenshots, and .eml files with a privacy-first automated risk assessment.";
+  "A privacy-first second opinion for suspicious email text, screenshots, and .eml files.";
 
 export const metadata: Metadata = {
   metadataBase: getMetadataBase(),
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   },
   description,
   applicationName: title,
-  keywords: ["email safety", "phishing", "spam", "email risk assessment"],
+  keywords: ["email safety", "phishing", "spam", "email risk assessment", "open source"],
   openGraph: {
     title,
     description,
@@ -48,5 +48,9 @@ export default function RootLayout({
 function getMetadataBase(): URL {
   const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
 
-  return new URL(vercelUrl ? `https://${vercelUrl}` : "http://localhost:3000");
+  const configuredUrl = process.env.NEXT_PUBLIC_MARKETING_URL;
+
+  return new URL(
+    configuredUrl ?? (vercelUrl ? `https://${vercelUrl}` : "http://localhost:3000"),
+  );
 }

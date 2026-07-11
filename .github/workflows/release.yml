@@ -1,0 +1,98 @@
+name: Build production image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy the verified image to production
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:analysis
+      - run: npm run test:security
+      - run: npm run build
+        env:
+          ANALYSIS_MODE: heuristic
+      - run: npm run test:smoke
+      - run: npm run package:extension
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maillume-browser-extension
+          path: dist/maillume-browser-extension.zip
+          if-no-files-found: error
+
+  image:
+    needs: verify
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/matthiasbusscher/maillume
+          tags: type=sha,format=long
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            NEXT_PUBLIC_MARKETING_URL=https://maillume.io
+            NEXT_PUBLIC_APP_URL=https://app.maillume.io
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Scan image for high and critical vulnerabilities
+        uses: aquasecurity/trivy-action@0.32.0
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+  deploy:
+    needs: image
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy immutable image over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script_stop: true
+          script: |
+            cd /opt/maillume
+            ./scripts/deploy-production.sh '${{ needs.image.outputs.image }}'
