@@ -1,124 +1,111 @@
-# Deployment and Self-Hosting
+# Production Deployment
 
-Inbox Risk Scanner supports two deployment shapes:
+The official Maillume service runs as a portable Next.js standalone container on a Hostinger VPS. Cloudflare Tunnel is the only web ingress. Managed Supabase provides optional authentication and non-content feedback. The public service uses heuristic analysis and no maintainer-funded AI key.
 
-- A public heuristic demo with no paid AI key.
-- A self-hosted AI deployment where the installer supplies and pays for their own provider key.
-
-The proposed official account-based hosted AI service is not implemented. Its privacy, quota, cost, and release gates are documented in `docs/hosted-service.md`.
-
-Optional non-content feedback can use Supabase without enabling accounts or scan storage. It is disabled by default; see `docs/feedback.md` for the migration, server-only environment variables, retention job, and deployment checks.
-
-Vercel provides zero-configuration support for Next.js projects. Environment variables can be scoped to Development, Preview, and Production, and changes apply only to new deployments. See the official [Next.js on Vercel](https://vercel.com/frameworks/nextjs) and [Vercel environment variable](https://vercel.com/docs/environment-variables) documentation.
-
-## Public Demo on Vercel
-
-1. Import the GitHub repository into a new Vercel project.
-2. Keep the detected framework preset as Next.js and the repository root as the project root.
-3. In Project Settings > Environment Variables, add this variable for Production and Preview:
-
-   ```text
-   ANALYSIS_MODE=heuristic
-   ```
-
-4. Confirm that `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and `AI_API_KEY` are not defined.
-5. Deploy the project. Future pushes to the production branch create production deployments; other branches can create preview deployments.
-
-The public demo must not use a maintainer-owned paid AI key. Heuristic mode performs analysis locally in the server runtime and creates no provider usage bill.
-
-## Self-Hosted AI on Vercel
-
-Fork or clone the repository into an account you control, import it into Vercel, and configure one provider entirely through server-side environment variables.
-
-OpenAI:
+## Production Topology
 
 ```text
-ANALYSIS_MODE=ai
-AI_PROVIDER=openai
-OPENAI_API_KEY=your-own-provider-key
-OPENAI_MODEL=your-provider-model-id
+Visitor
+  -> Cloudflare DNS, DDoS protection, WAF, rate limit
+  -> Cloudflare Tunnel (outbound connection from VPS)
+  -> maillume:3000 on a private Docker network
+  -> Supabase Auth/feedback when configured
 ```
 
-Anthropic:
+- `https://maillume.io` is canonical and serves marketing pages.
+- `https://app.maillume.io` rewrites `/` to the scanner at `/app`.
+- `https://www.maillume.io/*` redirects to `https://maillume.io/$1`.
+- `https://maillume.nl/*` redirects permanently to `https://maillume.io/$1`.
+- No public DNS record points at the VPS IP and ports 80/443 remain closed.
+
+## 1. Prepare Cloudflare
+
+1. Add `maillume.io` and `maillume.nl` to Cloudflare and replace the registrar nameservers with the assigned Cloudflare nameservers.
+2. Create a remotely managed Tunnel named `maillume-production`.
+3. Add public hostnames for `maillume.io`, `www.maillume.io`, and `app.maillume.io`, each targeting `http://maillume:3000`.
+4. Create redirect rules for `www.maillume.io` and `maillume.nl`, preserving path and query string. Use HTTP 301.
+5. Enable automatic DDoS protection and the Free Managed Ruleset.
+6. Use the free rate-limiting rule for path `/api/analyze`, initially 10 requests per 10 seconds per visitor, with a managed challenge. Tune it from observed non-content traffic.
+7. Do not add an A or AAAA record containing the VPS address.
+
+Store the Tunnel token only in `/opt/maillume/.env.production`. Turnstile is deliberately deferred until measured abuse shows it is necessary.
+
+## 2. Harden the Hostinger VPS
+
+Use the Hostinger Docker template on a VPS with at least 4 GB RAM.
+
+1. Create a non-root deployment user and add an SSH public key.
+2. Set `PermitRootLogin no` and `PasswordAuthentication no` in SSH configuration, validate with `sshd -t`, and reload SSH while the original session remains open.
+3. Configure Hostinger firewall/UFW to deny inbound traffic by default. Allow SSH only from a trusted administration address where practical. Do not allow 80 or 443.
+4. Install and enable Fail2Ban and unattended security updates.
+5. Disable unused services, especially public database and mail ports.
+6. Configure at least 2 GB swap when the VPS has no swap, but treat sustained swapping as a capacity alert.
+7. Keep Hostinger weekly backups enabled. Create a manual snapshot immediately before initial deployment or a major operating-system change.
+8. Verify Docker log rotation and disk usage monthly.
+
+Detailed checks and recovery procedures are in `docs/operations.md`.
+
+## 3. Install the Stack
+
+Clone the repository into `/opt/maillume`. Copy `.env.example` to `.env.production`, set file mode `600`, and configure production values:
 
 ```text
-ANALYSIS_MODE=ai
-AI_PROVIDER=anthropic
-ANTHROPIC_API_KEY=your-own-provider-key
-ANTHROPIC_MODEL=your-provider-model-id
+ANALYSIS_MODE=heuristic
+NEXT_PUBLIC_MARKETING_URL=https://maillume.io
+NEXT_PUBLIC_APP_URL=https://app.maillume.io
+ANALYSIS_REQUEST_LIMIT=20
+ANALYSIS_REQUEST_WINDOW_SECONDS=60
+ANALYSIS_MAX_REQUEST_BYTES=32768
+FEEDBACK_STORAGE=disabled
+CLOUDFLARE_TUNNEL_TOKEN=<server-only-token>
+MAILLUME_IMAGE=ghcr.io/matthiasbusscher/maillume:sha-<full-commit>
 ```
 
-OpenAI-compatible provider:
+Do not configure AI provider keys on the official public service. Build-time `NEXT_PUBLIC_` values are embedded in the image; the release workflow builds the official image with canonical defaults. Self-hosters needing different public values should build their own image.
 
-```text
-ANALYSIS_MODE=ai
-AI_PROVIDER=openai-compatible
-AI_BASE_URL=https://your-provider.example/v1
-AI_API_KEY=your-own-provider-key
-AI_MODEL=your-provider-model-id
-```
+Make `scripts/deploy-production.sh` executable. Authenticate Docker to GHCR using a read-only package token if the package is private.
 
-Do not prefix secrets with `NEXT_PUBLIC_`. Next.js exposes `NEXT_PUBLIC_` variables to browser code. Add provider keys only in Vercel Project Settings > Environment Variables and only to the environments that need AI mode.
+## 4. Configure Supabase and Google
 
-After adding or changing Vercel environment variables, create a new deployment or redeploy the latest deployment. Existing deployments do not receive changed environment variables.
+Anonymous scanning remains available when authentication is enabled.
 
-## AI Cost Controls
+1. Create a production Supabase project in an EU region and apply migrations in `supabase/migrations`.
+2. Create a Google Web OAuth client and use the Supabase callback shown in its Google-provider settings as the Google authorized redirect URI.
+3. Enable Google in Supabase with only OpenID, email, and profile scopes.
+4. Set the Supabase site URL to `https://app.maillume.io` and allow only `https://app.maillume.io/auth/callback` in production. Keep localhost only in a separate development project.
+5. Add public Supabase URL/publishable key and the server-only secret to `.env.production`.
+6. Enable production sign-in only after sign-in, sign-out, session refresh, and confirmation-gated account deletion pass.
+7. Verify Row Level Security is enabled. The feedback table accepts writes only through the server role and contains no scan-content columns.
 
-AI providers charge according to their own request and token pricing. Before exposing AI mode publicly:
+Never prefix a Supabase server secret or AI provider key with `NEXT_PUBLIC_`.
 
-```text
-AI_MAX_OUTPUT_TOKENS=800
-AI_RATE_LIMIT_ENABLED=true
-AI_RATE_LIMIT_MAX_REQUESTS=10
-AI_RATE_LIMIT_WINDOW_SECONDS=60
-```
+## 5. Configure GitHub Deployment
 
-Also configure provider-side budgets and alerts. The built-in rate limit is an in-memory safeguard and is not shared across every serverless instance. Public AI deployments should add a deployment-level rate limit or authentication layer.
+The `release.yml` workflow builds `ghcr.io/matthiasbusscher/maillume:sha-<full-commit>`, scans it with Trivy, and deploys over SSH.
 
-See `docs/cost-controls.md` for the full cost-control guidance.
+Create a protected GitHub environment named `production`, require reviewer approval, and add:
 
-## Local Self-Hosting
+- `PRODUCTION_HOST`: VPS SSH address.
+- `PRODUCTION_USER`: non-root deployment user.
+- `PRODUCTION_SSH_KEY`: dedicated private deployment key.
 
-Install dependencies, create `.env.local` from the documented variables in `.env.example`, and start the app:
+Add repository variables `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` before enabling production authentication. These public browser values are intentionally supplied while the image is built. Server secrets remain only in the VPS `.env.production` file.
 
-```bash
-npm install
-npm run dev
-```
+The remote deploy script pulls the immutable image, waits for `/api/health`, and restores the previous image if health checks fail. GitHub Actions builds images; production never builds source code.
 
-Use `ANALYSIS_MODE=heuristic` when no provider key is configured. Provider keys must stay in `.env.local`; environment files are ignored by Git.
-
-## Automated Verification
-
-Install the Playwright Chromium browser once, then run the smoke suite:
-
-```bash
-npx playwright install chromium
-npm run test:smoke
-```
-
-The automated suite covers:
-
-- Paste analysis and structured result rendering.
-- English/Dutch language switching.
-- `.eml` parsing and analysis.
-- Screenshot mode and upload validation.
-- User-facing rate-limit messaging.
-
-GitHub Actions runs type checking, linting, analysis tests, security tests, a heuristic production build, and the browser smoke suite for pull requests and pushes to `main`.
-
-## Post-Deploy Checklist
+## Verification
 
 Use synthetic data only.
 
-- Paste a synthetic suspicious email and confirm a structured result appears.
-- Switch between English and Dutch and confirm labels and the disclaimer update.
-- Upload a synthetic `.eml` file and confirm it is parsed before analysis.
-- Upload a small PNG or JPEG containing visible email text and confirm OCR completes.
-- Confirm the result includes score, level, explanation, signals, links, recommendation, and disclaimer.
-- Confirm browser network responses from `/api/analyze` include `Cache-Control: no-store`.
-- Inspect the `/api/analyze` response and confirm `analysis_mode` is `heuristic`; also confirm the Vercel project has no provider keys configured.
-- If AI mode is enabled, confirm the selected provider works and rate-limit errors are understandable.
-- If feedback is enabled, submit a synthetic result label, confirm `/api/feedback` contains no scan fields, and verify the Supabase expiry job is active.
+1. Check `/api/health`, marketing, scanner, trust, auth, and resource routes through Cloudflare.
+2. Confirm `maillume.nl` and `www.maillume.io` preserve paths while redirecting to canonical `.io` URLs.
+3. Confirm direct requests to the VPS IP cannot reach the app.
+4. Confirm `/api/analyze` returns `Cache-Control: no-store`, rejects oversized requests with `413`, and rejects excess requests with `429` before analysis.
+5. Confirm production reports `analysis_mode: heuristic` and has no provider key.
+6. Confirm screenshot and `.eml` source files remain browser-side.
+7. Test Google authentication and account deletion with a dedicated test account.
+8. Rehearse deployment rollback and VPS restart recovery before private beta.
 
-Raw emails, real inbox screenshots, real `.eml` files, and provider keys must never be used in public test reports or GitHub issues.
+## Future Migration
+
+The image uses standard Next.js standalone output and has no Hostinger-specific application code. A future migration can run the same image on another container platform or deploy the unchanged Next.js project to Vercel. Move DNS only after the new origin passes health and privacy checks.

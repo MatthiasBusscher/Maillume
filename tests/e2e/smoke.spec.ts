@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import path from "node:path";
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
 });
 
 test("paste analysis renders a structured result and disclaimer", async ({ page }) => {
@@ -91,16 +91,19 @@ test("rate-limited analysis shows a clear localized error", async ({ page }) => 
 });
 
 test("launch metadata and generated assets are available", async ({ page, request }) => {
-  await expect(page).toHaveTitle("Inbox Risk Scanner");
+  await page.goto("/");
+  await expect(page).toHaveTitle("Maillume");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    /privacy-first automated risk assessment/i,
+    /privacy-first risk assessment/i,
   );
 
-  const [iconResponse, openGraphResponse, manifestResponse] = await Promise.all([
+  const [iconResponse, openGraphResponse, manifestResponse, robotsResponse, sitemapResponse] = await Promise.all([
     request.get("/icon"),
     request.get("/opengraph-image"),
     request.get("/manifest.webmanifest"),
+    request.get("/robots.txt"),
+    request.get("/sitemap.xml"),
   ]);
 
   expect(iconResponse.ok()).toBe(true);
@@ -109,8 +112,12 @@ test("launch metadata and generated assets are available", async ({ page, reques
   expect(openGraphResponse.headers()["content-type"]).toContain("image/png");
   expect(manifestResponse.ok()).toBe(true);
   expect(manifestResponse.headers()["content-type"]).toContain("application/manifest+json");
+  expect(robotsResponse.ok()).toBe(true);
+  expect(await robotsResponse.text()).toContain("Disallow: /app");
+  expect(sitemapResponse.ok()).toBe(true);
+  expect(await sitemapResponse.text()).toContain("/self-hosted");
 
-  const sourceLinks = page.getByRole("link", { name: "Source code" });
+  const sourceLinks = page.getByRole("link", { name: "Source", exact: true });
   await expect(sourceLinks.first()).toHaveAttribute(
     "href",
     "https://github.com/MatthiasBusscher/inbox-risk-scanner",
@@ -119,11 +126,11 @@ test("launch metadata and generated assets are available", async ({ page, reques
     "href",
     "https://github.com/MatthiasBusscher/inbox-risk-scanner/blob/main/LICENSE",
   );
-  await expect(page.getByText(/AGPL-3.0 free software/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "AGPL-3.0" })).toBeVisible();
 });
 
 test("optional feedback sends labels without scan content", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Use sample" }).click();
   await page.getByRole("button", { name: "Analyze email" }).click();
 
@@ -172,7 +179,7 @@ test("feedback controls work from the keyboard and reject content fields", async
 
   expect(rejected.status()).toBe(400);
 
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Use sample" }).click();
   await page.getByRole("button", { name: "Analyze email" }).click();
 
@@ -193,4 +200,127 @@ test("feedback controls work from the keyboard and reject content fields", async
   await page.keyboard.press("Enter");
 
   await expect(page.getByText("Feedback received")).toBeVisible();
+});
+
+test("marketing routes present the product without claiming roadmap features are live", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { name: "Maillume", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Check an email" }).first()).toHaveAttribute(
+    "href",
+    "/app",
+  );
+  await expect(page.getByText("No account required", { exact: false }).first()).toBeVisible();
+
+  await page.goto("/pricing");
+  await expect(page.getByRole("heading", { name: "The safety workflow stays free." })).toBeVisible();
+  await expect(page.getByText("Planned, not for sale")).toBeVisible();
+
+  await page.goto("/self-hosted");
+  await expect(page.getByRole("heading", { name: /Your infrastructure/ })).toBeVisible();
+
+  await page.goto("/platform");
+  await expect(page.getByText("Available today").first()).toBeVisible();
+  await expect(page.getByText("Research", { exact: true }).first()).toBeVisible();
+});
+
+test("Google sign-in degrades safely when Supabase auth is not configured", async ({ page }) => {
+  await page.goto("/auth/sign-in");
+
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeDisabled();
+  await expect(page.getByText("The scanner still works without an account.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open scanner" })).toHaveAttribute("href", "/app");
+});
+
+test("trust pages are publicly accessible", async ({ page }) => {
+  for (const [path, heading] of [
+    ["/privacy", "Privacy notice"],
+    ["/terms", "Public-beta terms"],
+    ["/security", "Security"],
+  ]) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
+  }
+});
+
+test("the app subdomain root resolves to the scanner workspace", async ({ request }) => {
+  const response = await request.get("/", {
+    headers: {
+      Host: "app.maillume.io",
+    },
+  });
+
+  expect(response.ok()).toBe(true);
+  expect(await response.text()).toContain("Inspect a suspicious email");
+});
+
+test("account deletion rejects cross-origin requests", async ({ request }) => {
+  const response = await request.post("/account/delete", {
+    form: { confirm: "delete" },
+    headers: { Origin: "https://attacker.example" },
+  });
+
+  expect(response.status()).toBe(403);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+});
+
+test("health endpoint exposes no dependency or secret details", async ({ request }) => {
+  const response = await request.get("/api/health");
+
+  expect(response.ok()).toBe(true);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  expect(await response.json()).toEqual({ status: "ok" });
+});
+
+test("analysis rejects oversized request bodies before processing", async ({ request }) => {
+  const response = await request.post("/api/analyze", {
+    data: { source: "paste", body: "x".repeat(40_000) },
+  });
+
+  expect(response.status()).toBe(413);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+});
+
+test("canonical domain redirects preserve path and query", async ({ request }) => {
+  for (const host of ["maillume.nl", "www.maillume.nl", "www.maillume.io"]) {
+    const response = await request.get("/privacy?source=redirect-test", {
+      headers: { Host: host },
+      maxRedirects: 0,
+    });
+
+    expect(response.status()).toBe(301);
+    expect(response.headers().location).toBe(
+      "https://maillume.io/privacy?source=redirect-test",
+    );
+  }
+});
+
+test("the sourced Odido incident resource states Maillume's limits", async ({ page }) => {
+  await page.goto("/resources/odido-phishing-incident");
+
+  await expect(page.getByRole("heading", { name: /first step, not the whole attack/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /original NOS report/ })).toHaveAttribute(
+    "href",
+    "https://nos.nl/artikel/2602283-odido-hackers-kwamen-binnen-via-phishing-deden-zich-voor-als-ict-afdeling",
+  );
+  await expect(page.getByText(/cannot verify a caller's identity/)).toBeVisible();
+});
+
+test("primary pages fit mobile and desktop viewports without horizontal overflow", async ({ page }) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+
+    for (const path of ["/", "/app", "/resources/odido-phishing-incident"]) {
+      await page.goto(path);
+      await expect(page.locator("h1").first()).toBeVisible();
+      const dimensions = await page.evaluate(() => ({
+        clientWidth: document.documentElement.clientWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+      }));
+      expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
+    }
+  }
 });

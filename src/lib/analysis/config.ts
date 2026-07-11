@@ -13,6 +13,7 @@ export type AiAnalysisConfig = {
   model: string;
   maxOutputTokens: number;
   rateLimit: AiRateLimitConfig;
+  maxConcurrentRequests: number;
 };
 
 export type AnalysisConfig = HeuristicAnalysisConfig | AiAnalysisConfig;
@@ -32,6 +33,8 @@ const DEFAULT_AI_RATE_LIMIT_MAX_REQUESTS = 10;
 const DEFAULT_AI_RATE_LIMIT_WINDOW_SECONDS = 60;
 const MAX_AI_RATE_LIMIT_REQUESTS = 1_000;
 const MAX_AI_RATE_LIMIT_WINDOW_SECONDS = 86_400;
+const DEFAULT_AI_MAX_CONCURRENT_REQUESTS = 2;
+const MAX_AI_CONCURRENT_REQUESTS = 20;
 
 export class AnalysisConfigError extends Error {
   constructor(message: string) {
@@ -80,6 +83,13 @@ export function getAnalysisConfig(env: AnalysisEnv = process.env): AnalysisConfi
     model,
     maxOutputTokens: getMaxOutputTokens(env.AI_MAX_OUTPUT_TOKENS),
     rateLimit: getAiRateLimitConfig(env),
+    maxConcurrentRequests: getBoundedIntegerEnv(
+      env.AI_MAX_CONCURRENT_REQUESTS,
+      DEFAULT_AI_MAX_CONCURRENT_REQUESTS,
+      1,
+      MAX_AI_CONCURRENT_REQUESTS,
+      "AI_MAX_CONCURRENT_REQUESTS",
+    ),
   };
 }
 

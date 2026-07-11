@@ -20,6 +20,8 @@
     "src/lib/analysis/ai-prompt.ts",
     "src/lib/analysis/ai-schema.ts",
     "src/lib/analysis/config.ts",
+    "src/lib/analysis/concurrency.ts",
+    "src/lib/analysis/concurrency.test.ts",
     "src/lib/analysis/rate-limit.ts",
     "src/lib/analysis/providers.ts",
     "src/lib/eml/parse-eml.test.ts",
@@ -33,6 +35,8 @@
     "src/lib/feedback/types.ts",
     "src/lib/feedback/validation.ts",
     "src/lib/security/privacy-review.test.ts",
+    "src/lib/supabase/config.test.ts",
+    "src/lib/supabase/config.ts",
     "src/lib/scan-limits.test.ts",
     "src/lib/scan-limits.ts",
     "src/lib/types.ts"

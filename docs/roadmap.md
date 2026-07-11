@@ -1,4 +1,4 @@
-# Inbox Risk Scanner GitHub Issue Roadmap
+# Maillume GitHub Issue Roadmap
 
 Implementation status: all 13 roadmap items are complete in the v1 launch-candidate codebase. GitHub issues remain the source of truth for release follow-ups.
 
@@ -27,7 +27,7 @@ The public heuristic scanner and self-hosted bring-your-own-key mode remain the 
 9. Evaluation Samples and Risk Calibration
 10. Abuse Protection and Cost Controls
 11. Security and Privacy Review
-12. Vercel Deployment and Self-Hosting Docs
+12. Portable Deployment and Self-Hosting Docs
 13. v1 Launch Polish
 
 ## Issue #1: Project Setup & Initial Scan Page
@@ -37,7 +37,7 @@ Build the first usable version of the app without external services.
 Definition of Done:
 
 - Next.js App Router, TypeScript, and Tailwind CSS are configured.
-- Landing page introduces Inbox Risk Scanner and puts the scanner in the primary flow.
+- Landing page introduces Maillume and puts the scanner in the primary flow.
 - Email scan form supports subject, sender email address, and email body.
 - Form returns mocked structured analysis results.
 - Result UI displays risk score, risk level, explanation, suspicious signals, detected links, recommended action, and the required disclaimer.
@@ -107,7 +107,7 @@ Definition of Done:
 
 ## Issue #7: Optional Self-Hosted AI Provider Abstraction
 
-Allow people who install Inbox Risk Scanner themselves to use their own AI provider key.
+Allow people who install Maillume themselves to use their own AI provider key.
 
 Definition of Done:
 
@@ -167,15 +167,15 @@ Definition of Done:
 - Temporary file handling is reviewed and minimized.
 - Security review confirms no AI key, service role key, or uploaded content reaches the browser unintentionally.
 
-## Issue #12: Vercel Deployment and Self-Hosting Docs
+## Issue #12: Portable Deployment and Self-Hosting Docs
 
 Prepare both the public demo and self-hosted installations.
 
 Definition of Done:
 
-- Public Vercel deployment builds successfully in heuristic mode.
+- Public standalone container deployment builds successfully in heuristic mode.
 - `.env.example` documents heuristic mode and optional self-hosted AI mode.
-- Self-hosting docs explain how to configure provider keys safely in Vercel.
+- Self-hosting docs explain how to configure provider keys safely as server-only environment variables.
 - Smoke test covers paste, screenshot, `.eml`, language switching, and result rendering.
 - Documentation clearly states that the public demo does not use the maintainer's paid AI key.
 

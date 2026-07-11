@@ -2,14 +2,14 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Inbox Risk Scanner",
-    short_name: "Risk Scanner",
+    name: "Maillume",
+    short_name: "Maillume",
     description:
-      "Privacy-first automated risk assessment for suspicious email text, screenshots, and .eml files.",
-    start_url: "/",
+      "A privacy-first second opinion for suspicious email text, screenshots, and .eml files.",
+    start_url: "/app",
     display: "standalone",
-    background_color: "#f8fafc",
-    theme_color: "#020617",
+    background_color: "#eef1eb",
+    theme_color: "#111711",
     icons: [
       {
         src: "/icon",

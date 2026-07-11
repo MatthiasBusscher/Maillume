@@ -1,6 +1,6 @@
 # Privacy-Safe Detection Feedback
 
-Inbox Risk Scanner can optionally collect result labels without collecting the email that was scanned. Feedback is a separate user action and is disabled unless a storage mode is configured.
+Maillume can optionally collect result labels without collecting the email that was scanned. Feedback is a separate user action and is disabled unless a storage mode is configured.
 
 ## Stored Fields
 

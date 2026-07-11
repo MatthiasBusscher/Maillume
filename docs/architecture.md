@@ -1,8 +1,8 @@
-# Inbox Risk Scanner Architecture
+# Maillume Architecture
 
 ## Product Shape
 
-Inbox Risk Scanner helps non-technical users assess email content before they click links, reply, or send sensitive information. The app must be clear about uncertainty and always show this disclaimer:
+Maillume helps non-technical users assess email content before they click links, reply, or send sensitive information. The app must be clear about uncertainty and always show this disclaimer:
 
 > This is an automated risk assessment and should not be considered a guarantee.
 
@@ -26,11 +26,18 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
 ## Application Layers
 
 1. Web UI
-   - Next.js App Router pages and components.
+   - Next.js App Router marketing pages at `/`, `/pricing`, `/platform`, and `/self-hosted`.
+   - The scanner workspace lives at `/app` and is rewritten from `/` on an `app.*` hostname.
    - Tailwind CSS for styling.
    - Client components for interactive form state and result display.
 
-2. API Layer
+2. Optional Authentication
+   - Supabase Auth provides Google OAuth when public project configuration is present.
+   - `/auth/callback` exchanges the OAuth code for a cookie-backed session.
+   - Accounts are optional and the scanner remains usable while signed out.
+   - Account identity does not create scan history or assessment storage.
+
+3. API Layer
    - `POST /api/analyze` accepts normalized scan input from pasted text, OCR, or `.eml` parsing.
    - Uses the server-side `analyzeEmail` provider interface.
    - Uses local heuristics in public demo mode.
@@ -38,22 +45,24 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Validates and normalizes the model response before returning it.
    - Does not persist raw scan content or scan results.
 
-3. Input Processing Layer
+4. Input Processing Layer
    - Paste mode uses subject, sender email, and body text.
    - Screenshot mode extracts visible text with client-side OCR, then discards the uploaded image.
    - `.eml` mode parses headers, sender, subject, text/html bodies, detected links, and attachment metadata in the browser, then discards the uploaded file.
    - Upload type and size limits are centralized in `src/lib/scan-limits.ts`.
    - Processing should happen in memory or temporary runtime storage only.
 
-4. Data Layer
+5. Data Layer
    - No database is required for scanning.
    - Ordinary scans never become training or evaluation data.
    - Optional feedback uses a separate strict schema containing labels and high-level categories only.
    - Production feedback storage uses a server-only Supabase service-role key, Row Level Security, and automatic expiry. The scanner remains available when feedback is disabled.
-   - If accounts are added later, they may store identity, preferences, quota counters, entitlements, and billing references, but not scan history or assessment content.
+   - Optional Google accounts store provider identity and session data in Supabase Auth. Future preferences, quota counters, entitlements, and billing references may be added, but not scan history or assessment content.
 
-5. Deployment
-   - Vercel hosts the Next.js app.
+6. Deployment
+   - A standalone Next.js container runs on the Hostinger VPS behind Cloudflare Tunnel.
+   - The production shape uses `maillume.io` for marketing and `app.maillume.io` for the scanner, with `maillume.nl` redirecting to the canonical `.io` domain.
+   - No web port or origin IP is exposed publicly; Cloudflare provides protected ingress and edge abuse controls.
    - Public deployment uses `ANALYSIS_MODE=heuristic` and no AI provider key.
    - Self-hosters can use `ANALYSIS_MODE=ai`, `AI_PROVIDER=openai|anthropic|openai-compatible`, and their own server-side provider key.
 
@@ -65,15 +74,31 @@ src/
     api/
       analyze/
         route.ts
+      feedback/
+        route.ts
+    app/
+      page.tsx
+    auth/
+      callback/
+      sign-in/
+      sign-out/
+    account/
+    platform/
+    pricing/
+    privacy/
+    security/
+    self-hosted/
+    terms/
     layout.tsx
     page.tsx
     globals.css
   components/
+    brand-mark.tsx
     email-scan-form.tsx
+    home-page.tsx
     risk-meter.tsx
-    scan-result.tsx
-    app-shell.tsx
-    file-dropzone.tsx
+    site-footer.tsx
+    site-header.tsx
     language-switcher.tsx
   lib/
     analysis/
@@ -86,7 +111,8 @@ src/
       heuristic-fixtures.ts
       provider-config.test.ts
       providers.ts
-      rate-limit.ts
+    rate-limit.ts
+      concurrency.ts
       validate-input.ts
     evaluation/
       email-fixtures.ts
@@ -101,6 +127,10 @@ src/
       validation.ts
     ocr/
       extract-text.ts
+    supabase/
+      client.ts
+      config.ts
+      server.ts
     scan-limits.ts
     i18n/
       dictionary.ts
@@ -118,7 +148,7 @@ supabase/
     20260710150000_create_detection_feedback.sql
 ```
 
-The initial implementation includes the foundation, landing page, scan form, risk meter, no-storage analysis route, English/Dutch UI foundation with browser-language initialization, screenshot OCR input, `.eml` parsing input, shared synthetic evaluation fixtures, and optional self-hosted AI provider calls behind server environment variables.
+The implementation includes the Maillume marketing and trust pages, `/app` scanner workspace, optional Supabase Google authentication, scan form, risk meter, no-storage analysis route, English/Dutch UI foundation, screenshot OCR input, `.eml` parsing input, shared synthetic evaluation fixtures, and optional self-hosted AI provider calls behind server environment variables.
 
 ## Evaluation And Calibration
 
@@ -178,9 +208,18 @@ AI_MAX_OUTPUT_TOKENS=800
 AI_RATE_LIMIT_ENABLED=true
 AI_RATE_LIMIT_MAX_REQUESTS=10
 AI_RATE_LIMIT_WINDOW_SECONDS=60
+AI_MAX_CONCURRENT_REQUESTS=2
+ANALYSIS_REQUEST_LIMIT=20
+ANALYSIS_REQUEST_WINDOW_SECONDS=60
+ANALYSIS_MAX_REQUEST_BYTES=32768
+NEXT_PUBLIC_MARKETING_URL=
+NEXT_PUBLIC_APP_URL=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-The public hosted version should keep `ANALYSIS_MODE=heuristic` and leave provider keys unset. Self-hosters can set `ANALYSIS_MODE=ai`, choose a provider, add their own key and model ID to their Vercel environment variables, and tune the AI rate limit.
+The public hosted version should keep `ANALYSIS_MODE=heuristic` and leave provider keys unset. Self-hosters can set `ANALYSIS_MODE=ai`, choose a provider, add their own server-side key and model ID, and tune the AI rate and concurrency limits.
 
 OpenAI-compatible examples:
 
@@ -228,4 +267,4 @@ The route must not write raw scan content, OCR text, `.eml` data, prompts, or re
 
 ## Future-Ready Boundaries
 
-The design leaves room for forwarded email ingestion, team accounts, and paid hosted plans, but none of those are implemented in the launch MVP. See `docs/hosted-service.md` for the approved planning boundaries and launch gates for accounts, hosted AI, and billing.
+The design leaves room for forwarded email ingestion, account preferences, team accounts, and paid hosted plans. Google authentication now exists as an optional identity foundation, but hosted AI, billing, scan history, teams, and mail-client integration are not implemented. See `docs/hosted-service.md` for the approved planning boundaries and launch gates.

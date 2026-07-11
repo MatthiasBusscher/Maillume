@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 
 import type { AnalysisConfig } from "./config";
-import { enforceAiRateLimit, RateLimitError, type AiRateLimitStore } from "./rate-limit";
+import { enforceAiRateLimit, enforceRequestRateLimit, RateLimitError, type AiRateLimitStore } from "./rate-limit";
 
 const HEURISTIC_CONFIG = {
   mode: "heuristic",
@@ -14,6 +14,7 @@ const AI_CONFIG = {
   apiKey: "fake-openai-key-for-tests",
   model: "openai-test-model",
   maxOutputTokens: 800,
+  maxConcurrentRequests: 2,
   rateLimit: {
     enabled: true,
     maxRequests: 2,
@@ -50,6 +51,25 @@ function main() {
   assert.ok(
     limitedError instanceof RateLimitError,
     "AI mode should reject requests above the configured window limit",
+  );
+
+  const requestStore = new Map() satisfies AiRateLimitStore;
+  enforceRequestRateLimit(requestFromIp("203.0.113.60"), {
+    maxRequests: 1,
+    windowMs: 1_000,
+    now: () => 0,
+    store: requestStore,
+  });
+  assert.throws(
+    () =>
+      enforceRequestRateLimit(requestFromIp("203.0.113.60"), {
+        maxRequests: 1,
+        windowMs: 1_000,
+        now: () => 100,
+        store: requestStore,
+      }),
+    RateLimitError,
+    "all hosted analysis modes should support request limiting",
   );
   assert.equal(limitedError.retryAfterSeconds, 1);
 

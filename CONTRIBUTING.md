@@ -1,6 +1,6 @@
-# Contributing to Inbox Risk Scanner
+# Contributing to Maillume
 
-Thanks for helping build Inbox Risk Scanner. The project goal is a privacy-first, open-source tool that helps non-technical users assess suspicious emails without storing scan content by default.
+Thanks for helping build Maillume. The project goal is a privacy-first, open-source tool that helps non-technical users assess suspicious emails without storing scan content by default.
 
 ## Before You Start
 
@@ -58,7 +58,7 @@ Good pull requests should:
 - Stay focused on one issue or workflow.
 - Include screenshots for UI changes when useful, using synthetic data only.
 - Explain privacy implications if the change touches scan content, uploads, OCR, `.eml` parsing, logging, or AI prompts.
-- Avoid certainty claims. Inbox Risk Scanner provides risk assessments, not guarantees.
+- Avoid certainty claims. Maillume provides risk assessments, not guarantees.
 
 ## Contributor License
 

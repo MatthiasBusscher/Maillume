@@ -1,10 +1,10 @@
 # Hosted Service Architecture
 
-Status: approved planning baseline. Authentication, hosted AI, and payments are not implemented.
+Status: approved planning baseline. Optional Google authentication is implemented as an identity foundation; hosted AI, account entitlements, and payments are not implemented.
 
 ## Decision Summary
 
-Inbox Risk Scanner remains an open-source, privacy-first scanner first and a hosted service second.
+Maillume remains an open-source, privacy-first scanner first and a hosted service second.
 
 - Anonymous heuristic scans stay free and do not require an account.
 - Normal scans are processed for the current assessment only. They are not reused for analytics, model training, or evaluation fixtures.
@@ -47,7 +47,7 @@ Screenshot OCR and `.eml` parsing happen in the browser. The hosted API receives
 
 ### Data Inventory
 
-| Data | Processed where | Retained by Inbox Risk Scanner | Target retention |
+| Data | Processed where | Retained by Maillume | Target retention |
 | --- | --- | --- | --- |
 | Raw screenshot or `.eml` file | Browser memory | No | Cleared after parsing or page close |
 | Subject, sender, body, OCR text, links | Request memory; selected AI provider in hosted AI mode | No | Discarded after the response |
@@ -176,7 +176,7 @@ The Plus price is a validation target, not final public copy. Launch pricing req
 
 Hosted AI disclosure shown immediately before the first hosted AI scan:
 
-> When you choose hosted AI analysis, the subject, sender, and message text shown in the scanner are sent to the named AI provider only to produce this assessment. Inbox Risk Scanner does not save this content or use it to build a training dataset. The provider and its current processing terms are shown before you continue. You can always use heuristic scanning without an account or AI provider.
+> When you choose hosted AI analysis, the subject, sender, and message text shown in the scanner are sent to the named AI provider only to produce this assessment. Maillume does not save this content or use it to build a training dataset. The provider and its current processing terms are shown before you continue. You can always use heuristic scanning without an account or AI provider.
 
 Optional feedback disclosure:
 

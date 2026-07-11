@@ -45,6 +45,9 @@ function main() {
 
   const routeContent = readProjectFile("src/app/api/analyze/route.ts");
   const feedbackRouteContent = readProjectFile("src/app/api/feedback/route.ts");
+  const authCallbackContent = readProjectFile("src/app/auth/callback/route.ts");
+  const accountDeletionContent = readProjectFile("src/app/account/delete/route.ts");
+  const scannerPageContent = readProjectFile("src/app/app/page.tsx");
   const feedbackMigration = readProjectFile(
     "supabase/migrations/20260710150000_create_detection_feedback.sql",
   );
@@ -53,13 +56,30 @@ function main() {
     license?: string;
   };
   const nextConfigContent = readProjectFile("next.config.ts");
+  const dockerfileContent = readProjectFile("Dockerfile");
+  const composeContent = readProjectFile("docker-compose.production.yml");
 
   assert.match(routeContent, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(routeContent, /console\./);
+  assert.doesNotMatch(routeContent, /node:fs|writeFile|appendFile|createWriteStream/);
+  assert.doesNotMatch(routeContent, /supabase|feedback\/storage/);
   assert.match(feedbackRouteContent, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(feedbackRouteContent, /console\./);
   assert.match(feedbackMigration, /enable row level security/i);
   assert.match(feedbackMigration, /purge_expired_detection_feedback/);
+  assert.match(authCallbackContent, /requestedNext\.startsWith\("\/"\)/);
+  assert.match(authCallbackContent, /!requestedNext\.startsWith\("\/\/"\)/);
+  assert.match(authCallbackContent, /private, no-cache, no-store/);
+  assert.match(accountDeletionContent, /getUser\(\)/);
+  assert.match(accountDeletionContent, /admin\.auth\.admin\.deleteUser/);
+  assert.match(accountDeletionContent, /Cross-origin account deletion is not allowed/);
+  assert.match(accountDeletionContent, /private, no-cache, no-store/);
+  assert.ok(
+    accountDeletionContent.indexOf("getUser()") <
+      accountDeletionContent.indexOf("admin.auth.admin.deleteUser"),
+    "account deletion must verify the signed-in user before using the admin API",
+  );
+  assert.doesNotMatch(scannerPageContent, /\bredirect\s*\(/);
 
   for (const forbiddenColumn of [
     "body",
@@ -81,6 +101,12 @@ function main() {
   assert.match(nextConfigContent, /X-Frame-Options/);
   assert.match(nextConfigContent, /Referrer-Policy/);
   assert.match(nextConfigContent, /Permissions-Policy/);
+  assert.match(nextConfigContent, /output: "standalone"/);
+  assert.match(dockerfileContent, /USER nextjs/);
+  assert.doesNotMatch(composeContent, /^\s*ports:/m);
+  assert.match(composeContent, /read_only: true/);
+  assert.match(composeContent, /no-new-privileges:true/);
+  assert.match(composeContent, /max-size: 10m/);
   assert.match(licenseContent, /GNU AFFERO GENERAL PUBLIC LICENSE/);
   assert.match(licenseContent, /13\. Remote Network Interaction/);
   assert.equal(packageMetadata.license, "AGPL-3.0-only");

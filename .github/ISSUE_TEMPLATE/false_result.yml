@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this template when PhishGuard scores a message too high or too low. Do not include real private email content, private screenshots, raw headers, tracking links, API keys, or `.eml` files.
+        Use this template when Maillume scores a message too high or too low. Do not include real private email content, private screenshots, raw headers, tracking links, API keys, or `.eml` files.
   - type: checkboxes
     id: privacy
     attributes:
@@ -64,4 +64,3 @@ body:
     attributes:
       label: Why should it score differently?
       description: Explain the suspicious or legitimate signals.
-

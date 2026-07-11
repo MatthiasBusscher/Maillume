@@ -31,7 +31,7 @@ export function LanguageSwitcher({
               onClick={() => onLocaleChange(option.locale)}
               className={`h-8 min-w-10 px-2 text-xs font-semibold transition ${
                 isActive
-                  ? "bg-[#d8ff3e] text-[#171a1f]"
+                  ? "bg-[#dfff52] text-[#111711]"
                   : "text-[#c8ced4] hover:bg-white/10 hover:text-white"
               }`}
               aria-pressed={isActive}

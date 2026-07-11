@@ -111,7 +111,7 @@ export function AnalysisFeedback({
         aria-live="polite"
         aria-labelledby="feedback-success-title"
       >
-        <div className="border-l-4 border-[#087b87] bg-[#eaf6f5] px-4 py-4 text-[#204e51]">
+        <div className="border-l-4 border-[#087b72] bg-[#eaf6f5] px-4 py-4 text-[#204e51]">
           <h3 id="feedback-success-title" className="flex items-center gap-2 font-semibold">
             <Check className="h-4 w-4" aria-hidden="true" />
             {dictionary.feedback.successTitle}
@@ -128,7 +128,7 @@ export function AnalysisFeedback({
     <section className="border-t border-[#d5d9de] py-5" aria-labelledby="feedback-title">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-[10px] uppercase text-[#087b87]">
+          <p className="font-mono text-[10px] uppercase text-[#087b72]">
             {dictionary.feedback.eyebrow}
           </p>
           <h3 id="feedback-title" className="mt-1 text-base font-semibold text-[#26313b]">
@@ -206,7 +206,7 @@ export function AnalysisFeedback({
                     type="checkbox"
                     checked={signalCategories.includes(category)}
                     onChange={() => toggleCategory(category)}
-                    className="h-4 w-4 accent-[#087b87]"
+                    className="h-4 w-4 accent-[#087b72]"
                   />
                   {dictionary.feedback.categories[category]}
                 </label>
@@ -214,7 +214,7 @@ export function AnalysisFeedback({
             </div>
           </fieldset>
 
-          <div className="border-l-4 border-[#087b87] bg-[#eaf6f5] px-4 py-3 text-xs leading-5 text-[#315c60]">
+          <div className="border-l-4 border-[#087b72] bg-[#eaf6f5] px-4 py-3 text-xs leading-5 text-[#315c60]">
             <p className="flex items-center gap-2 font-semibold text-[#173b40]">
               <DatabaseZap className="h-4 w-4" aria-hidden="true" />
               {dictionary.feedback.disclosureTitle}
@@ -231,7 +231,7 @@ export function AnalysisFeedback({
           <button
             type="submit"
             disabled={!canSubmit || status === "submitting"}
-            className="inline-flex h-10 items-center gap-2 border border-[#171a1f] bg-[#171a1f] px-4 text-sm font-semibold text-white transition hover:bg-[#087b87] disabled:cursor-not-allowed disabled:border-[#cbd1d6] disabled:bg-[#cbd1d6] disabled:text-[#77818b]"
+            className="inline-flex h-10 items-center gap-2 border border-[#111711] bg-[#111711] px-4 text-sm font-semibold text-white transition hover:bg-[#087b72] disabled:cursor-not-allowed disabled:border-[#cbd1d6] disabled:bg-[#cbd1d6] disabled:text-[#77818b]"
           >
             <Send className="h-4 w-4" aria-hidden="true" />
             {status === "submitting" ? dictionary.feedback.submitting : dictionary.feedback.submit}
@@ -260,8 +260,8 @@ function FeedbackChoice({
       aria-pressed={active}
       className={`inline-flex min-h-10 min-w-0 items-center justify-center gap-2 px-3 py-2 text-xs font-semibold leading-4 transition sm:text-sm ${
         active
-          ? "bg-[#171a1f] text-white shadow-[inset_0_3px_0_#d8ff3e]"
-          : "bg-white text-[#4e5965] hover:bg-[#eef2f3] hover:text-[#171a1f]"
+          ? "bg-[#111711] text-white shadow-[inset_0_3px_0_#dfff52]"
+          : "bg-white text-[#4e5965] hover:bg-[#eef2f3] hover:text-[#111711]"
       }`}
     >
       {icon}

@@ -1,6 +1,6 @@
 # Security Policy
 
-Inbox Risk Scanner handles sensitive inputs by design. Even though the launch goal is to avoid storing scan content, contributors should treat pasted emails, screenshots, OCR text, `.eml` files, headers, and AI prompts as sensitive.
+Maillume handles sensitive inputs by design. Even though the launch goal is to avoid storing scan content, contributors should treat pasted emails, screenshots, OCR text, `.eml` files, headers, and AI prompts as sensitive.
 
 The current launch review checklist lives in `docs/security-privacy-review.md`.
 
@@ -29,4 +29,4 @@ Do not post or commit:
 
 ## Supported Versions
 
-Inbox Risk Scanner is pre-v1. Security fixes should target the main development branch until a release process exists.
+Maillume is pre-v1. Security fixes should target the main development branch until a release process exists.

@@ -1,10 +1,10 @@
-# Inbox Risk Scanner
+# Maillume
 
-Inbox Risk Scanner is an open-source, privacy-first app for checking whether email content appears likely to be phishing, spam, or legitimate.
+Maillume is an open-source, privacy-first app for checking whether email content appears likely to be phishing, spam, or legitimate.
 
 Use the official scanner without an account or run the same core yourself. The hosted service is designed to sell managed convenience later, not access to the core safety workflow.
 
-The current implementation is a privacy-first Next.js app with paste, screenshot OCR, and `.eml` input modes backed by local heuristic analysis.
+The current implementation is a privacy-first Next.js product with a public marketing site, an anonymous scanner workspace, optional Google authentication, and paste, screenshot OCR, and `.eml` inputs backed by local heuristic analysis.
 
 The launch goal is to support pasted text, screenshots, and `.eml` files without storing scan content after scoring.
 
@@ -12,7 +12,9 @@ The launch goal is to support pasted text, screenshots, and `.eml` files without
 
 The repository is a v1 launch candidate. Implemented today:
 
-- Landing page
+- Maillume marketing, platform, pricing, self-hosted, privacy, terms, and security pages
+- Scanner workspace at `/app` with production support for `app.maillume.io`
+- Optional Google sign-in through Supabase without making accounts a scanner requirement
 - Paste-based email scan form
 - Screenshot OCR input mode
 - `.eml` parsing input mode
@@ -23,22 +25,23 @@ The repository is a v1 launch candidate. Implemented today:
 - Server-side analysis provider abstraction for heuristic mode and self-hosted AI mode
 - Abuse controls, security/privacy guardrails, and browser smoke tests
 - Optional non-content result feedback with a strict allowlist and Supabase retention schema
-- Vercel and local self-hosting documentation
+- Portable Docker, Hostinger VPS, Cloudflare Tunnel, and local self-hosting documentation
 - Launch metadata, generated favicon/social image, and accessibility basics
 
-The technical launch roadmap is implemented. The next product phase is documented separately and keeps anonymous heuristic scanning free while hosted accounts, AI allowances, and billing remain behind explicit go/no-go gates.
+The technical scanner roadmap and optional Google identity foundation are implemented. The next product phase keeps anonymous heuristic scanning free while account features, hosted AI allowances, and billing remain behind explicit go/no-go gates.
 
 ## Tech Stack
 
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
+- Supabase authentication and optional privacy-safe feedback storage
 - Optional OpenAI, Anthropic, or OpenAI-compatible API for self-hosted structured analysis
-- Vercel deployment
+- Hostinger VPS with Cloudflare-protected container deployment
 
 ## Analysis Modes
 
-Inbox Risk Scanner should not ship with the maintainer's paid AI API key in the public hosted version.
+Maillume should not ship with the maintainer's paid AI API key in the public hosted version.
 
 - Public demo mode: local heuristic analysis only, no AI provider key, no stored scan data.
 - Self-hosted AI mode: installers deploy their own copy and configure their own server-side provider key. In this mode, normalized scan text is sent to their selected AI provider for structured analysis.
@@ -92,7 +95,7 @@ See `.env.example` for the full environment shape.
 - Screenshot OCR and `.eml` parsing run in the browser before normalized text is sent for analysis.
 - Contributors should only share synthetic or fully sanitized examples in issues and tests.
 
-The proposed hosted product boundaries, cost model, retention targets, privacy disclosures, and launch gates are in `docs/hosted-service.md`. They are architecture decisions, not implemented account or payment features.
+The proposed hosted product boundaries, cost model, retention targets, privacy disclosures, and launch gates are in `docs/hosted-service.md`. Google sign-in exists, but account preferences, hosted AI allowances, and payment features are not implemented.
 
 ## Local Development
 
@@ -101,7 +104,9 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3000` for the marketing site or `http://localhost:3000/app` for the scanner.
+
+Google sign-in is optional. Configure the public Supabase URL and publishable key from `.env.example`, enable Google in the Supabase Auth dashboard, and allow `http://localhost:3000/auth/callback` as a development redirect URL.
 
 Recommended checks:
 
@@ -119,6 +124,8 @@ npm run build
 - Architecture: `docs/architecture.md`
 - AI cost controls: `docs/cost-controls.md`
 - Deployment and self-hosting: `docs/deployment.md`
+- Production operations: `docs/operations.md`
+- Private beta checklist: `docs/launch-checklist.md`
 - Evaluation fixtures: `docs/evaluation.md`
 - Privacy-safe feedback: `docs/feedback.md`
 - Hosted service architecture: `docs/hosted-service.md`
