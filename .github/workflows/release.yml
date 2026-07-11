@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy the verified image to production
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -76,6 +82,7 @@ jobs:
 
   deploy:
     needs: image
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
     runs-on: ubuntu-latest
     environment: production
     steps:

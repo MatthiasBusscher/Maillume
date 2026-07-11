@@ -81,7 +81,7 @@ Never prefix a Supabase server secret or AI provider key with `NEXT_PUBLIC_`.
 
 ## 5. Configure GitHub Deployment
 
-The `release.yml` workflow builds `ghcr.io/matthiasbusscher/maillume:sha-<full-commit>`, scans it with Trivy, and deploys over SSH.
+The `release.yml` workflow builds `ghcr.io/matthiasbusscher/maillume:sha-<full-commit>` and scans it with Trivy on every push to `main`. Production deployment runs only through a manual workflow dispatch with the `deploy` input enabled, then requires approval from the protected `production` environment before SSH access.
 
 Create a protected GitHub environment named `production`, require reviewer approval, and add:
 
