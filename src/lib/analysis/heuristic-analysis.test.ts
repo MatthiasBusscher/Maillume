@@ -53,4 +53,15 @@ for (const fixture of heuristicCalibrationFixtures) {
   );
 }
 
+const dutchResult = analyzeEmailHeuristic({
+  locale: "nl",
+  subject: "Laatste waarschuwing: account geblokkeerd",
+  senderEmail: "beveiliging@mcafee-verlenging.click",
+  body: "Uw abonnement verloopt vandaag. Klik hier en bevestig uw gegevens: https://mcafee-verlenging.click/login",
+});
+assert.notEqual(dutchResult.risk_level, "low", "Dutch suspicious sample should not be low risk");
+assert.ok(dutchResult.suspicious_signals.some((signal) => /dringende|geblokkeerd|abonnement|afzenderdomein/.test(signal)), "Dutch analysis should localize suspicious signals");
+assert.match(dutchResult.recommended_action, /Klik niet|voorzichtig/);
+assert.doesNotMatch(dutchResult.short_explanation, /This message/);
+
 console.log(`Checked ${heuristicCalibrationFixtures.length} heuristic calibration fixtures.`);

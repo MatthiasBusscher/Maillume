@@ -5,14 +5,15 @@ import { PageIntro } from "@/components/page-intro";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SOURCE_REPOSITORY_URL } from "@/lib/site";
+import { selfHostedNl } from "@/lib/i18n/marketing-pages";
+import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
+import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 
-export const metadata: Metadata = {
-  title: "Self-hosted",
-  description: "Run the complete Maillume email risk scanner on infrastructure you control.",
-};
+export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: "Self-hosted", description: locale === "nl" ? selfHostedNl["Run the complete Maillume email risk scanner on infrastructure you control."] : "Run the complete Maillume email risk scanner on infrastructure you control." }; }
 
-export default function SelfHostedPage() {
-  return (
+export default async function SelfHostedPage() {
+  const copy = (await getRequestSiteLocale()) === "nl" ? selfHostedNl : {};
+  return translateMarketingTree((
     <main className="min-h-screen bg-[#f7f8f4]">
       <SiteHeader />
       <PageIntro
@@ -153,7 +154,7 @@ npm run dev`}</code></pre>
       </section>
       <SiteFooter />
     </main>
-  );
+  ), copy);
 }
 
 function SelfHostedBenefit({ description, icon: Icon, title }: { description: string; icon: typeof ServerCog; title: string }) {

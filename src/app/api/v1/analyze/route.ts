@@ -10,7 +10,7 @@ import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
 import { hashApiKey, isApiKeyFormat } from "@/lib/api-keys";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
-  ANALYSIS_DISCLAIMER,
+  ANALYSIS_DISCLAIMERS,
   ANALYSIS_PIPELINE_VERSION,
   type AnalyzeErrorResponse,
   type AnalyzeResponse,
@@ -75,8 +75,14 @@ export async function POST(request: Request) {
       analysis_mode: analysis.mode,
       analysis_provider: analysis.provider,
       analysis_version: ANALYSIS_PIPELINE_VERSION,
-      disclaimer: ANALYSIS_DISCLAIMER,
-      privacy: { stored: false, retention: "not_stored", message: "Scan content is processed for this assessment only and is not stored." },
+      disclaimer: ANALYSIS_DISCLAIMERS[validation.input.locale],
+      privacy: {
+        stored: false,
+        retention: "not_stored",
+        message: validation.input.locale === "nl"
+          ? "De scaninhoud wordt alleen voor deze beoordeling verwerkt en niet in de applicatie opgeslagen."
+          : "Scan content is processed only for this assessment and is not saved in application storage.",
+      },
     }, {
       headers: {
         ...NO_STORE_HEADERS,

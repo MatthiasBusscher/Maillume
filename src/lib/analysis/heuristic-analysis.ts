@@ -1,4 +1,31 @@
-import type { EmailAnalysisInput, EmailAnalysisResult, RiskLevel } from "../types";
+import type { AnalysisLocale, EmailAnalysisInput, EmailAnalysisResult, RiskLevel } from "../types";
+
+const DUTCH_SIGNALS: Record<string, string> = {
+  "Uses urgent language that pressures the recipient to act quickly.": "Gebruikt dringende taal die de ontvanger onder druk zet om snel te handelen.",
+  "Asks for account credentials or identity verification.": "Vraagt om inloggegevens of identiteitsverificatie.",
+  "Mentions payments, invoices, refunds, or financial transfer pressure.": "Noemt betalingen, facturen, terugbetalingen of zet aan tot een geldoverdracht.",
+  "References an attachment or document that may be used as bait.": "Verwijst naar een bijlage of document dat als lokaas kan worden gebruikt.",
+  "Impersonates a familiar service or authority.": "Bootst een bekende dienst of instantie na.",
+  "Uses prize, giveaway, or promotional spam language.": "Gebruikt taal over prijzen, winacties of ongewenste aanbiedingen.",
+  "Claims an account was blocked or a subscription will expire unless the user acts.": "Beweert dat een account is geblokkeerd of een abonnement verloopt als de gebruiker niets doet.",
+  "Uses fake security or antivirus subscription language.": "Gebruikt misleidende taal over beveiliging of antivirusabonnementen.",
+  "Pushes the recipient toward a link or button as the next step.": "Stuurt de ontvanger aan op een link of knop als volgende stap.",
+  "Looks like unsolicited sales or lead-generation outreach.": "Lijkt op ongevraagde verkoop- of acquisitiemail.",
+  "Contains financial, loan, investment, or get-rich-quick language.": "Bevat taal over financiën, leningen, beleggingen of snel rijk worden.",
+  "Contains common medical, adult, gambling, or high-risk spam terms.": "Bevat veelvoorkomende termen uit medische, erotische, gok- of andere risicovolle spam.",
+  "Uses a generic greeting instead of identifying the recipient.": "Gebruikt een algemene aanhef zonder de ontvanger te benoemen.",
+  "Contains external links that should be checked before opening.": "Bevat externe links die u vóór het openen moet controleren.",
+  "Uses a shortened URL, which can hide the final destination.": "Gebruikt een verkorte URL die de uiteindelijke bestemming kan verbergen.",
+  "Includes a link with a domain pattern often abused in suspicious campaigns.": "Bevat een link met een domeinpatroon dat vaak in verdachte campagnes wordt misbruikt.",
+  "Displays one link destination but points to a different domain.": "Toont één linkbestemming maar verwijst naar een ander domein.",
+  "Uses excessive capitalization or punctuation to create pressure.": "Gebruikt overmatig hoofdletters of leestekens om druk uit te oefenen.",
+  "Appears to obfuscate words, a common spam-filter evasion tactic.": "Lijkt woorden te verhullen, een veelgebruikte techniek om spamfilters te omzeilen.",
+  "The sender address does not look like a valid email address.": "Het adres van de afzender lijkt geen geldig e-mailadres.",
+  "Sender domain uses a top-level domain often seen in suspicious mail.": "Het afzenderdomein gebruikt een topleveldomein dat vaak in verdachte e-mail voorkomt.",
+  "Sender domain has an unusual number of hyphens or digits.": "Het afzenderdomein bevat opvallend veel koppeltekens of cijfers.",
+  "Sender domain appears to reference a known brand without using its official domain.": "Het afzenderdomein verwijst naar een bekend merk zonder het officiële domein te gebruiken.",
+  "The message has very little context, making it harder to validate.": "Het bericht bevat weinig context, waardoor het moeilijker te beoordelen is.",
+};
 
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 const HTML_HREF_PATTERN = /\bhref\s*=\s*["']([^"']+)["']/gi;
@@ -235,6 +262,7 @@ const keywordGroups = [
 ];
 
 export function analyzeEmailHeuristic(input: EmailAnalysisInput): EmailAnalysisResult {
+  const locale = input.locale ?? "en";
   const content = [input.subject, input.senderEmail, input.body].filter(Boolean).join("\n");
   const links = extractLinks(content);
   const signals: string[] = [];
@@ -243,38 +271,38 @@ export function analyzeEmailHeuristic(input: EmailAnalysisInput): EmailAnalysisR
   for (const group of keywordGroups) {
     if (group.patterns.some((pattern) => pattern.test(content))) {
       score += group.score;
-      signals.push(group.label);
+      signals.push(localizeSignal(group.label, locale));
     }
   }
 
   if (links.length > 0) {
     score += Math.min(20, links.length * 8);
-    signals.push("Contains external links that should be checked before opening.");
+    signals.push(localizeSignal("Contains external links that should be checked before opening.", locale));
   }
 
   if (links.some((link) => SHORT_LINK_DOMAINS.some((domain) => link.includes(domain)))) {
     score += 14;
-    signals.push("Uses a shortened URL, which can hide the final destination.");
+    signals.push(localizeSignal("Uses a shortened URL, which can hide the final destination.", locale));
   }
 
   if (links.some((link) => RISKY_TLDS.some((tld) => link.toLowerCase().includes(tld)))) {
     score += 12;
-    signals.push("Includes a link with a domain pattern often abused in suspicious campaigns.");
+    signals.push(localizeSignal("Includes a link with a domain pattern often abused in suspicious campaigns.", locale));
   }
 
   if (hasMismatchedDisplayedLink(input.body) || hasParsedHiddenLinkMismatch(input.body)) {
     score += 18;
-    signals.push("Displays one link destination but points to a different domain.");
+    signals.push(localizeSignal("Displays one link destination but points to a different domain.", locale));
   }
 
   if (hasExcessiveFormattingPressure(content)) {
     score += 9;
-    signals.push("Uses excessive capitalization or punctuation to create pressure.");
+    signals.push(localizeSignal("Uses excessive capitalization or punctuation to create pressure.", locale));
   }
 
   if (hasObfuscatedSpamWords(content)) {
     score += 12;
-    signals.push("Appears to obfuscate words, a common spam-filter evasion tactic.");
+    signals.push(localizeSignal("Appears to obfuscate words, a common spam-filter evasion tactic.", locale));
   }
 
   if (input.senderEmail) {
@@ -282,28 +310,28 @@ export function analyzeEmailHeuristic(input: EmailAnalysisInput): EmailAnalysisR
 
     if (!senderDomain) {
       score += 18;
-      signals.push("The sender address does not look like a valid email address.");
+      signals.push(localizeSignal("The sender address does not look like a valid email address.", locale));
     } else {
       if (RISKY_TLDS.some((tld) => senderDomain.endsWith(tld))) {
         score += 12;
-        signals.push("Sender domain uses a top-level domain often seen in suspicious mail.");
+        signals.push(localizeSignal("Sender domain uses a top-level domain often seen in suspicious mail.", locale));
       }
 
       if (hasSuspiciousDomainShape(senderDomain)) {
         score += 8;
-        signals.push("Sender domain has an unusual number of hyphens or digits.");
+        signals.push(localizeSignal("Sender domain has an unusual number of hyphens or digits.", locale));
       }
 
       if (looksLikeBrandImpersonation(senderDomain)) {
         score += 18;
-        signals.push("Sender domain appears to reference a known brand without using its official domain.");
+        signals.push(localizeSignal("Sender domain appears to reference a known brand without using its official domain.", locale));
       }
     }
   }
 
   if (input.body.trim().length < 80) {
     score += 6;
-    signals.push("The message has very little context, making it harder to validate.");
+    signals.push(localizeSignal("The message has very little context, making it harder to validate.", locale));
   }
 
   const riskScore = Math.min(96, Math.max(4, score));
@@ -314,8 +342,8 @@ export function analyzeEmailHeuristic(input: EmailAnalysisInput): EmailAnalysisR
     risk_score: riskScore,
     suspicious_signals: signals,
     detected_links: links,
-    recommended_action: getRecommendedAction(riskLevel),
-    short_explanation: getExplanation(riskLevel, signals.length, links.length),
+    recommended_action: getRecommendedAction(riskLevel, locale),
+    short_explanation: getExplanation(riskLevel, signals.length, links.length, locale),
   };
 }
 
@@ -435,7 +463,12 @@ function getRiskLevel(score: number): RiskLevel {
   return "low";
 }
 
-function getRecommendedAction(level: RiskLevel): string {
+function getRecommendedAction(level: RiskLevel, locale: AnalysisLocale): string {
+  if (locale === "nl") {
+    if (level === "high") return "Klik niet op links en antwoord niet. Controleer het verzoek eerst via een vertrouwd kanaal.";
+    if (level === "medium") return "Ga voorzichtig verder. Controleer de afzender en open links pas nadat u de bestemming hebt nagekeken.";
+    return "Er zijn geen belangrijke waarschuwingssignalen gevonden, maar blijf normaal voorzichtig.";
+  }
   if (level === "high") {
     return "Do not click links or reply. Verify the request through a trusted channel first.";
   }
@@ -447,7 +480,12 @@ function getRecommendedAction(level: RiskLevel): string {
   return "No major warning signs were found, but continue using normal caution.";
 }
 
-function getExplanation(level: RiskLevel, signalCount: number, linkCount: number): string {
+function getExplanation(level: RiskLevel, signalCount: number, linkCount: number, locale: AnalysisLocale): string {
+  if (locale === "nl") {
+    if (level === "high") return `Dit bericht komt overeen met meerdere bekende phishing- of spampatronen, waaronder ${signalCount} ${signalCount === 1 ? "verdacht signaal" : "verdachte signalen"} en ${linkCount} ${linkCount === 1 ? "gevonden link" : "gevonden links"}.`;
+    if (level === "medium") return `Dit bericht bevat waarschuwingssignalen die u moet controleren voordat u handelt. ${linkCount > 0 ? "Let vooral op de bestemming van de link." : "Het risico zit vooral in de tekst zelf."}`;
+    return "Dit bericht komt niet sterk overeen met de phishing- of spampatronen die door deze beoordeling worden gecontroleerd.";
+  }
   if (level === "high") {
     return `This message matches several common phishing or spam patterns, including ${signalCount} suspicious signal${signalCount === 1 ? "" : "s"} and ${linkCount} detected link${linkCount === 1 ? "" : "s"}.`;
   }
@@ -457,4 +495,8 @@ function getExplanation(level: RiskLevel, signalCount: number, linkCount: number
   }
 
   return "This message does not strongly match the phishing or spam patterns checked by this assessment.";
+}
+
+function localizeSignal(signal: string, locale: AnalysisLocale): string {
+  return locale === "nl" ? (DUTCH_SIGNALS[signal] ?? signal) : signal;
 }
