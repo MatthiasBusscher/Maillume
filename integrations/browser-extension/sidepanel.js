@@ -1,16 +1,27 @@
 const elements = Object.fromEntries(
-  ["capture", "subject", "sender", "body", "endpoint", "apiKey", "save", "destination", "analyze", "status", "result", "score", "level", "explanation", "signals", "action"]
+  ["capture", "subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "explanation", "signals", "action"]
     .map((id) => [id, document.getElementById(id)]),
 );
+let committedEndpoint = "";
+let committedApiKey = "";
 
 initialize();
 
 async function initialize() {
+  localizeUi();
   const saved = await chrome.storage.local.get(["endpoint", "apiKey"]);
   if (saved.endpoint) elements.endpoint.value = saved.endpoint;
   if (saved.apiKey) elements.apiKey.value = saved.apiKey;
+  committedEndpoint = saved.endpoint || "";
+  committedApiKey = saved.apiKey || "";
   updateDestination();
   updateAnalyzeState();
+}
+
+function localizeUi() {
+  const locale = getLocale();
+  document.documentElement.lang = locale;
+  if (locale === "nl") document.querySelectorAll("[data-nl]").forEach((node) => { node.textContent = node.dataset.nl; });
 }
 
 elements.capture.addEventListener("click", async () => {
@@ -39,16 +50,36 @@ elements.save.addEventListener("click", async () => {
   const originPattern = `${endpointUrl.protocol}//${endpointUrl.hostname}/*`;
   const granted = await chrome.permissions.request({ origins: [originPattern] });
   if (!granted) return setStatus("Connection permission was not granted.", true);
-  await chrome.storage.local.set({ endpoint, apiKey: elements.apiKey.value.trim() });
+  const apiKey = elements.apiKey.value.trim();
+  const previousPattern = committedEndpoint ? permissionPattern(committedEndpoint) : null;
+  await chrome.storage.local.set({ endpoint, apiKey });
+  committedEndpoint = endpoint;
+  committedApiKey = apiKey;
+  if (previousPattern && previousPattern !== originPattern) {
+    await chrome.permissions.remove({ origins: [previousPattern] });
+  }
   elements.endpoint.value = endpoint;
   updateDestination();
   updateAnalyzeState();
   setStatus("Connection settings saved on this device.");
 });
 
+elements.reset.addEventListener("click", async () => {
+  if (committedEndpoint) await chrome.permissions.remove({ origins: [permissionPattern(committedEndpoint)] });
+  await chrome.storage.local.remove(["endpoint", "apiKey"]);
+  committedEndpoint = "";
+  committedApiKey = "";
+  elements.endpoint.value = "https://app.maillume.io";
+  elements.apiKey.value = "";
+  elements.result.hidden = true;
+  updateDestination();
+  updateAnalyzeState();
+  setStatus("Saved connection and deployment permission removed.");
+});
+
 elements.analyze.addEventListener("click", async () => {
-  const endpoint = normalizeEndpoint(elements.endpoint.value);
-  const apiKey = elements.apiKey.value.trim();
+  const endpoint = committedEndpoint;
+  const apiKey = committedApiKey;
   const body = elements.body.value.trim();
   if (!endpoint || !apiKey || !body) return setStatus("Selection, deployment, and API key are required.", true);
 
@@ -59,10 +90,11 @@ elements.analyze.addEventListener("click", async () => {
     const response = await fetch(`${endpoint}/api/v1/analyze`, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ source: "paste", subject: elements.subject.value.trim(), senderEmail: elements.sender.value.trim(), body }),
+      body: JSON.stringify({ source: "paste", subject: elements.subject.value.trim(), senderEmail: elements.sender.value.trim(), body, locale: getLocale() }),
     });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || `Analysis failed (${response.status}).`);
+    if (!isAnalysisResult(payload.result)) throw new Error("The deployment returned an invalid analysis response.");
     renderResult(payload.result);
     setStatus("Assessment complete. Message content was not saved by the extension.");
   } catch (error) {
@@ -84,11 +116,26 @@ function normalizeEndpoint(value) {
 
 function updateDestination() {
   const endpoint = normalizeEndpoint(elements.endpoint.value);
-  elements.destination.textContent = endpoint ? `Destination: ${endpoint}` : "Destination: configure a Maillume deployment";
+  const saved = endpoint && endpoint === committedEndpoint && elements.apiKey.value.trim() === committedApiKey;
+  elements.destination.textContent = saved ? `Destination: ${endpoint}` : endpoint ? `Unsaved destination: ${endpoint}` : "Destination: configure a Maillume deployment";
 }
 
 function updateAnalyzeState() {
-  elements.analyze.disabled = !(elements.body.value.trim() && elements.apiKey.value.trim() && normalizeEndpoint(elements.endpoint.value));
+  const endpoint = normalizeEndpoint(elements.endpoint.value);
+  elements.analyze.disabled = !(elements.body.value.trim() && committedApiKey && endpoint && endpoint === committedEndpoint && elements.apiKey.value.trim() === committedApiKey);
+}
+
+function permissionPattern(endpoint) {
+  const url = new URL(endpoint);
+  return `${url.protocol}//${url.hostname}/*`;
+}
+
+function getLocale() {
+  return chrome.i18n.getUILanguage().toLowerCase().startsWith("nl") ? "nl" : "en";
+}
+
+function isAnalysisResult(result) {
+  return result && typeof result.risk_score === "number" && ["low", "medium", "high"].includes(result.risk_level) && Array.isArray(result.suspicious_signals) && typeof result.short_explanation === "string" && typeof result.recommended_action === "string";
 }
 
 function setStatus(message, isError = false) {

@@ -8,7 +8,7 @@ import { AiProviderRequestError } from "@/lib/analysis/providers";
 import { AnalysisCapacityError, withAnalysisCapacity } from "@/lib/analysis/concurrency";
 import { enforceAiRateLimit, enforceRequestRateLimit, RateLimitError } from "@/lib/analysis/rate-limit";
 import {
-  ANALYSIS_DISCLAIMER,
+  ANALYSIS_DISCLAIMERS,
   ANALYSIS_PIPELINE_VERSION,
   type AnalyzeErrorResponse,
   type AnalyzeResponse,
@@ -109,11 +109,13 @@ export async function POST(request: Request) {
       analysis_mode: analysis.mode,
       analysis_provider: analysis.provider,
       analysis_version: ANALYSIS_PIPELINE_VERSION,
-      disclaimer: ANALYSIS_DISCLAIMER,
+      disclaimer: ANALYSIS_DISCLAIMERS[validation.input.locale],
       privacy: {
         stored: false,
         retention: "not_stored",
-        message: "Scan content is processed for this assessment only and is not stored.",
+        message: validation.input.locale === "nl"
+          ? "De scaninhoud wordt alleen voor deze beoordeling verwerkt en niet in de applicatie opgeslagen."
+          : "Scan content is processed only for this assessment and is not saved in application storage.",
       },
     },
     {

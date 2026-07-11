@@ -2,9 +2,13 @@ export type RiskLevel = "low" | "medium" | "high";
 export type AnalysisMode = "heuristic" | "ai";
 export type AiProviderName = "openai" | "anthropic" | "openai-compatible";
 export type AnalysisProviderName = "heuristic" | AiProviderName;
+export type AnalysisLocale = "en" | "nl";
 
-export const ANALYSIS_DISCLAIMER =
-  "This is an automated risk assessment and should not be considered a guarantee.";
+export const ANALYSIS_DISCLAIMERS = {
+  en: "This is an automated risk assessment and should not be considered a guarantee.",
+  nl: "Dit is een geautomatiseerde risicobeoordeling en biedt geen garantie.",
+} as const satisfies Record<AnalysisLocale, string>;
+export const ANALYSIS_DISCLAIMER = ANALYSIS_DISCLAIMERS.en;
 export const ANALYSIS_PIPELINE_VERSION = "analysis-v1";
 
 export const MAX_SCAN_BODY_LENGTH = 20_000;
@@ -15,10 +19,12 @@ export type EmailAnalysisInput = {
   subject?: string;
   senderEmail?: string;
   body: string;
+  locale?: AnalysisLocale;
 };
 
 export type NormalizedScanInput = EmailAnalysisInput & {
   source: ScanSource;
+  locale: AnalysisLocale;
 };
 
 export type EmailAnalysisResult = {
@@ -35,7 +41,7 @@ export type AnalyzeResponse = {
   analysis_mode: AnalysisMode;
   analysis_provider: AnalysisProviderName;
   analysis_version: typeof ANALYSIS_PIPELINE_VERSION;
-  disclaimer: typeof ANALYSIS_DISCLAIMER;
+  disclaimer: (typeof ANALYSIS_DISCLAIMERS)[AnalysisLocale];
   privacy: {
     stored: false;
     retention: "not_stored";

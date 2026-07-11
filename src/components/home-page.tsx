@@ -19,30 +19,37 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import {
   DEFAULT_LOCALE,
   dictionaries,
-  getBrowserLocale,
   type Locale,
 } from "@/lib/i18n/dictionary";
+import { localizePath, SITE_LOCALE_COOKIE } from "@/lib/i18n/site-locale";
 import { LICENSE_URL, SOURCE_REPOSITORY_URL } from "@/lib/project-links";
 import { getMarketingHref } from "@/lib/site";
 
 export function ScannerPage({
   feedbackEnabled,
+  initialLocale,
   userEmail,
 }: {
   feedbackEnabled: boolean;
+  initialLocale: Locale;
   userEmail?: string;
 }) {
-  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
+  const [locale, setLocale] = useState<Locale>(initialLocale ?? DEFAULT_LOCALE);
   const dictionary = useMemo(() => dictionaries[locale], [locale]);
   const marketingHref = getMarketingHref();
 
   useEffect(() => {
-    setLocale(getBrowserLocale(window.navigator.language));
-  }, []);
-
-  useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
+
+  function changeLocale(nextLocale: Locale) {
+    setLocale(nextLocale);
+    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+    const domain = window.location.hostname.endsWith("maillume.io") ? "; Domain=.maillume.io" : "";
+    document.cookie = `${SITE_LOCALE_COOKIE}=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax${secure}${domain}`;
+    const pathname = localizePath(window.location.pathname, nextLocale);
+    window.history.replaceState(window.history.state, "", `${pathname}${window.location.search}${window.location.hash}`);
+  }
 
   return (
     <main className="min-h-screen bg-[#e9ede6]">
@@ -68,7 +75,7 @@ export function ScannerPage({
             <LanguageSwitcher
               dictionary={dictionary}
               locale={locale}
-              onLocaleChange={setLocale}
+              onLocaleChange={changeLocale}
             />
             <a
               href={SOURCE_REPOSITORY_URL}
@@ -81,7 +88,7 @@ export function ScannerPage({
               <Github className="h-4 w-4" aria-hidden="true" />
             </a>
             <Link
-              href={userEmail ? "/account" : "/auth/sign-in"}
+              href={localizePath(userEmail ? "/account" : "/auth/sign-in", locale)}
               aria-label={userEmail ? dictionary.app.account : dictionary.app.signIn}
               title={userEmail ? dictionary.app.account : dictionary.app.signIn}
               className="inline-flex h-10 w-10 items-center justify-center border border-white/30 text-white transition hover:border-[#dfff52] hover:text-[#dfff52]"

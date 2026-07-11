@@ -6,11 +6,11 @@ import { PageIntro } from "@/components/page-intro";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getAppHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
+import { pricingNl } from "@/lib/i18n/marketing-pages";
+import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
+import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 
-export const metadata: Metadata = {
-  title: "Pricing",
-  description: "Simple, honest pricing for Maillume Cloud and the open-source self-hosted scanner.",
-};
+export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: locale === "nl" ? "Prijzen" : "Pricing", description: locale === "nl" ? pricingNl["Simple, honest pricing for Maillume Cloud and the open-source self-hosted scanner."] : "Simple, honest pricing for Maillume Cloud and the open-source self-hosted scanner." }; }
 
 const plans = [
   {
@@ -65,8 +65,9 @@ const plans = [
   },
 ];
 
-export default function PricingPage() {
-  return (
+export default async function PricingPage() {
+  const copy = (await getRequestSiteLocale()) === "nl" ? pricingNl : {};
+  return translateMarketingTree((
     <main className="min-h-screen bg-[#f7f8f4]">
       <SiteHeader />
       <PageIntro
@@ -171,7 +172,7 @@ export default function PricingPage() {
 
       <SiteFooter />
     </main>
-  );
+  ), copy);
 }
 
 function PricingQuestion({ children, question }: { children: React.ReactNode; question: string }) {

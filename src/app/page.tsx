@@ -18,12 +18,14 @@ import { ScannerPreview } from "@/components/scanner-preview";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getAppHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
+import { homeNl } from "@/lib/i18n/marketing-pages";
+import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
+import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 
-export const metadata: Metadata = {
-  title: "Maillume",
-  description:
-    "Get a clear, privacy-first risk assessment for suspicious email text, screenshots, and .eml files.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestSiteLocale();
+  return { title: "Maillume", description: locale === "nl" ? "Krijg een heldere, privacygerichte risicobeoordeling van verdachte e-mailtekst, screenshots en .eml-bestanden." : "Get a clear, privacy-first risk assessment for suspicious email text, screenshots, and .eml files." };
+}
 
 const capabilityRows = [
   {
@@ -49,10 +51,11 @@ const capabilityRows = [
   },
 ];
 
-export default function MarketingHomePage() {
+export default async function MarketingHomePage() {
   const appHref = getAppHref();
+  const copy = (await getRequestSiteLocale()) === "nl" ? homeNl : {};
 
-  return (
+  return translateMarketingTree((
     <main className="min-h-screen bg-[#f7f8f4]">
       <SiteHeader />
 
@@ -228,7 +231,7 @@ export default function MarketingHomePage() {
 
       <SiteFooter />
     </main>
-  );
+  ), copy);
 }
 
 function StatusItem({ icon: Icon, label }: { icon: typeof Check; label: string }) {

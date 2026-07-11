@@ -5,11 +5,11 @@ import { PageIntro } from "@/components/page-intro";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SOURCE_REPOSITORY_URL } from "@/lib/site";
+import { platformNl } from "@/lib/i18n/marketing-pages";
+import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
+import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 
-export const metadata: Metadata = {
-  title: "Platform",
-  description: "Maillume hosted API, browser extension, Gmail add-on, and Outlook add-in.",
-};
+export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: locale === "nl" ? "Platform" : "Platform", description: locale === "nl" ? "Gehoste Maillume-API, browserextensie, Gmail-add-on en Outlook-invoegtoepassing." : "Maillume hosted API, browser extension, Gmail add-on, and Outlook add-in." }; }
 
 const roadmap = [
   { status: "Available", title: "Hosted API access", description: "Authenticated, revocable keys with a 100-call monthly beta quota and aggregate-only usage counters." },
@@ -18,8 +18,9 @@ const roadmap = [
   { status: "Source beta", title: "Outlook add-in", description: "A ReadItem task pane for the open message, with no read/write mailbox permission or background scan." },
 ];
 
-export default function PlatformPage() {
-  return (
+export default async function PlatformPage() {
+  const copy = (await getRequestSiteLocale()) === "nl" ? platformNl : {};
+  return translateMarketingTree((
     <main className="min-h-screen bg-[#f7f8f4]">
       <SiteHeader />
       <PageIntro
@@ -131,7 +132,7 @@ export default function PlatformPage() {
       </section>
       <SiteFooter />
     </main>
-  );
+  ), copy);
 }
 
 function PlatformCheck({ children }: { children: React.ReactNode }) {

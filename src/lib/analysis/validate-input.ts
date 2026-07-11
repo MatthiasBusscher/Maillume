@@ -1,4 +1,4 @@
-import { MAX_SCAN_BODY_LENGTH, type NormalizedScanInput, type ScanSource } from "@/lib/types";
+import { MAX_SCAN_BODY_LENGTH, type AnalysisLocale, type NormalizedScanInput, type ScanSource } from "../types";
 
 type ValidationResult =
   | {
@@ -12,6 +12,7 @@ type ValidationResult =
     };
 
 const SOURCES = new Set<ScanSource>(["paste", "screenshot", "eml"]);
+const LOCALES = new Set<AnalysisLocale>(["en", "nl"]);
 
 export function validateAnalyzeRequest(payload: unknown): ValidationResult {
   if (!payload || typeof payload !== "object") {
@@ -22,14 +23,25 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
   }
 
   const data = payload as Record<string, unknown>;
+  const unsupportedFields = Object.keys(data).filter(
+    (field) => !["source", "subject", "senderEmail", "body", "locale"].includes(field),
+  );
+  if (unsupportedFields.length > 0) {
+    return { ok: false, error: "Request contains unsupported fields." };
+  }
   const source = data.source;
   const subject = normalizeOptionalString(data.subject);
   const senderEmail = normalizeOptionalString(data.senderEmail);
   const body = normalizeRequiredString(data.body);
+  const locale = data.locale;
   const fieldErrors: Partial<Record<keyof NormalizedScanInput, string>> = {};
 
   if (source !== undefined && (typeof source !== "string" || !SOURCES.has(source as ScanSource))) {
     fieldErrors.source = "Unsupported scan source.";
+  }
+
+  if (locale !== undefined && (typeof locale !== "string" || !LOCALES.has(locale as AnalysisLocale))) {
+    fieldErrors.locale = "Unsupported analysis language.";
   }
 
   if (!body) {
@@ -58,6 +70,7 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
     ok: true,
     input: {
       source: (typeof source === "string" ? source : "paste") as ScanSource,
+      locale: (typeof locale === "string" ? locale : "en") as AnalysisLocale,
       subject,
       senderEmail,
       body,

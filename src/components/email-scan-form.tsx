@@ -86,6 +86,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale }: EmailScan
           subject,
           senderEmail,
           body,
+          locale,
         }),
       });
 

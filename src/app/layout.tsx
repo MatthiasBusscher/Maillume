@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { getRequestPathname, getRequestSiteLocale } from "@/lib/i18n/request-locale";
+import { localizePath } from "@/lib/i18n/site-locale";
 
 const title = "Maillume";
-const description =
-  "A privacy-first second opinion for suspicious email text, screenshots, and .eml files.";
+const descriptions = {
+  en: "A privacy-first second opinion for suspicious email text, screenshots, and .eml files.",
+  nl: "Een privacybewuste extra beoordeling voor verdachte e-mailtekst, screenshots en .eml-bestanden.",
+};
 
-export const metadata: Metadata = {
-  metadataBase: getMetadataBase(),
+export async function generateMetadata(): Promise<Metadata> {
+  const [locale, pathname] = await Promise.all([getRequestSiteLocale(), getRequestPathname()]);
+  const description = descriptions[locale];
+  const cleanPath = localizePath(pathname, "en");
+  return {
+    metadataBase: getMetadataBase(),
   title: {
     default: title,
     template: `%s | ${title}`,
@@ -18,8 +26,8 @@ export const metadata: Metadata = {
     title,
     description,
     type: "website",
-    locale: "en_US",
-    alternateLocale: ["nl_NL"],
+    locale: locale === "nl" ? "nl_NL" : "en_US",
+    alternateLocale: [locale === "nl" ? "en_US" : "nl_NL"],
     siteName: title,
   },
   twitter: {
@@ -31,15 +39,22 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-};
+  alternates: {
+    canonical: localizePath(cleanPath, locale),
+    languages: { en: cleanPath, nl: localizePath(cleanPath, "nl"), "x-default": cleanPath },
+  },
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getRequestSiteLocale();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className="antialiased">{children}</body>
     </html>
   );

@@ -1,13 +1,9 @@
 import type { NextConfig } from "next";
 
-const securityHeaders = [
+const baseSecurityHeaders = [
   {
     key: "X-Content-Type-Options",
     value: "nosniff",
-  },
-  {
-    key: "X-Frame-Options",
-    value: "DENY",
   },
   {
     key: "Referrer-Policy",
@@ -28,8 +24,22 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/(.*)",
-        headers: securityHeaders,
+        source: "/integrations/outlook",
+        headers: [
+          ...baseSecurityHeaders,
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors https://*.office.com https://*.office365.com https://*.officeapps.live.com https://*.microsoft365.com https://*.outlook.com",
+          },
+        ],
+      },
+      {
+        source: "/((?!integrations/outlook).*)",
+        headers: [
+          ...baseSecurityHeaders,
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+        ],
       },
     ];
   },

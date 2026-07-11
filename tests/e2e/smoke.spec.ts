@@ -25,15 +25,33 @@ test("language switching updates the scanner", async ({ page }) => {
   await page.getByTitle("Nederlands").click();
 
   await expect(page.locator("html")).toHaveAttribute("lang", "nl");
+  await expect(page).toHaveURL(/\/nl\/app$/);
   await expect(page.getByRole("heading", { name: "Controleer een verdachte e-mail" })).toBeVisible();
   await expect(page.getByRole("button", { name: "E-mail analyseren" })).toBeVisible();
   await page.getByRole("button", { name: "Voorbeeld" }).click();
   await page.getByRole("button", { name: "E-mail analyseren" }).click();
+  await expect(page.getByText("Verdachte signalen")).toBeVisible();
+  await expect(page.getByText(/Klik niet op links|Ga voorzichtig verder/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Help de detectie verbeteren" })).toBeVisible();
 
   await page.getByTitle("English").click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page).toHaveURL(/\/app$/);
   await expect(page.getByRole("heading", { name: "Check a suspicious email" })).toBeVisible();
+});
+
+test("Dutch routes render server-side and persist across navigation", async ({ page }) => {
+  await page.goto("/nl/platform");
+  await expect(page.locator("html")).toHaveAttribute("lang", "nl");
+  await expect(page.getByRole("link", { name: "Prijzen" }).first()).toHaveAttribute("href", "/nl/pricing");
+
+  await page.goto("/pricing");
+  await expect(page).toHaveURL(/\/nl\/pricing$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "nl");
+
+  const apiResponse = await page.request.get("/api/health");
+  expect(apiResponse.ok()).toBe(true);
+  expect(apiResponse.url()).toContain("/api/health");
 });
 
 test("keyboard users can skip directly to the scanner", async ({ page }) => {
@@ -291,7 +309,9 @@ test("canonical domain redirects preserve path and query", async ({ request }) =
 
     expect(response.status()).toBe(301);
     expect(response.headers().location).toBe(
-      "https://maillume.io/privacy?source=redirect-test",
+      host.endsWith(".nl") || host === "maillume.nl"
+        ? "https://maillume.io/nl/privacy?source=redirect-test"
+        : "https://maillume.io/privacy?source=redirect-test",
     );
   }
 });
@@ -359,4 +379,48 @@ test("Outlook task pane explains explicit current-message access", async ({ page
   await expect(page.getByRole("heading", { name: "Maillume for Outlook" })).toBeVisible();
   await expect(page.getByText(/reads the open message only after/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Analyze this message" })).toBeDisabled();
+});
+
+test("Outlook reads only after confirmation and can be embedded by Office", async ({ page, request }) => {
+  const paneResponse = await request.get("/integrations/outlook");
+  expect(paneResponse.headers()["x-frame-options"]).toBeUndefined();
+  expect(paneResponse.headers()["content-security-policy"]).toContain("https://*.office.com");
+
+  await page.route("https://appsforoffice.microsoft.com/**", async (route) => {
+    await route.fulfill({ contentType: "application/javascript", body: "" });
+  });
+
+  await page.addInitScript(() => {
+    const state = window as typeof window & { __outlookReads: number; Office: unknown };
+    state.__outlookReads = 0;
+    window.localStorage.setItem("maillume-outlook-api-key", `mlm_${"a".repeat(43)}`);
+    state.Office = {
+      AsyncResultStatus: { Succeeded: "succeeded" },
+      CoercionType: { Text: "text" },
+      onReady: (callback: (info: { host: string }) => void) => callback({ host: "Outlook" }),
+      context: { mailbox: { item: {
+        subject: "Synthetic Outlook message",
+        from: { emailAddress: "sender@example.com" },
+        body: { getAsync: (_type: string, callback: (result: { status: string; value?: string; error?: { message?: string } }) => void) => {
+          state.__outlookReads += 1;
+          callback({ status: "succeeded", value: "Synthetic message body" });
+        } },
+      } } },
+    };
+  });
+  let submitted: Record<string, unknown> | undefined;
+  await page.route("**/api/v1/analyze", async (route) => {
+    submitted = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({ contentType: "application/json", json: { result: {
+      risk_level: "low", risk_score: 10, suspicious_signals: [], detected_links: [],
+      recommended_action: "Continue with normal caution.", short_explanation: "No major warning signs.",
+    } } });
+  });
+  await page.goto("/nl/integrations/outlook");
+  await expect.poll(() => page.evaluate(() => (window as typeof window & { __outlookReads: number }).__outlookReads)).toBe(0);
+  const analyze = page.getByRole("button", { name: "Dit bericht analyseren" });
+  await expect(analyze).toBeEnabled();
+  await analyze.click();
+  await expect.poll(() => page.evaluate(() => (window as typeof window & { __outlookReads: number }).__outlookReads)).toBe(1);
+  expect(submitted).toMatchObject({ body: "Synthetic message body", locale: "nl", subject: "Synthetic Outlook message" });
 });

@@ -31,15 +31,31 @@ jobs:
       - run: npm run lint
       - run: npm run test:analysis
       - run: npm run test:security
+      - run: npm run test:integrations
       - run: npm run build
         env:
           ANALYSIS_MODE: heuristic
       - run: npm run test:smoke
-      - run: npm run package:extension
+      - run: npm run package:integrations
       - uses: actions/upload-artifact@v7
         with:
           name: maillume-browser-extension
           path: dist/maillume-browser-extension.zip
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: maillume-integration-checksums
+          path: dist/integration-SHA256SUMS
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: maillume-gmail-addon
+          path: dist/maillume-gmail-addon.zip
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: maillume-outlook-manifest
+          path: public/outlook-manifest.xml
           if-no-files-found: error
 
   image:

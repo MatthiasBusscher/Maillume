@@ -10,8 +10,10 @@ export const AI_ANALYSIS_SYSTEM_PROMPT = [
 ].join(" ");
 
 export function buildAiAnalysisUserPrompt(input: EmailAnalysisInput): string {
+  const outputLanguage = input.locale === "nl" ? "Dutch" : "English";
   return [
     "Analyze this email risk assessment input.",
+    `Write every human-readable JSON value in ${outputLanguage}. Keep enum values and JSON field names unchanged.`,
     "",
     `Subject: ${input.subject ?? "(not provided)"}`,
     `Sender email: ${input.senderEmail ?? "(not provided)"}`,

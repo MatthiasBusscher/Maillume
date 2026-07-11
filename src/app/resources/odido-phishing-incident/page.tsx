@@ -5,18 +5,18 @@ import { ArrowLeft, ArrowUpRight, CheckCircle2, PhoneCall, ShieldAlert } from "l
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getAppHref } from "@/lib/site";
+import { incidentNl } from "@/lib/i18n/marketing-pages";
+import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
+import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 
 const NOS_REPORT_URL =
   "https://nos.nl/artikel/2602283-odido-hackers-kwamen-binnen-via-phishing-deden-zich-voor-als-ict-afdeling";
 
-export const metadata: Metadata = {
-  title: "What the Odido phishing incident teaches us",
-  description:
-    "How email phishing, internal IT impersonation, and MFA manipulation can form one attack.",
-};
+export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: locale === "nl" ? incidentNl["What the Odido phishing incident teaches us"] : "What the Odido phishing incident teaches us", description: locale === "nl" ? incidentNl["How email phishing, internal IT impersonation, and MFA manipulation can form one attack."] : "How email phishing, internal IT impersonation, and MFA manipulation can form one attack." }; }
 
-export default function OdidoIncidentPage() {
-  return (
+export default async function OdidoIncidentPage() {
+  const copy = (await getRequestSiteLocale()) === "nl" ? incidentNl : {};
+  return translateMarketingTree((
     <main className="min-h-screen bg-[#f7f8f4] text-[#111711]">
       <SiteHeader />
       <article>
@@ -91,7 +91,7 @@ export default function OdidoIncidentPage() {
       </article>
       <SiteFooter />
     </main>
-  );
+  ), copy);
 }
 
 function IncidentStep({ number, text, title }: { number: string; text: string; title: string }) {

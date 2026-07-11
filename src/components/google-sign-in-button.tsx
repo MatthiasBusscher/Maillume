@@ -4,8 +4,9 @@ import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
 
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import type { AccountDictionary } from "@/lib/i18n/account-en";
 
-export function GoogleSignInButton({ configured }: { configured: boolean }) {
+export function GoogleSignInButton({ configured, labels }: { configured: boolean; labels: AccountDictionary["signIn"]["google"] }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -13,7 +14,7 @@ export function GoogleSignInButton({ configured }: { configured: boolean }) {
     const supabase = createBrowserSupabaseClient();
 
     if (!supabase) {
-      setError("Google sign-in is not configured on this deployment.");
+      setError(labels.unavailable);
       return;
     }
 
@@ -31,7 +32,7 @@ export function GoogleSignInButton({ configured }: { configured: boolean }) {
     });
 
     if (signInError) {
-      setError("Google sign-in could not be started. Please try again.");
+      setError(labels.failed);
       setIsLoading(false);
     }
   }
@@ -49,11 +50,11 @@ export function GoogleSignInButton({ configured }: { configured: boolean }) {
         ) : (
           <GoogleMark />
         )}
-        {isLoading ? "Opening Google" : "Continue with Google"}
+        {isLoading ? labels.opening : labels.continue}
       </button>
       {!configured ? (
         <p className="mt-3 text-xs leading-5 text-[#687268]">
-          Google sign-in is not configured on this deployment. The scanner still works without an account.
+          {labels.notConfigured}
         </p>
       ) : null}
       {error ? <p className="mt-3 text-xs leading-5 text-[#b2382b]" role="alert">{error}</p> : null}
