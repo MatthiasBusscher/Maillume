@@ -386,6 +386,10 @@ test("Outlook reads only after confirmation and can be embedded by Office", asyn
   expect(paneResponse.headers()["x-frame-options"]).toBeUndefined();
   expect(paneResponse.headers()["content-security-policy"]).toContain("https://*.office.com");
 
+  await page.route("https://appsforoffice.microsoft.com/**", async (route) => {
+    await route.fulfill({ contentType: "application/javascript", body: "" });
+  });
+
   await page.addInitScript(() => {
     const state = window as typeof window & { __outlookReads: number; Office: unknown };
     state.__outlookReads = 0;
