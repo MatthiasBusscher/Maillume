@@ -118,6 +118,7 @@ function main() {
   assert.match(nextConfigContent, /Permissions-Policy/);
   assert.match(nextConfigContent, /output: "standalone"/);
   assert.match(dockerfileContent, /USER nextjs/);
+  assert.match(dockerfileContent, /rm -rf \/usr\/local\/lib\/node_modules\/npm/);
   assert.doesNotMatch(composeContent, /^\s*ports:/m);
   assert.match(composeContent, /read_only: true/);
   assert.match(composeContent, /no-new-privileges:true/);
