@@ -72,11 +72,18 @@ export default async function PlatformPage() {
 // response
 {
   "result": {
+    "classification": "likely_phishing",
     "risk_level": "high",
-    "risk_score": 82,
+    "risk_score": 85,
+    "score_factors": [
+      { "id": "link_mismatch", "family": "destination", "contribution": 30, "label": "Displays one domain but links to another." },
+      { "id": "changed_payment_details", "family": "intent", "contribution": 30, "label": "Changes trusted payment or bank details." },
+      { "id": "brand_lookalike_sender", "family": "identity", "contribution": 25, "label": "The sender appears to imitate a known brand domain." }
+    ],
     "suspicious_signals": ["..."],
     "recommended_action": "..."
   },
+  "analysis_version": "analysis-v2",
   "privacy": { "stored": false }
 }`}</code></pre>
           </div>

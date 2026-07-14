@@ -31,7 +31,7 @@ test("language switching updates the scanner", async ({ page }) => {
   await page.getByRole("button", { name: "Voorbeeld" }).click();
   await page.getByRole("button", { name: "E-mail analyseren" }).click();
   await expect(page.getByRole("heading", { name: "Verdachte signalen", exact: true })).toBeVisible();
-  await expect(page.getByText(/Klik niet op links|Ga voorzichtig verder/)).toBeVisible();
+  await expect(page.getByText(/Klik niet, antwoord niet|Controleer de afzender|Er zijn weinig waarschuwingstekens/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Help de detectie verbeteren" })).toBeVisible();
 
   await page.getByTitle("English").click();
@@ -246,7 +246,7 @@ test("optional feedback sends labels without scan content", async ({ page }) => 
     feedbackKind: "false_positive",
     locale: "en",
     source: "paste",
-    analyzerVersion: "analysis-v1",
+    analyzerVersion: "analysis-v2",
     scoreBand: "high",
     signalCategories: ["urgency"],
   });
@@ -266,7 +266,7 @@ test("feedback controls work from the keyboard and reject content fields", async
       feedbackKind: "false_positive",
       locale: "en",
       source: "paste",
-      analyzerVersion: "analysis-v1",
+      analyzerVersion: "analysis-v2",
       scoreBand: "high",
       signalCategories: [],
       body: "must never be accepted",
@@ -458,6 +458,8 @@ test("hosted API publishes its machine-readable contract", async ({ request }) =
   const specification = await response.json();
   expect(specification.openapi).toBe("3.1.0");
   expect(specification.paths["/api/v1/analyze"].post.security).toEqual([{ apiKey: [] }]);
+  expect(specification.components.schemas.AnalysisResult.required).toEqual(expect.arrayContaining(["classification", "score_factors"]));
+  expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v2");
 });
 
 test("Outlook task pane explains explicit current-message access", async ({ page }) => {
@@ -482,7 +484,7 @@ test("Outlook reads only after confirmation and can be embedded by Office", asyn
   await page.addInitScript(() => {
     const state = window as typeof window & { __outlookReads: number; Office: unknown };
     state.__outlookReads = 0;
-    window.localStorage.setItem("maillume-outlook-api-key", `mlm_${"a".repeat(43)}`);
+    window.sessionStorage.setItem("maillume-outlook-api-key", `mlm_${"a".repeat(43)}`);
     state.Office = {
       AsyncResultStatus: { Succeeded: "succeeded" },
       CoercionType: { Text: "text" },
@@ -507,7 +509,13 @@ test("Outlook reads only after confirmation and can be embedded by Office", asyn
       return;
     }
     await route.fulfill({ contentType: "application/json", json: { result: {
-      risk_level: "high", risk_score: 82, suspicious_signals: ["Synthetic warning"], detected_links: [],
+      classification: "likely_phishing", risk_level: "high", risk_score: 82,
+      score_factors: [
+        { id: "synthetic-destination", family: "destination", contribution: 30, label: "Synthetic destination warning" },
+        { id: "synthetic-intent", family: "intent", contribution: 30, label: "Synthetic intent warning" },
+        { id: "synthetic-identity", family: "identity", contribution: 22, label: "Synthetic identity warning" },
+      ],
+      suspicious_signals: ["Synthetic warning"], detected_links: [],
       recommended_action: "Verify through a known channel.", short_explanation: "Suspicious pattern detected.",
     } } });
   });
@@ -525,5 +533,5 @@ test("Outlook reads only after confirmation and can be embedded by Office", asyn
   await page.getByText("API-sleutel", { exact: true }).click();
   await page.getByRole("button", { name: "Sleutel verwijderen" }).click();
   await expect(analyze).toBeDisabled();
-  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("maillume-outlook-api-key"))).toBeNull();
+  await expect.poll(() => page.evaluate(() => window.sessionStorage.getItem("maillume-outlook-api-key"))).toBeNull();
 });

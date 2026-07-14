@@ -31,6 +31,8 @@ summary { cursor: pointer; font-size: 13px; font-weight: 700; }
 .score-row span { display: block; color: #687268; font: 9px ui-monospace, monospace; text-transform: uppercase; }
 .score-row strong { display: block; font: 700 42px ui-monospace, monospace; }
 .level { border: 1px solid #d84c3c; background: #ffe2dd; padding: 5px 8px; color: #8f251b !important; font-weight: 700 !important; }
+.classification { margin: 12px 0 0; color: #111711; font-weight: 700; }
+.factors { margin: 0; padding-left: 18px; }
 .result h2 { margin-top: 18px; }
 .result li { margin-bottom: 7px; color: #4f5b50; font-size: 12px; line-height: 1.45; }
 .disclaimer { border-top: 1px solid #bfc5bc; margin: 16px 0 0; padding-top: 12px; font-size: 10px; }

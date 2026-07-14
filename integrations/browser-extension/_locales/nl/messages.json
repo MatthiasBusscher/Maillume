@@ -1,4 +1,5 @@
 {
   "extensionName": { "message": "Maillume" },
-  "extensionDescription": { "message": "Analyseer e-mailtekst die u bewust selecteert in Gmail, Outlook of een andere webmaildienst." }
+  "extensionDescription": { "message": "Analyseer e-mailtekst die u bewust selecteert in Gmail, Outlook of een andere webmaildienst." },
+  "actionTitle": { "message": "Selectie vastleggen met Maillume" }
 }

@@ -34,19 +34,14 @@ for (const fixture of emailEvaluationFixtures) {
   );
 
   const prompt = buildAiAnalysisUserPrompt(fixture.input);
-  assert.ok(prompt.includes(fixture.input.body), `${fixture.id}: AI prompt should include fixture body`);
+  const promptPayload = JSON.parse(prompt.split("\n").at(-1) ?? "{}") as { body?: string };
+  assert.equal(promptPayload.body, fixture.input.body, `${fixture.id}: AI prompt should preserve fixture body as JSON data`);
 
   const normalized = normalizeAiAnalysisResult({
-    risk_level: fixture.expectedRiskLevel,
-    risk_score: fixture.minScore ?? fixture.maxScore ?? 35,
-    suspicious_signals:
-      fixture.category === "legitimate" ? [] : ["Synthetic warning sign for evaluation"],
-    detected_links: [],
-    recommended_action: "Review this message cautiously through a trusted channel.",
-    short_explanation: "Synthetic normalized output for fixture evaluation.",
+    evidence_ids: fixture.category === "legitimate" ? [] : ["urgency_pressure"],
   });
 
-  assert.equal(typeof normalized.risk_score, "number", `${fixture.id}: AI output should normalize`);
+  assert.ok(Array.isArray(normalized), `${fixture.id}: AI evidence should normalize`);
 }
 
 for (const category of REQUIRED_CATEGORIES) {
@@ -58,7 +53,7 @@ for (const language of REQUIRED_LANGUAGES) {
 }
 
 assert.ok(
-  AI_ANALYSIS_SYSTEM_PROMPT.includes("Return only the requested structured JSON fields."),
+  AI_ANALYSIS_SYSTEM_PROMPT.includes("Return only the requested structured JSON field."),
   "AI prompt should require structured JSON output",
 );
 

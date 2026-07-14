@@ -64,4 +64,48 @@ assert.ok(dutchResult.suspicious_signals.some((signal) => /dringende|geblokkeerd
 assert.match(dutchResult.recommended_action, /Klik niet|voorzichtig/);
 assert.doesNotMatch(dutchResult.short_explanation, /This message/);
 
+const structuralUrlRegression = analyzeEmailHeuristic({
+  senderEmail: "account@microsoft.example",
+  body: "Review your own account activity at https://account.microsoft.com/security and download the requested archive from https://files.example/archive.zip.",
+});
+assert.ok(!structuralUrlRegression.score_factors.some((factor) => factor.id === "short_url"));
+assert.ok(!structuralUrlRegression.score_factors.some((factor) => factor.id === "risky_link_domain"));
+
+const brandSubstringRegression = analyzeEmailHeuristic({
+  senderEmail: "orders@applecart.example",
+  body: "Your Applecart order was delivered successfully. No action is required.",
+});
+assert.ok(!brandSubstringRegression.score_factors.some((factor) => factor.id === "brand_lookalike_sender"));
+
+const redirectRegression = analyzeEmailHeuristic({
+  senderEmail: "billing@vendor.example",
+  body: '<a href="https://tracking.vendor.example/open">https://portal.vendor.example/invoice</a>',
+});
+assert.ok(!redirectRegression.score_factors.some((factor) => factor.id === "link_mismatch"));
+
+const changedPaymentDetails = analyzeEmailHeuristic({
+  senderEmail: "director@company-finance.example",
+  body: "This is the CEO. Use our new bank account for the urgent supplier transfer today.",
+});
+assert.notEqual(changedPaymentDetails.risk_level, "low");
+assert.equal(changedPaymentDetails.classification, "likely_phishing");
+
+const insufficientContext = analyzeEmailHeuristic({ body: "Can you take a look?" });
+assert.equal(insufficientContext.risk_level, "low");
+assert.equal(insufficientContext.classification, "uncertain");
+
+const noWarningSignals = analyzeEmailHeuristic({
+  senderEmail: "colleague@example.test",
+  body: "Here are the meeting notes we discussed yesterday. The next project review remains scheduled for Thursday afternoon.",
+});
+assert.equal(noWarningSignals.risk_score, 0);
+assert.equal(noWarningSignals.classification, "likely_legitimate");
+
+for (const result of [dutchResult, structuralUrlRegression, brandSubstringRegression, redirectRegression, changedPaymentDetails, insufficientContext, noWarningSignals]) {
+  assert.equal(
+    result.score_factors.reduce((total, factor) => total + factor.contribution, 0),
+    result.risk_score,
+  );
+}
+
 console.log(`Checked ${heuristicCalibrationFixtures.length} heuristic calibration fixtures.`);

@@ -53,15 +53,44 @@
           "subject": { "type": "string", "maxLength": 300 },
           "senderEmail": { "type": "string", "maxLength": 320 },
           "locale": { "type": "string", "enum": ["en", "nl"], "default": "en" },
-          "body": { "type": "string", "minLength": 1, "maxLength": 20000 }
+          "body": { "type": "string", "minLength": 1, "maxLength": 20000 },
+          "linkPairs": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["displayedUrl", "destinationUrl"],
+              "properties": {
+                "displayedUrl": { "type": "string", "format": "uri", "maxLength": 2048 },
+                "destinationUrl": { "type": "string", "format": "uri", "maxLength": 2048 }
+              }
+            }
+          }
         }
       },
       "AnalysisResult": {
         "type": "object",
-        "required": ["risk_level", "risk_score", "suspicious_signals", "detected_links", "recommended_action", "short_explanation"],
+        "additionalProperties": false,
+        "required": ["classification", "risk_level", "risk_score", "score_factors", "suspicious_signals", "detected_links", "recommended_action", "short_explanation"],
         "properties": {
+          "classification": { "type": "string", "enum": ["likely_phishing", "likely_spam", "likely_legitimate", "uncertain"] },
           "risk_level": { "type": "string", "enum": ["low", "medium", "high"] },
-          "risk_score": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "risk_score": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Versioned risk index equal to the sum of score_factors contributions; not a probability." },
+          "score_factors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "family", "contribution", "label"],
+              "properties": {
+                "id": { "type": "string" },
+                "family": { "type": "string", "enum": ["identity", "destination", "intent", "delivery", "style"] },
+                "contribution": { "type": "integer", "minimum": 1, "maximum": 30 },
+                "label": { "type": "string" }
+              }
+            }
+          },
           "suspicious_signals": { "type": "array", "items": { "type": "string" } },
           "detected_links": { "type": "array", "items": { "type": "string", "format": "uri" } },
           "recommended_action": { "type": "string" },
@@ -74,8 +103,8 @@
         "properties": {
           "result": { "$ref": "#/components/schemas/AnalysisResult" },
           "analysis_mode": { "type": "string", "enum": ["heuristic", "ai"] },
-          "analysis_provider": { "type": "string" },
-          "analysis_version": { "type": "string" },
+          "analysis_provider": { "type": "string", "enum": ["heuristic", "openai", "anthropic", "openai-compatible"] },
+          "analysis_version": { "const": "analysis-v2" },
           "disclaimer": { "type": "string" },
           "privacy": {
             "type": "object",

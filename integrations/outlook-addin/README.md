@@ -10,6 +10,8 @@ The Outlook add-in uses the production manifest at `public/outlook-manifest.xml`
 4. Open a synthetic message and run **Check with Maillume**.
 5. Verify the task pane shows the destination before retrieval and renders the structured result.
 
-The key is stored in the add-in origin's local storage and can be removed from the task pane. Message text and results remain in task-pane memory and are not persisted by the add-in.
+The key is kept in the add-in origin's session storage and can be removed from the task pane. It is cleared when the task-pane browsing session ends. Message text and results remain in task-pane memory and are not persisted by the add-in.
+
+The task pane requires the `analysis-v2` classification and score-factor breakdown, verifies detected links and the factor total, and explains that the score is a risk index rather than a probability.
 
 Task-pane pinning is intentionally disabled in the first release. Supporting it correctly requires a VersionOverrides 1.1 manifest and item-change handling across Outlook clients.

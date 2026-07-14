@@ -1,12 +1,16 @@
+import type { EmailLinkPair } from "../types";
+
 const HEADER_BODY_SEPARATOR = /\r?\n\r?\n/;
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 const HREF_PATTERN = /\bhref\s*=\s*["']([^"']+)["']/gi;
+const HTML_LINK_PAIR_PATTERN = /<a\b[^>]*href\s*=\s*["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
 
 export type ParsedEml = {
   subject?: string;
   senderEmail?: string;
   body: string;
   links: string[];
+  linkPairs: EmailLinkPair[];
   attachmentNames: string[];
 };
 
@@ -23,6 +27,7 @@ export function parseEml(raw: string): ParsedEml {
   const textParts: string[] = [];
   const htmlParts: string[] = [];
   const rawLinks: string[] = [];
+  const linkPairs: EmailLinkPair[] = [];
   const attachmentNames: string[] = [];
 
   for (const section of sections) {
@@ -43,6 +48,7 @@ export function parseEml(raw: string): ParsedEml {
     rawLinks.push(...extractLinks(decodedBody));
 
     if (/text\/html/i.test(sectionContentType)) {
+      linkPairs.push(...extractDisplayedLinkPairs(decodedBody));
       htmlParts.push(htmlToText(decodedBody));
     } else if (/text\/plain/i.test(sectionContentType) || sections.length === 1) {
       textParts.push(decodedBody.trim());
@@ -61,8 +67,26 @@ export function parseEml(raw: string): ParsedEml {
     senderEmail,
     body: bodyWithMetadata,
     links,
+    linkPairs: deduplicateLinkPairs(linkPairs),
     attachmentNames,
   };
+}
+
+function extractDisplayedLinkPairs(html: string): EmailLinkPair[] {
+  return Array.from(html.matchAll(HTML_LINK_PAIR_PATTERN)).flatMap((match) => {
+    const displayedUrl = htmlToText(match[2]).match(LINK_PATTERN)?.[0];
+    if (!displayedUrl) return [];
+    return [{
+      displayedUrl: displayedUrl.replace(/[.,!?;:]+$/, ""),
+      destinationUrl: match[1].replace(/[.,!?;:]+$/, ""),
+    }];
+  });
+}
+
+function deduplicateLinkPairs(pairs: EmailLinkPair[]): EmailLinkPair[] {
+  return Array.from(
+    new Map(pairs.map((pair) => [`${pair.displayedUrl}\n${pair.destinationUrl}`, pair])).values(),
+  );
 }
 
 function getSectionHeaders(section: string): Map<string, string> {
