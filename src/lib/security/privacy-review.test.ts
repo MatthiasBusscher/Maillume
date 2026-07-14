@@ -11,6 +11,7 @@ const SERVER_SECRET_NAMES = [
   "SUPABASE_SECRET_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
   "SERVICE_ROLE_KEY",
+  "CLOUDFLARE_TUNNEL_TOKEN",
 ];
 
 function main() {
@@ -58,11 +59,15 @@ function main() {
   const nextConfigContent = readProjectFile("next.config.ts");
   const dockerfileContent = readProjectFile("Dockerfile");
   const composeContent = readProjectFile("docker-compose.production.yml");
+  const deploymentContent = readProjectFile("docs/deployment.md");
   const apiAccessMigration = readProjectFile(
     "supabase/migrations/20260711120000_create_api_access.sql",
   );
   const quotaRefundMigration = readProjectFile(
     "supabase/migrations/20260711180000_refund_api_quota.sql",
+  );
+  const apiQuotaFixMigration = readProjectFile(
+    "supabase/migrations/20260714071000_fix_consume_api_quota.sql",
   );
   const hostedApiRoute = readProjectFile("src/app/api/v1/analyze/route.ts");
   const extensionManifest = readProjectFile("integrations/browser-extension/manifest.json");
@@ -123,10 +128,17 @@ function main() {
   assert.match(composeContent, /read_only: true/);
   assert.match(composeContent, /no-new-privileges:true/);
   assert.match(composeContent, /max-size: 10m/);
+  assert.match(deploymentContent, /Tunnel token only in `\/opt\/maillume\/\.env\.infrastructure`/);
+  assert.doesNotMatch(
+    deploymentContent,
+    /Tunnel token only in `\/opt\/maillume\/\.env\.production`/,
+  );
   assert.match(apiAccessMigration, /enable row level security/gi);
   assert.match(apiAccessMigration, /secret_hash char\(64\)/);
   assert.match(apiAccessMigration, /consume_api_quota/);
   assert.match(apiAccessMigration, /purge_expired_api_usage/);
+  assert.match(apiQuotaFixMigration, /on conflict on constraint api_usage_monthly_pkey/);
+  assert.doesNotMatch(apiQuotaFixMigration, /on conflict \(api_key_id,/);
   assert.match(quotaRefundMigration, /greatest\(0, request_count - 1\)/);
   assert.match(hostedApiRoute, /refund_api_quota/);
   assert.doesNotMatch(apiAccessMigration, /^\s*(body|subject|sender_email|message_text|links|result|ip_address)\s+/im);
@@ -136,7 +148,8 @@ function main() {
   assert.match(extensionManifest, /"activeTab"/);
   assert.doesNotMatch(extensionManifest, /"content_scripts"|"tabs"|mail\.google\.com|outlook\.office\.com/);
   assert.doesNotMatch(extensionPanel, /storage\.local\.set\([^)]*(?:body|result)[\s\S]*?\)/);
-  assert.match(gmailManifest, /gmail\.addons\.current\.message\.readonly/);
+  assert.match(gmailManifest, /gmail\.addons\.current\.message\.action/);
+  assert.doesNotMatch(gmailManifest, /gmail\.addons\.current\.message\.readonly/);
   assert.doesNotMatch(gmailManifest, /auth\/gmail\.readonly|auth\/gmail\.modify|auth\/gmail\"/);
   assert.ok(
     gmailCode.indexOf("Analyze this message") < gmailCode.indexOf("message.getPlainBody()"),
@@ -144,6 +157,8 @@ function main() {
   );
   assert.match(outlookManifest, /<Permissions>ReadItem<\/Permissions>/);
   assert.doesNotMatch(outlookManifest, /ReadWriteMailbox/);
+  assert.match(outlookManifest, /<Version>1\.0\.0\.0<\/Version>/);
+  assert.doesNotMatch(outlookManifest, /SupportsPinning/);
   assert.doesNotMatch(outlookComponent, /localStorage\.setItem\([^)]*(?:body|result|subject|sender)[\s\S]*?\)/);
   assert.match(licenseContent, /GNU AFFERO GENERAL PUBLIC LICENSE/);
   assert.match(licenseContent, /13\. Remote Network Interaction/);

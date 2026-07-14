@@ -5,11 +5,11 @@ Status: public-beta decision record.
 ## Public-Beta Identity
 
 - Product name: **Maillume**
-- Repository: `inbox-risk-scanner`
+- Repository: `maillume`
 - Target marketing domain: `maillume.io` (pending registration)
 - Target scanner domain: `app.maillume.io`
 - Category: privacy-first email risk assessment
-- Short promise: **A second opinion before you click, reply, or pay.**
+- Short promise: **Shine a light on suspicious email.**
 - Open-source message: **Use it here. Run it yourself.**
 
 The earlier PhishGuard working name is not used because similar names already exist. Maillume is the selected launch identity. `maillume.io` and defensive domain `maillume.nl` are owned for the project; `maillume.com` belongs to another party. This is a preliminary collision screen, not trademark clearance.

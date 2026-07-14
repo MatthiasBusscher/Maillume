@@ -1,8 +1,8 @@
 export const PRODUCT_NAME = "Maillume";
-export const PRODUCT_TAGLINE = "A second opinion before you trust an email.";
+export const PRODUCT_TAGLINE = "Shine a light on suspicious email.";
 
 export const SOURCE_REPOSITORY_URL =
-  "https://github.com/MatthiasBusscher/inbox-risk-scanner";
+  "https://github.com/MatthiasBusscher/Maillume";
 export const LICENSE_URL = `${SOURCE_REPOSITORY_URL}/blob/main/LICENSE`;
 
 export function getAppHref(): string {

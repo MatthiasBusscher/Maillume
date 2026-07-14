@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Maillume",
     short_name: "Maillume",
     description:
-      "A privacy-first second opinion for suspicious email text, screenshots, and .eml files.",
+      "Shine a light on suspicious email text, screenshots, and .eml files.",
     start_url: "/app",
     display: "standalone",
     background_color: "#eef1eb",

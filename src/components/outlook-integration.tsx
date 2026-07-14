@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, KeyRound, ScanSearch } from "lucide-react";
+import { AlertTriangle, CheckCircle2, KeyRound, ScanSearch, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import type { EmailAnalysisResult } from "@/lib/types";
@@ -56,6 +56,13 @@ export function OutlookIntegration({ labels, locale }: { labels: AccountDictiona
     setStatus(labels.keySaved);
   }
 
+  function removeKey() {
+    window.localStorage.removeItem("maillume-outlook-api-key");
+    setApiKey("");
+    setResult(undefined);
+    setStatus(labels.keyRemoved);
+  }
+
   async function analyzeMessage() {
     const office = window.Office;
     const item = office?.context.mailbox?.item;
@@ -85,6 +92,7 @@ export function OutlookIntegration({ labels, locale }: { labels: AccountDictiona
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || labels.analysisFailed);
+      if (!isAnalysisResult(payload.result)) throw new Error(labels.invalidResponse);
       setResult(payload.result);
       setStatus(labels.complete);
     } catch (error) {
@@ -103,14 +111,14 @@ export function OutlookIntegration({ labels, locale }: { labels: AccountDictiona
         <p className="text-sm leading-6 text-[#59655a]">{labels.privacy}</p>
         <details className="mt-5 border-y border-[#d8dcd3] py-4">
           <summary className="cursor-pointer text-sm font-semibold"><KeyRound className="mr-2 inline h-4 w-4" /> {labels.apiKey}</summary>
-          <div className="mt-4 flex gap-2"><input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} placeholder="mlm_..." aria-label={labels.apiKey} className="h-10 min-w-0 flex-1 border border-[#aeb6ac] px-3 text-sm" /><button type="button" onClick={saveKey} className="h-10 bg-[#111711] px-3 text-sm font-semibold text-white">{labels.save}</button></div>
+          <div className="mt-4 flex flex-wrap gap-2"><input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} placeholder="mlm_..." aria-label={labels.apiKey} className="h-10 min-w-0 flex-1 border border-[#aeb6ac] px-3 text-sm" /><button type="button" onClick={saveKey} className="h-10 bg-[#111711] px-3 text-sm font-semibold text-white">{labels.save}</button><button type="button" onClick={removeKey} className="inline-flex h-10 items-center gap-2 border border-[#aeb6ac] px-3 text-sm font-semibold text-[#374238]"><Trash2 className="h-4 w-4" aria-hidden="true" />{labels.remove}</button></div>
         </details>
         <button type="button" onClick={analyzeMessage} disabled={!ready || !apiKey || busy} className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 bg-[#dfff52] px-4 text-sm font-bold text-[#111711] disabled:opacity-50"><ScanSearch className="h-4 w-4" /> {busy ? labels.analyzing : labels.analyze}</button>
         <p role="status" className="mt-3 min-h-6 text-xs leading-5 text-[#59655a]">{status}</p>
       </section>
 
       {result ? <section className="border-x border-b border-[#111711] bg-white p-5">
-        <div className="flex items-end justify-between border-b border-[#aeb6ac] pb-4"><div><p className="font-mono text-[9px] uppercase text-[#687268]">{labels.riskScore}</p><p className="font-mono text-5xl font-semibold">{result.risk_score}</p></div><span className="border border-[#d84c3c] bg-[#ffe2dd] px-2 py-1 text-[10px] font-bold uppercase text-[#8f251b]">{result.risk_level}</span></div>
+        <div className="flex items-end justify-between border-b border-[#aeb6ac] pb-4"><div><p className="font-mono text-[9px] uppercase text-[#687268]">{labels.riskScore}</p><p className="font-mono text-5xl font-semibold">{result.risk_score}</p></div><span className="border border-[#d84c3c] bg-[#ffe2dd] px-2 py-1 text-[10px] font-bold uppercase text-[#8f251b]">{labels.riskLevels[result.risk_level]}</span></div>
         <p className="mt-4 text-sm leading-6 text-[#4f5b50]">{result.short_explanation}</p>
         <h2 className="mt-5 text-sm font-semibold"><AlertTriangle className="mr-2 inline h-4 w-4 text-[#ff705f]" /> {labels.suspiciousSignals}</h2>
         <ul className="mt-2 space-y-2 text-xs leading-5 text-[#59655a]">{result.suspicious_signals.map((signal) => <li key={signal}>{signal}</li>)}</ul>
@@ -119,4 +127,15 @@ export function OutlookIntegration({ labels, locale }: { labels: AccountDictiona
       </section> : null}
     </div>
   );
+}
+
+function isAnalysisResult(value: unknown): value is EmailAnalysisResult {
+  if (!value || typeof value !== "object") return false;
+  const result = value as Partial<EmailAnalysisResult>;
+  return typeof result.risk_score === "number"
+    && ["low", "medium", "high"].includes(result.risk_level ?? "")
+    && Array.isArray(result.suspicious_signals)
+    && Array.isArray(result.detected_links)
+    && typeof result.short_explanation === "string"
+    && typeof result.recommended_action === "string";
 }

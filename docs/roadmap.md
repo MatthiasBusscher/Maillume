@@ -1,8 +1,8 @@
 # Maillume GitHub Issue Roadmap
 
-Implementation status: all 13 roadmap items are complete in the v1 launch-candidate codebase. GitHub issues remain the source of truth for release follow-ups.
+Implementation status: the scanner core and integration surfaces are implemented in source. Production auth/API acceptance, marketplace publication, security evidence, and private-beta release work remain open. GitHub issues are the source of truth.
 
-## Post-Launch Product Order
+## Release And Post-Launch Order
 
 1. Issue #27: Visual Identity and Scanner Workspace Redesign. Complete.
 2. Issue #29: Hosted Service Architecture and Plan Boundaries. Decide privacy, cost, quota, pricing, license, and launch gates before implementation.
@@ -10,7 +10,7 @@ Implementation status: all 13 roadmap items are complete in the v1 launch-candid
 4. Issue #34: Brand, License, and Public Beta Positioning. Complete the beta identity and hosted-by-us-or-you model before going public.
 5. Issue #35: Public Beta Deployment and Trust Pages. Deploy the heuristic beta, verify trust controls, then make the repository public.
 6. Issue #30: Mail Client Integration Feasibility Spike. Complete: Chrome, Gmail, and Outlook use explicit-action, minimum-permission designs.
-7. Browser extension, Gmail add-on, Outlook add-in, and authenticated hosted API. Implemented in source; marketplace review and production configuration remain launch gates.
+7. Browser extension, Gmail add-on, Outlook add-in, and authenticated hosted API. Implemented in source; issues #38 and #39 must close before public availability is claimed.
 8. Hosted AI and billing remain gated by the Issue #29 privacy, cost, and legal decisions.
 
 The public heuristic scanner and self-hosted bring-your-own-key mode remain the launch product. See `docs/hosted-service.md` for the approved hosted-service planning baseline.

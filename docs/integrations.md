@@ -38,7 +38,7 @@ Stored API metadata is limited to key owner, name, prefix, hash, quota, creation
 
 `integrations/gmail-addon` is a Google Workspace add-on source project.
 
-- Scope: `gmail.addons.current.message.readonly`.
+- Scope: `gmail.addons.current.message.action`.
 - The contextual card does not read the message.
 - Pressing **Analyze this message** activates temporary access, reads that message, and calls the fixed official endpoint.
 - Self-hosters publish their own add-on after changing the endpoint allowlist.
@@ -49,7 +49,7 @@ Stored API metadata is limited to key owner, name, prefix, hash, quota, creation
 
 - Permission: `ReadItem`.
 - The task pane waits for **Analyze this message** before calling `body.getAsync`.
-- API key is stored in task-pane local storage; message content and result are not persisted.
+- API key is stored in task-pane local storage and can be removed there; message content and result are not persisted.
 - The production add-in uses `https://app.maillume.io` as its fixed destination.
 
 Provider marketplace publication requires final icons, operator identity, privacy-policy URLs, test accounts, validation, and review. Those are release operations and must be completed before claiming store availability.

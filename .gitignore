@@ -11,7 +11,10 @@ test-results
 .vercel
 .env
 .env.local
+.env.production
+.env.infrastructure
 .env.*.local
 *.log
 *.tsbuildinfo
 .DS_Store
+supabase/.temp/

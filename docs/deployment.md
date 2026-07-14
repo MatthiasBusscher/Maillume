@@ -1,6 +1,6 @@
 # Production Deployment
 
-The official Maillume service runs as a portable Next.js standalone container on a Hostinger VPS. Cloudflare Tunnel is the only web ingress. Managed Supabase provides optional authentication and non-content feedback. The public service uses heuristic analysis and no maintainer-funded AI key.
+The target Maillume deployment is a portable Next.js standalone container on a Hostinger VPS, with Cloudflare Tunnel as its only web ingress and managed Supabase for optional authentication and non-content feedback. The documented production configuration uses heuristic analysis and no maintainer-funded AI key. Treat these as release invariants until the live environment has passed the verification checklist below.
 
 ## Production Topology
 
@@ -28,7 +28,7 @@ Visitor
 6. Use the free rate-limiting rule for paths beginning `/api/`, covering both `/api/analyze` and `/api/v1/analyze`. Start at 10 requests per 10 seconds per visitor, with a managed challenge, and tune it from observed non-content traffic.
 7. Do not add an A or AAAA record containing the VPS address.
 
-Store the Tunnel token only in `/opt/maillume/.env.production`. Turnstile is deliberately deferred until measured abuse shows it is necessary.
+Store the Tunnel token only in `/opt/maillume/.env.infrastructure`; the application container must never receive it. Turnstile is deliberately deferred until measured abuse shows it is necessary.
 
 ## 2. Harden the Hostinger VPS
 
@@ -47,7 +47,7 @@ Detailed checks and recovery procedures are in `docs/operations.md`.
 
 ## 3. Install the Stack
 
-Clone the repository into `/opt/maillume`. Copy `.env.example` to `.env.production`, set file mode `600`, and configure production values:
+Clone the repository into `/opt/maillume`. Copy `.env.example` to `.env.production` for application settings and `.env.infrastructure.example` to `.env.infrastructure` for Docker/Tunnel settings. Set both files to mode `600`.
 
 ```text
 ANALYSIS_MODE=heuristic
@@ -57,6 +57,11 @@ ANALYSIS_REQUEST_LIMIT=20
 ANALYSIS_REQUEST_WINDOW_SECONDS=60
 ANALYSIS_MAX_REQUEST_BYTES=32768
 FEEDBACK_STORAGE=disabled
+```
+
+Configure infrastructure-only values separately so the application container never receives the Tunnel token:
+
+```text
 CLOUDFLARE_TUNNEL_TOKEN=<server-only-token>
 MAILLUME_IMAGE=ghcr.io/matthiasbusscher/maillume:sha-<full-commit>
 ```

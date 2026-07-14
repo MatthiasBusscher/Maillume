@@ -37,6 +37,8 @@ services:
     init: true
     restart: unless-stopped
     command: tunnel --no-autoupdate run
+    env_file:
+      - .env.infrastructure
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:

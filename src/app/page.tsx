@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -22,11 +21,6 @@ import { homeNl } from "@/lib/i18n/marketing-pages";
 import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getRequestSiteLocale();
-  return { title: "Maillume", description: locale === "nl" ? "Krijg een heldere, privacygerichte risicobeoordeling van verdachte e-mailtekst, screenshots en .eml-bestanden." : "Get a clear, privacy-first risk assessment for suspicious email text, screenshots, and .eml files." };
-}
-
 const capabilityRows = [
   {
     icon: FileSearch,
@@ -47,13 +41,14 @@ const capabilityRows = [
     label: "No scan history",
     title: "The assessment ends when the request does.",
     description:
-      "The hosted beta does not save email text, sender details, screenshots, .eml files, links, or completed scan results.",
+      "Maillume does not write email text, sender details, screenshots, .eml files, links, or completed scan results to scan history.",
   },
 ];
 
 export default async function MarketingHomePage() {
   const appHref = getAppHref();
-  const copy = (await getRequestSiteLocale()) === "nl" ? homeNl : {};
+  const locale = await getRequestSiteLocale();
+  const copy = locale === "nl" ? homeNl : {};
 
   return translateMarketingTree((
     <main className="min-h-screen bg-[#f7f8f4]">
@@ -63,18 +58,19 @@ export default async function MarketingHomePage() {
         <div className="pointer-events-none absolute inset-y-0 left-[8%] w-px bg-white/10" />
         <div className="pointer-events-none absolute inset-y-0 right-[13%] w-px bg-white/10" />
         <div className="pointer-events-none absolute inset-x-0 top-[30%] h-px bg-white/10" />
+        <div className="pointer-events-none absolute -top-24 left-[42%] hidden h-[900px] w-[34%] -skew-x-12 border-x border-[#dfff52]/15 bg-[#dfff52]/[0.04] lg:block" aria-hidden="true" />
 
         <div className="relative z-10 mx-auto grid min-h-[calc(100svh-7rem)] max-w-[1440px] gap-12 px-5 pb-0 pt-14 sm:px-6 sm:pt-16 lg:min-h-[660px] lg:grid-cols-[minmax(340px,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:gap-12 lg:px-8 lg:py-16 xl:grid-cols-[minmax(420px,0.78fr)_minmax(0,1.22fr)] xl:gap-16">
           <div className="max-w-[680px] lg:max-w-[520px] lg:self-center">
             <div className="flex items-center gap-3 font-mono text-[11px] uppercase text-[#dfff52]">
               <span className="h-px w-8 bg-[#dfff52]" aria-hidden="true" />
-              Open-source email risk assessment
+              A second look before you act
             </div>
             <h1 className="mt-5 text-5xl font-semibold leading-[0.96] text-white sm:text-6xl lg:text-7xl">
               Maillume
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-7 text-[#d9e0d7] sm:text-xl sm:leading-8">
-              A calm second opinion for suspicious email, before you click, reply, or pay.
+              Paste the email, screenshot, or .eml file. Maillume points out the warning signs and gives you a practical next step before you click, reply, share information, or pay.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -100,15 +96,15 @@ export default async function MarketingHomePage() {
           </div>
 
           <div className="min-w-0 self-end lg:self-center">
-            <ScannerPreview />
+            <ScannerPreview locale={locale} />
           </div>
         </div>
       </section>
 
       <section className="border-b border-[#cbd0c5] bg-[#dfff52]">
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 divide-y divide-[#111711]/25 px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6 lg:px-8">
-          <StatusItem icon={LockKeyhole} label="Files parsed in your browser" />
-          <StatusItem icon={ShieldQuestion} label="Evidence, never certainty theater" />
+          <StatusItem icon={LockKeyhole} label="Source files stay in your browser" />
+          <StatusItem icon={ShieldQuestion} label="Reasons you can inspect" />
           <StatusItem icon={Braces} label="AGPL-3.0 open source" />
         </div>
       </section>
@@ -117,13 +113,13 @@ export default async function MarketingHomePage() {
         <div className="mx-auto max-w-[1440px] px-5 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-20">
             <div>
-              <p className="font-mono text-[11px] uppercase text-[#087b72]">A useful second opinion</p>
+              <p className="font-mono text-[11px] uppercase text-[#087b72]">A clearer second opinion</p>
               <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">
-                Email safety should feel understandable.
+                Suspicious emails rarely look suspicious everywhere.
               </h2>
             </div>
             <p className="max-w-3xl text-xl leading-8 text-[#4f5b50] sm:text-2xl sm:leading-9">
-              Maillume turns the pressure tactics, mismatched domains, suspicious links, and identity clues in an email into a report a non-technical person can act on.
+              Maillume gathers the small clues in one place, explains them in plain language, and helps you choose a safer next step. You stay in control of the decision.
             </p>
           </div>
 
@@ -148,10 +144,10 @@ export default async function MarketingHomePage() {
           <div>
             <p className="font-mono text-[11px] uppercase text-[#dfff52]">What leaves the browser</p>
             <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">
-              Only the text needed for this assessment.
+              Your file stays local. The assessment text does not become history.
             </h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-[#d2e6e2]">
-              Screenshot OCR and .eml parsing happen locally. The normalized text is sent to the analysis route for the current score and is not added to a scan database.
+              Screenshot OCR and .eml parsing happen in your browser. Only the normalized text needed for the current check is sent to the selected Maillume deployment, and it is not added to a scan database.
             </p>
           </div>
 
@@ -169,9 +165,9 @@ export default async function MarketingHomePage() {
             <div className="border-b border-[#aeb6ac] pb-10 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-14">
               <ScanSearch className="h-6 w-6 text-[#ff705f]" aria-hidden="true" />
               <p className="mt-5 font-mono text-[10px] uppercase text-[#687268]">Hosted by us</p>
-              <h2 className="mt-3 text-3xl font-semibold text-[#111711]">Use the scanner in seconds.</h2>
+              <h2 className="mt-3 text-3xl font-semibold text-[#111711]">Check an email without setting anything up.</h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
-                The official cloud runs the local heuristic analyzer without a maintainer-funded AI key. Anonymous checks remain the default.
+                The hosted scanner uses transparent heuristic checks by default. You do not need an account, and Maillume does not create a history of what you scan.
               </p>
               <a href={appHref} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">
                 Open Maillume <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -180,9 +176,9 @@ export default async function MarketingHomePage() {
             <div className="pt-10 lg:pl-14 lg:pt-0">
               <ServerCog className="h-6 w-6 text-[#087b72]" aria-hidden="true" />
               <p className="mt-5 font-mono text-[10px] uppercase text-[#687268]">Hosted by you</p>
-              <h2 className="mt-3 text-3xl font-semibold text-[#111711]">Run the complete core yourself.</h2>
+              <h2 className="mt-3 text-3xl font-semibold text-[#111711]">Keep the complete scanner under your control.</h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
-                Deploy the AGPL application on your infrastructure, keep heuristic mode, or connect your own supported AI provider key.
+                Deploy the AGPL application on your own infrastructure. Keep the predictable heuristic mode, or connect an AI provider with a server-side key you own.
               </p>
               <Link href="/self-hosted" className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">
                 Explore self-hosting <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -214,7 +210,7 @@ export default async function MarketingHomePage() {
           <div>
             <p className="font-mono text-[10px] uppercase text-[#455045]">Open development</p>
             <h2 className="mt-3 max-w-3xl text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">
-              Inspect the code. Improve the checks. Run your own copy.
+              Read the code, challenge the scoring, and help make suspicious email easier to understand.
             </h2>
           </div>
           <a

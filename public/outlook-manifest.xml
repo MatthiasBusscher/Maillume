@@ -5,15 +5,15 @@
   xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
   xsi:type="MailApp">
   <Id>37f531b4-7a90-4f46-909d-79870417f745</Id>
-  <Version>0.1.0.0</Version>
+  <Version>1.0.0.0</Version>
   <ProviderName>Maillume contributors</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Maillume" />
   <Description DefaultValue="Analyze the currently open message after an explicit user action.">
     <Override Locale="nl-NL" Value="Analyseer het geopende bericht na een bewuste gebruikersactie." />
   </Description>
-  <IconUrl DefaultValue="https://maillume.io/integration-icons/icon-32.png" />
-  <HighResolutionIconUrl DefaultValue="https://maillume.io/integration-icons/icon-80.png" />
+  <IconUrl DefaultValue="https://maillume.io/integration-icons/icon-64.png" />
+  <HighResolutionIconUrl DefaultValue="https://maillume.io/integration-icons/icon-128.png" />
   <SupportUrl DefaultValue="https://maillume.io/security" />
   <AppDomains>
     <AppDomain>https://maillume.io</AppDomain>
@@ -54,7 +54,6 @@
                   </Icon>
                   <Action xsi:type="ShowTaskpane">
                     <SourceLocation resid="Taskpane.Url" />
-                    <SupportsPinning>true</SupportsPinning>
                   </Action>
                 </Control>
               </Group>

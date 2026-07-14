@@ -12,11 +12,13 @@
     "test:heuristics": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/analysis/heuristic-analysis.test.js",
     "test:security": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/security/privacy-review.test.js",
     "test:integrations": "node tests/integrations/integrations.test.cjs",
+    "test:extension": "node tests/integrations/browser-extension.smoke.cjs",
     "test:smoke": "playwright test",
     "test:smoke:ui": "playwright test --ui",
     "package:extension": "./scripts/package-browser-extension.sh",
     "package:gmail": "./scripts/package-gmail-addon.sh",
     "package:integrations": "./scripts/package-integrations.sh",
+    "generate:integration-icons": "node scripts/generate-integration-icons.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

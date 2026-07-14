@@ -1,155 +1,178 @@
+<div align="center">
+
 # Maillume
 
-Maillume is an open-source, privacy-first app for checking whether email content appears likely to be phishing, spam, or legitimate.
+**An open-source second opinion for suspicious email.**
 
-Use the official scanner without an account or run the same core yourself. The hosted service is designed to sell managed convenience later, not access to the core safety workflow.
+Understand the warning signs in an email before you click, reply, share information, or pay.
 
-The current implementation is a privacy-first Next.js product with a public marketing site, an anonymous scanner workspace, optional Google authentication, and paste, screenshot OCR, and `.eml` inputs backed by local heuristic analysis.
+[Try Maillume](https://app.maillume.io) · [Website](https://maillume.io) · [Documentation](docs/architecture.md) · [Roadmap](docs/roadmap.md) · [Contributing](CONTRIBUTING.md)
 
-The launch goal is to support pasted text, screenshots, and `.eml` files without storing scan content after scoring.
+[![CI](https://github.com/MatthiasBusscher/Maillume/actions/workflows/ci.yml/badge.svg)](https://github.com/MatthiasBusscher/Maillume/actions/workflows/ci.yml)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-087b72.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-15-111711.svg?logo=next.js)](https://nextjs.org/)
+[![Languages](https://img.shields.io/badge/UI-English%20%7C%20Nederlands-ff705f.svg)](docs/roadmap.md)
 
-## Current Status
+</div>
 
-The repository is a v1 launch candidate. Implemented today:
+![Maillume showing an explainable email risk assessment](docs/assets/maillume-overview.png)
 
-- Maillume marketing, platform, pricing, self-hosted, privacy, terms, and security pages
-- Scanner workspace at `/app` with production support for `app.maillume.io`
-- Optional Google sign-in through Supabase without making accounts a scanner requirement
-- Paste-based email scan form
-- Screenshot OCR input mode
-- `.eml` parsing input mode
-- No-storage `/api/analyze` route using calibrated local heuristic structured analysis
-- English and Dutch UI foundation with manual language switching and browser-language initialization
-- Risk score, risk level, suspicious signals, detected links, explanation, recommended action, and required disclaimer
-- Synthetic English/Dutch heuristic calibration fixtures
-- Server-side analysis provider abstraction for heuristic mode and self-hosted AI mode
-- Abuse controls, security/privacy guardrails, and browser smoke tests
-- Optional non-content result feedback with a strict allowlist and Supabase retention schema
-- Authenticated hosted API keys with atomic monthly quotas and aggregate-only usage metadata
-- Source-available Manifest V3 browser extension, Gmail Workspace add-on, and Outlook read-mode add-in
-- Portable Docker, Hostinger VPS, Cloudflare Tunnel, and local self-hosting documentation
-- Launch metadata, generated favicon/social image, and accessibility basics
+## About Maillume
 
-The technical scanner roadmap and optional Google identity foundation are implemented. The next product phase keeps anonymous heuristic scanning free while account features, hosted AI allowances, and billing remain behind explicit go/no-go gates.
+Suspicious email is hard to judge when it looks just convincing enough. Maillume makes that decision easier by turning sender clues, pressure tactics, links, and message patterns into a plain-language risk report.
 
-## Tech Stack
+Paste an email, add a screenshot, or open an exported `.eml` file. Maillume shows what it noticed, how strongly the signals affect the score, and what to do next. The final decision always stays with the user.
 
-- Next.js App Router
-- TypeScript
-- Tailwind CSS
-- Supabase authentication and optional privacy-safe feedback storage
-- Optional OpenAI, Anthropic, or OpenAI-compatible API for self-hosted structured analysis
-- Hostinger VPS with Cloudflare-protected container deployment
+> This is an automated risk assessment and should not be considered a guarantee.
 
-## Analysis Modes
+## Key Capabilities
 
-Maillume should not ship with the maintainer's paid AI API key in the public hosted version.
+- **Explainable results:** risk score, risk level, suspicious signals, detected links, and a practical next action.
+- **Three input paths:** pasted text, browser-side screenshot OCR, and browser-side `.eml` parsing.
+- **No scan history:** email content and completed assessments are not written to a scan database.
+- **Useful without an account:** anonymous heuristic scanning is the permanent free core.
+- **Self-hostable:** run the complete scanner in Docker and optionally connect your own AI provider.
+- **Bilingual from the start:** the web interface and current integration betas support English and Dutch.
+- **Built in the open:** AGPL-3.0 source, public issues, security guidance, and a documented result contract.
 
-- Public demo mode: local heuristic analysis only, no AI provider key, no stored scan data.
-- Self-hosted AI mode: installers deploy their own copy and configure their own server-side provider key. In this mode, normalized scan text is sent to their selected AI provider for structured analysis.
+## Project Status
 
-Provider keys must live only in environment variables on the server. They should never be committed to GitHub and never sent to the browser.
+Maillume is a release candidate preparing for private beta. The scanner works today; production acceptance and marketplace publication remain explicit launch gates.
 
-Example public/demo configuration:
+| Capability | Status |
+| --- | --- |
+| Anonymous English and Dutch web scanner | Release candidate |
+| Paste, screenshot OCR, and `.eml` input | Available |
+| Local heuristic assessment | Available |
+| Self-hosted AI with an operator-owned key | Available from source |
+| Google accounts and hosted API keys | Implemented; production acceptance in progress |
+| Chrome, Gmail, and Outlook integrations | Source beta; marketplace publication pending |
+| Maintainer-hosted AI and payments | Not implemented |
 
-```bash
-ANALYSIS_MODE=heuristic
-```
+Follow [production acceptance](https://github.com/MatthiasBusscher/Maillume/issues/38), [integration publication](https://github.com/MatthiasBusscher/Maillume/issues/39), and the [private-beta rehearsal](https://github.com/MatthiasBusscher/Maillume/issues/40) on GitHub.
 
-Example self-hosted OpenAI configuration:
+## Quick Start
+
+Requirements: Node.js 22+ and npm.
 
 ```bash
-ANALYSIS_MODE=ai
-AI_PROVIDER=openai
-OPENAI_API_KEY=your-own-server-side-key
-OPENAI_MODEL=your-provider-model-id
+git clone https://github.com/MatthiasBusscher/Maillume.git
+cd Maillume
+npm install
+cp .env.example .env.local
+npm run dev
 ```
 
-Example self-hosted OpenAI-compatible configuration:
+Open `http://localhost:3000/app`. Heuristic mode needs no account, database, or AI key.
+
+## Privacy Model
+
+Screenshot OCR and `.eml` parsing run in the browser. The source file is not uploaded. The normalized text needed for the current assessment is sent to the selected Maillume deployment and discarded when the request ends.
+
+Maillume does not create scan history and does not use ordinary scans as training data. It does not write email bodies, sender details, subjects, links, screenshots, `.eml` files, prompts, or completed results to Supabase.
+
+Self-hosted AI mode sends normalized scan text to the provider selected by the operator. The operator controls that provider relationship, including retention settings, budgets, and regional requirements. Read the [privacy architecture](docs/hosted-service.md) and [security review](docs/security-privacy-review.md) before running a public deployment.
+
+## Integrations
+
+The integration source is available for testing, but none of the three integrations should be presented as marketplace-ready yet.
+
+| Surface | Access boundary | Local verification |
+| --- | --- | --- |
+| Chrome extension | Text explicitly selected in the active tab | Manifest V3 load test, permission tests, and packaged-artifact checks |
+| Gmail add-on | Open message after the user presses Analyze | Mocked Apps Script behavior, scope audit, and packaged-artifact checks |
+| Outlook add-in | Open message after the user presses Analyze | Office.js browser test and production manifest validation |
+
+Build the submission artifacts with:
+
+```bash
+npm run package:integrations
+```
+
+Real Gmail, Outlook, and marketplace acceptance tests are tracked in the [publication packet](docs/integration-publication.md).
+
+## How It Works
+
+```mermaid
+flowchart LR
+  A["Paste, screenshot, or .eml"] --> B["Browser parsing"]
+  B --> C["POST /api/analyze"]
+  C --> D{"Configured mode"}
+  D --> E["Local heuristics"]
+  D --> F["Operator AI provider"]
+  E --> G["Explainable risk report"]
+  F --> G
+  G --> H["Request ends; no scan history"]
+```
+
+Both analysis modes return the same structured contract:
+
+```ts
+type EmailAnalysisResult = {
+  risk_level: "low" | "medium" | "high";
+  risk_score: number;
+  suspicious_signals: string[];
+  detected_links: string[];
+  recommended_action: string;
+  short_explanation: string;
+};
+```
+
+## Self-Hosting and AI
+
+Heuristic mode is the default. A self-hoster can opt into AI analysis with server-only configuration:
 
 ```bash
 ANALYSIS_MODE=ai
 AI_PROVIDER=openai-compatible
 AI_BASE_URL=https://your-provider.example/v1
 AI_API_KEY=your-own-provider-key
-AI_MODEL=your-provider-model-id
+AI_MODEL=your-model-id
 ```
 
-Optional AI mode has built-in best-effort rate limiting:
+Never prefix provider secrets with `NEXT_PUBLIC_`. Configure provider budgets and deployment-level rate limiting before exposing AI mode publicly. See [AI cost controls](docs/cost-controls.md).
+
+For a production-style local container:
 
 ```bash
-AI_RATE_LIMIT_ENABLED=true
-AI_RATE_LIMIT_MAX_REQUESTS=10
-AI_RATE_LIMIT_WINDOW_SECONDS=60
+docker build \
+  --build-arg NEXT_PUBLIC_MARKETING_URL=http://localhost:3000 \
+  --build-arg NEXT_PUBLIC_APP_URL=http://localhost:3000/app \
+  -t maillume:local .
+
+docker run --rm -p 3000:3000 \
+  -e ANALYSIS_MODE=heuristic \
+  maillume:local
 ```
 
-Self-hosters should also configure provider budgets, usage alerts, and deployment-level rate limits before exposing AI mode publicly.
+See the [deployment guide](docs/deployment.md) for Docker Compose, Cloudflare Tunnel, and portable hosting.
 
-See `.env.example` for the full environment shape.
-
-## Privacy Direction
-
-- Raw email content should be processed only for the current score.
-- The current paste flow sends scan content to `/api/analyze` for the current request only.
-- Pasted email text, screenshots, `.eml` files, OCR text, and scan results should not be stored by default.
-- Normal free or paid scans must not be reused as training data or evaluation fixtures.
-- Future improvement feedback must be optional, separate from scanning, and exclude message content, senders, subjects, and links.
-- Screenshot OCR and `.eml` parsing run in the browser before normalized text is sent for analysis.
-- Contributors should only share synthetic or fully sanitized examples in issues and tests.
-
-The hosted product boundaries, cost model, retention targets, privacy disclosures, and launch gates are in `docs/hosted-service.md`. Google sign-in and quota-limited integration API keys exist; hosted AI allowances, account preferences, and payments remain unimplemented.
-
-## Local Development
-
-```bash
-npm install
-npm run dev
-```
-
-Open `http://localhost:3000` for the marketing site or `http://localhost:3000/app` for the scanner.
-
-Google sign-in is optional. Configure the public Supabase URL and publishable key from `.env.example`, enable Google in the Supabase Auth dashboard, and allow `http://localhost:3000/auth/callback` as a development redirect URL.
-
-Recommended checks:
+## Development
 
 ```bash
 npm run typecheck
 npm run lint
 npm run test:analysis
 npm run test:security
+npm run test:integrations
+npm run test:extension
 npm run test:smoke
 npm run build
 ```
 
-## Project Docs
+Reusable scoring fixtures must be synthetic or fully sanitized. Never commit real private email content, inbox screenshots, raw `.eml` files, private headers, or credentials.
 
-- Architecture: `docs/architecture.md`
-- AI cost controls: `docs/cost-controls.md`
-- Deployment and self-hosting: `docs/deployment.md`
-- Production operations: `docs/operations.md`
-- Private beta checklist: `docs/launch-checklist.md`
-- Integrations and hosted API: `docs/integrations.md`
-- Integration marketplace publication: `docs/integration-publication.md`
-- Evaluation fixtures: `docs/evaluation.md`
-- Privacy-safe feedback: `docs/feedback.md`
-- Hosted service architecture: `docs/hosted-service.md`
-- Product positioning: `docs/product-positioning.md`
-- Direct dependency license review: `docs/dependency-licenses.md`
-- Roadmap: `docs/roadmap.md`
-- Security and privacy review: `docs/security-privacy-review.md`
+Useful guides: [architecture](docs/architecture.md), [evaluation](docs/evaluation.md), [operations](docs/operations.md), [launch checklist](docs/launch-checklist.md), and [roadmap](docs/roadmap.md).
 
-## Contributing
+## Community and Security
 
-Read `CONTRIBUTING.md` before opening an issue or pull request.
-
-Please do not submit real private email content, raw `.eml` files, private inbox screenshots, API keys, or unsanitized headers. Use synthetic or fully sanitized examples only.
-
-## Security
-
-Read `SECURITY.md` for vulnerability reporting and sensitive data rules.
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+- Use [GitHub Issues](https://github.com/MatthiasBusscher/Maillume/issues) for reproducible bugs and product proposals.
+- Keep all examples synthetic and free of private inbox data.
+- Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
 ## License
 
-GNU AGPL-3.0-only. See `LICENSE` and `NOTICE`.
+Maillume is licensed under [GNU AGPL-3.0-only](LICENSE). See [NOTICE](NOTICE) for attribution and warranty information.
 
-If you offer a modified version over a network, review the AGPL source-availability obligations that apply to your deployment. This is a plain-language reminder, not legal advice.
+If you offer a modified version over a network, review the AGPL source-availability obligations for that deployment. This is a plain-language reminder, not legal advice.

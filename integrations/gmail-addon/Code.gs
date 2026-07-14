@@ -1,9 +1,9 @@
 var MAILLUME_ENDPOINT = "https://app.maillume.io";
 
-function buildHomeCard() {
+function buildHomeCard(e) {
   var properties = PropertiesService.getUserProperties();
   var apiKey = properties.getProperty("MAILLUME_API_KEY") || "";
-  var nl = getLocale() === "nl";
+  var nl = getLocale(e) === "nl";
 
   return CardService.newCardBuilder()
     .setHeader(CardService.newCardHeader().setTitle("Maillume").setSubtitle(nl ? "Risicobeoordeling van huidig bericht" : "Current-message risk assessment"))
@@ -31,8 +31,8 @@ function buildHomeCard() {
     .build();
 }
 
-function buildMessageCard() {
-  var nl = getLocale() === "nl";
+function buildMessageCard(e) {
+  var nl = getLocale(e) === "nl";
   var configured = Boolean(PropertiesService.getUserProperties().getProperty("MAILLUME_API_KEY"));
   var section = CardService.newCardSection()
     .addWidget(CardService.newTextParagraph().setText(nl ? "Er is niets verzonden. Druk op de knop om alleen het bericht te analyseren dat nu in Gmail is geopend." : "Nothing has been sent. Press the button to analyze only the message currently open in Gmail."));
@@ -55,27 +55,28 @@ function buildMessageCard() {
 }
 
 function saveApiKey(e) {
+  var nl = getLocale(e) === "nl";
   var key = String(e.commonEventObject.formInputs.apiKey.stringInputs.value[0] || "").trim();
-  if (!/^mlm_[A-Za-z0-9_-]{43}$/.test(key)) return notification("Enter a valid Maillume API key.");
+  if (!/^mlm_[A-Za-z0-9_-]{43}$/.test(key)) return notification(nl ? "Voer een geldige Maillume API-sleutel in." : "Enter a valid Maillume API key.");
   PropertiesService.getUserProperties().setProperty("MAILLUME_API_KEY", key);
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText("API key saved for your Google account."))
-    .setNavigation(CardService.newNavigation().updateCard(buildHomeCard()))
+    .setNotification(CardService.newNotification().setText(nl ? "API-sleutel opgeslagen voor je Google-account." : "API key saved for your Google account."))
+    .setNavigation(CardService.newNavigation().updateCard(buildHomeCard(e)))
     .build();
 }
 
-function removeApiKey() {
+function removeApiKey(e) {
   PropertiesService.getUserProperties().deleteProperty("MAILLUME_API_KEY");
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText(getLocale() === "nl" ? "Opgeslagen API-sleutel verwijderd." : "Saved API key removed."))
-    .setNavigation(CardService.newNavigation().updateCard(buildHomeCard()))
+    .setNotification(CardService.newNotification().setText(getLocale(e) === "nl" ? "Opgeslagen API-sleutel verwijderd." : "Saved API key removed."))
+    .setNavigation(CardService.newNavigation().updateCard(buildHomeCard(e)))
     .build();
 }
 
 function analyzeCurrentMessage(e) {
-  var locale = getLocale();
+  var locale = getLocale(e);
   var apiKey = PropertiesService.getUserProperties().getProperty("MAILLUME_API_KEY");
-  if (!apiKey) return notification("Save a Maillume API key first.");
+  if (!apiKey) return notification(locale === "nl" ? "Sla eerst een Maillume API-sleutel op." : "Save a Maillume API key first.");
 
   var message;
   try {
@@ -107,19 +108,20 @@ function analyzeCurrentMessage(e) {
   var status = response.getResponseCode();
   var parsed;
   try { parsed = JSON.parse(response.getContentText()); } catch (error) { parsed = {}; }
-  if (status < 200 || status >= 300) return notification(parsed.error || (locale === "nl" ? "De Maillume-analyse is mislukt." : "Maillume analysis failed."));
+  if (status < 200 || status >= 300) return notification(locale === "nl" ? "De Maillume-analyse is mislukt." : "Maillume analysis failed.");
   if (!isAnalysisResult(parsed.result)) return notification(locale === "nl" ? "De service gaf een ongeldig analyseresultaat terug." : "The service returned an invalid analysis result.");
 
   return CardService.newActionResponseBuilder()
-    .setNavigation(CardService.newNavigation().pushCard(buildResultCard(parsed.result)))
+    .setNavigation(CardService.newNavigation().pushCard(buildResultCard(parsed.result, locale)))
     .build();
 }
 
-function buildResultCard(result) {
-  var nl = getLocale() === "nl";
+function buildResultCard(result, locale) {
+  var nl = locale === "nl";
+  var riskLevels = nl ? { low: "LAAG", medium: "GEMIDDELD", high: "HOOG" } : { low: "LOW", medium: "MEDIUM", high: "HIGH" };
   var signals = result.suspicious_signals.length ? result.suspicious_signals.map(function (signal) { return "• " + escapeHtml(signal); }).join("<br>") : (nl ? "Er zijn geen specifieke verdachte signalen gevonden." : "No specific suspicious signals were detected.");
   return CardService.newCardBuilder()
-    .setHeader(CardService.newCardHeader().setTitle((nl ? "Risicoscore " : "Risk score ") + result.risk_score + " · " + String(result.risk_level).toUpperCase()).setSubtitle(nl ? "Geautomatiseerde beoordeling, geen garantie" : "Automated assessment, never a guarantee"))
+    .setHeader(CardService.newCardHeader().setTitle((nl ? "Risicoscore " : "Risk score ") + result.risk_score + " · " + riskLevels[result.risk_level]).setSubtitle(nl ? "Geautomatiseerde beoordeling, geen garantie" : "Automated assessment, never a guarantee"))
     .addSection(
       CardService.newCardSection()
         .addWidget(CardService.newTextParagraph().setText(escapeHtml(result.short_explanation)))
@@ -138,10 +140,11 @@ function escapeHtml(value) {
   return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-function getLocale() {
-  return String(Session.getActiveUserLocale() || "en").toLowerCase().indexOf("nl") === 0 ? "nl" : "en";
+function getLocale(e) {
+  var locale = e && e.commonEventObject && e.commonEventObject.userLocale;
+  return String(locale || "en").toLowerCase().indexOf("nl") === 0 ? "nl" : "en";
 }
 
 function isAnalysisResult(result) {
-  return result && typeof result.risk_score === "number" && ["low", "medium", "high"].indexOf(result.risk_level) >= 0 && Array.isArray(result.suspicious_signals) && typeof result.short_explanation === "string" && typeof result.recommended_action === "string";
+  return result && typeof result.risk_score === "number" && ["low", "medium", "high"].indexOf(result.risk_level) >= 0 && Array.isArray(result.suspicious_signals) && Array.isArray(result.detected_links) && typeof result.short_explanation === "string" && typeof result.recommended_action === "string";
 }

@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 
+import { SatoriBrandGlyph } from "@/components/satori-brand-glyph";
+
 export const alt = "Maillume open-source email risk assessment";
 
 export const size = {
@@ -34,26 +36,17 @@ export default function OpenGraphImage() {
       />
       <div style={{ display: "flex", flex: 1, flexDirection: "column" }}>
         <div style={{ alignItems: "center", display: "flex" }}>
-          <div
-            style={{
-              alignItems: "center",
-              background: "#dfff52",
-              color: "#111711",
-              display: "flex",
-              fontSize: 22,
-              fontWeight: 700,
-              height: 58,
-              justifyContent: "center",
-              width: 58,
-            }}
-          >
-            ML
-          </div>
+          <SatoriBrandGlyph
+            accentOffset={-7}
+            background="#dfff52"
+            foreground="#111711"
+            size={58}
+          />
           <div style={{ fontSize: 28, fontWeight: 700, marginLeft: 18 }}>Maillume</div>
         </div>
 
         <div style={{ color: "#dfff52", fontSize: 19, fontWeight: 700, marginTop: 62 }}>
-          OPEN-SOURCE EMAIL RISK ASSESSMENT
+          ILLUMINATE SUSPICIOUS EMAIL
         </div>
         <div
           style={{
@@ -65,7 +58,7 @@ export default function OpenGraphImage() {
             maxWidth: 760,
           }}
         >
-          A second opinion before you trust an email.
+          Shine a light on suspicious email.
         </div>
         <div
           style={{

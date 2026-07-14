@@ -62,7 +62,7 @@ export default async function SelfHostedPage() {
               <span className="font-mono text-[9px] text-[#849083]">heuristic mode</span>
             </div>
             <pre className="overflow-x-auto p-5 text-sm leading-7 text-[#d8e0d6]"><code>{`git clone ${SOURCE_REPOSITORY_URL}.git
-cd inbox-risk-scanner
+cd maillume
 npm install
 
 cp .env.example .env.local

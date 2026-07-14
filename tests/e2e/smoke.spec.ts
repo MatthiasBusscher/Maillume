@@ -14,7 +14,7 @@ test("paste analysis renders a structured result and disclaimer", async ({ page 
   await page.getByRole("button", { name: "Analyze email" }).click();
 
   await expect(page.getByText("Risk score")).toBeVisible();
-  await expect(page.getByText("Suspicious signals")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Suspicious signals", exact: true })).toBeVisible();
   await expect(page.getByRole("meter")).toHaveAttribute("aria-valuenow", /\d+/);
   await expect(
     page.getByText("This is an automated risk assessment and should not be considered a guarantee."),
@@ -30,7 +30,7 @@ test("language switching updates the scanner", async ({ page }) => {
   await expect(page.getByRole("button", { name: "E-mail analyseren" })).toBeVisible();
   await page.getByRole("button", { name: "Voorbeeld" }).click();
   await page.getByRole("button", { name: "E-mail analyseren" }).click();
-  await expect(page.getByText("Verdachte signalen")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Verdachte signalen", exact: true })).toBeVisible();
   await expect(page.getByText(/Klik niet op links|Ga voorzichtig verder/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Help de detectie verbeteren" })).toBeVisible();
 
@@ -52,6 +52,84 @@ test("Dutch routes render server-side and persist across navigation", async ({ p
   const apiResponse = await page.request.get("/api/health");
   expect(apiResponse.ok()).toBe(true);
   expect(apiResponse.url()).toContain("/api/health");
+});
+
+test("marketing language redirects use the configured public origin", async ({ page, request }) => {
+  const response = await request.get("/language/en?next=%2Fnl", {
+    headers: { Host: "0.0.0.0:3000" },
+    maxRedirects: 0,
+  });
+
+  expect(response.status()).toBe(303);
+  expect(response.headers().location).toBe("http://127.0.0.1:3100/");
+
+  await page.goto("/nl");
+  await page.getByRole("link", { name: "EN", exact: true }).click();
+  await expect(page).toHaveURL("http://127.0.0.1:3100/");
+});
+
+test("Dutch marketing preview and app navigation are visibly localized", async ({ page }) => {
+  await page.goto("/nl");
+  const preview = page.getByTestId("scanner-preview");
+  for (const text of [
+    "E-mailanalyse",
+    "Controleer een verdachte e-mail",
+    "Onderwerp",
+    "Afzender",
+    "E-mailinhoud",
+    "E-mail analyseren",
+    "Risicoscore",
+    "Hoog",
+    "Creëert urgentie rond een probleem met je account.",
+    "De linkbestemming past niet bij de beweerde afzender.",
+    "Controleer dit via een bekend contactkanaal voordat je handelt.",
+    "Geautomatiseerde risicobeoordeling. Dit resultaat is geen garantie.",
+  ]) {
+    await expect(preview.getByText(text, { exact: true })).toBeVisible();
+  }
+  for (const text of [
+    "Email analysis",
+    "Subject",
+    "Sender",
+    "Email content",
+    "Analyze email",
+    "Risk score",
+    "High",
+    "Creates urgency around an account problem.",
+    "Link destination does not match the claimed sender.",
+  ]) {
+    await expect(preview.getByText(text, { exact: true })).toHaveCount(0);
+  }
+  await expect(page.getByText("Verwerkt bestanden en haalt leesbare tekst op.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Controleert risicopatronen en geeft gestructureerde JSON terug.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Er wordt geen e-mailinhoud of resultaat in een scangeschiedenis opgeslagen.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Ontdek self-hosting" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Lees de incidentnotities" })).toBeVisible();
+  await expect(page.getByText("Parses files and extracts readable text.", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Checks risk patterns and returns structured JSON.", { exact: true })).toHaveCount(0);
+
+  await page.goto("/nl/pricing");
+  await expect(page.getByText("Releasekandidaat", { exact: true })).toBeVisible();
+
+  await page.goto("/nl/app");
+  const signIn = page.getByRole("link", { name: "Inloggen", exact: true });
+  const website = page.getByRole("link", { name: "Website", exact: true });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(signIn).toBeVisible();
+  await expect(website).toBeHidden();
+  expect((await signIn.boundingBox())!.width).toBeGreaterThanOrEqual(90);
+
+  for (const width of [640, 768, 900, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    await expect(signIn).toBeVisible();
+    await expect(website).toBeVisible();
+    const signInBox = (await signIn.boundingBox())!;
+    const websiteBox = (await website.boundingBox())!;
+    expect(signInBox.height).toBe(websiteBox.height);
+    expect(websiteBox.width).toBeLessThanOrEqual(signInBox.width * 1.25);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width + 1);
+  }
 });
 
 test("keyboard users can skip directly to the scanner", async ({ page }) => {
@@ -104,7 +182,7 @@ test("rate-limited analysis shows a clear localized error", async ({ page }) => 
   await page.getByRole("button", { name: "Analyze email" }).click();
 
   await expect(page.locator("form [role='alert']")).toContainText(
-    "Too many AI analyses were requested. Please wait and try again.",
+    "Too many analyses were requested. Please wait and try again.",
   );
 });
 
@@ -113,7 +191,7 @@ test("launch metadata and generated assets are available", async ({ page, reques
   await expect(page).toHaveTitle("Maillume");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    /privacy-first risk assessment/i,
+    /shine a light on suspicious email/i,
   );
 
   const [iconResponse, openGraphResponse, manifestResponse, robotsResponse, sitemapResponse] = await Promise.all([
@@ -138,11 +216,11 @@ test("launch metadata and generated assets are available", async ({ page, reques
   const sourceLinks = page.getByRole("link", { name: "Source", exact: true });
   await expect(sourceLinks.first()).toHaveAttribute(
     "href",
-    "https://github.com/MatthiasBusscher/inbox-risk-scanner",
+    "https://github.com/MatthiasBusscher/Maillume",
   );
   await expect(page.getByRole("link", { name: "License" })).toHaveAttribute(
     "href",
-    "https://github.com/MatthiasBusscher/inbox-risk-scanner/blob/main/LICENSE",
+    "https://github.com/MatthiasBusscher/Maillume/blob/main/LICENSE",
   );
   await expect(page.getByRole("link", { name: "AGPL-3.0" })).toBeVisible();
 });
@@ -232,14 +310,15 @@ test("marketing routes accurately distinguish available and source-beta features
 
   await page.goto("/pricing");
   await expect(page.getByRole("heading", { name: "The safety workflow stays free." })).toBeVisible();
+  await expect(page.getByText("Release candidate", { exact: true })).toBeVisible();
   await expect(page.getByText("Planned, not for sale")).toBeVisible();
 
   await page.goto("/self-hosted");
   await expect(page.getByRole("heading", { name: /Your infrastructure/ })).toBeVisible();
 
   await page.goto("/platform");
-  await expect(page.getByText("Available today").first()).toBeVisible();
-  await expect(page.getByText("Available", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Implemented in source").first()).toBeVisible();
+  await expect(page.getByText("Acceptance pending", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Source beta", { exact: true }).first()).toBeVisible();
 });
 
@@ -336,7 +415,14 @@ test("primary pages fit mobile and desktop viewports without horizontal overflow
   ]) {
     await page.setViewportSize(viewport);
 
-    for (const path of ["/", "/app", "/resources/odido-phishing-incident"]) {
+    for (const path of [
+      "/",
+      "/app",
+      "/platform",
+      "/pricing",
+      "/auth/sign-in",
+      "/resources/odido-phishing-incident",
+    ]) {
       await page.goto(path);
       await expect(page.locator("h1").first()).toBeVisible();
       const dimensions = await page.evaluate(() => ({
@@ -383,8 +469,11 @@ test("Outlook task pane explains explicit current-message access", async ({ page
 
 test("Outlook reads only after confirmation and can be embedded by Office", async ({ page, request }) => {
   const paneResponse = await request.get("/integrations/outlook");
+  const dutchPaneResponse = await request.get("/nl/integrations/outlook");
   expect(paneResponse.headers()["x-frame-options"]).toBeUndefined();
   expect(paneResponse.headers()["content-security-policy"]).toContain("https://*.office.com");
+  expect(dutchPaneResponse.headers()["x-frame-options"]).toBeUndefined();
+  expect(dutchPaneResponse.headers()["content-security-policy"]).toContain("https://*.office.com");
 
   await page.route("https://appsforoffice.microsoft.com/**", async (route) => {
     await route.fulfill({ contentType: "application/javascript", body: "" });
@@ -409,11 +498,17 @@ test("Outlook reads only after confirmation and can be embedded by Office", asyn
     };
   });
   let submitted: Record<string, unknown> | undefined;
+  let analysisRequests = 0;
   await page.route("**/api/v1/analyze", async (route) => {
+    analysisRequests += 1;
     submitted = route.request().postDataJSON() as Record<string, unknown>;
+    if (analysisRequests === 1) {
+      await route.fulfill({ contentType: "application/json", json: { result: { risk_score: 10 } } });
+      return;
+    }
     await route.fulfill({ contentType: "application/json", json: { result: {
-      risk_level: "low", risk_score: 10, suspicious_signals: [], detected_links: [],
-      recommended_action: "Continue with normal caution.", short_explanation: "No major warning signs.",
+      risk_level: "high", risk_score: 82, suspicious_signals: ["Synthetic warning"], detected_links: [],
+      recommended_action: "Verify through a known channel.", short_explanation: "Suspicious pattern detected.",
     } } });
   });
   await page.goto("/nl/integrations/outlook");
@@ -422,5 +517,13 @@ test("Outlook reads only after confirmation and can be embedded by Office", asyn
   await expect(analyze).toBeEnabled();
   await analyze.click();
   await expect.poll(() => page.evaluate(() => (window as typeof window & { __outlookReads: number }).__outlookReads)).toBe(1);
+  await expect(page.getByRole("status")).toHaveText("Maillume gaf een ongeldig analyseresultaat terug.");
+  await analyze.click();
+  await expect.poll(() => page.evaluate(() => (window as typeof window & { __outlookReads: number }).__outlookReads)).toBe(2);
+  await expect(page.getByText("Hoog", { exact: true })).toBeVisible();
   expect(submitted).toMatchObject({ body: "Synthetic message body", locale: "nl", subject: "Synthetic Outlook message" });
+  await page.getByText("API-sleutel", { exact: true }).click();
+  await page.getByRole("button", { name: "Sleutel verwijderen" }).click();
+  await expect(analyze).toBeDisabled();
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("maillume-outlook-api-key"))).toBeNull();
 });
