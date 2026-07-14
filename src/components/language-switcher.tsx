@@ -1,5 +1,3 @@
-import { Globe2 } from "lucide-react";
-
 import { type Dictionary, type Locale, supportedLocales } from "@/lib/i18n/dictionary";
 
 type LanguageSwitcherProps = {
@@ -16,10 +14,9 @@ export function LanguageSwitcher({
   return (
     <div
       role="group"
-      className="flex items-center gap-2"
+      className="flex items-center"
       aria-label={dictionary.language.label}
     >
-      <Globe2 className="h-4 w-4 text-[#aeb6bf]" aria-hidden="true" />
       <div className="inline-flex border border-white/25 bg-[#0f1114] p-1">
         {supportedLocales.map((option) => {
           const isActive = option.locale === locale;

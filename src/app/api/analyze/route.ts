@@ -7,6 +7,7 @@ import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
 import { AiProviderRequestError } from "@/lib/analysis/providers";
 import { AnalysisCapacityError, withAnalysisCapacity } from "@/lib/analysis/concurrency";
 import { enforceAiRateLimit, enforceRequestRateLimit, RateLimitError } from "@/lib/analysis/rate-limit";
+import { getAnalysisMaxRequestBytes } from "@/lib/analysis/request-limits";
 import {
   ANALYSIS_DISCLAIMERS,
   ANALYSIS_PIPELINE_VERSION,
@@ -18,7 +19,6 @@ const NO_STORE_HEADERS = {
   "Cache-Control": "no-store",
 };
 
-const DEFAULT_MAX_REQUEST_BYTES = 32 * 1024;
 const DEFAULT_REQUEST_LIMIT = 20;
 const DEFAULT_REQUEST_WINDOW_SECONDS = 60;
 
@@ -130,7 +130,7 @@ function requestBodyIsTooLarge(request: Request): boolean {
 }
 
 function getMaxRequestBytes(): number {
-  return readPositiveInteger("ANALYSIS_MAX_REQUEST_BYTES", DEFAULT_MAX_REQUEST_BYTES, 256 * 1024);
+  return getAnalysisMaxRequestBytes();
 }
 
 class RequestBodyTooLargeError extends Error {}

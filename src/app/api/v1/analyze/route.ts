@@ -7,6 +7,7 @@ import { AnalysisConfigError, getAnalysisConfig } from "@/lib/analysis/config";
 import { AiProviderRequestError } from "@/lib/analysis/providers";
 import { enforceAiRateLimit, enforceRequestRateLimit, RateLimitError } from "@/lib/analysis/rate-limit";
 import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
+import { getAnalysisMaxRequestBytes } from "@/lib/analysis/request-limits";
 import { hashApiKey, isApiKeyFormat } from "@/lib/api-keys";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
@@ -17,7 +18,6 @@ import {
 } from "@/lib/types";
 
 const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
-const DEFAULT_MAX_REQUEST_BYTES = 32 * 1024;
 const DEFAULT_REQUEST_LIMIT = 20;
 const DEFAULT_REQUEST_WINDOW_SECONDS = 60;
 
@@ -46,12 +46,12 @@ export async function POST(request: Request) {
   if (!admin) return jsonError("Hosted API access is not configured.", 503);
 
   const contentLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(contentLength) && contentLength > getMaxRequestBytes()) return jsonError("Request body is too large.", 413);
+  if (Number.isFinite(contentLength) && contentLength > getAnalysisMaxRequestBytes()) return jsonError("Request body is too large.", 413);
 
   let payload: unknown;
   try {
     const raw = await request.text();
-    if (new TextEncoder().encode(raw).byteLength > getMaxRequestBytes()) return jsonError("Request body is too large.", 413);
+    if (new TextEncoder().encode(raw).byteLength > getAnalysisMaxRequestBytes()) return jsonError("Request body is too large.", 413);
     payload = JSON.parse(raw) as unknown;
   } catch {
     return jsonError("Invalid JSON request body.", 400);
@@ -105,10 +105,6 @@ export async function POST(request: Request) {
     if (error instanceof AiProviderRequestError || error instanceof AiResponseValidationError) return jsonError(error.message, 502);
     throw error;
   }
-}
-
-function getMaxRequestBytes() {
-  return readPositiveInteger("ANALYSIS_MAX_REQUEST_BYTES", DEFAULT_MAX_REQUEST_BYTES, 256 * 1024);
 }
 
 function readPositiveInteger(name: string, fallback: number, maximum: number) {

@@ -21,6 +21,11 @@ export async function middleware(request: NextRequest) {
   const originalPathname = request.nextUrl.pathname;
   const pathLocale = getPathLocale(originalPathname);
 
+  if (isAppHostname && originalPathname === "/" && request.nextUrl.searchParams.has("code")) {
+    targetUrl.pathname = "/auth/callback";
+    return NextResponse.redirect(targetUrl, 307);
+  }
+
   if (hostname === "maillume.nl" || hostname === "www.maillume.nl") {
     targetUrl.protocol = "https:";
     targetUrl.hostname = "maillume.io";

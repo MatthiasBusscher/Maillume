@@ -6,22 +6,26 @@ import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
-const redirectSource = readFileSync(join(testDirectory, "redirect.ts"), "utf8");
-const compiledRoute = ts.transpileModule(redirectSource, {
-  compilerOptions: {
-    module: ts.ModuleKind.CommonJS,
-    target: ts.ScriptTarget.ES2020,
-  },
-}).outputText;
-const routeModule = { exports: {} };
+function compileHelper(fileName) {
+  const source = readFileSync(join(testDirectory, fileName), "utf8");
+  const compiled = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2020,
+    },
+  }).outputText;
+  const helperModule = { exports: {} };
 
-Function("require", "module", "exports", compiledRoute)(
-  () => { throw new Error("The redirect helper must not import route dependencies."); },
-  routeModule,
-  routeModule.exports,
-);
+  Function("require", "module", "exports", compiled)(
+    () => { throw new Error(`${fileName} must not import route dependencies.`); },
+    helperModule,
+    helperModule.exports,
+  );
+  return helperModule.exports;
+}
 
-const { getSafeOAuthRedirectUrl } = routeModule.exports;
+const { getSafeOAuthRedirectUrl } = compileHelper("redirect.ts");
+const { getPublicAppOrigin } = compileHelper("origin.ts");
 const origin = "https://app.maillume.io";
 
 test("keeps ordinary same-origin callback destinations", () => {
@@ -83,4 +87,42 @@ test("falls back for raw and encoded control characters", () => {
       JSON.stringify(requestedNext),
     );
   }
+});
+
+test("uses the configured public app origin ahead of proxy and container values", () => {
+  assert.equal(
+    getPublicAppOrigin({
+      configuredAppUrl: "https://app.maillume.io/app",
+      forwardedHost: "attacker.example",
+      forwardedProto: "http",
+      host: "0.0.0.0:3000",
+      requestUrl: "http://0.0.0.0:3000/auth/callback",
+    }),
+    "https://app.maillume.io",
+  );
+});
+
+test("uses trusted proxy headers when no app URL is configured", () => {
+  assert.equal(
+    getPublicAppOrigin({
+      forwardedHost: "app.maillume.io, internal.example",
+      forwardedProto: "https, http",
+      host: "0.0.0.0:3000",
+      requestUrl: "http://0.0.0.0:3000/auth/callback",
+    }),
+    "https://app.maillume.io",
+  );
+});
+
+test("falls back to the request origin for invalid public origin inputs", () => {
+  assert.equal(
+    getPublicAppOrigin({
+      configuredAppUrl: "javascript:alert(1)",
+      forwardedHost: "app.maillume.io",
+      forwardedProto: "ftp",
+      host: "0.0.0.0:3000",
+      requestUrl: "http://0.0.0.0:3000/auth/callback",
+    }),
+    "http://0.0.0.0:3000",
+  );
 });

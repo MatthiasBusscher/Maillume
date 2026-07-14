@@ -113,22 +113,65 @@ test("Dutch marketing preview and app navigation are visibly localized", async (
 
   await page.goto("/nl/app");
   const signIn = page.getByRole("link", { name: "Inloggen", exact: true });
-  const website = page.getByRole("link", { name: "Website", exact: true });
+  const menu = page.locator('summary[aria-label="Meer opties"]');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(signIn).toBeVisible();
-  await expect(website).toBeHidden();
-  expect((await signIn.boundingBox())!.width).toBeGreaterThanOrEqual(90);
+  await expect(menu).toBeVisible();
+  expect((await signIn.boundingBox())!.width).toBe(40);
 
   for (const width of [640, 768, 900, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     await expect(signIn).toBeVisible();
-    await expect(website).toBeVisible();
-    const signInBox = (await signIn.boundingBox())!;
-    const websiteBox = (await website.boundingBox())!;
-    expect(signInBox.height).toBe(websiteBox.height);
-    expect(websiteBox.width).toBeLessThanOrEqual(signInBox.width * 1.25);
+    await expect(menu).toBeVisible();
+    expect((await page.locator("header").boundingBox())!.height).toBe(64);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width + 1);
+  }
+
+  await menu.click();
+  await expect(page.getByRole("link", { name: "Website", exact: true })).toBeVisible();
+  await expect(page.locator("details").getByRole("link", { name: "Broncode", exact: true })).toBeVisible();
+});
+
+test("scanner shows its character and byte budget before submission", async ({ page }) => {
+  let analysisRequests = 0;
+  await page.route("**/api/analyze", async (route) => {
+    analysisRequests += 1;
+    await route.abort();
+  });
+
+  await page.getByLabel("Email content").fill("x".repeat(20_001));
+
+  await expect(page.getByText("20,001 / 20,000 characters")).toBeVisible();
+  await expect(page.getByText("Shorten the email content to 20,000 characters or less.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Analyze email" })).toBeDisabled();
+  expect(analysisRequests).toBe(0);
+});
+
+test("scanner explains a non-JSON upstream 413 response", async ({ page }) => {
+  await page.route("**/api/analyze", async (route) => {
+    await route.fulfill({ body: "Content Too Large", contentType: "text/plain", status: 413 });
+  });
+
+  await page.getByLabel("Email content").fill("Synthetic message body");
+  await page.getByRole("button", { name: "Analyze email" }).click();
+  await expect(page.locator("form [role='alert']")).toContainText(
+    "This message is too large to analyze safely.",
+  );
+});
+
+test("initial scanner workspace fits common desktop viewports", async ({ page }) => {
+  for (const viewport of [
+    { width: 1024, height: 768 },
+    { width: 1280, height: 800 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/app");
+    const box = await page.getByTestId("scanner-workspace").boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.y).toBeGreaterThanOrEqual(64);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height + 1);
   }
 });
 
@@ -350,6 +393,18 @@ test("the app subdomain root resolves to the scanner workspace", async ({ reques
 
   expect(response.ok()).toBe(true);
   expect(await response.text()).toContain("Inspect a suspicious email");
+});
+
+test("an OAuth code returned to the app root is recovered by the callback route", async ({ request }) => {
+  const response = await request.get("/?code=synthetic-code", {
+    headers: { Host: "app.maillume.io" },
+    maxRedirects: 0,
+  });
+
+  expect(response.status()).toBe(307);
+  const callbackLocation = new URL(response.headers().location);
+  expect(callbackLocation.pathname).toBe("/auth/callback");
+  expect(callbackLocation.searchParams.get("code")).toBe("synthetic-code");
 });
 
 test("account deletion rejects cross-origin requests", async ({ request }) => {

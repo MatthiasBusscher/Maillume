@@ -24,6 +24,7 @@ export const accountEn = {
       notConfigured: "Google sign-in is not configured on this deployment. The scanner still works without an account.",
       unavailable: "Google sign-in is not configured on this deployment.",
       failed: "Google sign-in could not be started. Please try again.",
+      callbackFailed: "Google sign-in could not be completed. Please try again. If this continues, check the authorized redirect URL.",
     },
   },
   account: {

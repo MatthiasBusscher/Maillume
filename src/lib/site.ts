@@ -9,6 +9,12 @@ export function getAppHref(): string {
   return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "/app";
 }
 
+export function getAppRouteHref(pathname: string): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  if (!appUrl) return pathname;
+  return new URL(pathname, `${appUrl}/`).toString();
+}
+
 export function getMarketingHref(): string {
   return process.env.NEXT_PUBLIC_MARKETING_URL?.replace(/\/$/, "") || "/";
 }

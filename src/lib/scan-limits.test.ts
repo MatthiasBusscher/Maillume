@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 
 import {
+  DEFAULT_ANALYSIS_MAX_REQUEST_BYTES,
   EML_ACCEPT,
+  getSerializedRequestSize,
   isSupportedEmlFile,
   isSupportedScreenshotFile,
   isWithinFileSizeLimit,
@@ -14,6 +16,9 @@ import {
 function main() {
   assert.equal(MAX_SCREENSHOT_SIZE_BYTES, 5 * 1024 * 1024);
   assert.equal(MAX_EML_SIZE_BYTES, 2 * 1024 * 1024);
+  assert.equal(DEFAULT_ANALYSIS_MAX_REQUEST_BYTES, 32 * 1024);
+  assert.equal(getSerializedRequestSize({ body: "test" }), 15);
+  assert.equal(getSerializedRequestSize({ body: "veilig" }), 17);
   assert.equal(SCREENSHOT_ACCEPT, "image/png,image/jpeg,image/webp,image/gif");
   assert.equal(EML_ACCEPT, ".eml,message/rfc822");
 

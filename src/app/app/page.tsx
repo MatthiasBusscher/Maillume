@@ -4,6 +4,7 @@ import { ScannerPage } from "@/components/home-page";
 import { isFeedbackEnabled } from "@/lib/feedback/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
+import { getAnalysisMaxRequestBytes } from "@/lib/analysis/request-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export default async function AppPage() {
     <ScannerPage
       feedbackEnabled={isFeedbackEnabled()}
       initialLocale={locale}
+      maxRequestBytes={getAnalysisMaxRequestBytes()}
       userEmail={data.user?.email}
     />
   );
