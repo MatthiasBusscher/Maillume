@@ -373,12 +373,12 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
             value={body}
             onChange={(event) => setBody(event.target.value)}
             placeholder={dictionary.form.bodyPlaceholder}
-            rows={6}
+            rows={4}
             required
             readOnly={isExtracting}
             aria-invalid={Boolean(inputLimitError)}
             aria-describedby="scan-request-size"
-            className="min-h-36 resize-y border border-[#b7bec5] bg-[#fafbfb] px-3 py-3 font-sans text-sm leading-6 normal-case text-[#111711] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
+            className="min-h-24 resize-y border border-[#b7bec5] bg-[#fafbfb] px-3 py-3 font-sans text-sm leading-6 normal-case text-[#111711] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
           />
         </label>
 

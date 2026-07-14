@@ -57,7 +57,7 @@ export const dictionaries = {
       contentTooLong: "Shorten the email content to 20,000 characters or less.",
       requestTooLarge: "This message is too large to analyze safely. Shorten the content or remove unusually long links.",
       privacyNote:
-        "Processed for this score only. Files are parsed in your browser; scan content is not stored.",
+        "Processed once for this score. Scan content is not stored.",
       analyze: "Analyze email",
       analyzing: "Analyzing",
       analysisFailed: "Analysis failed. Please try again.",
@@ -213,7 +213,7 @@ export const dictionaries = {
       contentTooLong: "Kort de e-mailinhoud in tot maximaal 20.000 tekens.",
       requestTooLarge: "Dit bericht is te groot om veilig te analyseren. Kort de inhoud in of verwijder ongewoon lange links.",
       privacyNote:
-        "Alleen verwerkt voor deze score. Bestanden worden in uw browser verwerkt; scaninhoud wordt niet opgeslagen.",
+        "Eenmalig verwerkt voor deze score. Scaninhoud wordt niet opgeslagen.",
       analyze: "E-mail analyseren",
       analyzing: "Analyseren",
       analysisFailed: "Analyse mislukt. Probeer het opnieuw.",
