@@ -28,7 +28,7 @@ Visitor
 6. Use the free rate-limiting rule for paths beginning `/api/`, covering both `/api/analyze` and `/api/v1/analyze`. Start at 10 requests per 10 seconds per visitor, with a managed challenge, and tune it from observed non-content traffic.
 7. Do not add an A or AAAA record containing the VPS address.
 
-Store the Tunnel token only in `/opt/maillume/.env.production`. Turnstile is deliberately deferred until measured abuse shows it is necessary.
+Store the Tunnel token only in `/opt/maillume/.env.infrastructure`; the application container must never receive it. Turnstile is deliberately deferred until measured abuse shows it is necessary.
 
 ## 2. Harden the Hostinger VPS
 

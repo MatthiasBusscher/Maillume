@@ -11,6 +11,7 @@ const SERVER_SECRET_NAMES = [
   "SUPABASE_SECRET_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
   "SERVICE_ROLE_KEY",
+  "CLOUDFLARE_TUNNEL_TOKEN",
 ];
 
 function main() {
@@ -58,6 +59,7 @@ function main() {
   const nextConfigContent = readProjectFile("next.config.ts");
   const dockerfileContent = readProjectFile("Dockerfile");
   const composeContent = readProjectFile("docker-compose.production.yml");
+  const deploymentContent = readProjectFile("docs/deployment.md");
   const apiAccessMigration = readProjectFile(
     "supabase/migrations/20260711120000_create_api_access.sql",
   );
@@ -126,6 +128,11 @@ function main() {
   assert.match(composeContent, /read_only: true/);
   assert.match(composeContent, /no-new-privileges:true/);
   assert.match(composeContent, /max-size: 10m/);
+  assert.match(deploymentContent, /Tunnel token only in `\/opt\/maillume\/\.env\.infrastructure`/);
+  assert.doesNotMatch(
+    deploymentContent,
+    /Tunnel token only in `\/opt\/maillume\/\.env\.production`/,
+  );
   assert.match(apiAccessMigration, /enable row level security/gi);
   assert.match(apiAccessMigration, /secret_hash char\(64\)/);
   assert.match(apiAccessMigration, /consume_api_quota/);
