@@ -48,6 +48,8 @@ function main() {
   const feedbackRouteContent = readProjectFile("src/app/api/feedback/route.ts");
   const authCallbackContent = readProjectFile("src/app/auth/callback/route.ts");
   const authRedirectContent = readProjectFile("src/app/auth/callback/redirect.ts");
+  const oauthReturnContent = readProjectFile("src/lib/auth/oauth-return.ts");
+  const middlewareContent = readProjectFile("src/middleware.ts");
   const accountDeletionContent = readProjectFile("src/app/account/delete/route.ts");
   const accountRequestGuard = readProjectFile("src/lib/security/account-request.ts");
   const scannerPageContent = readProjectFile("src/app/app/page.tsx");
@@ -99,6 +101,10 @@ function main() {
   assert.match(authRedirectContent, /UNSAFE_REDIRECT_CHARACTERS/);
   assert.match(authRedirectContent, /destination\.origin === fallbackUrl\.origin/);
   assert.match(authCallbackContent, /private, no-cache, no-store/);
+  assert.match(authCallbackContent, /hasOAuthErrorReturn\(requestUrl\)/);
+  assert.match(middlewareContent, /hasOAuthErrorReturn\(request\.nextUrl\)/);
+  assert.match(oauthReturnContent, /OAUTH_PROVIDER_FAILURE_CODE = "oauth_provider_failed"/);
+  assert.doesNotMatch(oauthReturnContent, /searchParams\.get\("error_description"\)/);
   assert.match(accountDeletionContent, /getUser\(\)/);
   assert.match(accountDeletionContent, /admin\.auth\.admin\.deleteUser/);
   assert.match(accountDeletionContent, /Cross-origin account deletion is not allowed/);

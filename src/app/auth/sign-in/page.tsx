@@ -26,7 +26,12 @@ export default async function SignInPage({
   const configured =
     getPublicSupabaseConfig() !== null && getSupabaseAdminConfig() !== null;
   const marketingHref = getMarketingHref();
-  const callbackFailed = (await searchParams).error === "oauth_callback_failed";
+  const authError = (await searchParams).error;
+  const authErrorMessage = authError === "oauth_callback_failed"
+    ? copy.google.callbackFailed
+    : authError === "oauth_provider_failed"
+      ? copy.google.providerFailed
+      : null;
 
   return (
     <main className="grid min-h-screen bg-[#eef1eb] lg:grid-cols-[0.9fr_1.1fr]">
@@ -51,9 +56,9 @@ export default async function SignInPage({
           <div className="mt-7">
             <GoogleSignInButton configured={configured} labels={copy.google} />
           </div>
-          {callbackFailed ? (
+          {authErrorMessage ? (
             <p role="alert" className="mt-4 border-l-4 border-[#b2382b] bg-[#fff0ed] px-4 py-3 text-sm leading-6 text-[#7a2b23]">
-              {copy.google.callbackFailed}
+              {authErrorMessage}
             </p>
           ) : null}
           <div className="my-7 flex items-center gap-3 text-[10px] uppercase text-[#778177]">

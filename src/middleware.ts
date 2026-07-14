@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
+import { getOAuthFailureUrl, hasOAuthErrorReturn } from "@/lib/auth/oauth-return";
 import {
   DEFAULT_SITE_LOCALE,
   getPathLocale,
@@ -21,9 +22,14 @@ export async function middleware(request: NextRequest) {
   const originalPathname = request.nextUrl.pathname;
   const pathLocale = getPathLocale(originalPathname);
 
-  if (isAppHostname && originalPathname === "/" && request.nextUrl.searchParams.has("code")) {
-    targetUrl.pathname = "/auth/callback";
-    return NextResponse.redirect(targetUrl, 307);
+  if (isAppHostname && originalPathname === "/") {
+    if (hasOAuthErrorReturn(request.nextUrl)) {
+      return NextResponse.redirect(getOAuthFailureUrl(targetUrl.origin), 307);
+    }
+    if (request.nextUrl.searchParams.has("code")) {
+      targetUrl.pathname = "/auth/callback";
+      return NextResponse.redirect(targetUrl, 307);
+    }
   }
 
   if (hostname === "maillume.nl" || hostname === "www.maillume.nl") {

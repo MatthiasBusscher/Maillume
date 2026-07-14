@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getOAuthFailureUrl, hasOAuthErrorReturn } from "@/lib/auth/oauth-return";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getPublicAppOrigin } from "./origin";
 import { getSafeOAuthRedirectUrl } from "./redirect";
@@ -18,6 +19,10 @@ export async function GET(request: Request) {
     requestUrl: request.url,
   });
   const redirectUrl = getSafeOAuthRedirectUrl(requestedNext, publicOrigin);
+
+  if (hasOAuthErrorReturn(requestUrl)) {
+    return privateRedirect(getOAuthFailureUrl(publicOrigin));
+  }
 
   if (code) {
     try {
