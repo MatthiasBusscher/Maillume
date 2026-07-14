@@ -162,7 +162,7 @@ jobs:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          script_stop: true
           script: |
+            set -eu
             cd /opt/maillume
             ./scripts/deploy-production.sh '${{ needs.image.outputs.image }}'

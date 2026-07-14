@@ -64,6 +64,63 @@ assert.ok(dutchResult.suspicious_signals.some((signal) => /dringende|geblokkeerd
 assert.match(dutchResult.recommended_action, /Klik niet|voorzichtig/);
 assert.doesNotMatch(dutchResult.short_explanation, /This message/);
 
+const dutchRenewalFraud = analyzeEmailHeuristic({
+  locale: "nl",
+  subject: "We hebben je account geblokkeerd - laatste waarschuwing",
+  senderEmail: "notice@zvcznitmo.example",
+  body: [
+    "Laatste systeempoging: niet betaald.",
+    "Betaalmethode bijwerken.",
+    "75% loyaliteitskorting.",
+    "Om uw voortdurende beveiliging te garanderen, hebben we deze maand een korting van 75% toegepast.",
+    "Voltooi uw verlenging voordat deze aanbieding om middernacht verloopt.",
+  ].join(" "),
+});
+assert.notEqual(dutchRenewalFraud.risk_level, "low", "Coercive Dutch renewal fraud must not be low risk");
+assert.ok(dutchRenewalFraud.risk_score >= 40, "Independent renewal-fraud evidence should remain visible in the score");
+assert.ok(dutchRenewalFraud.score_factors.some((factor) => factor.family === "identity"));
+assert.ok(dutchRenewalFraud.score_factors.some((factor) => factor.family === "intent"));
+
+const strongSingleFamilySpam = analyzeEmailHeuristic({
+  locale: "en",
+  subject: "Exclusive renewal discount",
+  body: "Claim your 75% renewal discount before midnight. This limited-time offer ends tonight.",
+});
+assert.equal(strongSingleFamilySpam.risk_level, "medium", "Strong promotional spam evidence may reach medium risk alone");
+assert.equal(strongSingleFamilySpam.classification, "likely_spam");
+
+const sameFamilyAttackChain = analyzeEmailHeuristic({
+  subject: "Final notice: account locked",
+  body: "Your account is blocked. Verify your password immediately to keep access. Failure to complete this account verification will prevent normal access.",
+});
+assert.equal(sameFamilyAttackChain.risk_level, "high", "A decisive attack chain must not depend on crossing family boundaries");
+assert.ok(sameFamilyAttackChain.score_factors.every((factor) => factor.family === "intent"));
+
+const weakSignalsRemainLow = analyzeEmailHeuristic({
+  senderEmail: "newsletter@vendor.example",
+  body: "Read the Microsoft product update at https://vendor.example/news.",
+});
+assert.equal(weakSignalsRemainLow.risk_level, "low", "A brand mention and ordinary link must remain low risk");
+
+const supportTicketBackscatter = analyzeEmailHeuristic({
+  subject: "Your reply has been received",
+  senderEmail: "tickets@support-platform.example",
+  body: "We received your recent reply to ticket 123. Reduce your heating costs with smarter controls. Visit our website for more details: https://support-platform.example/ticket/123",
+});
+assert.equal(supportTicketBackscatter.classification, "likely_spam");
+assert.notEqual(supportTicketBackscatter.risk_level, "low", "Unexpected-ticket marketing must not be low risk");
+assert.ok(supportTicketBackscatter.score_factors.some((factor) => factor.id === "unexpected_conversation"));
+
+const hostedStorageLure = analyzeEmailHeuristic({
+  subject: "Storage status update for your company account",
+  senderEmail: "notice@random9host.firebaseapp.com",
+  body: "Cloud storage is 95% used. Your company storage is nearing capacity. Upgrade now for only $9.99 / year to keep internal files and client data accessible. Offer expires soon. Secure company data: https://unrelated-storage.example/upgrade",
+});
+assert.equal(hostedStorageLure.risk_level, "high", "Hosted storage upgrade lure must be high risk");
+assert.equal(hostedStorageLure.classification, "likely_phishing");
+assert.ok(hostedStorageLure.score_factors.some((factor) => factor.id === "hosted_sender_domain"));
+assert.ok(hostedStorageLure.score_factors.some((factor) => factor.id === "sender_destination_mismatch"));
+
 const structuralUrlRegression = analyzeEmailHeuristic({
   senderEmail: "account@microsoft.example",
   body: "Review your own account activity at https://account.microsoft.com/security and download the requested archive from https://files.example/archive.zip.",
@@ -101,7 +158,7 @@ const noWarningSignals = analyzeEmailHeuristic({
 assert.equal(noWarningSignals.risk_score, 0);
 assert.equal(noWarningSignals.classification, "likely_legitimate");
 
-for (const result of [dutchResult, structuralUrlRegression, brandSubstringRegression, redirectRegression, changedPaymentDetails, insufficientContext, noWarningSignals]) {
+for (const result of [dutchResult, dutchRenewalFraud, strongSingleFamilySpam, sameFamilyAttackChain, weakSignalsRemainLow, supportTicketBackscatter, hostedStorageLure, structuralUrlRegression, brandSubstringRegression, redirectRegression, changedPaymentDetails, insufficientContext, noWarningSignals]) {
   assert.equal(
     result.score_factors.reduce((total, factor) => total + factor.contribution, 0),
     result.risk_score,

@@ -201,7 +201,7 @@ Server-side validation should enforce:
 
 - `risk_score` is an integer from 0 to 100 and equals the sum of applied factor contributions.
 - Evidence is grouped into capped identity, destination, intent, delivery, and style families.
-- Weak evidence cannot produce medium risk by itself; high risk requires strong evidence from at least two families.
+- Weak evidence cannot produce medium risk by itself. High risk requires either strong evidence from multiple families or a decisive attack chain such as account lockout plus credential capture; family boundaries are not an evasion gate.
 - Missing evidence can produce `uncertain` and must not be presented as reassurance.
 - `risk_level` and `classification` are derived by Maillume, not trusted from a provider response.
 - Arrays are present even when empty.
@@ -259,7 +259,7 @@ type AnalyzeResponse = {
   result: EmailAnalysisResult;
   analysis_mode: "heuristic" | "ai";
   analysis_provider: "heuristic" | "openai" | "anthropic" | "openai-compatible";
-  analysis_version: "analysis-v2";
+  analysis_version: "analysis-v2.1";
   disclaimer: string;
   privacy: {
     stored: false;

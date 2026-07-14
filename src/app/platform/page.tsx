@@ -83,7 +83,7 @@ export default async function PlatformPage() {
     "suspicious_signals": ["..."],
     "recommended_action": "..."
   },
-  "analysis_version": "analysis-v2",
+  "analysis_version": "analysis-v2.1",
   "privacy": { "stored": false }
 }`}</code></pre>
           </div>

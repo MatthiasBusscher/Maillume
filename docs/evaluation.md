@@ -1,6 +1,6 @@
 # Synthetic Evaluation
 
-Maillume uses a repository-only synthetic corpus to calibrate `analysis-v2` without retaining or collecting users' email.
+Maillume uses a repository-only synthetic corpus to calibrate `analysis-v2.1` without retaining or collecting users' email.
 
 The risk score is a versioned, capped index of observed evidence. It is not the probability that a message is malicious and these synthetic checks are not a claim of real-world accuracy.
 
