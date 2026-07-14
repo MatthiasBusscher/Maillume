@@ -70,7 +70,11 @@ function main() {
   const apiQuotaFixMigration = readProjectFile(
     "supabase/migrations/20260714071000_fix_consume_api_quota.sql",
   );
+  const apiLifecycleMigration = readProjectFile(
+    "supabase/migrations/20260714183000_harden_api_key_lifecycle.sql",
+  );
   const hostedApiRoute = readProjectFile("src/app/api/v1/analyze/route.ts");
+  const accountApiKeysRoute = readProjectFile("src/app/account/api-keys/route.ts");
   const extensionManifest = readProjectFile("integrations/browser-extension/manifest.json");
   const extensionPanel = readProjectFile("integrations/browser-extension/sidepanel.js");
   const gmailManifest = readProjectFile("integrations/gmail-addon/appsscript.json");
@@ -148,11 +152,54 @@ function main() {
   assert.match(apiQuotaFixMigration, /on conflict on constraint api_usage_monthly_pkey/);
   assert.doesNotMatch(apiQuotaFixMigration, /on conflict \(api_key_id,/);
   assert.match(quotaRefundMigration, /greatest\(0, request_count - 1\)/);
-  assert.match(hostedApiRoute, /refund_api_quota/);
+  assert.match(hostedApiRoute, /refund_account_api_quota/);
+  assert.match(apiLifecycleMigration, /create table public\.api_account_limits/);
+  assert.match(apiLifecycleMigration, /create table public\.api_account_usage_monthly/);
+  assert.match(apiLifecycleMigration, /create table public\.api_quota_reservations/);
+  assert.match(apiLifecycleMigration, /expires_at timestamptz/);
+  assert.match(apiLifecycleMigration, /foreign key \(user_id, rotated_from_id\)[\s\S]*references public\.api_keys\(user_id, id\)/);
+  assert.match(apiLifecycleMigration, /for update/g);
+  const reserveQuotaFunction = apiLifecycleMigration.match(
+    /create function public\.reserve_account_api_quota[\s\S]*?(?=create function public\.refund_account_api_quota)/,
+  )?.[0] ?? "";
+  assert.ok(
+    reserveQuotaFunction.indexOf("from public.api_account_limits limits") <
+      reserveQuotaFunction.indexOf("and keys.secret_hash = p_secret_hash\n  for update"),
+    "quota reservation must lock the account before the API key",
+  );
+  assert.match(apiLifecycleMigration, /sum\(usage\.request_count\)::bigint/);
+  assert.doesNotMatch(apiLifecycleMigration, /least\([^)]*usage\.request_count/);
+  assert.match(apiLifecycleMigration, />= 5/);
+  assert.match(apiLifecycleMigration, />= 10/);
+  assert.match(apiLifecycleMigration, /create_hosted_api_key/);
+  assert.match(apiLifecycleMigration, /rotate_hosted_api_key/);
+  assert.match(apiLifecycleMigration, /revoke_hosted_api_key/);
+  assert.match(apiLifecycleMigration, /grant select \([\s\S]*expires_at[\s\S]*\) on public\.api_keys to authenticated/);
+  const publicKeyGrant = apiLifecycleMigration.match(
+    /grant select \(([\s\S]*?)\) on public\.api_keys to authenticated/,
+  )?.[1] ?? "";
+  assert.doesNotMatch(publicKeyGrant, /secret_hash/);
+  assert.match(apiLifecycleMigration, /set search_path = ''/);
+  assert.match(apiLifecycleMigration, /grant execute on function public\.reserve_account_api_quota\(text\) to service_role/);
+  assert.match(apiLifecycleMigration, /grant execute on function public\.refund_account_api_quota\(uuid\) to service_role/);
+  assert.match(apiLifecycleMigration, /grant execute on function public\.finalize_account_api_quota\(uuid\) to service_role/);
+  assert.match(apiLifecycleMigration, /reserved_at < clock_timestamp\(\) - interval '10 minutes'/);
+  assert.match(apiLifecycleMigration, /revoke all on table public\.api_keys from authenticated, service_role/);
+  assert.match(apiLifecycleMigration, /revoke all on table public\.api_account_limits from public, anon, authenticated, service_role/);
+  assert.match(apiLifecycleMigration, /on delete cascade/);
+  assert.doesNotMatch(apiLifecycleMigration, /^\s*(body|subject|sender_email|message_text|links|result|ip_address)\s+/im);
+  assert.match(accountApiKeysRoute, /create_hosted_api_key/);
+  assert.match(accountApiKeysRoute, /rotate_hosted_api_key/);
+  assert.match(accountApiKeysRoute, /revoke_hosted_api_key/);
+  assert.doesNotMatch(accountApiKeysRoute, /\.insert\(|\.update\(/);
+  assert.doesNotMatch(hostedApiRoute, /\.eq\("secret_hash"/);
   assert.doesNotMatch(apiAccessMigration, /^\s*(body|subject|sender_email|message_text|links|result|ip_address)\s+/im);
   assert.doesNotMatch(hostedApiRoute, /console\.|writeFile|appendFile|createWriteStream/);
   assert.match(hostedApiRoute, /hashApiKey\(token\)/);
-  assert.match(hostedApiRoute, /consume_api_quota/);
+  assert.match(hostedApiRoute, /reserve_account_api_quota/);
+  assert.match(hostedApiRoute, /finalize_account_api_quota/);
+  assert.match(hostedApiRoute, /reservation_id/);
+  assert.doesNotMatch(hostedApiRoute, /consume_api_quota|inspect_api_key_status/);
   assert.match(extensionManifest, /"activeTab"/);
   assert.match(extensionManifest, /"minimum_chrome_version": "116"/);
   assert.doesNotMatch(extensionManifest, /"content_scripts"|"tabs"|mail\.google\.com|outlook\.office\.com/);

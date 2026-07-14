@@ -54,6 +54,7 @@ Screenshot OCR and `.eml` parsing happen in the browser. The hosted API receives
 | Structured assessment | Browser state and response memory | No | Discarded on refresh or navigation |
 | Account identity and preferences | Supabase Auth and application database | Yes, for account features only | Account lifetime; deletion workflow removes application data |
 | Integration API key and quota counters | Application database | Yes | Key metadata until revocation/account deletion; aggregate monthly counts for up to 13 months |
+| Quota reservation metadata (account/key IDs, period, timestamps) | Application database | Yes, without scan content or results | Finalized or refunded during the request; eligible for deletion after 10 minutes by a five-minute purge job |
 | Billing customer and subscription references | Application database and payment provider | Yes, without payment-card data | Required account and financial retention periods |
 | Operational request metadata | Hosting and security systems | Yes, without message content or query strings | Target maximum 14 days |
 | Optional non-content feedback | Feedback store | Yes | Maximum 90 days before aggregation or deletion |

@@ -22,11 +22,17 @@ const DEFAULT_REQUEST_LIMIT = 20;
 const DEFAULT_REQUEST_WINDOW_SECONDS = 60;
 
 type QuotaRow = {
-  api_key_id: string;
-  monthly_quota: number;
-  owner_id: string;
-  request_count: number;
+  api_key_id: string | null;
+  monthly_quota: number | null;
+  operation_status: string;
+  owner_id: string | null;
+  request_count: number | null;
+  reservation_id: string | null;
 };
+
+type AdminClient = NonNullable<ReturnType<typeof createSupabaseAdminClient>>;
+
+class QuotaFinalizationError extends Error {}
 
 export async function POST(request: Request) {
   const token = getBearerToken(request);
@@ -62,20 +68,29 @@ export async function POST(request: Request) {
 
   const secretHash = hashApiKey(token);
   let quota: QuotaRow | undefined;
-  let reservedApiKeyId: string | undefined;
+  let reservationId: string | undefined;
   try {
     const config = getAnalysisConfig();
     enforceAiRateLimit(request, config);
-    const { data: quotaData, error: quotaError } = await admin.rpc("consume_api_quota", { p_secret_hash: secretHash });
+    const { data: quotaData, error: quotaError } = await admin.rpc("reserve_account_api_quota", {
+      p_secret_hash: secretHash,
+    });
     if (quotaError) return jsonError("API quota validation is temporarily unavailable.", 503);
 
     quota = (quotaData as QuotaRow[] | null)?.[0];
-    if (!quota) {
-      const { data: existing } = await admin.from("api_keys").select("id").eq("secret_hash", secretHash).is("revoked_at", null).maybeSingle();
-      return existing ? jsonError("Monthly API quota exhausted.", 429, { "Retry-After": secondsUntilNextMonth() }) : jsonError("API key is invalid or revoked.", 401);
+    if (!quota) return jsonError("API key validation is temporarily unavailable.", 503);
+    if (quota.operation_status !== "reserved" || !quota.reservation_id) {
+      return apiKeyStatusError(quota.operation_status);
     }
-    reservedApiKeyId = quota.api_key_id;
+    reservationId = quota.reservation_id;
     const analysis = await withAnalysisCapacity(config, () => analyzeEmail(validation.input, { config }));
+    const finalized = await applyReservationOperation(
+      admin,
+      "finalize_account_api_quota",
+      reservationId,
+    );
+    if (!finalized) throw new QuotaFinalizationError("API quota finalization failed.");
+    reservationId = undefined;
 
     return NextResponse.json<AnalyzeResponse>({
       result: analysis.result,
@@ -93,18 +108,39 @@ export async function POST(request: Request) {
     }, {
       headers: {
         ...NO_STORE_HEADERS,
-        "X-RateLimit-Limit": String(quota.monthly_quota),
-        "X-RateLimit-Remaining": String(Math.max(0, quota.monthly_quota - quota.request_count)),
+        "X-RateLimit-Limit": String(quota.monthly_quota ?? 0),
+        "X-RateLimit-Remaining": String(Math.max(0, (quota.monthly_quota ?? 0) - (quota.request_count ?? 0))),
       },
     });
   } catch (error) {
-    if (reservedApiKeyId) await admin.rpc("refund_api_quota", { p_api_key_id: reservedApiKeyId });
+    if (reservationId && !await applyReservationOperation(
+      admin,
+      "refund_account_api_quota",
+      reservationId,
+    )) {
+      return jsonError("Analysis failed and API quota could not be restored automatically.", 503);
+    }
+    if (error instanceof QuotaFinalizationError) {
+      return jsonError("Analysis could not be finalized. API quota was restored.", 503);
+    }
     if (error instanceof RateLimitError) return jsonError(error.message, 429, { "Retry-After": String(error.retryAfterSeconds) });
     if (error instanceof AnalysisCapacityError) return jsonError(error.message, 429, { "Retry-After": "5" });
     if (error instanceof AnalysisConfigError) return jsonError(error.message, 500);
     if (error instanceof AiProviderRequestError || error instanceof AiResponseValidationError) return jsonError(error.message, 502);
     throw error;
   }
+}
+
+async function applyReservationOperation(
+  admin: AdminClient,
+  operation: "finalize_account_api_quota" | "refund_account_api_quota",
+  reservationId: string,
+) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const { data, error } = await admin.rpc(operation, { p_reservation_id: reservationId });
+    if (!error && data === true) return true;
+  }
+  return false;
 }
 
 function readPositiveInteger(name: string, fallback: number, maximum: number) {
@@ -124,6 +160,17 @@ function secondsUntilNextMonth() {
   const now = new Date();
   const nextMonth = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1);
   return String(Math.max(1, Math.ceil((nextMonth - now.getTime()) / 1000)));
+}
+
+function apiKeyStatusError(status: string) {
+  if (status === "exhausted") {
+    return jsonError("Monthly account API quota exhausted.", 429, {
+      "Retry-After": secondsUntilNextMonth(),
+    });
+  }
+  if (status === "expired") return jsonError("API key has expired.", 401);
+  if (status === "revoked") return jsonError("API key has been revoked.", 401);
+  return jsonError("API key is invalid.", 401);
 }
 
 function jsonError(error: string, status: number, headers: HeadersInit = {}) {

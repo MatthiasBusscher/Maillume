@@ -28,6 +28,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
+        with:
+          version: 2.109.1
+      - name: Start local database
+        run: supabase start --ignore-health-check -x edge-runtime,gotrue,imgproxy,kong,logflare,mailpit,postgres-meta,postgrest,realtime,storage-api,studio,supavisor,vector
+      - name: Database lifecycle tests
+        run: |
+          supabase test db --local supabase/tests
+          supabase db lint --local --level warning
       - run: npx playwright install --with-deps chromium
       - run: npm run typecheck
       - run: npm run lint
@@ -41,6 +51,9 @@ jobs:
           ANALYSIS_MODE: heuristic
       - run: npm run test:smoke
       - run: npm run package:integrations
+      - name: Stop local database
+        if: always()
+        run: supabase stop --no-backup
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: maillume-browser-extension

@@ -30,6 +30,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
+        with:
+          version: 2.109.1
+
+      - name: Start local database
+        run: supabase start --ignore-health-check -x edge-runtime,gotrue,imgproxy,kong,logflare,mailpit,postgres-meta,postgrest,realtime,storage-api,studio,supavisor,vector
+
+      - name: Database lifecycle tests
+        run: |
+          supabase test db --local supabase/tests
+          supabase db lint --local --level warning
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
@@ -64,6 +77,10 @@ jobs:
 
       - name: Browser smoke tests
         run: npm run test:smoke
+
+      - name: Stop local database
+        if: always()
+        run: supabase stop --no-backup
 
   secrets:
     name: Full-history secret scan

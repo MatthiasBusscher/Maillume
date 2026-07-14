@@ -74,7 +74,7 @@ Make `scripts/deploy-production.sh` executable. Authenticate Docker to GHCR usin
 
 Anonymous scanning remains available when authentication is enabled.
 
-1. Create a production Supabase project in an EU region and apply every migration in `supabase/migrations`, including API key and atomic quota tables.
+1. Create a production Supabase project in an EU region and apply every migration in `supabase/migrations`, including the account-level API quota and expiring key lifecycle migration. Follow the verification and rollback notes in `docs/api-key-lifecycle.md`.
 2. Create a Google Web OAuth client and use the Supabase callback shown in its Google-provider settings as the Google authorized redirect URI.
 3. Enable Google in Supabase with only OpenID, email, and profile scopes.
 4. Set the Supabase site URL to `https://app.maillume.io` and allow only `https://app.maillume.io/auth/callback` in production. Keep localhost only in a separate development project.
