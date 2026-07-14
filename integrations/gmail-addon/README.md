@@ -12,4 +12,4 @@ This Google Workspace add-on requests temporary action access to the message cur
 
 The official manifest permits requests only to `https://app.maillume.io/`. Google requires outbound destinations in the submitted manifest, so a self-hosted operator must change `MAILLUME_ENDPOINT` and `urlFetchWhitelist`, then publish their own add-on deployment. The add-on supports English and Dutch, does not redisplay a key, and keeps it only in the per-user Apps Script cache for up to six hours. Cache entries may expire sooner, and the user can remove the temporary key explicitly at any time.
 
-Result cards require the `analysis-v2` classification and score-factor breakdown and explain that the score is a risk index, not a probability.
+Result cards require the `analysis-v2.1` classification and score-factor breakdown and explain that the score is a risk index, not a probability.

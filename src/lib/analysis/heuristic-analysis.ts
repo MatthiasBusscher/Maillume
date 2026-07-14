@@ -9,6 +9,7 @@ const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 const HTML_LINK_PATTERN = /<a\b[^>]*href\s*=\s*["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
 const SHORT_LINK_DOMAINS = new Set(["bit.ly", "tinyurl.com", "t.co", "rebrand.ly", "is.gd", "ow.ly"]);
 const RISKY_TLDS = new Set(["zip", "mov", "click", "top", "xyz", "ru"]);
+const HOSTED_SENDER_DOMAINS = new Set(["firebaseapp.com", "web.app", "pages.dev", "netlify.app", "vercel.app"]);
 const BRAND_DOMAINS: Record<string, string[]> = {
   amazon: ["amazon.com"],
   apple: ["apple.com"],
@@ -32,7 +33,14 @@ const BRAND_DOMAINS: Record<string, string[]> = {
 const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   {
     id: "urgency_pressure",
-    patterns: [/\burgent\b/i, /immediately/i, /act now/i, /final notice/i, /today only/i, /laatste waarschuwing/i, /laatste kans/i, /bevestig direct/i, /direct (actie|handelen|bevestigen|annuleren)/i, /binnen \d{1,2} (uur|uren)/i],
+    patterns: [
+      /\burgent\b/i, /immediately/i, /act now/i, /final notice/i, /today only/i,
+      /(?:expires?|ends?) (?:today|tonight|at midnight)/i, /before midnight/i, /within \d{1,2} hours?/i,
+      /laatste waarschuwing/i, /laatste kans/i, /bevestig direct/i,
+      /direct (actie|handelen|bevestigen|annuleren)/i, /binnen \d{1,2} (uur|uren)/i,
+      /(?:verloopt|eindigt) (?:vandaag|vanavond|om middernacht)/i, /voor middernacht/i,
+      /offer expires soon/i, /upgrade now/i,
+    ],
   },
   {
     id: "credential_request",
@@ -52,23 +60,45 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   },
   {
     id: "prize_promotion",
-    patterns: [/congratulations/i, /\bwinner\b/i, /claim (your )?(prize|reward|gift|bonus)/i, /exclusive offer/i, /limited time/i, /\b\d{1,2}% off\b/i, /winnaar/i, /claim (uw|je) prijs/i, /loyaliteitskorting/i],
+    patterns: [
+      /congratulations/i, /\bwinner\b/i, /claim (your )?(prize|reward|gift|bonus)/i,
+      /exclusive offer/i, /limited[ -]time (?:offer|discount|deal)/i,
+      /\b\d{1,2}% (?:off|discount|saving)s?\b/i, /loyalty discount/i, /renewal discount/i,
+      /winnaar/i, /claim (uw|je) prijs/i, /loyaliteitskorting/i,
+      /\b\d{1,2}% (?:korting|besparing)\b/i, /korting van \d{1,2}%/i,
+      /(?:tijdelijke|speciale) aanbieding/i, /verlengingskorting/i,
+      /offer expires soon/i, /only \$?\d+(?:[.,]\d{2})?\s*\/\s*(?:year|month)/i,
+    ],
   },
   {
     id: "account_threat",
-    patterns: [/account (blocked|locked|suspended)/i, /subscription.*(expires|renew|blocked)/i, /account (geblokkeerd|vergrendeld|opgeschort)/i, /abonnement.*(verloopt|verlopen|verleng)/i, /betaalmethode bijwerken/i],
+    patterns: [
+      /account (?:is )?(blocked|locked|suspended|restricted|closed)/i,
+      /subscription.*(expires|expired|renew|blocked)/i, /complete (?:your )?renewal/i,
+      /update (?:your )?payment method/i, /last (?:system|payment) attempt/i,
+      /account (?:is )?(geblokkeerd|vergrendeld|opgeschort|beperkt|gesloten)/i,
+      /abonnement.*(verloopt|verlopen|verleng)/i, /voltooi (?:uw|je) verlenging/i,
+      /betaalmethode bijwerken/i, /laatste (?:systeem|betaal)poging/i,
+      /(?:cloud )?storage.*(?:nearing|near|at) capacity/i, /storage.*\b(?:9[0-9]|100)% used\b/i,
+      /opslag.*(?:bijna vol|capaciteit|9[0-9]% gebruikt)/i,
+    ],
   },
   {
     id: "fake_security",
-    patterns: [/antivirus subscription/i, /internet security.*(expired|renew)/i, /virus protection.*expired/i, /antivirusabonnement/i, /virusbescherming.*verlopen/i, /beveiligingssoftware.*verleng/i],
+    patterns: [
+      /antivirus subscription/i, /security (?:plan|subscription|protection).*(?:expired|renew|payment)/i,
+      /internet security.*(expired|renew)/i, /virus protection.*expired/i,
+      /antivirusabonnement/i, /beveiligingsabonnement/i, /voortdurende beveiliging/i,
+      /virusbescherming.*verlopen/i, /beveiligingssoftware.*verleng/i,
+    ],
   },
   {
     id: "link_call_to_action",
-    patterns: [/click here/i, /open this link/i, /follow the link/i, /use the button/i, /klik hier/i, /open deze link/i, /gebruik de knop/i, /volg de link/i],
+    patterns: [/click here/i, /open this link/i, /follow the link/i, /use the button/i, /upgrade now/i, /secure company data/i, /visit (?:our|the) website/i, /klik hier/i, /open deze link/i, /gebruik de knop/i, /volg de link/i, /bezoek (?:onze|de) website/i],
   },
   {
     id: "unsolicited_sales",
-    patterns: [/rank (higher|on google)/i, /increase (your )?(traffic|sales|leads)/i, /qualified leads/i, /guest post/i, /backlink/i, /marketing service/i, /onze seo-diensten/i, /meer (leads|websiteverkeer)/i],
+    patterns: [/rank (higher|on google)/i, /increase (your )?(traffic|sales|leads)/i, /reduce your .{0,30}(?:energy|heating) costs/i, /qualified leads/i, /guest post/i, /backlink/i, /marketing service/i, /onze seo-diensten/i, /meer (leads|websiteverkeer)/i, /(?:verlaag|bespaar).{0,35}(?:stook|energie)kosten/i],
   },
   {
     id: "investment_pitch",
@@ -101,6 +131,10 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   {
     id: "callback_lure",
     patterns: [/call (us|this number|support) (now|immediately|to cancel)/i, /bel (ons|dit nummer|de helpdesk).*(direct|annuleren)/i],
+  },
+  {
+    id: "unexpected_conversation",
+    patterns: [/your reply has been received/i, /received your recent reply/i, /ticket that you have .* as (?:a )?cc/i, /uw reactie is ontvangen/i, /uw recente antwoord ontvangen/i],
   },
 ];
 
@@ -138,7 +172,7 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput) {
   const linkPairs = [...extractHtmlLinkPairs(input.body), ...(input.linkPairs ?? [])];
   if (linkPairs.some(hasMismatchedLinkPair)) evidence.add("link_mismatch");
 
-  if (input.senderEmail) addSenderEvidence(input.senderEmail, evidence);
+  if (input.senderEmail) addSenderEvidence(input.senderEmail, links, evidence);
 
   return { evidence: Array.from(evidence), links, locale };
 }
@@ -159,7 +193,7 @@ export function extractHtmlLinkPairs(content: string): EmailLinkPair[] {
   });
 }
 
-function addSenderEvidence(sender: string, evidence: Set<EvidenceId>) {
+function addSenderEvidence(sender: string, links: string[], evidence: Set<EvidenceId>) {
   const senderDomain = getSenderDomain(sender);
   if (!senderDomain) {
     evidence.add("invalid_sender");
@@ -170,6 +204,19 @@ function addSenderEvidence(sender: string, evidence: Set<EvidenceId>) {
   if (tld && RISKY_TLDS.has(tld)) evidence.add("risky_sender_domain");
   if (hasSuspiciousDomainShape(senderDomain)) evidence.add("suspicious_sender_shape");
   if (looksLikeBrandImpersonation(senderDomain)) evidence.add("brand_lookalike_sender");
+
+  const hostedBaseDomain = Array.from(HOSTED_SENDER_DOMAINS).find(
+    (baseDomain) => senderDomain.endsWith(`.${baseDomain}`),
+  );
+  if (hostedBaseDomain) {
+    evidence.add("hosted_sender_domain");
+    if (links.some((link) => {
+      const destination = getRegistrableDomain(link);
+      return Boolean(destination && destination !== hostedBaseDomain && !destination.endsWith(`.${hostedBaseDomain}`));
+    })) {
+      evidence.add("sender_destination_mismatch");
+    }
+  }
 }
 
 function hasMismatchedLinkPair(pair: EmailLinkPair): boolean {
@@ -207,7 +254,9 @@ function getSenderDomain(sender: string): string | null {
 function hasSuspiciousDomainShape(domain: string): boolean {
   const digits = domain.match(/\d/g)?.length ?? 0;
   const hyphens = domain.match(/-/g)?.length ?? 0;
-  return digits >= 4 || hyphens >= 3;
+  const registrableLabel = (getRegistrableDomain(domain) ?? domain).split(".")[0] ?? "";
+  const hasConsonantRun = /[bcdfghjklmnpqrstvwxyz]{5,}/i.test(registrableLabel);
+  return digits >= 4 || hyphens >= 3 || hasConsonantRun;
 }
 
 function looksLikeBrandImpersonation(senderDomain: string): boolean {

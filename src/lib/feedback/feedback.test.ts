@@ -22,7 +22,7 @@ const validFeedback: DetectionFeedbackSubmission = {
   feedbackKind: "false_positive",
   locale: "en",
   source: "paste",
-  analyzerVersion: "analysis-v2",
+  analyzerVersion: "analysis-v2.1",
   scoreBand: "high",
   signalCategories: ["urgency", "impersonation"],
 };

@@ -32,6 +32,9 @@ export const EVIDENCE_IDS = [
   "invalid_sender",
   "risky_sender_domain",
   "suspicious_sender_shape",
+  "hosted_sender_domain",
+  "sender_destination_mismatch",
+  "unexpected_conversation",
   "brand_lookalike_sender",
   "little_context",
   "executive_impersonation",
@@ -75,6 +78,9 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   invalid_sender: evidence("identity", 20, "The sender address is invalid or incomplete.", "Het afzenderadres is ongeldig of onvolledig.", true),
   risky_sender_domain: evidence("identity", 10, "The sender uses a frequently abused top-level domain.", "De afzender gebruikt een vaak misbruikt topleveldomein.", true),
   suspicious_sender_shape: evidence("identity", 4, "The sender domain has an unusual shape.", "Het afzenderdomein heeft een ongebruikelijke vorm."),
+  hosted_sender_domain: evidence("identity", 10, "The sender uses an unusual app-hosting subdomain.", "De afzender gebruikt een ongebruikelijk subdomein van een apphostingdienst.", true),
+  sender_destination_mismatch: evidence("destination", 10, "A hosted sender points to an unrelated destination domain.", "Een gehost afzenderdomein verwijst naar een niet-gerelateerd bestemmingsdomein.", true),
+  unexpected_conversation: evidence("identity", 10, "Claims you replied to or joined an existing support conversation.", "Beweert dat u hebt gereageerd op of bent toegevoegd aan een bestaand supportgesprek."),
   brand_lookalike_sender: evidence("identity", 25, "The sender appears to imitate a known brand domain.", "De afzender lijkt een bekend merkdomein na te bootsen.", true),
   little_context: evidence("style", 4, "The message provides very little context.", "Het bericht bevat erg weinig context."),
   executive_impersonation: evidence("identity", 20, "Claims to be an executive or internal authority.", "Doet zich voor als leidinggevende of interne autoriteit.", true),
@@ -87,7 +93,7 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
 const FAMILY_CAPS: Record<EvidenceFamily, number> = {
   identity: 25,
   destination: 30,
-  intent: 30,
+  intent: 50,
   delivery: 20,
   style: 10,
 };
@@ -136,7 +142,7 @@ export function buildAnalysisResult(
     });
 
   const riskScore = scoreFactors.reduce((total, factor) => total + factor.contribution, 0);
-  const riskLevel = getRiskLevel(riskScore, familyScores);
+  const riskLevel = getRiskLevel(unique, riskScore, familyScores);
   const classification = getClassification(unique, riskLevel, riskScore);
 
   return {
@@ -184,13 +190,32 @@ function spamEvidence(
 }
 
 function getRiskLevel(
+  ids: EvidenceId[],
   score: number,
   familyScores: Record<EvidenceFamily, number>,
 ): RiskLevel {
+  const representedFamilies = Object.values(familyScores).filter((value) => value > 0).length;
   const strongFamilies = Object.values(familyScores).filter((value) => value >= 15).length;
+  const hasStrongEvidence = ids.some((id) => EVIDENCE[id].contribution >= 20);
+
+  if (score >= 50 && hasDecisiveEvidenceChain(ids)) return "high";
   if (score >= 70 && strongFamilies >= 2) return "high";
+  if (hasStrongEvidence && score >= 30) return "medium";
+  if (hasStrongEvidence && representedFamilies >= 2 && score >= 25) return "medium";
   if (score >= 35) return "medium";
   return "low";
+}
+
+function hasDecisiveEvidenceChain(ids: EvidenceId[]): boolean {
+  const found = new Set(ids);
+  const has = (...required: EvidenceId[]) => required.every((id) => found.has(id));
+
+  return has("account_threat", "credential_request", "urgency_pressure")
+    || has("changed_payment_details", "payment_request")
+    || has("mfa_or_oauth_request", "urgency_pressure")
+    || has("executive_impersonation", "payment_request")
+    || has("fake_security", "account_threat", "payment_request")
+    || has("prize_promotion", "payment_request", "urgency_pressure");
 }
 
 function getClassification(
@@ -201,12 +226,28 @@ function getClassification(
   const definitions = ids.map((id) => EVIDENCE[id]);
   const phishingEvidence = definitions.some((definition) => definition.phishing);
   const spamEvidenceFound = definitions.some((definition) => definition.spam);
+  const phishingSpecificEvidence = ids.some((id) => PHISHING_SPECIFIC_EVIDENCE.has(id));
 
-  if (spamEvidenceFound && !phishingEvidence) return "likely_spam";
+  if (spamEvidenceFound && !phishingSpecificEvidence) return "likely_spam";
   if (level === "high" || (phishingEvidence && score >= 35)) return "likely_phishing";
   if (level === "low" && score === 0) return "likely_legitimate";
   return "uncertain";
 }
+
+const PHISHING_SPECIFIC_EVIDENCE = new Set<EvidenceId>([
+  "credential_request",
+  "payment_request",
+  "changed_payment_details",
+  "account_threat",
+  "fake_security",
+  "link_mismatch",
+  "brand_lookalike_sender",
+  "executive_impersonation",
+  "payroll_or_tax_request",
+  "mfa_or_oauth_request",
+  "qr_lure",
+  "callback_lure",
+]);
 
 function getRecommendedAction(
   classification: AssessmentClassification,
