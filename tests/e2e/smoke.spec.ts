@@ -138,11 +138,11 @@ test("launch metadata and generated assets are available", async ({ page, reques
   const sourceLinks = page.getByRole("link", { name: "Source", exact: true });
   await expect(sourceLinks.first()).toHaveAttribute(
     "href",
-    "https://github.com/MatthiasBusscher/inbox-risk-scanner",
+    "https://github.com/MatthiasBusscher/maillume",
   );
   await expect(page.getByRole("link", { name: "License" })).toHaveAttribute(
     "href",
-    "https://github.com/MatthiasBusscher/inbox-risk-scanner/blob/main/LICENSE",
+    "https://github.com/MatthiasBusscher/maillume/blob/main/LICENSE",
   );
   await expect(page.getByRole("link", { name: "AGPL-3.0" })).toBeVisible();
 });

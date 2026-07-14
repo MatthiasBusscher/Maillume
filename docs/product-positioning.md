@@ -5,7 +5,7 @@ Status: public-beta decision record.
 ## Public-Beta Identity
 
 - Product name: **Maillume**
-- Repository: `inbox-risk-scanner`
+- Repository: `maillume`
 - Target marketing domain: `maillume.io` (pending registration)
 - Target scanner domain: `app.maillume.io`
 - Category: privacy-first email risk assessment
