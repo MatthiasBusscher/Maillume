@@ -1,17 +1,32 @@
 import { NextResponse } from "next/server";
 
+import {
+  ACCOUNT_DELETE_MAX_REQUEST_BYTES,
+  hasRecentAuthentication,
+  hasRequestContentType,
+  isStrictSameOriginMutation,
+  readBoundedRequestBody,
+} from "@/lib/security/account-request";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   const requestUrl = new URL(request.url);
-  const origin = request.headers.get("origin");
 
-  if (origin && !isSameOrigin(origin, requestUrl.origin)) {
+  if (!isStrictSameOriginMutation(request)) {
     return privateResponse("Cross-origin account deletion is not allowed.", 403);
   }
 
-  const formData = await request.formData();
+  if (!hasRequestContentType(request, "application/x-www-form-urlencoded")) {
+    return privateResponse("Invalid account deletion request.", 415);
+  }
+
+  const rawBody = await readBoundedRequestBody(request, ACCOUNT_DELETE_MAX_REQUEST_BYTES);
+  if (!rawBody.ok) {
+    return privateResponse("Account deletion request body is too large.", 413);
+  }
+
+  const formData = new URLSearchParams(rawBody.text);
 
   if (formData.get("confirm") !== "delete") {
     return privateRedirect(new URL("/account?error=confirmation_required", requestUrl.origin));
@@ -28,6 +43,10 @@ export async function POST(request: Request) {
 
   if (userError || !data.user) {
     return privateRedirect(new URL("/auth/sign-in", requestUrl.origin));
+  }
+
+  if (!hasRecentAuthentication(data.user.last_sign_in_at)) {
+    return privateRedirect(new URL("/account?error=recent_auth_required", requestUrl.origin));
   }
 
   if (!admin) {
@@ -63,12 +82,4 @@ function applyPrivateHeaders(response: NextResponse) {
   );
   response.headers.set("Expires", "0");
   response.headers.set("Pragma", "no-cache");
-}
-
-function isSameOrigin(candidate: string, expected: string) {
-  try {
-    return new URL(candidate).origin === expected;
-  } catch {
-    return false;
-  }
 }

@@ -48,6 +48,12 @@ export const accountEn = {
     deletionConfirmation: "I understand that this removes my account identity and cannot be undone.",
     deletePermanently: "Delete account permanently",
     deletionUnavailable: "Account deletion is not configured on this deployment. Production authentication must remain disabled until a server-only Supabase secret is available.",
+    deletionErrors: {
+      confirmationRequired: "Confirm that you understand permanent deletion before continuing.",
+      unavailable: "Account deletion is temporarily unavailable. Please try again later.",
+      failed: "Your account could not be deleted. Nothing was changed. Please try again.",
+      recentAuthRequired: "For your security, permanent deletion requires a recent sign-in. Sign out, sign in again, and then return to this control within 15 minutes.",
+    },
   },
   apiKeys: {
     title: "Integration API keys",

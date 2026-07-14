@@ -417,6 +417,36 @@ test("account deletion rejects cross-origin requests", async ({ request }) => {
   expect(response.headers()["cache-control"]).toContain("no-store");
 });
 
+test("account mutations reject missing origins and oversized bodies", async ({ request }) => {
+  const missingDeletionOrigin = await request.post("/account/delete", {
+    form: { confirm: "delete" },
+  });
+  expect(missingDeletionOrigin.status()).toBe(403);
+
+  const missingApiKeyOrigin = await request.post("/account/api-keys", {
+    data: { lifetimeDays: 30, name: "Browser" },
+  });
+  expect(missingApiKeyOrigin.status()).toBe(403);
+
+  const oversizedDeletion = await request.post("/account/delete", {
+    data: `confirm=delete&padding=${"x".repeat(1_024)}`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Origin: "http://127.0.0.1:3100",
+    },
+  });
+  expect(oversizedDeletion.status()).toBe(413);
+
+  const oversizedApiKeyMutation = await request.post("/account/api-keys", {
+    data: JSON.stringify({ lifetimeDays: 30, name: "x".repeat(4_096) }),
+    headers: {
+      "Content-Type": "application/json",
+      Origin: "http://127.0.0.1:3100",
+    },
+  });
+  expect(oversizedApiKeyMutation.status()).toBe(413);
+});
+
 test("health endpoint exposes no dependency or secret details", async ({ request }) => {
   const response = await request.get("/api/health");
 
