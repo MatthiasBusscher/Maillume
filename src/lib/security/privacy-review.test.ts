@@ -186,6 +186,7 @@ function main() {
   assertPinnedActions(releaseWorkflow, ".github/workflows/release.yml");
   assert.match(ciWorkflow, /fetch-depth: 0/);
   assert.match(ciWorkflow, /gitleaks\/gitleaks-action@[0-9a-f]{40}/);
+  assert.equal((ciWorkflow.match(/pull-requests: read/g) ?? []).length, 1);
   assert.match(releaseWorkflow, /fetch-depth: 0/);
   assert.match(releaseWorkflow, /needs: \[verify, secrets\]/);
   assert.match(releaseWorkflow, /npm run test:extension/);
