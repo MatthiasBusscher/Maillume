@@ -83,7 +83,7 @@ export function ScannerPage({
               rel="noreferrer"
               aria-label={dictionary.legal.source}
               title={dictionary.legal.source}
-              className="inline-flex h-10 w-10 items-center justify-center border border-white/30 text-white transition hover:border-[#dfff52] hover:text-[#dfff52]"
+              className="hidden h-10 w-10 items-center justify-center border border-white/30 text-white transition hover:border-[#dfff52] hover:text-[#dfff52] sm:inline-flex"
             >
               <Github className="h-4 w-4" aria-hidden="true" />
             </a>
@@ -91,16 +91,21 @@ export function ScannerPage({
               href={localizePath(userEmail ? "/account" : "/auth/sign-in", locale)}
               aria-label={userEmail ? dictionary.app.account : dictionary.app.signIn}
               title={userEmail ? dictionary.app.account : dictionary.app.signIn}
-              className="inline-flex h-10 w-10 items-center justify-center border border-white/30 text-white transition hover:border-[#dfff52] hover:text-[#dfff52]"
+              className="inline-flex h-10 items-center justify-center gap-2 border border-white/30 px-2 text-sm font-semibold text-white transition hover:border-[#dfff52] hover:text-[#dfff52] sm:px-3"
             >
               {userEmail ? <UserRound className="h-4 w-4" aria-hidden="true" /> : <LogIn className="h-4 w-4" aria-hidden="true" />}
+              <span>
+                {userEmail ? dictionary.app.account : dictionary.app.signIn}
+              </span>
             </Link>
             <a
               href={marketingHref}
-              className="hidden h-10 items-center gap-2 border border-white/30 px-3 text-sm font-semibold text-white transition hover:border-[#dfff52] hover:text-[#dfff52] lg:inline-flex"
+              aria-label={dictionary.app.website}
+              title={dictionary.app.website}
+              className="hidden h-10 items-center justify-center gap-2 border border-white/30 px-3 text-sm font-semibold text-white transition hover:border-[#dfff52] hover:text-[#dfff52] sm:inline-flex"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              {dictionary.app.website}
+              <span className="hidden md:inline">{dictionary.app.website}</span>
             </a>
             <a
               href="#scanner"
@@ -141,7 +146,9 @@ export function ScannerPage({
               <p className="mt-3 font-mono text-[10px] uppercase text-[#69737d]">
                 {dictionary.app.assessmentStatus}
               </p>
-              <p className="mt-1 text-sm font-semibold text-[#111711]">24/7</p>
+              <p className="mt-1 text-sm font-semibold text-[#111711]">
+                {dictionary.app.assessmentValue}
+              </p>
             </div>
           </div>
         </div>

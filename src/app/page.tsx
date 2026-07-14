@@ -53,7 +53,8 @@ const capabilityRows = [
 
 export default async function MarketingHomePage() {
   const appHref = getAppHref();
-  const copy = (await getRequestSiteLocale()) === "nl" ? homeNl : {};
+  const locale = await getRequestSiteLocale();
+  const copy = locale === "nl" ? homeNl : {};
 
   return translateMarketingTree((
     <main className="min-h-screen bg-[#f7f8f4]">
@@ -63,18 +64,19 @@ export default async function MarketingHomePage() {
         <div className="pointer-events-none absolute inset-y-0 left-[8%] w-px bg-white/10" />
         <div className="pointer-events-none absolute inset-y-0 right-[13%] w-px bg-white/10" />
         <div className="pointer-events-none absolute inset-x-0 top-[30%] h-px bg-white/10" />
+        <div className="pointer-events-none absolute -top-24 left-[42%] hidden h-[900px] w-[34%] -skew-x-12 border-x border-[#dfff52]/15 bg-[#dfff52]/[0.04] lg:block" aria-hidden="true" />
 
         <div className="relative z-10 mx-auto grid min-h-[calc(100svh-7rem)] max-w-[1440px] gap-12 px-5 pb-0 pt-14 sm:px-6 sm:pt-16 lg:min-h-[660px] lg:grid-cols-[minmax(340px,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:gap-12 lg:px-8 lg:py-16 xl:grid-cols-[minmax(420px,0.78fr)_minmax(0,1.22fr)] xl:gap-16">
           <div className="max-w-[680px] lg:max-w-[520px] lg:self-center">
             <div className="flex items-center gap-3 font-mono text-[11px] uppercase text-[#dfff52]">
               <span className="h-px w-8 bg-[#dfff52]" aria-hidden="true" />
-              Open-source email risk assessment
+              Illuminate suspicious email
             </div>
             <h1 className="mt-5 text-5xl font-semibold leading-[0.96] text-white sm:text-6xl lg:text-7xl">
               Maillume
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-7 text-[#d9e0d7] sm:text-xl sm:leading-8">
-              A calm second opinion for suspicious email, before you click, reply, or pay.
+              Shine a light on suspicious email. Maillume reveals the signals behind a message so you can decide what to trust before you click, reply, or pay.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -100,7 +102,7 @@ export default async function MarketingHomePage() {
           </div>
 
           <div className="min-w-0 self-end lg:self-center">
-            <ScannerPreview />
+            <ScannerPreview locale={locale} />
           </div>
         </div>
       </section>
@@ -117,9 +119,9 @@ export default async function MarketingHomePage() {
         <div className="mx-auto max-w-[1440px] px-5 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-20">
             <div>
-              <p className="font-mono text-[11px] uppercase text-[#087b72]">A useful second opinion</p>
+              <p className="font-mono text-[11px] uppercase text-[#087b72]">A clearer view</p>
               <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">
-                Email safety should feel understandable.
+                See what an email is asking you to trust.
               </h2>
             </div>
             <p className="max-w-3xl text-xl leading-8 text-[#4f5b50] sm:text-2xl sm:leading-9">

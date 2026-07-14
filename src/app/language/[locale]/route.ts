@@ -5,6 +5,7 @@ import {
   localizePath,
   SITE_LOCALE_COOKIE,
 } from "@/lib/i18n/site-locale";
+import { getMarketingHref } from "@/lib/site";
 
 export async function GET(
   request: Request,
@@ -12,28 +13,39 @@ export async function GET(
 ) {
   const { locale } = await context.params;
   const requestUrl = new URL(request.url);
+  const publicOrigin = getPublicOrigin(requestUrl);
 
   if (!isSiteLocale(locale)) {
-    return NextResponse.redirect(new URL("/", requestUrl.origin), 303);
+    return NextResponse.redirect(new URL("/", publicOrigin), 303);
   }
 
   const nextPath = getSafeNextPath(requestUrl.searchParams.get("next"));
-  const destination = new URL(localizePath(nextPath, locale), requestUrl.origin);
+  const destination = new URL(localizePath(nextPath, locale), publicOrigin);
   const response = NextResponse.redirect(destination, 303);
-  const hostname = requestUrl.hostname;
+  const hostname = destination.hostname;
 
   response.cookies.set(SITE_LOCALE_COOKIE, locale, {
     httpOnly: false,
     maxAge: 60 * 60 * 24 * 365,
     path: "/",
     sameSite: "lax",
-    secure: requestUrl.protocol === "https:",
+    secure: destination.protocol === "https:",
     ...(hostname === "maillume.io" || hostname.endsWith(".maillume.io")
       ? { domain: ".maillume.io" }
       : {}),
   });
   response.headers.set("Cache-Control", "private, no-store");
   return response;
+}
+
+function getPublicOrigin(requestUrl: URL) {
+  const configuredHref = getMarketingHref();
+
+  if (configuredHref.startsWith("http://") || configuredHref.startsWith("https://")) {
+    return new URL(configuredHref).origin;
+  }
+
+  return requestUrl.origin;
 }
 
 function getSafeNextPath(value: string | null) {

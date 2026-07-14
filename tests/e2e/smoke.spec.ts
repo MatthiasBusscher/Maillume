@@ -14,7 +14,7 @@ test("paste analysis renders a structured result and disclaimer", async ({ page 
   await page.getByRole("button", { name: "Analyze email" }).click();
 
   await expect(page.getByText("Risk score")).toBeVisible();
-  await expect(page.getByText("Suspicious signals")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Suspicious signals", exact: true })).toBeVisible();
   await expect(page.getByRole("meter")).toHaveAttribute("aria-valuenow", /\d+/);
   await expect(
     page.getByText("This is an automated risk assessment and should not be considered a guarantee."),
@@ -30,7 +30,7 @@ test("language switching updates the scanner", async ({ page }) => {
   await expect(page.getByRole("button", { name: "E-mail analyseren" })).toBeVisible();
   await page.getByRole("button", { name: "Voorbeeld" }).click();
   await page.getByRole("button", { name: "E-mail analyseren" }).click();
-  await expect(page.getByText("Verdachte signalen")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Verdachte signalen", exact: true })).toBeVisible();
   await expect(page.getByText(/Klik niet op links|Ga voorzichtig verder/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Help de detectie verbeteren" })).toBeVisible();
 
@@ -52,6 +52,33 @@ test("Dutch routes render server-side and persist across navigation", async ({ p
   const apiResponse = await page.request.get("/api/health");
   expect(apiResponse.ok()).toBe(true);
   expect(apiResponse.url()).toContain("/api/health");
+});
+
+test("marketing language redirects use the configured public origin", async ({ page, request }) => {
+  const response = await request.get("/language/en?next=%2Fnl", {
+    headers: { Host: "0.0.0.0:3000" },
+    maxRedirects: 0,
+  });
+
+  expect(response.status()).toBe(303);
+  expect(response.headers().location).toBe("http://127.0.0.1:3100/");
+
+  await page.goto("/nl");
+  await page.getByRole("link", { name: "EN", exact: true }).click();
+  await expect(page).toHaveURL("http://127.0.0.1:3100/");
+});
+
+test("Dutch marketing preview and app navigation are visibly localized", async ({ page }) => {
+  await page.goto("/nl");
+  const preview = page.getByTestId("scanner-preview");
+  await expect(preview.getByText("E-mailanalyse", { exact: true })).toBeVisible();
+  await expect(preview.getByText("Controleer een verdachte e-mail", { exact: true })).toBeVisible();
+  await expect(preview.getByText("Email analysis", { exact: true })).toHaveCount(0);
+
+  await page.goto("/nl/app");
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await expect(page.getByText("Inloggen", { exact: true })).toBeVisible();
+  await expect(page.getByText("Website", { exact: true })).toBeVisible();
 });
 
 test("keyboard users can skip directly to the scanner", async ({ page }) => {
@@ -104,7 +131,7 @@ test("rate-limited analysis shows a clear localized error", async ({ page }) => 
   await page.getByRole("button", { name: "Analyze email" }).click();
 
   await expect(page.locator("form [role='alert']")).toContainText(
-    "Too many AI analyses were requested. Please wait and try again.",
+    "Too many analyses were requested. Please wait and try again.",
   );
 });
 
@@ -238,8 +265,8 @@ test("marketing routes accurately distinguish available and source-beta features
   await expect(page.getByRole("heading", { name: /Your infrastructure/ })).toBeVisible();
 
   await page.goto("/platform");
-  await expect(page.getByText("Available today").first()).toBeVisible();
-  await expect(page.getByText("Available", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Implemented in source").first()).toBeVisible();
+  await expect(page.getByText("Acceptance pending", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Source beta", { exact: true }).first()).toBeVisible();
 });
 
@@ -336,7 +363,14 @@ test("primary pages fit mobile and desktop viewports without horizontal overflow
   ]) {
     await page.setViewportSize(viewport);
 
-    for (const path of ["/", "/app", "/resources/odido-phishing-incident"]) {
+    for (const path of [
+      "/",
+      "/app",
+      "/platform",
+      "/pricing",
+      "/auth/sign-in",
+      "/resources/odido-phishing-incident",
+    ]) {
       await page.goto(path);
       await expect(page.locator("h1").first()).toBeVisible();
       const dimensions = await page.evaluate(() => ({

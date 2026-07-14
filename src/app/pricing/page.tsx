@@ -25,7 +25,7 @@ const plans = [
       "Heuristic email risk assessment",
       "Paste, screenshot, and .eml inputs",
       "English and Dutch interface",
-      "Account API keys with 100 calls/month",
+      "Account API keys after production acceptance",
       "No scan history",
     ],
     cta: "Check an email",
@@ -73,7 +73,7 @@ export default async function PricingPage() {
       <PageIntro
         eyebrow="Pricing"
         title="The safety workflow stays free."
-        description="The hosted beta charges nothing for core heuristic checks or a small integration API allowance. Future paid plans may fund managed AI and higher limits, but they do not remove the free scanner."
+        description="The hosted beta charges nothing for core heuristic checks. A small integration API allowance follows production acceptance; future paid plans may fund managed AI and higher limits without removing the free scanner."
       />
 
       <section className="border-b border-[#cbd0c5] py-16 sm:py-20">

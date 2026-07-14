@@ -19,8 +19,9 @@ export default defineConfig({
     env: {
       ANALYSIS_MODE: "heuristic",
       FEEDBACK_STORAGE: "memory",
+      NEXT_PUBLIC_MARKETING_URL: "http://127.0.0.1:3100",
     },
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
     url: "http://127.0.0.1:3100",
   },

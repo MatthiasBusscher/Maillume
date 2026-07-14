@@ -53,7 +53,7 @@ export default function OpenGraphImage() {
         </div>
 
         <div style={{ color: "#dfff52", fontSize: 19, fontWeight: 700, marginTop: 62 }}>
-          OPEN-SOURCE EMAIL RISK ASSESSMENT
+          ILLUMINATE SUSPICIOUS EMAIL
         </div>
         <div
           style={{
@@ -65,7 +65,7 @@ export default function OpenGraphImage() {
             maxWidth: 760,
           }}
         >
-          A second opinion before you trust an email.
+          Shine a light on suspicious email.
         </div>
         <div
           style={{

@@ -5,8 +5,8 @@ import { localizePath } from "@/lib/i18n/site-locale";
 
 const title = "Maillume";
 const descriptions = {
-  en: "A privacy-first second opinion for suspicious email text, screenshots, and .eml files.",
-  nl: "Een privacybewuste extra beoordeling voor verdachte e-mailtekst, screenshots en .eml-bestanden.",
+  en: "Shine a light on suspicious email text, screenshots, and .eml files.",
+  nl: "Breng verdachte e-mailtekst, screenshots en .eml-bestanden aan het licht.",
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -63,9 +63,9 @@ export default async function RootLayout({
 function getMetadataBase(): URL {
   const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
 
-  const configuredUrl = process.env.NEXT_PUBLIC_MARKETING_URL;
+  const configuredUrl = process.env.NEXT_PUBLIC_MARKETING_URL?.trim();
 
   return new URL(
-    configuredUrl ?? (vercelUrl ? `https://${vercelUrl}` : "http://localhost:3000"),
+    configuredUrl || (vercelUrl ? `https://${vercelUrl}` : "http://localhost:3000"),
   );
 }

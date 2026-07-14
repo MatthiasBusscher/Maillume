@@ -16,6 +16,7 @@ export const dictionaries = {
       skipToScanner: "Skip to scanner",
       privacyStatus: "Scans stored",
       assessmentStatus: "Assessment",
+      assessmentValue: "On demand",
       audience: "Email risk workspace",
       workspaceTitle: "Inspect a suspicious email",
       website: "Website",
@@ -55,7 +56,7 @@ export const dictionaries = {
       analyze: "Analyze email",
       analyzing: "Analyzing",
       analysisFailed: "Analysis failed. Please try again.",
-      rateLimited: "Too many AI analyses were requested. Please wait and try again.",
+      rateLimited: "Too many analyses were requested. Please wait and try again.",
       serviceUnavailable:
         "Analysis is temporarily unavailable. Check the server configuration and try again.",
       screenshotPrompt: "Upload a screenshot of the suspicious email.",
@@ -155,13 +156,14 @@ export const dictionaries = {
       skipToScanner: "Ga naar de scanner",
       privacyStatus: "Scans opgeslagen",
       assessmentStatus: "Beoordeling",
+      assessmentValue: "Op aanvraag",
       audience: "Werkruimte voor e-mailrisico",
       workspaceTitle: "Onderzoek een verdachte e-mail",
       website: "Website",
       signIn: "Inloggen",
       account: "Account",
       hero:
-        "Plak een bericht, scan een screenshot of open een .eml-bestand voor een duidelijke, gestructureerde second opinion.",
+        "Plak een bericht, scan een screenshot of open een .eml-bestand voor een duidelijke, gestructureerde extra controle.",
     },
     language: {
       label: "Taal",
@@ -194,7 +196,7 @@ export const dictionaries = {
       analyze: "E-mail analyseren",
       analyzing: "Analyseren",
       analysisFailed: "Analyse mislukt. Probeer het opnieuw.",
-      rateLimited: "Er zijn te veel AI-analyses aangevraagd. Wacht even en probeer het opnieuw.",
+      rateLimited: "Er zijn te veel analyses aangevraagd. Wacht even en probeer het opnieuw.",
       serviceUnavailable:
         "De analyse is tijdelijk niet beschikbaar. Controleer de serverconfiguratie en probeer het opnieuw.",
       screenshotPrompt: "Upload een screenshot van de verdachte e-mail.",
