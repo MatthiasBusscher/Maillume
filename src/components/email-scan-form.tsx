@@ -558,8 +558,8 @@ function UploadPanel({
 
 function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
   return (
-    <div className="flex h-full min-h-[28rem] flex-col">
-      <div className="flex items-start gap-3 border-b border-[#d5d9de] pb-5">
+    <div className="flex h-full min-h-[24rem] flex-col">
+      <div className="flex items-start gap-3 border-b border-[#d5d9de] pb-4">
         <span
           className="flex h-8 w-8 flex-none items-center justify-center bg-[#bdebf0] font-mono text-xs font-bold text-[#173b40]"
           aria-hidden="true"
@@ -576,7 +576,7 @@ function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
         </div>
       </div>
 
-      <div className="border-b border-[#d5d9de] py-8">
+      <div className="border-b border-[#d5d9de] py-5">
         <div className="flex items-end justify-between gap-5">
           <div>
             <p className="font-mono text-[10px] uppercase text-[#69737d]">
@@ -586,25 +586,25 @@ function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
           </div>
           <ScanLine className="h-14 w-14 text-[#aeb6bf]" strokeWidth={1.25} aria-hidden="true" />
         </div>
-        <div className="mt-6 grid h-3 grid-cols-3 gap-1" aria-hidden="true">
+        <div className="mt-4 grid h-3 grid-cols-3 gap-1" aria-hidden="true">
           <span className="bg-[#bfc7c2]" />
           <span className="bg-[#d4c9ae]" />
           <span className="bg-[#d6bbb7]" />
         </div>
-        <p className="mt-5 max-w-lg text-sm leading-6 text-[#59646f]">
+        <p className="mt-3 max-w-lg text-sm leading-5 text-[#59646f]">
           {dictionary.empty.description}
         </p>
       </div>
 
-      <div className="my-6 border-l-4 border-[#087b72] bg-[#eaf6f5] px-4 py-4 text-sm leading-6 text-[#204e51]">
-        <div className="mb-2 flex items-center gap-2 font-semibold text-[#173b40]">
+      <div className="my-4 border-l-4 border-[#087b72] bg-[#eaf6f5] px-4 py-3 text-sm leading-5 text-[#204e51]">
+        <div className="mb-1 flex items-center gap-2 font-semibold text-[#173b40]">
           <DatabaseZap className="h-4 w-4" aria-hidden="true" />
           {dictionary.empty.privacyTitle}
         </div>
         {dictionary.empty.privacyBody}
       </div>
 
-      <div className="mt-auto border-t border-[#d5d9de] pt-4 text-xs leading-5 text-[#69737d]">
+      <div className="mt-auto border-t border-[#d5d9de] pt-3 text-xs leading-5 text-[#69737d]">
         {dictionary.result.disclaimer}
       </div>
     </div>
