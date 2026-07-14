@@ -1,6 +1,6 @@
 # Production Deployment
 
-The official Maillume service runs as a portable Next.js standalone container on a Hostinger VPS. Cloudflare Tunnel is the only web ingress. Managed Supabase provides optional authentication and non-content feedback. The public service uses heuristic analysis and no maintainer-funded AI key.
+The target Maillume deployment is a portable Next.js standalone container on a Hostinger VPS, with Cloudflare Tunnel as its only web ingress and managed Supabase for optional authentication and non-content feedback. The documented production configuration uses heuristic analysis and no maintainer-funded AI key. Treat these as release invariants until the live environment has passed the verification checklist below.
 
 ## Production Topology
 

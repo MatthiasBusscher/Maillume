@@ -71,14 +71,65 @@ test("marketing language redirects use the configured public origin", async ({ p
 test("Dutch marketing preview and app navigation are visibly localized", async ({ page }) => {
   await page.goto("/nl");
   const preview = page.getByTestId("scanner-preview");
-  await expect(preview.getByText("E-mailanalyse", { exact: true })).toBeVisible();
-  await expect(preview.getByText("Controleer een verdachte e-mail", { exact: true })).toBeVisible();
-  await expect(preview.getByText("Email analysis", { exact: true })).toHaveCount(0);
+  for (const text of [
+    "E-mailanalyse",
+    "Controleer een verdachte e-mail",
+    "Onderwerp",
+    "Afzender",
+    "E-mailinhoud",
+    "E-mail analyseren",
+    "Risicoscore",
+    "Hoog",
+    "Creëert urgentie rond een probleem met je account.",
+    "De linkbestemming past niet bij de beweerde afzender.",
+    "Controleer dit via een bekend contactkanaal voordat je handelt.",
+    "Geautomatiseerde risicobeoordeling. Dit resultaat is geen garantie.",
+  ]) {
+    await expect(preview.getByText(text, { exact: true })).toBeVisible();
+  }
+  for (const text of [
+    "Email analysis",
+    "Subject",
+    "Sender",
+    "Email content",
+    "Analyze email",
+    "Risk score",
+    "High",
+    "Creates urgency around an account problem.",
+    "Link destination does not match the claimed sender.",
+  ]) {
+    await expect(preview.getByText(text, { exact: true })).toHaveCount(0);
+  }
+  await expect(page.getByText("Verwerkt bestanden en haalt leesbare tekst op.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Controleert risicopatronen en geeft gestructureerde JSON terug.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Er wordt geen e-mailinhoud of resultaat in een scangeschiedenis opgeslagen.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Ontdek self-hosting" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Lees de incidentnotities" })).toBeVisible();
+  await expect(page.getByText("Parses files and extracts readable text.", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Checks risk patterns and returns structured JSON.", { exact: true })).toHaveCount(0);
+
+  await page.goto("/nl/pricing");
+  await expect(page.getByText("Releasekandidaat", { exact: true })).toBeVisible();
 
   await page.goto("/nl/app");
-  await page.setViewportSize({ width: 1280, height: 800 });
-  await expect(page.getByText("Inloggen", { exact: true })).toBeVisible();
-  await expect(page.getByText("Website", { exact: true })).toBeVisible();
+  const signIn = page.getByRole("link", { name: "Inloggen", exact: true });
+  const website = page.getByRole("link", { name: "Website", exact: true });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(signIn).toBeVisible();
+  await expect(website).toBeHidden();
+  expect((await signIn.boundingBox())!.width).toBeGreaterThanOrEqual(90);
+
+  for (const width of [640, 768, 900, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    await expect(signIn).toBeVisible();
+    await expect(website).toBeVisible();
+    const signInBox = (await signIn.boundingBox())!;
+    const websiteBox = (await website.boundingBox())!;
+    expect(signInBox.height).toBe(websiteBox.height);
+    expect(websiteBox.width).toBeLessThanOrEqual(signInBox.width * 1.25);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width + 1);
+  }
 });
 
 test("keyboard users can skip directly to the scanner", async ({ page }) => {
@@ -140,7 +191,7 @@ test("launch metadata and generated assets are available", async ({ page, reques
   await expect(page).toHaveTitle("Maillume");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    /privacy-first risk assessment/i,
+    /shine a light on suspicious email/i,
   );
 
   const [iconResponse, openGraphResponse, manifestResponse, robotsResponse, sitemapResponse] = await Promise.all([
@@ -165,11 +216,11 @@ test("launch metadata and generated assets are available", async ({ page, reques
   const sourceLinks = page.getByRole("link", { name: "Source", exact: true });
   await expect(sourceLinks.first()).toHaveAttribute(
     "href",
-    "https://github.com/MatthiasBusscher/maillume",
+    "https://github.com/MatthiasBusscher/Maillume",
   );
   await expect(page.getByRole("link", { name: "License" })).toHaveAttribute(
     "href",
-    "https://github.com/MatthiasBusscher/maillume/blob/main/LICENSE",
+    "https://github.com/MatthiasBusscher/Maillume/blob/main/LICENSE",
   );
   await expect(page.getByRole("link", { name: "AGPL-3.0" })).toBeVisible();
 });
@@ -259,6 +310,7 @@ test("marketing routes accurately distinguish available and source-beta features
 
   await page.goto("/pricing");
   await expect(page.getByRole("heading", { name: "The safety workflow stays free." })).toBeVisible();
+  await expect(page.getByText("Release candidate", { exact: true })).toBeVisible();
   await expect(page.getByText("Planned, not for sale")).toBeVisible();
 
   await page.goto("/self-hosted");

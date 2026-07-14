@@ -8,7 +8,7 @@ An open-source, privacy-first email risk scanner for people who want a clear sec
 
 [Website](https://maillume.io) · [Open scanner](https://app.maillume.io) · [Documentation](docs/architecture.md) · [Roadmap](docs/roadmap.md)
 
-[![CI](https://github.com/MatthiasBusscher/maillume/actions/workflows/ci.yml/badge.svg)](https://github.com/MatthiasBusscher/maillume/actions/workflows/ci.yml)
+[![CI](https://github.com/MatthiasBusscher/Maillume/actions/workflows/ci.yml/badge.svg)](https://github.com/MatthiasBusscher/Maillume/actions/workflows/ci.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-087b72.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-15-111711.svg?logo=next.js)](https://nextjs.org/)
 [![Languages](https://img.shields.io/badge/UI-English%20%7C%20Nederlands-ff705f.svg)](docs/roadmap.md)
@@ -17,7 +17,7 @@ An open-source, privacy-first email risk scanner for people who want a clear sec
 
 ![Maillume homepage showing an explainable email risk assessment](docs/assets/maillume-overview.png)
 
-Maillume turns suspicious patterns, links, sender clues, and pressure tactics into an explainable risk report. It supports pasted text, screenshots, and `.eml` files without creating scan history. The public scanner uses local heuristics, so it does not depend on a maintainer-funded AI key.
+Maillume turns suspicious patterns, links, sender clues, and pressure tactics into an explainable risk report. It supports pasted text, screenshots, and `.eml` files without creating scan history. Heuristic analysis is the default and needs no AI key.
 
 > This is an automated risk assessment and should not be considered a guarantee.
 
@@ -25,7 +25,7 @@ Maillume turns suspicious patterns, links, sender clues, and pressure tactics in
 
 | Capability | Status |
 | --- | --- |
-| Anonymous English/Dutch web scanner | Beta available |
+| Anonymous English/Dutch web scanner | Release candidate |
 | Paste, screenshot OCR, and `.eml` input | Available |
 | Local heuristic risk assessment | Available |
 | Self-hosted AI with your own provider key | Available from source |
@@ -33,7 +33,7 @@ Maillume turns suspicious patterns, links, sender clues, and pressure tactics in
 | Chrome, Gmail, and Outlook integrations | Source beta; marketplace publication pending |
 | Maintainer-hosted AI and payments | Not implemented |
 
-The repository is a private-beta release candidate. [Production acceptance](https://github.com/MatthiasBusscher/maillume/issues/38), [integration publication](https://github.com/MatthiasBusscher/maillume/issues/39), and the [release rehearsal](https://github.com/MatthiasBusscher/maillume/issues/40) remain open before broad launch.
+The repository is a private-beta release candidate. [Production acceptance](https://github.com/MatthiasBusscher/Maillume/issues/38), [integration publication](https://github.com/MatthiasBusscher/Maillume/issues/39), and the [release rehearsal](https://github.com/MatthiasBusscher/Maillume/issues/40) remain open before broad launch.
 
 ## Why Maillume
 
@@ -55,7 +55,7 @@ Self-hosted AI mode sends normalized scan text to the provider selected by the o
 Requirements: Node.js 22+ and npm.
 
 ```bash
-git clone https://github.com/MatthiasBusscher/maillume.git
+git clone https://github.com/MatthiasBusscher/Maillume.git
 cd maillume
 npm install
 cp .env.example .env.local
@@ -93,7 +93,7 @@ type EmailAnalysisResult = {
 
 ## Self-Hosted AI
 
-The hosted beta deliberately has no project-owned AI key. A self-hoster can opt into AI analysis with server-only variables:
+The hosted release is designed to run without a project-owned AI key; production acceptance must verify that live configuration. A self-hoster can opt into AI analysis with server-only variables:
 
 ```bash
 ANALYSIS_MODE=ai
@@ -120,7 +120,7 @@ docker run --rm -p 3000:3000 \
   maillume:local
 ```
 
-The production image uses Next.js standalone output, a non-root user, a read-only filesystem, and a health endpoint. See the [deployment guide](docs/deployment.md) for Cloudflare Tunnel and portable hosting.
+The production image uses Next.js standalone output, a non-root user, and a health endpoint. The production Compose stack additionally enforces a read-only filesystem, dropped capabilities, and `no-new-privileges`. See the [deployment guide](docs/deployment.md) for Cloudflare Tunnel and portable hosting.
 
 ## Development
 

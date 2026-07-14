@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -22,11 +21,6 @@ import { homeNl } from "@/lib/i18n/marketing-pages";
 import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getRequestSiteLocale();
-  return { title: "Maillume", description: locale === "nl" ? "Krijg een heldere, privacygerichte risicobeoordeling van verdachte e-mailtekst, screenshots en .eml-bestanden." : "Get a clear, privacy-first risk assessment for suspicious email text, screenshots, and .eml files." };
-}
-
 const capabilityRows = [
   {
     icon: FileSearch,
@@ -47,7 +41,7 @@ const capabilityRows = [
     label: "No scan history",
     title: "The assessment ends when the request does.",
     description:
-      "The hosted beta does not save email text, sender details, screenshots, .eml files, links, or completed scan results.",
+      "Maillume does not write email text, sender details, screenshots, .eml files, links, or completed scan results to scan history.",
   },
 ];
 
@@ -173,7 +167,7 @@ export default async function MarketingHomePage() {
               <p className="mt-5 font-mono text-[10px] uppercase text-[#687268]">Hosted by us</p>
               <h2 className="mt-3 text-3xl font-semibold text-[#111711]">Use the scanner in seconds.</h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
-                The official cloud runs the local heuristic analyzer without a maintainer-funded AI key. Anonymous checks remain the default.
+                The release candidate defaults to local heuristic analysis and does not require a project-funded AI key. Anonymous checks remain the default.
               </p>
               <a href={appHref} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">
                 Open Maillume <ArrowRight className="h-4 w-4" aria-hidden="true" />

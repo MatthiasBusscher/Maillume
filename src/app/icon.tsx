@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 
+import { SatoriBrandGlyph } from "@/components/satori-brand-glyph";
+
 export const size = {
   width: 64,
   height: 64,
@@ -11,19 +13,18 @@ export default function Icon() {
   return new ImageResponse(
     <div
       style={{
-        alignItems: "center",
         background: "#111711",
-        color: "#dfff52",
         display: "flex",
-        fontSize: 21,
-        fontWeight: 700,
         height: "100%",
-        justifyContent: "center",
-        letterSpacing: 0,
         width: "100%",
       }}
     >
-      ML
+      <SatoriBrandGlyph
+        accentOffset={5}
+        background="#111711"
+        foreground="#dfff52"
+        size={64}
+      />
     </div>,
     size,
   );
