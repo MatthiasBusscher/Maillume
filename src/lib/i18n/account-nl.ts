@@ -27,6 +27,7 @@ export const accountNl = {
       unavailable: "Inloggen met Google is niet ingesteld voor deze omgeving.",
       failed: "Inloggen met Google kon niet worden gestart. Probeer het opnieuw.",
       callbackFailed: "Inloggen met Google kon niet worden voltooid. Probeer het opnieuw. Controleer de toegestane omleidings-URL als dit blijft gebeuren.",
+      providerFailed: "Google heeft de aanmelding niet voltooid, waardoor er geen Maillume-sessie is gemaakt. Probeer het opnieuw. Controleer tijdens de privébèta of dit Google-account als testgebruiker is toegestaan.",
     },
   },
   account: {

@@ -407,6 +407,35 @@ test("an OAuth code returned to the app root is recovered by the callback route"
   expect(callbackLocation.searchParams.get("code")).toBe("synthetic-code");
 });
 
+test("OAuth provider errors are sanitized and cannot fall through to the scanner", async ({ page, request }) => {
+  const rawQuery = "error=access_denied&error_description=sensitive-provider-detail&state=synthetic-state";
+  const rootResponse = await request.get(`/?${rawQuery}`, {
+    headers: { Host: "app.maillume.io" },
+    maxRedirects: 0,
+  });
+
+  expect(rootResponse.status()).toBe(307);
+  const rootLocation = new URL(rootResponse.headers().location);
+  expect(rootLocation.pathname).toBe("/auth/sign-in");
+  expect(rootLocation.searchParams.get("error")).toBe("oauth_provider_failed");
+  expect(rootLocation.searchParams.has("error_description")).toBe(false);
+  expect(rootLocation.searchParams.has("state")).toBe(false);
+
+  const callbackResponse = await request.get(`/auth/callback?${rawQuery}`, {
+    maxRedirects: 0,
+  });
+  expect(callbackResponse.status()).toBe(307);
+  const callbackLocation = new URL(callbackResponse.headers().location);
+  expect(callbackLocation.pathname).toBe("/auth/sign-in");
+  expect(callbackLocation.searchParams.toString()).toBe("error=oauth_provider_failed");
+
+  await page.goto("/auth/sign-in?error=oauth_provider_failed");
+  await expect(page.locator("p[role='alert']")).toContainText(
+    "Google did not complete sign-in, so no Maillume session was created.",
+  );
+  await expect(page.getByText("sensitive-provider-detail")).toHaveCount(0);
+});
+
 test("account deletion rejects cross-origin requests", async ({ request }) => {
   const response = await request.post("/account/delete", {
     form: { confirm: "delete" },

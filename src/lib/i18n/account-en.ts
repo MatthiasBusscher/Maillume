@@ -25,6 +25,7 @@ export const accountEn = {
       unavailable: "Google sign-in is not configured on this deployment.",
       failed: "Google sign-in could not be started. Please try again.",
       callbackFailed: "Google sign-in could not be completed. Please try again. If this continues, check the authorized redirect URL.",
+      providerFailed: "Google did not complete sign-in, so no Maillume session was created. Please try again. During private beta, make sure this Google account is an approved test user.",
     },
   },
   account: {
