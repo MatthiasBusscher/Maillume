@@ -141,6 +141,7 @@ async function main() {
   assert.equal(openAiConfig.provider, "openai");
   assert.equal(openAiConfig.model, "openai-test-model");
   assert.equal(openAiConfig.maxOutputTokens, 700);
+  assert.equal(openAiConfig.requestTimeoutMs, 30_000);
   assert.equal(openAiConfig.maxConcurrentRequests, 2);
   assert.deepEqual(openAiConfig.rateLimit, {
     enabled: true,
@@ -173,6 +174,32 @@ async function main() {
   assert.equal(compatibleConfig.baseUrl, "https://api.deepseek.com");
   assert.equal(compatibleConfig.model, "deepseek-test-model");
 
+  const developmentHttpConfig = getAnalysisConfig({
+    ANALYSIS_MODE: "ai",
+    AI_PROVIDER: "openai-compatible",
+    AI_API_KEY: "fake-compatible-key-for-tests",
+    AI_BASE_URL: "http://localhost:11434/v1",
+    AI_MODEL: "local-test-model",
+    NODE_ENV: "development",
+  });
+
+  assert.equal(developmentHttpConfig.mode, "ai");
+  assert.equal(developmentHttpConfig.baseUrl, "http://localhost:11434/v1");
+
+  assert.throws(
+    () =>
+      getAnalysisConfig({
+        ANALYSIS_MODE: "ai",
+        AI_PROVIDER: "openai-compatible",
+        AI_API_KEY: "fake-compatible-key-for-tests",
+        AI_BASE_URL: "http://localhost:11434/v1",
+        AI_MODEL: "local-test-model",
+        NODE_ENV: "production",
+      }),
+    AnalysisConfigError,
+    "production OpenAI-compatible endpoints should require HTTPS",
+  );
+
   const openAiGenericKeyConfig = getAnalysisConfig({
     ANALYSIS_MODE: "ai",
     AI_PROVIDER: "openai",
@@ -192,6 +219,7 @@ async function main() {
     AI_RATE_LIMIT_MAX_REQUESTS: "25",
     AI_RATE_LIMIT_WINDOW_SECONDS: "120",
     AI_MAX_CONCURRENT_REQUESTS: "4",
+    AI_PROVIDER_TIMEOUT_MS: "45000",
   });
 
   assert.equal(customRateLimitConfig.mode, "ai");
@@ -201,6 +229,22 @@ async function main() {
     windowMs: 120_000,
   });
   assert.equal(customRateLimitConfig.maxConcurrentRequests, 4);
+  assert.equal(customRateLimitConfig.requestTimeoutMs, 45_000);
+
+  for (const invalidTimeout of ["999", "120001", "1.5"]) {
+    assert.throws(
+      () =>
+        getAnalysisConfig({
+          ANALYSIS_MODE: "ai",
+          AI_PROVIDER: "openai",
+          OPENAI_API_KEY: "fake-openai-key-for-tests",
+          OPENAI_MODEL: "openai-test-model",
+          AI_PROVIDER_TIMEOUT_MS: invalidTimeout,
+        }),
+      AnalysisConfigError,
+      `AI_PROVIDER_TIMEOUT_MS should reject ${invalidTimeout}`,
+    );
+  }
 
   assert.throws(
     () =>
@@ -253,6 +297,7 @@ async function main() {
   let openAiRequestBody: Record<string, unknown> | undefined;
   const openAiProvider = createAnalysisProvider(openAiConfig, {
     fetcher: async (_url, init) => {
+      assert.ok(init?.signal, "OpenAI request should be abortable");
       openAiRequestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
 
       return jsonResponse({
@@ -278,6 +323,7 @@ async function main() {
 
   const anthropicProvider = createAnalysisProvider(anthropicConfig, {
     fetcher: async (_url, init) => {
+      assert.ok(init?.signal, "Anthropic request should be abortable");
       const requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
 
       assert.equal(requestBody.model, "anthropic-test-model");
@@ -307,6 +353,7 @@ async function main() {
   let compatibleRequestBody: Record<string, unknown> | undefined;
   const compatibleProvider = createAnalysisProvider(compatibleConfig, {
     fetcher: async (url, init) => {
+      assert.ok(init?.signal, "OpenAI-compatible request should be abortable");
       compatibleRequestUrl = String(url);
       compatibleRequestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
 
@@ -404,6 +451,28 @@ async function main() {
     () => rejectedFetchProvider.analyze({ body: "Synthetic message body." }),
     AiProviderRequestError,
     "fetch failures should return controlled errors",
+  );
+
+  const timedOutProvider = createAnalysisProvider(
+    {
+      ...openAiConfig,
+      requestTimeoutMs: 10,
+    },
+    {
+      fetcher: async (_url, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(new Error("aborted")), {
+            once: true,
+          });
+        }),
+    },
+  );
+
+  await assert.rejects(
+    () => timedOutProvider.analyze({ body: "Synthetic message body." }),
+    (error: unknown) =>
+      error instanceof AiProviderRequestError && error.message === "OpenAI request timed out.",
+    "provider timeouts should abort fetch and return a controlled error",
   );
 
   console.log("Checked analysis provider configuration.");

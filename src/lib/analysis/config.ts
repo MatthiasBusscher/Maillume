@@ -12,6 +12,7 @@ export type AiAnalysisConfig = {
   baseUrl?: string;
   model: string;
   maxOutputTokens: number;
+  requestTimeoutMs?: number;
   rateLimit: AiRateLimitConfig;
   maxConcurrentRequests: number;
 };
@@ -29,6 +30,8 @@ type AnalysisEnv = Record<string, string | undefined>;
 const AI_PROVIDERS = new Set<AiProviderName>(["openai", "anthropic", "openai-compatible"]);
 const DEFAULT_MAX_OUTPUT_TOKENS = 800;
 const MAX_OUTPUT_TOKEN_LIMIT = 2_000;
+export const DEFAULT_AI_PROVIDER_TIMEOUT_MS = 30_000;
+const MAX_AI_PROVIDER_TIMEOUT_MS = 120_000;
 const DEFAULT_AI_RATE_LIMIT_MAX_REQUESTS = 10;
 const DEFAULT_AI_RATE_LIMIT_WINDOW_SECONDS = 60;
 const MAX_AI_RATE_LIMIT_REQUESTS = 1_000;
@@ -82,6 +85,13 @@ export function getAnalysisConfig(env: AnalysisEnv = process.env): AnalysisConfi
     ...(baseUrl ? { baseUrl } : {}),
     model,
     maxOutputTokens: getMaxOutputTokens(env.AI_MAX_OUTPUT_TOKENS),
+    requestTimeoutMs: getBoundedIntegerEnv(
+      env.AI_PROVIDER_TIMEOUT_MS,
+      DEFAULT_AI_PROVIDER_TIMEOUT_MS,
+      1_000,
+      MAX_AI_PROVIDER_TIMEOUT_MS,
+      "AI_PROVIDER_TIMEOUT_MS",
+    ),
     rateLimit: getAiRateLimitConfig(env),
     maxConcurrentRequests: getBoundedIntegerEnv(
       env.AI_MAX_CONCURRENT_REQUESTS,
@@ -180,6 +190,10 @@ function getAiBaseUrl(provider: AiProviderName, env: AnalysisEnv): string | unde
 
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
     throw new AnalysisConfigError("AI_BASE_URL must use http or https.");
+  }
+
+  if (env.NODE_ENV === "production" && parsed.protocol !== "https:") {
+    throw new AnalysisConfigError("AI_BASE_URL must use https in production.");
   }
 
   return baseUrl.replace(/\/+$/, "");

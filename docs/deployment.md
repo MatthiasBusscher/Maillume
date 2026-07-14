@@ -47,7 +47,7 @@ Detailed checks and recovery procedures are in `docs/operations.md`.
 
 ## 3. Install the Stack
 
-Clone the repository into `/opt/maillume`. Copy `.env.example` to `.env.production`, set file mode `600`, and configure production values:
+Clone the repository into `/opt/maillume`. Copy `.env.example` to `.env.production` for application settings and `.env.infrastructure.example` to `.env.infrastructure` for Docker/Tunnel settings. Set both files to mode `600`.
 
 ```text
 ANALYSIS_MODE=heuristic
@@ -57,6 +57,11 @@ ANALYSIS_REQUEST_LIMIT=20
 ANALYSIS_REQUEST_WINDOW_SECONDS=60
 ANALYSIS_MAX_REQUEST_BYTES=32768
 FEEDBACK_STORAGE=disabled
+```
+
+Configure infrastructure-only values separately so the application container never receives the Tunnel token:
+
+```text
 CLOUDFLARE_TUNNEL_TOKEN=<server-only-token>
 MAILLUME_IMAGE=ghcr.io/matthiasbusscher/maillume:sha-<full-commit>
 ```

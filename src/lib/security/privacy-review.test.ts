@@ -64,6 +64,9 @@ function main() {
   const quotaRefundMigration = readProjectFile(
     "supabase/migrations/20260711180000_refund_api_quota.sql",
   );
+  const apiQuotaFixMigration = readProjectFile(
+    "supabase/migrations/20260714071000_fix_consume_api_quota.sql",
+  );
   const hostedApiRoute = readProjectFile("src/app/api/v1/analyze/route.ts");
   const extensionManifest = readProjectFile("integrations/browser-extension/manifest.json");
   const extensionPanel = readProjectFile("integrations/browser-extension/sidepanel.js");
@@ -127,6 +130,8 @@ function main() {
   assert.match(apiAccessMigration, /secret_hash char\(64\)/);
   assert.match(apiAccessMigration, /consume_api_quota/);
   assert.match(apiAccessMigration, /purge_expired_api_usage/);
+  assert.match(apiQuotaFixMigration, /on conflict on constraint api_usage_monthly_pkey/);
+  assert.doesNotMatch(apiQuotaFixMigration, /on conflict \(api_key_id,/);
   assert.match(quotaRefundMigration, /greatest\(0, request_count - 1\)/);
   assert.match(hostedApiRoute, /refund_api_quota/);
   assert.doesNotMatch(apiAccessMigration, /^\s*(body|subject|sender_email|message_text|links|result|ip_address)\s+/im);

@@ -4,7 +4,11 @@ import type {
   EmailAnalysisInput,
   EmailAnalysisResult,
 } from "../types";
-import type { AiAnalysisConfig, AnalysisConfig } from "./config";
+import {
+  DEFAULT_AI_PROVIDER_TIMEOUT_MS,
+  type AiAnalysisConfig,
+  type AnalysisConfig,
+} from "./config";
 import { AI_ANALYSIS_SYSTEM_PROMPT, buildAiAnalysisUserPrompt } from "./ai-prompt";
 import { AI_ANALYSIS_SCHEMA, AiResponseValidationError, parseAiAnalysisJson } from "./ai-schema";
 import { analyzeEmailHeuristic } from "./heuristic-analysis";
@@ -64,47 +68,52 @@ async function analyzeWithOpenAi(
   input: EmailAnalysisInput,
   fetcher: Fetcher,
 ): Promise<EmailAnalysisResult> {
-  const response = await fetchProvider("OpenAI", () =>
-    fetcher("https://api.openai.com/v1/responses", {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: config.model,
-        input: [
-          {
-            role: "system",
-            content: AI_ANALYSIS_SYSTEM_PROMPT,
-          },
-          {
-            role: "user",
-            content: buildAiAnalysisUserPrompt(input),
-          },
-        ],
-        max_output_tokens: config.maxOutputTokens,
-        text: {
-          format: {
-            type: "json_schema",
-            name: "email_risk_assessment",
-            strict: true,
-            schema: AI_ANALYSIS_SCHEMA,
-          },
+  return fetchProvider(
+    "OpenAI",
+    config.requestTimeoutMs ?? DEFAULT_AI_PROVIDER_TIMEOUT_MS,
+    async (signal) => {
+      const response = await fetcher("https://api.openai.com/v1/responses", {
+        method: "POST",
+        cache: "no-store",
+        signal,
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+          "Content-Type": "application/json",
         },
-      }),
-    }),
+        body: JSON.stringify({
+          model: config.model,
+          input: [
+            {
+              role: "system",
+              content: AI_ANALYSIS_SYSTEM_PROMPT,
+            },
+            {
+              role: "user",
+              content: buildAiAnalysisUserPrompt(input),
+            },
+          ],
+          max_output_tokens: config.maxOutputTokens,
+          text: {
+            format: {
+              type: "json_schema",
+              name: "email_risk_assessment",
+              strict: true,
+              schema: AI_ANALYSIS_SCHEMA,
+            },
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new AiProviderRequestError(`OpenAI request failed with status ${response.status}.`);
+      }
+
+      const payload = await readProviderJson(response);
+      const content = extractOpenAiText(payload);
+
+      return parseAiAnalysisJson(content);
+    },
   );
-
-  if (!response.ok) {
-    throw new AiProviderRequestError(`OpenAI request failed with status ${response.status}.`);
-  }
-
-  const payload = await readProviderJson(response);
-  const content = extractOpenAiText(payload);
-
-  return parseAiAnalysisJson(content);
 }
 
 async function analyzeWithAnthropic(
@@ -112,43 +121,50 @@ async function analyzeWithAnthropic(
   input: EmailAnalysisInput,
   fetcher: Fetcher,
 ): Promise<EmailAnalysisResult> {
-  const response = await fetchProvider("Anthropic", () =>
-    fetcher("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": config.apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: config.model,
-        max_tokens: config.maxOutputTokens,
-        system: AI_ANALYSIS_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: buildAiAnalysisUserPrompt(input),
-          },
-        ],
-        output_config: {
-          format: {
-            type: "json_schema",
-            schema: AI_ANALYSIS_SCHEMA,
-          },
+  return fetchProvider(
+    "Anthropic",
+    config.requestTimeoutMs ?? DEFAULT_AI_PROVIDER_TIMEOUT_MS,
+    async (signal) => {
+      const response = await fetcher("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        cache: "no-store",
+        signal,
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": config.apiKey,
+          "anthropic-version": "2023-06-01",
         },
-      }),
-    }),
+        body: JSON.stringify({
+          model: config.model,
+          max_tokens: config.maxOutputTokens,
+          system: AI_ANALYSIS_SYSTEM_PROMPT,
+          messages: [
+            {
+              role: "user",
+              content: buildAiAnalysisUserPrompt(input),
+            },
+          ],
+          output_config: {
+            format: {
+              type: "json_schema",
+              schema: AI_ANALYSIS_SCHEMA,
+            },
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new AiProviderRequestError(
+          `Anthropic request failed with status ${response.status}.`,
+        );
+      }
+
+      const payload = await readProviderJson(response);
+      const content = extractAnthropicText(payload);
+
+      return parseAiAnalysisJson(content);
+    },
   );
-
-  if (!response.ok) {
-    throw new AiProviderRequestError(`Anthropic request failed with status ${response.status}.`);
-  }
-
-  const payload = await readProviderJson(response);
-  const content = extractAnthropicText(payload);
-
-  return parseAiAnalysisJson(content);
 }
 
 async function analyzeWithOpenAiCompatible(
@@ -156,57 +172,79 @@ async function analyzeWithOpenAiCompatible(
   input: EmailAnalysisInput,
   fetcher: Fetcher,
 ): Promise<EmailAnalysisResult> {
-  const response = await fetchProvider("OpenAI-compatible provider", () =>
-    fetcher(`${getOpenAiCompatibleBaseUrl(config)}/chat/completions`, {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          {
-            role: "system",
-            content: [
-              AI_ANALYSIS_SYSTEM_PROMPT,
-              "Return only valid JSON matching this schema:",
-              JSON.stringify(AI_ANALYSIS_SCHEMA),
-            ].join("\n"),
-          },
-          {
-            role: "user",
-            content: buildAiAnalysisUserPrompt(input),
-          },
-        ],
-        max_tokens: config.maxOutputTokens,
-        response_format: {
-          type: "json_object",
+  return fetchProvider(
+    "OpenAI-compatible provider",
+    config.requestTimeoutMs ?? DEFAULT_AI_PROVIDER_TIMEOUT_MS,
+    async (signal) => {
+      const response = await fetcher(`${getOpenAiCompatibleBaseUrl(config)}/chat/completions`, {
+        method: "POST",
+        cache: "no-store",
+        signal,
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+          "Content-Type": "application/json",
         },
-        stream: false,
-        temperature: 0,
-      }),
-    }),
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            {
+              role: "system",
+              content: [
+                AI_ANALYSIS_SYSTEM_PROMPT,
+                "Return only valid JSON matching this schema:",
+                JSON.stringify(AI_ANALYSIS_SCHEMA),
+              ].join("\n"),
+            },
+            {
+              role: "user",
+              content: buildAiAnalysisUserPrompt(input),
+            },
+          ],
+          max_tokens: config.maxOutputTokens,
+          response_format: {
+            type: "json_object",
+          },
+          stream: false,
+          temperature: 0,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new AiProviderRequestError(
+          `OpenAI-compatible provider request failed with status ${response.status}.`,
+        );
+      }
+
+      const payload = await readProviderJson(response);
+      const content = extractChatCompletionText(payload);
+
+      return parseAiAnalysisJson(content);
+    },
   );
-
-  if (!response.ok) {
-    throw new AiProviderRequestError(
-      `OpenAI-compatible provider request failed with status ${response.status}.`,
-    );
-  }
-
-  const payload = await readProviderJson(response);
-  const content = extractChatCompletionText(payload);
-
-  return parseAiAnalysisJson(content);
 }
 
-async function fetchProvider(provider: string, request: () => Promise<Response>): Promise<Response> {
+async function fetchProvider<T>(
+  provider: string,
+  timeoutMs: number,
+  request: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    return await request();
-  } catch {
+    return await request(controller.signal);
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new AiProviderRequestError(`${provider} request timed out.`);
+    }
+
+    if (error instanceof AiProviderRequestError || error instanceof AiResponseValidationError) {
+      throw error;
+    }
+
     throw new AiProviderRequestError(`${provider} request failed.`);
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
