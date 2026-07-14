@@ -1,5 +1,6 @@
 export const MAX_SCREENSHOT_SIZE_BYTES = 5 * 1024 * 1024;
 export const MAX_EML_SIZE_BYTES = 2 * 1024 * 1024;
+export const DEFAULT_ANALYSIS_MAX_REQUEST_BYTES = 32 * 1024;
 
 export const SUPPORTED_SCREENSHOT_MIME_TYPES = [
   "image/png",
@@ -37,4 +38,8 @@ export function isSupportedEmlFile(file: Pick<FileLike, "name" | "type">): boole
 
 export function isWithinFileSizeLimit(file: Pick<FileLike, "size">, maxBytes: number): boolean {
   return Number.isFinite(file.size) && file.size > 0 && file.size <= maxBytes;
+}
+
+export function getSerializedRequestSize(payload: unknown): number {
+  return new TextEncoder().encode(JSON.stringify(payload)).byteLength;
 }

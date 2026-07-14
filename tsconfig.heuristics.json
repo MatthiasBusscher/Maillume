@@ -26,6 +26,8 @@
     "src/lib/analysis/concurrency.ts",
     "src/lib/analysis/concurrency.test.ts",
     "src/lib/analysis/rate-limit.ts",
+    "src/lib/analysis/request-limits.ts",
+    "src/lib/analysis/request-limits.test.ts",
     "src/lib/analysis/providers.ts",
     "src/lib/eml/parse-eml.test.ts",
     "src/lib/eml/parse-eml.ts",

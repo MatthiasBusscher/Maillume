@@ -22,7 +22,6 @@ export function GoogleSignInButton({ configured, labels }: { configured: boolean
     setError("");
 
     const redirectTo = new URL("/auth/callback", window.location.origin);
-    redirectTo.searchParams.set("next", "/account");
 
     const { error: signInError } = await supabase.auth.signInWithOAuth({
       provider: "google",

@@ -26,6 +26,7 @@ export const accountNl = {
       notConfigured: "Inloggen met Google is niet ingesteld voor deze omgeving. De scanner werkt nog steeds zonder account.",
       unavailable: "Inloggen met Google is niet ingesteld voor deze omgeving.",
       failed: "Inloggen met Google kon niet worden gestart. Probeer het opnieuw.",
+      callbackFailed: "Inloggen met Google kon niet worden voltooid. Probeer het opnieuw. Controleer de toegestane omleidings-URL als dit blijft gebeuren.",
     },
   },
   account: {

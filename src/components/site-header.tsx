@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Github, LogIn, Menu, ScanSearch } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
-import { getAppHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
+import { getAppHref, getAppRouteHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
 import { getRequestPathname, getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizePath } from "@/lib/i18n/site-locale";
 
@@ -18,6 +18,7 @@ export async function SiteHeader() {
     navigation: [["/platform", "Platform"], ["/self-hosted", "Self-hosted"], ["/pricing", "Pricing"]] as const,
   };
   const appHref = localizeHref(getAppHref(), locale);
+  const signInHref = localizeHref(getAppRouteHref("/auth/sign-in"), locale);
   const navigation = copy.navigation.map(([href, label]) => ({ href: localizePath(href, locale), label }));
 
   return (
@@ -47,7 +48,7 @@ export async function SiteHeader() {
         <div className="hidden items-center gap-2 md:flex">
           <LanguageLinks locale={locale} pathname={pathname} />
           <Link
-            href={localizePath("/auth/sign-in", locale)}
+            href={signInHref}
             className="inline-flex h-10 items-center gap-2 border border-[#aeb6ac] px-4 text-sm font-semibold text-[#2b342c] transition hover:border-[#111711] hover:bg-white"
           >
             <LogIn className="h-4 w-4" aria-hidden="true" />
@@ -93,7 +94,7 @@ export async function SiteHeader() {
             <div className="mt-3 grid grid-cols-2 gap-2">
               <div className="col-span-2"><LanguageLinks locale={locale} pathname={pathname} /></div>
               <Link
-                href={localizePath("/auth/sign-in", locale)}
+                href={signInHref}
                 className="inline-flex h-10 items-center justify-center border border-[#aeb6ac] bg-white px-3 text-sm font-semibold"
               >
                 {copy.signIn}

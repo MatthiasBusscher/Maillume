@@ -5,7 +5,9 @@ import { cookies } from "next/headers";
 
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
 
-export async function createServerSupabaseClient() {
+export async function createServerSupabaseClient(
+  { strictCookieWrites = false }: { strictCookieWrites?: boolean } = {},
+) {
   const config = getPublicSupabaseConfig();
 
   if (!config) {
@@ -24,7 +26,8 @@ export async function createServerSupabaseClient() {
           cookiesToSet.forEach(({ name, options, value }) => {
             cookieStore.set(name, value, options);
           });
-        } catch {
+        } catch (error) {
+          if (strictCookieWrites) throw error;
           // Server Components cannot always write refreshed cookies. Middleware handles refreshes.
         }
       },

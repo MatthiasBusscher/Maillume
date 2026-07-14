@@ -15,13 +15,18 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: dictionary.metadata.signInTitle, description: dictionary.metadata.signInDescription, robots: { index: false, follow: false } };
 }
 
-export default async function SignInPage() {
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const locale = await getRequestSiteLocale();
   const dictionary = locale === "nl" ? accountNl : accountEn;
   const copy = dictionary.signIn;
   const configured =
     getPublicSupabaseConfig() !== null && getSupabaseAdminConfig() !== null;
   const marketingHref = getMarketingHref();
+  const callbackFailed = (await searchParams).error === "oauth_callback_failed";
 
   return (
     <main className="grid min-h-screen bg-[#eef1eb] lg:grid-cols-[0.9fr_1.1fr]">
@@ -46,6 +51,11 @@ export default async function SignInPage() {
           <div className="mt-7">
             <GoogleSignInButton configured={configured} labels={copy.google} />
           </div>
+          {callbackFailed ? (
+            <p role="alert" className="mt-4 border-l-4 border-[#b2382b] bg-[#fff0ed] px-4 py-3 text-sm leading-6 text-[#7a2b23]">
+              {copy.google.callbackFailed}
+            </p>
+          ) : null}
           <div className="my-7 flex items-center gap-3 text-[10px] uppercase text-[#778177]">
             <span className="h-px flex-1 bg-[#cbd0c5]" />
             {copy.separator}
