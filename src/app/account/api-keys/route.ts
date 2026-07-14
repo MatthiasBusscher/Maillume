@@ -13,6 +13,12 @@ import {
 } from "@/lib/api-keys";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  ACCOUNT_API_KEY_MAX_REQUEST_BYTES,
+  hasRequestContentType,
+  isStrictSameOriginMutation,
+  readBoundedRequestBody,
+} from "@/lib/security/account-request";
 
 const PRIVATE_HEADERS = { "Cache-Control": "private, no-cache, no-store, max-age=0" };
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -81,20 +87,21 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!isSameOriginRequest(request)) {
+  if (!isStrictSameOriginMutation(request)) {
     return errorResponse("Cross-origin API key creation is not allowed.", 403);
   }
-  const context = await getAccountContext();
-  if (!context) return errorResponse("Authentication required.", 401);
-
-  const body = await readJsonBody(request);
-  if (!body) return errorResponse("Invalid JSON request body.", 400);
+  const bodyResult = await readJsonBody(request);
+  if (!bodyResult.ok) return invalidBodyResponse(bodyResult.reason);
+  const body = bodyResult.body;
   const name = normalizeApiKeyName(body.name);
   const lifetimeDays = body.lifetimeDays === undefined
     ? DEFAULT_API_KEY_LIFETIME_DAYS
     : normalizeApiKeyLifetimeDays(body.lifetimeDays);
   if (!name) return errorResponse("Name must be between 1 and 50 characters.", 400);
   if (!lifetimeDays) return errorResponse("Choose a supported API key lifetime.", 400);
+
+  const context = await getAccountContext();
+  if (!context) return errorResponse("Authentication required.", 401);
 
   const key = createApiKey();
   const { data, error } = await context.admin.rpc("create_hosted_api_key", {
@@ -119,18 +126,19 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  if (!isSameOriginRequest(request)) {
+  if (!isStrictSameOriginMutation(request)) {
     return errorResponse("Cross-origin API key rotation is not allowed.", 403);
   }
-  const context = await getAccountContext();
-  if (!context) return errorResponse("Authentication required.", 401);
-
-  const body = await readJsonBody(request);
-  if (!body) return errorResponse("Invalid JSON request body.", 400);
+  const bodyResult = await readJsonBody(request);
+  if (!bodyResult.ok) return invalidBodyResponse(bodyResult.reason);
+  const body = bodyResult.body;
   const id = normalizeKeyId(body.id);
   const lifetimeDays = normalizeApiKeyLifetimeDays(body.lifetimeDays);
   if (!id) return errorResponse("A valid key id is required.", 400);
   if (!lifetimeDays) return errorResponse("Choose a supported API key lifetime.", 400);
+
+  const context = await getAccountContext();
+  if (!context) return errorResponse("Authentication required.", 401);
 
   const key = createApiKey();
   const { data, error } = await context.admin.rpc("rotate_hosted_api_key", {
@@ -155,16 +163,17 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  if (!isSameOriginRequest(request)) {
+  if (!isStrictSameOriginMutation(request)) {
     return errorResponse("Cross-origin API key revocation is not allowed.", 403);
   }
-  const context = await getAccountContext();
-  if (!context) return errorResponse("Authentication required.", 401);
-
-  const body = await readJsonBody(request);
-  if (!body) return errorResponse("Invalid JSON request body.", 400);
+  const bodyResult = await readJsonBody(request);
+  if (!bodyResult.ok) return invalidBodyResponse(bodyResult.reason);
+  const body = bodyResult.body;
   const id = normalizeKeyId(body.id);
   if (!id) return errorResponse("A valid key id is required.", 400);
+
+  const context = await getAccountContext();
+  if (!context) return errorResponse("Authentication required.", 401);
 
   const { data, error } = await context.admin.rpc("revoke_hosted_api_key", {
     p_api_key_id: id,
@@ -185,12 +194,24 @@ async function getAccountContext() {
   return { admin, client: supabase, userId: data.user.id };
 }
 
-async function readJsonBody(request: Request): Promise<Record<string, unknown> | null> {
+type JsonBodyResult =
+  | { ok: true; body: Record<string, unknown> }
+  | { ok: false; reason: "invalid" | "too_large" };
+
+async function readJsonBody(request: Request): Promise<JsonBodyResult> {
+  if (!hasRequestContentType(request, "application/json")) {
+    return { ok: false, reason: "invalid" };
+  }
+
   try {
-    const body = await request.json();
-    return typeof body === "object" && body !== null ? body as Record<string, unknown> : null;
+    const rawBody = await readBoundedRequestBody(request, ACCOUNT_API_KEY_MAX_REQUEST_BYTES);
+    if (!rawBody.ok) return { ok: false, reason: "too_large" };
+    const body = JSON.parse(rawBody.text) as unknown;
+    return typeof body === "object" && body !== null
+      ? { ok: true, body: body as Record<string, unknown> }
+      : { ok: false, reason: "invalid" };
   } catch {
-    return null;
+    return { ok: false, reason: "invalid" };
   }
 }
 
@@ -229,16 +250,12 @@ function operationError(status: string, operation: "creation" | "rotation") {
   return errorResponse(`API key ${operation} failed.`, 503);
 }
 
-function isSameOriginRequest(request: Request) {
-  const origin = request.headers.get("origin");
-  if (!origin) return true;
-  try {
-    return new URL(origin).origin === new URL(request.url).origin;
-  } catch {
-    return false;
-  }
-}
-
 function errorResponse(error: string, status: number, headers: HeadersInit = {}) {
   return NextResponse.json({ error }, { status, headers: { ...PRIVATE_HEADERS, ...headers } });
+}
+
+function invalidBodyResponse(reason: "invalid" | "too_large") {
+  return reason === "too_large"
+    ? errorResponse("Request body is too large.", 413)
+    : errorResponse("Invalid JSON request body.", 400);
 }

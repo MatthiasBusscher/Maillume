@@ -19,13 +19,26 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: dictionary.metadata.accountTitle, description: dictionary.metadata.accountDescription, robots: { index: false, follow: false } };
 }
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const locale = await getRequestSiteLocale();
   const dictionary = locale === "nl" ? accountNl : accountEn;
   const copy = dictionary.account;
+  const requestedError = (await searchParams).error;
   const supabase = await createServerSupabaseClient();
   const { data } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
   const deletionConfigured = getSupabaseAdminConfig() !== null;
+  const deletionError = requestedError
+    ? {
+        confirmation_required: copy.deletionErrors.confirmationRequired,
+        deletion_unavailable: copy.deletionErrors.unavailable,
+        deletion_failed: copy.deletionErrors.failed,
+        recent_auth_required: copy.deletionErrors.recentAuthRequired,
+      }[requestedError]
+    : undefined;
 
   if (!data.user) {
     return (
@@ -78,6 +91,11 @@ export default async function AccountPage() {
           <p className="font-mono text-[10px] uppercase text-[#b2382b]">{copy.controlEyebrow}</p>
           <h2 className="mt-3 text-xl font-semibold text-[#111711]">{copy.deleteTitle}</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#59655a]">{copy.deleteBody}</p>
+          {deletionError ? (
+            <p role="alert" className="mt-4 max-w-2xl border-l-4 border-[#b2382b] bg-[#fff7f5] px-4 py-3 text-sm leading-6 text-[#71352e]">
+              {deletionError}
+            </p>
+          ) : null}
           {deletionConfigured ? (
             <details className="mt-5 max-w-2xl border border-[#d08b82] bg-[#fff7f5] p-4">
               <summary className="cursor-pointer font-semibold text-[#8f251b]">{copy.showDeletion}</summary>

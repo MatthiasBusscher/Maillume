@@ -50,6 +50,12 @@ export const accountNl = {
     deletionConfirmation: "Ik begrijp dat mijn accountidentiteit wordt verwijderd en dat dit niet ongedaan kan worden gemaakt.",
     deletePermanently: "Account definitief verwijderen",
     deletionUnavailable: "Accountverwijdering is niet ingesteld voor deze omgeving. Productie-authenticatie moet uitgeschakeld blijven totdat er een Supabase-geheim voor uitsluitend de server beschikbaar is.",
+    deletionErrors: {
+      confirmationRequired: "Bevestig dat je begrijpt dat de verwijdering definitief is voordat je doorgaat.",
+      unavailable: "Accountverwijdering is tijdelijk niet beschikbaar. Probeer het later opnieuw.",
+      failed: "Je account kon niet worden verwijderd. Er is niets gewijzigd. Probeer het opnieuw.",
+      recentAuthRequired: "Voor je veiligheid is voor definitief verwijderen een recente aanmelding vereist. Log uit, log opnieuw in en keer binnen 15 minuten terug naar deze instelling.",
+    },
   },
   apiKeys: {
     title: "API-sleutels voor integraties",

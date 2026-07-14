@@ -42,6 +42,8 @@
     "src/lib/feedback/types.ts",
     "src/lib/feedback/validation.ts",
     "src/lib/security/privacy-review.test.ts",
+    "src/lib/security/account-request.ts",
+    "src/lib/security/account-request.test.ts",
     "src/lib/supabase/config.test.ts",
     "src/lib/supabase/config.ts",
     "src/lib/scan-limits.test.ts",

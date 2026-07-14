@@ -13,6 +13,13 @@ Maillume hosted integration keys are revocable credentials for the browser, Gmai
 - Plaintext keys are returned once. Supabase stores only a SHA-256 verifier, and authenticated clients cannot select that column.
 - Account deletion cascades through limits, aggregate usage, keys, and rotation lineage.
 
+## Browser mutation boundary
+
+- API-key creation, rotation, revocation, and account deletion require an exact same-origin `Origin`; requests without it are rejected. Contradictory Fetch Metadata is also rejected.
+- API-key mutation bodies are limited to 4 KiB and account-deletion bodies to 1 KiB. Limits are enforced while streaming even when `Content-Length` is absent.
+- Permanent account deletion requires a Supabase `last_sign_in_at` no more than 15 minutes old. The user must sign out and authenticate again when that window has expired.
+- These controls supplement Supabase authentication and RLS. They must not be weakened to accommodate non-browser API clients; integration clients use hosted API keys through `/api/v1/analyze` instead.
+
 ## Migration and verification
 
 This is a forward-only cutover because the migration removes the per-key quota RPCs. Deploy the corresponding application image first, then immediately apply `20260714183000_harden_api_key_lifecycle.sql`. During that short interval hosted API-key requests and key management may return `503`, while anonymous web scans remain available.

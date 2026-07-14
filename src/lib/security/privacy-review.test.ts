@@ -49,6 +49,7 @@ function main() {
   const authCallbackContent = readProjectFile("src/app/auth/callback/route.ts");
   const authRedirectContent = readProjectFile("src/app/auth/callback/redirect.ts");
   const accountDeletionContent = readProjectFile("src/app/account/delete/route.ts");
+  const accountRequestGuard = readProjectFile("src/lib/security/account-request.ts");
   const scannerPageContent = readProjectFile("src/app/app/page.tsx");
   const feedbackMigration = readProjectFile(
     "supabase/migrations/20260710150000_create_detection_feedback.sql",
@@ -101,6 +102,8 @@ function main() {
   assert.match(accountDeletionContent, /getUser\(\)/);
   assert.match(accountDeletionContent, /admin\.auth\.admin\.deleteUser/);
   assert.match(accountDeletionContent, /Cross-origin account deletion is not allowed/);
+  assert.match(accountDeletionContent, /ACCOUNT_DELETE_MAX_REQUEST_BYTES/);
+  assert.match(accountDeletionContent, /hasRecentAuthentication\(data\.user\.last_sign_in_at\)/);
   assert.match(accountDeletionContent, /private, no-cache, no-store/);
   assert.ok(
     accountDeletionContent.indexOf("getUser()") <
@@ -108,6 +111,10 @@ function main() {
     "account deletion must verify the signed-in user before using the admin API",
   );
   assert.doesNotMatch(scannerPageContent, /\bredirect\s*\(/);
+  assert.match(accountRequestGuard, /if \(!origin\) return false/);
+  assert.match(accountRequestGuard, /fetchSite === "same-origin"/);
+  assert.match(accountRequestGuard, /totalBytes > maxBytes/);
+  assert.match(accountRequestGuard, /RECENT_AUTH_MAX_AGE_MS = 15 \* 60 \* 1000/);
 
   for (const forbiddenColumn of [
     "body",
@@ -191,6 +198,11 @@ function main() {
   assert.match(accountApiKeysRoute, /create_hosted_api_key/);
   assert.match(accountApiKeysRoute, /rotate_hosted_api_key/);
   assert.match(accountApiKeysRoute, /revoke_hosted_api_key/);
+  assert.match(accountApiKeysRoute, /ACCOUNT_API_KEY_MAX_REQUEST_BYTES/);
+  assert.equal(
+    (accountApiKeysRoute.match(/isStrictSameOriginMutation\(request\)/g) ?? []).length,
+    3,
+  );
   assert.doesNotMatch(accountApiKeysRoute, /\.insert\(|\.update\(/);
   assert.doesNotMatch(hostedApiRoute, /\.eq\("secret_hash"/);
   assert.doesNotMatch(apiAccessMigration, /^\s*(body|subject|sender_email|message_text|links|result|ip_address)\s+/im);
