@@ -22,9 +22,19 @@ Initial thresholds:
 ## Routine Maintenance
 
 - Weekly: review container health, Cloudflare security events, Hostinger resource graphs, and backup completion.
-- Monthly: install OS updates, pull and restart the official `cloudflared` image, review dependencies and image vulnerabilities, inspect disk/log growth, and verify SSH/firewall users.
-- Before major change: create a Hostinger snapshot, verify the previous image tag, and test rollback.
+- Monthly: install OS updates, review the official `cloudflared` release and image vulnerabilities, update its verified digest when needed, inspect disk/log growth, and verify SSH/firewall users.
+- Before major change: create a Hostinger snapshot, verify the previous image digest, and test rollback.
 - Quarterly: restore into a disposable environment and verify the documented recovery path.
+
+## Immutable Image Inputs
+
+Production accepts Maillume and cloudflared images only by registry digest. The release workflow passes Maillume to the deployment script as `ghcr.io/matthiasbusscher/maillume@sha256:<64-hex-digest>`. Compose defaults to the official multi-platform digest resolved from Cloudflare's `2026.7.0` release on 14 July 2026:
+
+```dotenv
+CLOUDFLARED_IMAGE=cloudflare/cloudflared@sha256:5e49861633763e8933475477c20bae6039ed47f32c1d267a34babc347f28f0df
+```
+
+`CLOUDFLARED_IMAGE` is optional unless you intentionally update the sidecar. Resolve any replacement from an official versioned Cloudflare image, record the release, and keep the full digest. The deployment script rejects tags such as `latest` and non-Cloudflare image repositories.
 
 ## DDoS or Abuse Response
 
@@ -42,7 +52,10 @@ Initial thresholds:
 ```bash
 cd /opt/maillume
 previous="$(cat .previous-production-image)"
-MAILLUME_IMAGE="$previous" docker compose -f docker-compose.production.yml up -d
+MAILLUME_IMAGE="$previous" docker compose \
+  --env-file .env.infrastructure \
+  -f docker-compose.production.yml \
+  up -d --remove-orphans
 ```
 
 Verify health, scanner, and authentication afterward. Do not delete the failing image until the cause is understood.

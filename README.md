@@ -28,6 +28,7 @@ Paste an email, add a screenshot, or open an exported `.eml` file. Maillume show
 ## Key Capabilities
 
 - **Explainable results:** risk score, risk level, suspicious signals, detected links, and a practical next action.
+- **Versioned risk index:** the score is a capped, explainable index of observed evidence, not a probability that a message is malicious.
 - **Three input paths:** pasted text, browser-side screenshot OCR, and browser-side `.eml` parsing.
 - **No scan history:** email content and completed assessments are not written to a scan database.
 - **Useful without an account:** anonymous heuristic scanning is the permanent free core.
@@ -109,14 +110,23 @@ Both analysis modes return the same structured contract:
 
 ```ts
 type EmailAnalysisResult = {
+  classification: "likely_phishing" | "likely_spam" | "likely_legitimate" | "uncertain";
   risk_level: "low" | "medium" | "high";
   risk_score: number;
+  score_factors: Array<{
+    id: string;
+    family: "identity" | "destination" | "intent" | "delivery" | "style";
+    contribution: number;
+    label: string;
+  }>;
   suspicious_signals: string[];
   detected_links: string[];
   recommended_action: string;
   short_explanation: string;
 };
 ```
+
+`analysis_version` is currently `analysis-v2`. Applied factor contributions always sum to `risk_score`. Maillume derives classification, level, links, and score server-side; optional AI providers return stable evidence IDs instead of choosing a number.
 
 ## Self-Hosting and AI
 
@@ -160,7 +170,7 @@ npm run test:smoke
 npm run build
 ```
 
-Reusable scoring fixtures must be synthetic or fully sanitized. Never commit real private email content, inbox screenshots, raw `.eml` files, private headers, or credentials.
+Reusable scoring fixtures must be synthetic or fully sanitized. The CI corpus contains 300 English/Dutch synthetic cases split by scenario into development and locked sets. It is a regression benchmark, not evidence of real-world accuracy. Never commit real private email content, inbox screenshots, raw `.eml` files, private headers, or credentials.
 
 Useful guides: [architecture](docs/architecture.md), [evaluation](docs/evaluation.md), [operations](docs/operations.md), [launch checklist](docs/launch-checklist.md), and [roadmap](docs/roadmap.md).
 

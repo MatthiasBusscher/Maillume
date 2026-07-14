@@ -1,6 +1,6 @@
 services:
   maillume:
-    image: ${MAILLUME_IMAGE:?Set MAILLUME_IMAGE to an immutable GHCR tag}
+    image: ${MAILLUME_IMAGE:?Set MAILLUME_IMAGE to an immutable GHCR digest}
     init: true
     restart: unless-stopped
     env_file:
@@ -33,7 +33,7 @@ services:
         max-file: "3"
 
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    image: ${CLOUDFLARED_IMAGE:-cloudflare/cloudflared@sha256:5e49861633763e8933475477c20bae6039ed47f32c1d267a34babc347f28f0df}
     init: true
     restart: unless-stopped
     command: tunnel --no-autoupdate run

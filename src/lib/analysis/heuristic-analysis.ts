@@ -1,502 +1,251 @@
-import type { AnalysisLocale, EmailAnalysisInput, EmailAnalysisResult, RiskLevel } from "../types";
-
-const DUTCH_SIGNALS: Record<string, string> = {
-  "Uses urgent language that pressures the recipient to act quickly.": "Gebruikt dringende taal die de ontvanger onder druk zet om snel te handelen.",
-  "Asks for account credentials or identity verification.": "Vraagt om inloggegevens of identiteitsverificatie.",
-  "Mentions payments, invoices, refunds, or financial transfer pressure.": "Noemt betalingen, facturen, terugbetalingen of zet aan tot een geldoverdracht.",
-  "References an attachment or document that may be used as bait.": "Verwijst naar een bijlage of document dat als lokaas kan worden gebruikt.",
-  "Impersonates a familiar service or authority.": "Bootst een bekende dienst of instantie na.",
-  "Uses prize, giveaway, or promotional spam language.": "Gebruikt taal over prijzen, winacties of ongewenste aanbiedingen.",
-  "Claims an account was blocked or a subscription will expire unless the user acts.": "Beweert dat een account is geblokkeerd of een abonnement verloopt als de gebruiker niets doet.",
-  "Uses fake security or antivirus subscription language.": "Gebruikt misleidende taal over beveiliging of antivirusabonnementen.",
-  "Pushes the recipient toward a link or button as the next step.": "Stuurt de ontvanger aan op een link of knop als volgende stap.",
-  "Looks like unsolicited sales or lead-generation outreach.": "Lijkt op ongevraagde verkoop- of acquisitiemail.",
-  "Contains financial, loan, investment, or get-rich-quick language.": "Bevat taal over financiën, leningen, beleggingen of snel rijk worden.",
-  "Contains common medical, adult, gambling, or high-risk spam terms.": "Bevat veelvoorkomende termen uit medische, erotische, gok- of andere risicovolle spam.",
-  "Uses a generic greeting instead of identifying the recipient.": "Gebruikt een algemene aanhef zonder de ontvanger te benoemen.",
-  "Contains external links that should be checked before opening.": "Bevat externe links die u vóór het openen moet controleren.",
-  "Uses a shortened URL, which can hide the final destination.": "Gebruikt een verkorte URL die de uiteindelijke bestemming kan verbergen.",
-  "Includes a link with a domain pattern often abused in suspicious campaigns.": "Bevat een link met een domeinpatroon dat vaak in verdachte campagnes wordt misbruikt.",
-  "Displays one link destination but points to a different domain.": "Toont één linkbestemming maar verwijst naar een ander domein.",
-  "Uses excessive capitalization or punctuation to create pressure.": "Gebruikt overmatig hoofdletters of leestekens om druk uit te oefenen.",
-  "Appears to obfuscate words, a common spam-filter evasion tactic.": "Lijkt woorden te verhullen, een veelgebruikte techniek om spamfilters te omzeilen.",
-  "The sender address does not look like a valid email address.": "Het adres van de afzender lijkt geen geldig e-mailadres.",
-  "Sender domain uses a top-level domain often seen in suspicious mail.": "Het afzenderdomein gebruikt een topleveldomein dat vaak in verdachte e-mail voorkomt.",
-  "Sender domain has an unusual number of hyphens or digits.": "Het afzenderdomein bevat opvallend veel koppeltekens of cijfers.",
-  "Sender domain appears to reference a known brand without using its official domain.": "Het afzenderdomein verwijst naar een bekend merk zonder het officiële domein te gebruiken.",
-  "The message has very little context, making it harder to validate.": "Het bericht bevat weinig context, waardoor het moeilijker te beoordelen is.",
-};
+import type { EmailAnalysisInput, EmailLinkPair } from "../types";
+import {
+  buildAnalysisResult,
+  getRegistrableDomain,
+  type EvidenceId,
+} from "./evidence";
 
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
-const HTML_HREF_PATTERN = /\bhref\s*=\s*["']([^"']+)["']/gi;
-const SHORT_LINK_DOMAINS = ["bit.ly", "tinyurl.com", "t.co", "rebrand.ly", "is.gd", "ow.ly"];
-const RISKY_TLDS = [".zip", ".mov", ".click", ".top", ".xyz", ".ru"];
-const IMPERSONATED_BRANDS = [
-  { name: "Amazon", domains: ["amazon.com"] },
-  { name: "Apple", domains: ["apple.com"] },
-  { name: "Belastingdienst", domains: ["belastingdienst.nl"] },
-  { name: "DHL", domains: ["dhl.com"] },
-  { name: "Facebook", domains: ["facebook.com", "meta.com"] },
-  { name: "FedEx", domains: ["fedex.com"] },
-  { name: "Google", domains: ["google.com"] },
-  { name: "Instagram", domains: ["instagram.com", "meta.com"] },
-  { name: "ING", domains: ["ing.nl"] },
-  { name: "McAfee", domains: ["mcafee.com"] },
-  { name: "Microsoft", domains: ["microsoft.com", "office.com", "outlook.com"] },
-  { name: "Netflix", domains: ["netflix.com"] },
-  { name: "Norton", domains: ["norton.com"] },
-  { name: "PayPal", domains: ["paypal.com"] },
-  { name: "PostNL", domains: ["postnl.nl"] },
-  { name: "Rabobank", domains: ["rabobank.nl"] },
-  { name: "UPS", domains: ["ups.com"] },
-];
+const HTML_LINK_PATTERN = /<a\b[^>]*href\s*=\s*["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+const SHORT_LINK_DOMAINS = new Set(["bit.ly", "tinyurl.com", "t.co", "rebrand.ly", "is.gd", "ow.ly"]);
+const RISKY_TLDS = new Set(["zip", "mov", "click", "top", "xyz", "ru"]);
+const BRAND_DOMAINS: Record<string, string[]> = {
+  amazon: ["amazon.com"],
+  apple: ["apple.com"],
+  belastingdienst: ["belastingdienst.nl"],
+  dhl: ["dhl.com"],
+  facebook: ["facebook.com", "meta.com"],
+  fedex: ["fedex.com"],
+  google: ["google.com"],
+  ing: ["ing.nl"],
+  instagram: ["instagram.com", "meta.com"],
+  mcafee: ["mcafee.com"],
+  microsoft: ["microsoft.com", "office.com", "outlook.com"],
+  netflix: ["netflix.com"],
+  norton: ["norton.com"],
+  paypal: ["paypal.com"],
+  postnl: ["postnl.nl"],
+  rabobank: ["rabobank.nl"],
+  ups: ["ups.com"],
+};
 
-const keywordGroups = [
+const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   {
-    score: 20,
-    label: "Uses urgent language that pressures the recipient to act quickly.",
-    patterns: [
-      /urgent/i,
-      /immediately/i,
-      /act now/i,
-      /final notice/i,
-      /today only/i,
-      /laatste waarschuwing/i,
-      /\bvandaag\b/i,
-      /voor (middernacht|het einde van de dag)/i,
-      /verloopt?/i,
-      /laatste kans/i,
-      /direct (actie|handelen|bevestigen)/i,
-      /binnen \d{1,2} (uur|uren)/i,
-    ],
+    id: "urgency_pressure",
+    patterns: [/\burgent\b/i, /immediately/i, /act now/i, /final notice/i, /today only/i, /laatste waarschuwing/i, /laatste kans/i, /bevestig direct/i, /direct (actie|handelen|bevestigen|annuleren)/i, /binnen \d{1,2} (uur|uren)/i],
   },
   {
-    score: 18,
-    label: "Asks for account credentials or identity verification.",
-    patterns: [
-      /password/i,
-      /login/i,
-      /verify/i,
-      /2fa/i,
-      /credential/i,
-      /authenticate/i,
-      /account (is )?(blocked|locked|suspended)/i,
-      /account (geblokkeerd|vergrendeld|opgeschort)/i,
-      /account(update| bijwerken|gegevens)/i,
-      /inloggen/i,
-      /verifi[eë]ren/i,
-      /identiteit bevestigen/i,
-      /gegevens (controleren|bijwerken|bevestigen)/i,
-      /bevestig (uw|je) (account|gegevens|identiteit)/i,
-    ],
+    id: "credential_request",
+    patterns: [/\bpassword\b/i, /\bcredentials?\b/i, /verify (your )?(?:[a-z-]+ )?(account|identity)/i, /sign in (below|here|now)/i, /wachtwoord/i, /inloggegevens/i, /identiteit bevestigen/i, /bevestig (?:direct )?(uw|je) (?:[a-z-]+)?(?:account|gegevens|identiteit)/i],
   },
   {
-    score: 16,
-    label: "Mentions payments, invoices, refunds, or financial transfer pressure.",
-    patterns: [
-      /invoice/i,
-      /payment/i,
-      /wire transfer/i,
-      /gift card/i,
-      /refund/i,
-      /crypto/i,
-      /betaling/i,
-      /betaal(methode|gegevens)/i,
-      /niet betaald/i,
-      /factuur/i,
-      /terugbetaling/i,
-      /bankrekening/i,
-      /rekeningnummer/i,
-      /overschrijving/i,
-      /incasso/i,
-    ],
+    id: "payment_request",
+    patterns: [/wire transfer/i, /gift card/i, /payment (required|overdue|failed)/i, /invoice (overdue|unpaid)/i, /betaal(methode|gegevens)/i, /betaling.*(mislukt|vereist|achterstallig)/i, /niet betaald/i, /achterstallige factuur/i, /terugbetaling/i, /overschrijving/i, /incasso/i],
   },
   {
-    score: 14,
-    label: "References an attachment or document that may be used as bait.",
-    patterns: [
-      /attachment/i,
-      /attached/i,
-      /shared document/i,
-      /docusign/i,
-      /download/i,
-      /bijlage/i,
-      /document (gedeeld|openen|downloaden)/i,
-      /open de bijlage/i,
-    ],
+    id: "changed_payment_details",
+    patterns: [/new (bank|payment) (account|details)/i, /changed? (our )?(bank|payment) details/i, /updated? (bank|payment) details/i, /nieuw(e)? (bankrekening|rekeningnummer|betaalgegevens)/i, /gewijzigd(e)? (bankrekening|rekeningnummer|betaalgegevens)/i],
   },
   {
-    score: 12,
-    label: "Impersonates a familiar service or authority.",
-    patterns: [
-      /microsoft/i,
-      /google/i,
-      /apple/i,
-      /paypal/i,
-      /bank/i,
-      /administrator/i,
-      /mcafee/i,
-      /norton/i,
-      /antivirus/i,
-      /internet security/i,
-      /belastingdienst/i,
-      /postnl/i,
-      /rabobank/i,
-    ],
+    id: "attachment_lure",
+    patterns: [/open (the )?attachment/i, /download (the )?(document|invoice|file)/i, /shared document/i, /docusign/i, /open de bijlage/i, /document (openen|downloaden|gedeeld)/i],
   },
   {
-    score: 14,
-    label: "Uses prize, giveaway, or promotional spam language.",
-    patterns: [
-      /congratulations/i,
-      /\bwinner\b/i,
-      /\bwon\b/i,
-      /\bclaim (your )?(prize|reward|gift|bonus)\b/i,
-      /\bfree\b/i,
-      /exclusive offer/i,
-      /limited time/i,
-      /\b\d{1,2}% off\b/i,
-      /special promotion/i,
-      /\b\d{1,2}% (korting|loyaliteitskorting)\b/i,
-      /aanbieding/i,
-      /loyaliteitskorting/i,
-      /korting.*toegepast/i,
-    ],
+    id: "prize_promotion",
+    patterns: [/congratulations/i, /\bwinner\b/i, /claim (your )?(prize|reward|gift|bonus)/i, /exclusive offer/i, /limited time/i, /\b\d{1,2}% off\b/i, /winnaar/i, /claim (uw|je) prijs/i, /loyaliteitskorting/i],
   },
   {
-    score: 24,
-    label: "Claims an account was blocked or a subscription will expire unless the user acts.",
-    patterns: [
-      /account (geblokkeerd|vergrendeld|opgeschort)/i,
-      /account (blocked|locked|suspended)/i,
-      /abonnement.*(verloopt|verlopen|verleng)/i,
-      /subscription.*(expires|renew|blocked)/i,
-      /voltooi (uw|je) verlenging/i,
-      /renew(al)? before/i,
-      /beveiliging.*garanderen/i,
-      /betaalmethode bijwerken/i,
-    ],
+    id: "account_threat",
+    patterns: [/account (blocked|locked|suspended)/i, /subscription.*(expires|renew|blocked)/i, /account (geblokkeerd|vergrendeld|opgeschort)/i, /abonnement.*(verloopt|verlopen|verleng)/i, /betaalmethode bijwerken/i],
   },
   {
-    score: 18,
-    label: "Uses fake security or antivirus subscription language.",
-    patterns: [
-      /mcafee/i,
-      /norton/i,
-      /antivirus/i,
-      /internet security/i,
-      /virusbescherming/i,
-      /beveiligingssoftware/i,
-      /systeem(poging|pogingen)/i,
-      /system attempt/i,
-      /verdachte (inlog|activiteit|poging)/i,
-    ],
+    id: "fake_security",
+    patterns: [/antivirus subscription/i, /internet security.*(expired|renew)/i, /virus protection.*expired/i, /antivirusabonnement/i, /virusbescherming.*verlopen/i, /beveiligingssoftware.*verleng/i],
   },
   {
-    score: 14,
-    label: "Pushes the recipient toward a link or button as the next step.",
-    patterns: [
-      /click here/i,
-      /open this link/i,
-      /follow the link/i,
-      /sign in below/i,
-      /klik hier/i,
-      /open deze link/i,
-      /gebruik de knop/i,
-      /volg de link/i,
-    ],
+    id: "link_call_to_action",
+    patterns: [/click here/i, /open this link/i, /follow the link/i, /use the button/i, /klik hier/i, /open deze link/i, /gebruik de knop/i, /volg de link/i],
   },
   {
-    score: 18,
-    label: "Looks like unsolicited sales or lead-generation outreach.",
-    patterns: [
-      /\bseo\b/i,
-      /rank (higher|on google)/i,
-      /increase (your )?(traffic|sales|leads)/i,
-      /qualified leads/i,
-      /web design/i,
-      /app development/i,
-      /guest post/i,
-      /backlink/i,
-      /marketing service/i,
-    ],
+    id: "unsolicited_sales",
+    patterns: [/rank (higher|on google)/i, /increase (your )?(traffic|sales|leads)/i, /qualified leads/i, /guest post/i, /backlink/i, /marketing service/i, /onze seo-diensten/i, /meer (leads|websiteverkeer)/i],
   },
   {
-    score: 14,
-    label: "Contains financial, loan, investment, or get-rich-quick language.",
-    patterns: [
-      /\bloan\b/i,
-      /\bdebt\b/i,
-      /\bcredit\b/i,
-      /investment opportunity/i,
-      /passive income/i,
-      /work from home/i,
-      /make money/i,
-      /\bforex\b/i,
-      /\bbitcoin\b/i,
-    ],
+    id: "investment_pitch",
+    patterns: [/investment opportunity/i, /guaranteed returns?/i, /passive income/i, /work from home/i, /make money/i, /\bforex\b/i, /crypto opportunity/i, /beleggingskans/i, /gegarandeerd rendement/i, /passief inkomen/i],
   },
   {
-    score: 12,
-    label: "Contains common medical, adult, gambling, or high-risk spam terms.",
-    patterns: [
-      /\bviagra\b/i,
-      /\bcialis\b/i,
-      /weight loss/i,
-      /\bcbd\b/i,
-      /\bcasino\b/i,
-      /\bbetting\b/i,
-      /\badult\b/i,
-    ],
+    id: "high_risk_spam",
+    patterns: [/\bviagra\b/i, /\bcialis\b/i, /weight loss/i, /\bcbd\b/i, /casino/i, /\bbetting\b/i, /online gokken/i, /gok(beloning|bonus)/i, /snel afvallen/i],
   },
   {
-    score: 7,
-    label: "Uses a generic greeting instead of identifying the recipient.",
-    patterns: [
-      /dear (customer|user|client|member|email user)/i,
-      /\bhello friend\b/i,
-      /beste (klant|gebruiker|abonnee|lid)/i,
-      /geachte (klant|gebruiker|abonnee|lid)/i,
-    ],
+    id: "generic_greeting",
+    patterns: [/dear (customer|user|client|member)/i, /hello friend/i, /beste (klant|gebruiker|abonnee|lid)/i, /geachte (klant|gebruiker|abonnee|lid)/i],
+  },
+  {
+    id: "executive_impersonation",
+    patterns: [/(i am|this is) (the )?(ceo|cfo|director|owner)/i, /on behalf of (the )?(ceo|cfo|director)/i, /ik ben (de )?(directeur|eigenaar)/i, /namens (de )?(directeur|eigenaar)/i],
+  },
+  {
+    id: "payroll_or_tax_request",
+    patterns: [/change (my )?(payroll|direct deposit)/i, /employee tax (form|details)/i, /w-?2 form/i, /wijzig (mijn )?(salaris|loon|bankrekening)/i, /loonheffing/i, /personeelsgegevens bijwerken/i],
+  },
+  {
+    id: "mfa_or_oauth_request",
+    patterns: [/approve (the )?(mfa|login|sign-in) (request|prompt)/i, /accept (this )?(app|oauth) (request|permission)/i, /keur (de )?(inlog|mfa).*(goed|verzoek)/i, /accepteer.*(app|oauth).*(toegang|verzoek)/i],
+  },
+  {
+    id: "qr_lure",
+    patterns: [/scan (the )?qr( code)?/i, /qr-code scannen/i, /scan de qr/i],
+  },
+  {
+    id: "callback_lure",
+    patterns: [/call (us|this number|support) (now|immediately|to cancel)/i, /bel (ons|dit nummer|de helpdesk).*(direct|annuleren)/i],
   },
 ];
 
-export function analyzeEmailHeuristic(input: EmailAnalysisInput): EmailAnalysisResult {
-  const locale = input.locale ?? "en";
-  const content = [input.subject, input.senderEmail, input.body].filter(Boolean).join("\n");
-  const links = extractLinks(content);
-  const signals: string[] = [];
-  let score = 10;
-
-  for (const group of keywordGroups) {
-    if (group.patterns.some((pattern) => pattern.test(content))) {
-      score += group.score;
-      signals.push(localizeSignal(group.label, locale));
-    }
-  }
-
-  if (links.length > 0) {
-    score += Math.min(20, links.length * 8);
-    signals.push(localizeSignal("Contains external links that should be checked before opening.", locale));
-  }
-
-  if (links.some((link) => SHORT_LINK_DOMAINS.some((domain) => link.includes(domain)))) {
-    score += 14;
-    signals.push(localizeSignal("Uses a shortened URL, which can hide the final destination.", locale));
-  }
-
-  if (links.some((link) => RISKY_TLDS.some((tld) => link.toLowerCase().includes(tld)))) {
-    score += 12;
-    signals.push(localizeSignal("Includes a link with a domain pattern often abused in suspicious campaigns.", locale));
-  }
-
-  if (hasMismatchedDisplayedLink(input.body) || hasParsedHiddenLinkMismatch(input.body)) {
-    score += 18;
-    signals.push(localizeSignal("Displays one link destination but points to a different domain.", locale));
-  }
-
-  if (hasExcessiveFormattingPressure(content)) {
-    score += 9;
-    signals.push(localizeSignal("Uses excessive capitalization or punctuation to create pressure.", locale));
-  }
-
-  if (hasObfuscatedSpamWords(content)) {
-    score += 12;
-    signals.push(localizeSignal("Appears to obfuscate words, a common spam-filter evasion tactic.", locale));
-  }
-
-  if (input.senderEmail) {
-    const senderDomain = getSenderDomain(input.senderEmail);
-
-    if (!senderDomain) {
-      score += 18;
-      signals.push(localizeSignal("The sender address does not look like a valid email address.", locale));
-    } else {
-      if (RISKY_TLDS.some((tld) => senderDomain.endsWith(tld))) {
-        score += 12;
-        signals.push(localizeSignal("Sender domain uses a top-level domain often seen in suspicious mail.", locale));
-      }
-
-      if (hasSuspiciousDomainShape(senderDomain)) {
-        score += 8;
-        signals.push(localizeSignal("Sender domain has an unusual number of hyphens or digits.", locale));
-      }
-
-      if (looksLikeBrandImpersonation(senderDomain)) {
-        score += 18;
-        signals.push(localizeSignal("Sender domain appears to reference a known brand without using its official domain.", locale));
-      }
-    }
-  }
-
-  if (input.body.trim().length < 80) {
-    score += 6;
-    signals.push(localizeSignal("The message has very little context, making it harder to validate.", locale));
-  }
-
-  const riskScore = Math.min(96, Math.max(4, score));
-  const riskLevel = getRiskLevel(riskScore);
-
-  return {
-    risk_level: riskLevel,
-    risk_score: riskScore,
-    suspicious_signals: signals,
-    detected_links: links,
-    recommended_action: getRecommendedAction(riskLevel, locale),
-    short_explanation: getExplanation(riskLevel, signals.length, links.length, locale),
-  };
+export function analyzeEmailHeuristic(input: EmailAnalysisInput) {
+  const { evidence, links } = collectHeuristicEvidence(input);
+  return buildAnalysisResult(evidence, links, input.locale ?? "en");
 }
 
-function extractLinks(content: string): string[] {
-  const visibleLinks = Array.from(content.matchAll(LINK_PATTERN), (match) =>
-    cleanLink(match[0]),
-  );
-  const hrefLinks = Array.from(content.matchAll(HTML_HREF_PATTERN), (match) => cleanLink(match[1]))
-    .filter((link) => /^https?:\/\//i.test(link));
+export function collectHeuristicEvidence(input: EmailAnalysisInput) {
+  const locale = input.locale ?? "en";
+  const messageContent = [input.subject, input.body].filter(Boolean).join("\n");
+  const evidence = new Set<EvidenceId>();
 
-  return Array.from(new Set([...visibleLinks, ...hrefLinks]));
+  for (const group of PATTERN_GROUPS) {
+    if (group.patterns.some((pattern) => pattern.test(messageContent))) evidence.add(group.id);
+  }
+
+  if (/(?:never|do not|nooit|niet).{0,24}(?:approve|goedkeur|keur).{0,18}(?:mfa|login|inlog)/i.test(messageContent)) {
+    evidence.delete("mfa_or_oauth_request");
+  }
+  if (/(?:you subscribed|opted in|subscription preferences|aangemeld voor|abonnementsvoorkeuren)/i.test(messageContent)) {
+    evidence.delete("prize_promotion");
+  }
+
+  if (mentionsKnownBrand(messageContent)) evidence.add("brand_mention");
+  if (hasExcessiveFormattingPressure(messageContent)) evidence.add("format_pressure");
+  if (hasObfuscatedSpamWords(messageContent)) evidence.add("obfuscation");
+  if (input.body.trim().length < 80) evidence.add("little_context");
+
+  const links = extractHttpLinks(messageContent);
+  if (links.length > 0) evidence.add("external_link");
+  if (links.some(isShortUrl)) evidence.add("short_url");
+  if (links.some(hasRiskyTld)) evidence.add("risky_link_domain");
+
+  const linkPairs = [...extractHtmlLinkPairs(input.body), ...(input.linkPairs ?? [])];
+  if (linkPairs.some(hasMismatchedLinkPair)) evidence.add("link_mismatch");
+
+  if (input.senderEmail) addSenderEvidence(input.senderEmail, evidence);
+
+  return { evidence: Array.from(evidence), links, locale };
+}
+
+export function extractHttpLinks(content: string): string[] {
+  return Array.from(
+    new Set(
+      Array.from(content.matchAll(LINK_PATTERN), (match) => cleanLink(match[0])).filter(isValidHttpUrl),
+    ),
+  );
+}
+
+export function extractHtmlLinkPairs(content: string): EmailLinkPair[] {
+  return Array.from(content.matchAll(HTML_LINK_PATTERN)).flatMap((match) => {
+    const displayedUrl = stripHtml(match[2]).match(LINK_PATTERN)?.[0];
+    if (!displayedUrl) return [];
+    return [{ displayedUrl: cleanLink(displayedUrl), destinationUrl: cleanLink(match[1]) }];
+  });
+}
+
+function addSenderEvidence(sender: string, evidence: Set<EvidenceId>) {
+  const senderDomain = getSenderDomain(sender);
+  if (!senderDomain) {
+    evidence.add("invalid_sender");
+    return;
+  }
+
+  const tld = senderDomain.split(".").at(-1)?.toLowerCase();
+  if (tld && RISKY_TLDS.has(tld)) evidence.add("risky_sender_domain");
+  if (hasSuspiciousDomainShape(senderDomain)) evidence.add("suspicious_sender_shape");
+  if (looksLikeBrandImpersonation(senderDomain)) evidence.add("brand_lookalike_sender");
+}
+
+function hasMismatchedLinkPair(pair: EmailLinkPair): boolean {
+  const displayed = getRegistrableDomain(pair.displayedUrl);
+  const destination = getRegistrableDomain(pair.destinationUrl);
+  return Boolean(displayed && destination && displayed !== destination);
+}
+
+function isShortUrl(link: string): boolean {
+  try {
+    const hostname = new URL(link).hostname.toLowerCase();
+    return Array.from(SHORT_LINK_DOMAINS).some(
+      (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
+    );
+  } catch {
+    return false;
+  }
+}
+
+function hasRiskyTld(link: string): boolean {
+  try {
+    const tld = new URL(link).hostname.split(".").at(-1)?.toLowerCase();
+    return Boolean(tld && RISKY_TLDS.has(tld));
+  } catch {
+    return false;
+  }
+}
+
+function getSenderDomain(sender: string): string | null {
+  const angleAddress = sender.match(/<([^>]+)>/)?.[1] ?? sender;
+  const match = angleAddress.trim().toLowerCase().match(/^[^\s@]+@([^\s@]+)$/);
+  return match?.[1]?.replace(/\.$/, "") ?? null;
+}
+
+function hasSuspiciousDomainShape(domain: string): boolean {
+  const digits = domain.match(/\d/g)?.length ?? 0;
+  const hyphens = domain.match(/-/g)?.length ?? 0;
+  return digits >= 4 || hyphens >= 3;
+}
+
+function looksLikeBrandImpersonation(senderDomain: string): boolean {
+  const registrable = getRegistrableDomain(senderDomain);
+  if (!registrable) return false;
+  const tokens = registrable.split(/[^a-z0-9]+/i);
+
+  return Object.entries(BRAND_DOMAINS).some(([brand, officialDomains]) =>
+    tokens.includes(brand) && !officialDomains.includes(registrable),
+  );
+}
+
+function mentionsKnownBrand(content: string): boolean {
+  return Object.keys(BRAND_DOMAINS).some((brand) => new RegExp(`\\b${brand}\\b`, "i").test(content));
+}
+
+function hasExcessiveFormattingPressure(content: string): boolean {
+  const uppercaseWords = content.match(/\b[A-Z]{4,}\b/g)?.length ?? 0;
+  return uppercaseWords >= 3 || /[!?]{3,}/.test(content);
+}
+
+function hasObfuscatedSpamWords(content: string): boolean {
+  return /(?:v1agra|fr3e|cl1ck|w1nner|b1tco1n|l0gin|log1n)/i.test(content);
+}
+
+function isValidHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function cleanLink(link: string): string {
   return link.trim().replace(/[.,!?;:]+$/, "");
 }
 
-function hasMismatchedDisplayedLink(content: string): boolean {
-  const linkTags = content.matchAll(
-    /<a\b[^>]*href\s*=\s*["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
-  );
-
-  for (const tag of linkTags) {
-    const hrefDomain = getDomain(tag[1]);
-    const displayedLink = tag[2].replace(/<[^>]*>/g, "").match(LINK_PATTERN)?.[0];
-    const displayedDomain = displayedLink ? getDomain(displayedLink) : null;
-
-    if (hrefDomain && displayedDomain && hrefDomain !== displayedDomain) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function hasParsedHiddenLinkMismatch(content: string): boolean {
-  const hiddenLinks = content.matchAll(/Hidden link:\s*(https?:\/\/[^\s]+)\s*->\s*(https?:\/\/[^\s]+)/gi);
-
-  for (const link of hiddenLinks) {
-    const displayedDomain = getDomain(cleanLink(link[1]));
-    const hrefDomain = getDomain(cleanLink(link[2]));
-
-    if (displayedDomain && hrefDomain && displayedDomain !== hrefDomain) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function hasExcessiveFormattingPressure(content: string): boolean {
-  const words = content.match(/\b[A-Z]{5,}\b/g) ?? [];
-  const hasRepeatedPunctuation = /[!?]{3,}/.test(content);
-
-  return words.length >= 3 || hasRepeatedPunctuation;
-}
-
-function hasObfuscatedSpamWords(content: string): boolean {
-  return (
-    /\bv[\s._-]+i[\s._-]+a[\s._-]+g[\s._-]+r[\s._-]+a\b/i.test(content) ||
-    /\bf[\s._-]+r[\s._-]+e[\s._-]+e\b/i.test(content) ||
-    /\bc[\s._-]+a[\s._-]+s[\s._-]+i[\s._-]+n[\s._-]+o\b/i.test(content) ||
-    /\b(?:[a-z]\s){4,}[a-z]\b/i.test(content)
-  );
-}
-
-function getSenderDomain(senderEmail: string): string | null {
-  const trimmed = senderEmail.trim().toLowerCase();
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-    return null;
-  }
-
-  return trimmed.split("@").at(-1) ?? null;
-}
-
-function hasSuspiciousDomainShape(domain: string): boolean {
-  const digitCount = (domain.match(/\d/g) ?? []).length;
-  const hyphenCount = (domain.match(/-/g) ?? []).length;
-
-  return digitCount >= 4 || hyphenCount >= 3;
-}
-
-function looksLikeBrandImpersonation(domain: string): boolean {
-  return IMPERSONATED_BRANDS.some((brand) => {
-    const normalizedDomain = domain.replace(/\./g, "-");
-    const normalizedBrand = brand.name.toLowerCase();
-    const domainMentionsBrand =
-      normalizedBrand.length <= 3
-        ? new RegExp(`(^|-)${normalizedBrand}($|-)`).test(normalizedDomain)
-        : normalizedDomain.includes(normalizedBrand);
-    const isOfficialDomain = brand.domains.some(
-      (officialDomain) => domain === officialDomain || domain.endsWith(`.${officialDomain}`),
-    );
-
-    return domainMentionsBrand && !isOfficialDomain;
-  });
-}
-
-function getDomain(link: string): string | null {
-  try {
-    return new URL(link).hostname.replace(/^www\./, "").toLowerCase();
-  } catch {
-    return null;
-  }
-}
-
-function getRiskLevel(score: number): RiskLevel {
-  if (score >= 70) {
-    return "high";
-  }
-
-  if (score >= 35) {
-    return "medium";
-  }
-
-  return "low";
-}
-
-function getRecommendedAction(level: RiskLevel, locale: AnalysisLocale): string {
-  if (locale === "nl") {
-    if (level === "high") return "Klik niet op links en antwoord niet. Controleer het verzoek eerst via een vertrouwd kanaal.";
-    if (level === "medium") return "Ga voorzichtig verder. Controleer de afzender en open links pas nadat u de bestemming hebt nagekeken.";
-    return "Er zijn geen belangrijke waarschuwingssignalen gevonden, maar blijf normaal voorzichtig.";
-  }
-  if (level === "high") {
-    return "Do not click links or reply. Verify the request through a trusted channel first.";
-  }
-
-  if (level === "medium") {
-    return "Proceed carefully. Confirm the sender and open links only after checking the destination.";
-  }
-
-  return "No major warning signs were found, but continue using normal caution.";
-}
-
-function getExplanation(level: RiskLevel, signalCount: number, linkCount: number, locale: AnalysisLocale): string {
-  if (locale === "nl") {
-    if (level === "high") return `Dit bericht komt overeen met meerdere bekende phishing- of spampatronen, waaronder ${signalCount} ${signalCount === 1 ? "verdacht signaal" : "verdachte signalen"} en ${linkCount} ${linkCount === 1 ? "gevonden link" : "gevonden links"}.`;
-    if (level === "medium") return `Dit bericht bevat waarschuwingssignalen die u moet controleren voordat u handelt. ${linkCount > 0 ? "Let vooral op de bestemming van de link." : "Het risico zit vooral in de tekst zelf."}`;
-    return "Dit bericht komt niet sterk overeen met de phishing- of spampatronen die door deze beoordeling worden gecontroleerd.";
-  }
-  if (level === "high") {
-    return `This message matches several common phishing or spam patterns, including ${signalCount} suspicious signal${signalCount === 1 ? "" : "s"} and ${linkCount} detected link${linkCount === 1 ? "" : "s"}.`;
-  }
-
-  if (level === "medium") {
-    return `This message has some warning signs worth reviewing before taking action. ${linkCount > 0 ? "Pay special attention to the link destination." : "The text itself carries most of the risk."}`;
-  }
-
-  return "This message does not strongly match the phishing or spam patterns checked by this assessment.";
-}
-
-function localizeSignal(signal: string, locale: AnalysisLocale): string {
-  return locale === "nl" ? (DUTCH_SIGNALS[signal] ?? signal) : signal;
+function stripHtml(value: string): string {
+  return value.replace(/<[^>]*>/g, " ").replace(/&amp;/gi, "&").trim();
 }

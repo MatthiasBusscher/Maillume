@@ -11,17 +11,19 @@ on:
         default: false
         type: boolean
 
-permissions:
-  contents: read
-  packages: write
+permissions: {}
 
 jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: npm
@@ -31,55 +33,77 @@ jobs:
       - run: npm run lint
       - run: npm run test:analysis
       - run: npm run test:security
+      - run: node --test src/app/auth/callback/route.test.mjs
       - run: npm run test:integrations
+      - run: npm run test:extension
       - run: npm run build
         env:
           ANALYSIS_MODE: heuristic
       - run: npm run test:smoke
       - run: npm run package:integrations
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: maillume-browser-extension
           path: dist/maillume-browser-extension.zip
           if-no-files-found: error
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: maillume-integration-checksums
           path: dist/integration-SHA256SUMS
           if-no-files-found: error
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: maillume-gmail-addon
           path: dist/maillume-gmail-addon.zip
           if-no-files-found: error
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: maillume-outlook-manifest
           path: public/outlook-manifest.xml
           if-no-files-found: error
 
-  image:
-    needs: verify
+  secrets:
+    name: Full-history secret scan
     runs-on: ubuntu-latest
-    outputs:
-      image: ${{ steps.meta.outputs.tags }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
-      - uses: docker/login-action@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+
+  image:
+    needs: [verify, secrets]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.digest.outputs.image }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
       - id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ghcr.io/matthiasbusscher/maillume
           tags: type=sha,format=long
-      - uses: docker/build-push-action@v7
+      - name: Build and load image for scanning
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
-          push: true
+          load: true
+          push: false
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
             NEXT_PUBLIC_MARKETING_URL=https://maillume.io
@@ -89,21 +113,51 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Scan image for high and critical vulnerabilities
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ steps.meta.outputs.tags }}
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: "1"
 
+      - name: Log in to GHCR after scan
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push scanned image and resolve immutable digest
+        id: digest
+        env:
+          IMAGE: ${{ steps.meta.outputs.tags }}
+          IMAGE_NAME: ghcr.io/matthiasbusscher/maillume
+        run: |
+          set -euo pipefail
+          if [[ -z "$IMAGE" || "$IMAGE" == *$'\n'* ]]; then
+            echo "Expected exactly one image tag from metadata-action." >&2
+            exit 1
+          fi
+          docker push "$IMAGE"
+          digest_json="$(docker buildx imagetools inspect "$IMAGE" --format '{{json .Manifest.Digest}}')"
+          digest="${digest_json#\"}"
+          digest="${digest%\"}"
+          if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Could not resolve the pushed GHCR image to an immutable digest." >&2
+            exit 1
+          fi
+          repository_digest="$IMAGE_NAME@$digest"
+          echo "image=$repository_digest" >> "$GITHUB_OUTPUT"
+
   deploy:
     needs: image
     if: github.event_name == 'workflow_dispatch' && inputs.deploy
     runs-on: ubuntu-latest
     environment: production
+    permissions: {}
     steps:
       - name: Deploy immutable image over SSH
-        uses: appleboy/ssh-action@v1.2.5
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}

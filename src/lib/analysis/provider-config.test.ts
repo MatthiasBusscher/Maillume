@@ -5,13 +5,14 @@ import { getAnalysisConfig, AnalysisConfigError } from "./config";
 import { createAnalysisProvider, AiProviderRequestError } from "./providers";
 
 const VALID_AI_RESULT = {
-  risk_level: "high",
-  risk_score: 82,
-  suspicious_signals: ["Asks for credentials", "Uses urgent language"],
-  detected_links: ["https://example.test/login"],
-  recommended_action: "Do not click links. Verify the sender through a trusted channel.",
-  short_explanation: "The message includes multiple common phishing warning signs.",
+  evidence_ids: [
+    "credential_request",
+    "urgency_pressure",
+    "brand_lookalike_sender",
+    "link_mismatch",
+  ],
 };
+const PROVIDER_INPUT_BODY = "Synthetic neutral provider transport test content with enough context to avoid short-message evidence during deterministic normalization.";
 
 async function main() {
   const defaultConfig = getAnalysisConfig({});
@@ -309,13 +310,14 @@ async function main() {
   const openAiResult = await openAiProvider.analyze({
     subject: "Synthetic subject",
     senderEmail: "sender@example.test",
-    body: "Synthetic phishing-like message body.",
+    body: PROVIDER_INPUT_BODY,
   });
 
   assert.equal(openAiProvider.mode, "ai");
   assert.equal(openAiProvider.provider, "openai");
   assert.equal(openAiResult.risk_level, "high");
-  assert.equal(openAiResult.risk_score, 82);
+  assert.equal(openAiResult.risk_score, 85);
+  assert.equal(openAiResult.classification, "likely_phishing");
   assert.ok(openAiRequestBody, "OpenAI request body should be captured");
   assert.equal(openAiRequestBody.model, "openai-test-model");
   assert.equal(openAiRequestBody.max_output_tokens, 700);
@@ -333,10 +335,7 @@ async function main() {
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              ...VALID_AI_RESULT,
-              risk_level: "low",
-            }),
+            text: JSON.stringify(VALID_AI_RESULT),
           },
         ],
       });
@@ -344,10 +343,10 @@ async function main() {
   });
 
   const anthropicResult = await anthropicProvider.analyze({
-    body: "Synthetic phishing-like message body.",
+    body: PROVIDER_INPUT_BODY,
   });
 
-  assert.equal(anthropicResult.risk_level, "high", "risk level should be normalized from score");
+  assert.equal(anthropicResult.risk_level, "high", "risk level should be derived from evidence");
 
   let compatibleRequestUrl = "";
   let compatibleRequestBody: Record<string, unknown> | undefined;
@@ -370,11 +369,11 @@ async function main() {
   });
 
   const compatibleResult = await compatibleProvider.analyze({
-    body: "Synthetic phishing-like message body.",
+    body: PROVIDER_INPUT_BODY,
   });
 
   assert.equal(compatibleProvider.provider, "openai-compatible");
-  assert.equal(compatibleResult.risk_score, 82);
+  assert.equal(compatibleResult.risk_score, 85);
   assert.equal(compatibleRequestUrl, "https://api.deepseek.com/chat/completions");
   assert.ok(compatibleRequestBody, "OpenAI-compatible request body should be captured");
   assert.equal(compatibleRequestBody.model, "deepseek-test-model");

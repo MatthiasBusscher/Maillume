@@ -19,9 +19,8 @@
       <section class="step">
         <span class="number">01</span>
         <div>
-          <h2 data-nl="Selecteer de e-mailtekst">Select the email text</h2>
-          <p data-nl="Markeer alleen het bericht dat u wilt controleren en houd dit paneel open.">Highlight only the message you want to inspect, then keep this panel open.</p>
-          <button id="capture" type="button" data-nl="Huidige selectie gebruiken">Use current selection</button>
+          <h2 data-nl="Selectie uit de werkbalk">Selection from the toolbar</h2>
+          <p data-nl="Selecteer de zichtbare e-mailtekst en klik op de Maillume-knop in de Chrome-werkbalk. De eenmalig vastgelegde tekst verschijnt hieronder.">Select the visible email text and click the Maillume action in the Chrome toolbar. The one-time capture appears below.</p>
         </div>
       </section>
 
@@ -40,9 +39,9 @@
         <div class="settings fields">
           <label><span data-nl="Maillume-installatie">Maillume deployment</span> <input id="endpoint" type="url" value="https://app.maillume.io" /></label>
           <label><span data-nl="API-sleutel">API key</span> <input id="apiKey" type="password" autocomplete="off" placeholder="mlm_..." /></label>
-          <button id="save" type="button" class="secondary" data-nl="Opslaan op dit apparaat">Save on this device</button>
-          <button id="reset" type="button" class="danger" data-nl="Opgeslagen verbinding verwijderen">Remove saved connection</button>
-          <p class="small" data-nl="De API-sleutel blijft in de opslag van de extensie. De extensie slaat berichtinhoud nooit op.">The API key stays in extension storage. Message content is never stored by the extension.</p>
+          <button id="save" type="button" class="secondary" data-nl="Verbinding opslaan">Save connection</button>
+          <button id="reset" type="button" class="danger" data-nl="Verbinding verwijderen">Remove connection</button>
+          <p class="small" data-nl="De implementatie-URL blijft lokaal opgeslagen. De API-sleutel blijft alleen tijdens deze browsersessie beschikbaar. Berichtinhoud en resultaten worden niet opgeslagen.">The deployment URL remains in local extension storage. The API key is available only for this browser session. Message content and results are not stored.</p>
         </div>
       </details>
 
@@ -55,7 +54,11 @@
           <div><span data-nl="Risicoscore">Risk score</span><strong id="score"></strong></div>
           <span id="level" class="level"></span>
         </div>
+        <p id="classification" class="classification"></p>
         <p id="explanation"></p>
+        <h2 data-nl="Zo werkt deze score">How this score works</h2>
+        <p data-nl="De score is een gewogen risico-index, geen waarschijnlijkheid of garantie.">The score is a weighted risk index, not a probability or guarantee.</p>
+        <ul id="factors" class="factors"></ul>
         <h2 data-nl="Verdachte signalen">Suspicious signals</h2>
         <ul id="signals"></ul>
         <h2 data-nl="Aanbevolen vervolgstap">Recommended action</h2>

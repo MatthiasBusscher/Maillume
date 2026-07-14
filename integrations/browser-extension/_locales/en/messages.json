@@ -1,4 +1,5 @@
 {
   "extensionName": { "message": "Maillume" },
-  "extensionDescription": { "message": "Analyze email text you explicitly select in Gmail, Outlook, or another webmail client." }
+  "extensionDescription": { "message": "Analyze email text you explicitly select in Gmail, Outlook, or another webmail client." },
+  "actionTitle": { "message": "Capture selection with Maillume" }
 }

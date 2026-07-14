@@ -31,7 +31,7 @@ export function OutlookIntegration({ labels, locale }: { labels: AccountDictiona
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    setApiKey(window.localStorage.getItem("maillume-outlook-api-key") ?? "");
+    setApiKey(window.sessionStorage.getItem("maillume-outlook-api-key") ?? "");
     let attempts = 0;
     const connect = () => {
       if (window.Office) {
@@ -52,12 +52,12 @@ export function OutlookIntegration({ labels, locale }: { labels: AccountDictiona
 
   function saveKey() {
     if (!/^mlm_[A-Za-z0-9_-]{43}$/.test(apiKey.trim())) return setStatus(labels.invalidKey);
-    window.localStorage.setItem("maillume-outlook-api-key", apiKey.trim());
+    window.sessionStorage.setItem("maillume-outlook-api-key", apiKey.trim());
     setStatus(labels.keySaved);
   }
 
   function removeKey() {
-    window.localStorage.removeItem("maillume-outlook-api-key");
+    window.sessionStorage.removeItem("maillume-outlook-api-key");
     setApiKey("");
     setResult(undefined);
     setStatus(labels.keyRemoved);
@@ -119,7 +119,11 @@ export function OutlookIntegration({ labels, locale }: { labels: AccountDictiona
 
       {result ? <section className="border-x border-b border-[#111711] bg-white p-5">
         <div className="flex items-end justify-between border-b border-[#aeb6ac] pb-4"><div><p className="font-mono text-[9px] uppercase text-[#687268]">{labels.riskScore}</p><p className="font-mono text-5xl font-semibold">{result.risk_score}</p></div><span className="border border-[#d84c3c] bg-[#ffe2dd] px-2 py-1 text-[10px] font-bold uppercase text-[#8f251b]">{labels.riskLevels[result.risk_level]}</span></div>
+        <p className="mt-4 text-sm font-semibold text-[#111711]">{labels.classifications[result.classification]}</p>
         <p className="mt-4 text-sm leading-6 text-[#4f5b50]">{result.short_explanation}</p>
+        <h2 className="mt-5 text-sm font-semibold">{labels.howScoreWorks}</h2>
+        <p className="mt-2 text-xs leading-5 text-[#59655a]">{labels.scoreMeaning}</p>
+        <ul className="mt-2 space-y-2 text-xs leading-5 text-[#59655a]">{result.score_factors.map((factor) => <li key={factor.id}>{factor.label}: +{factor.contribution} {labels.points}</li>)}</ul>
         <h2 className="mt-5 text-sm font-semibold"><AlertTriangle className="mr-2 inline h-4 w-4 text-[#ff705f]" /> {labels.suspiciousSignals}</h2>
         <ul className="mt-2 space-y-2 text-xs leading-5 text-[#59655a]">{result.suspicious_signals.map((signal) => <li key={signal}>{signal}</li>)}</ul>
         <h2 className="mt-5 text-sm font-semibold"><CheckCircle2 className="mr-2 inline h-4 w-4 text-[#087b72]" /> {labels.recommendedAction}</h2><p className="mt-2 text-xs leading-5 text-[#59655a]">{result.recommended_action}</p>
@@ -133,9 +137,31 @@ function isAnalysisResult(value: unknown): value is EmailAnalysisResult {
   if (!value || typeof value !== "object") return false;
   const result = value as Partial<EmailAnalysisResult>;
   return typeof result.risk_score === "number"
+    && Number.isFinite(result.risk_score)
+    && result.risk_score >= 0
+    && result.risk_score <= 100
     && ["low", "medium", "high"].includes(result.risk_level ?? "")
-    && Array.isArray(result.suspicious_signals)
-    && Array.isArray(result.detected_links)
+    && ["likely_phishing", "likely_spam", "likely_legitimate", "uncertain"].includes(result.classification ?? "")
+    && Array.isArray(result.score_factors)
+    && result.score_factors.every((factor) => factor
+      && typeof factor.id === "string"
+      && ["identity", "destination", "intent", "delivery", "style"].includes(factor.family)
+      && Number.isFinite(factor.contribution)
+      && factor.contribution > 0
+      && typeof factor.label === "string")
+    && result.score_factors.reduce((total, factor) => total + factor.contribution, 0) === result.risk_score
+    && Array.isArray(result.suspicious_signals) && result.suspicious_signals.every((signal) => typeof signal === "string")
+    && Array.isArray(result.detected_links) && result.detected_links.every(isHttpUrl)
     && typeof result.short_explanation === "string"
     && typeof result.recommended_action === "string";
+}
+
+function isHttpUrl(value: unknown) {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }

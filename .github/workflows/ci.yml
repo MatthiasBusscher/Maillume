@@ -6,20 +6,23 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           cache: npm
           node-version: 22
@@ -42,6 +45,9 @@ jobs:
       - name: Security tests
         run: npm run test:security
 
+      - name: OAuth callback security tests
+        run: node --test src/app/auth/callback/route.test.mjs
+
       - name: Integration behavior tests
         run: npm run test:integrations
 
@@ -58,3 +64,25 @@ jobs:
 
       - name: Browser smoke tests
         run: npm run test:smoke
+
+  secrets:
+    name: Full-history secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Check out complete repository history
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Scan Git history with Gitleaks
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"

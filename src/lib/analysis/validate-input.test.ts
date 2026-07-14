@@ -21,4 +21,20 @@ const unknownField = validateAnalyzeRequest({ body: "Synthetic message", rawEmai
 assert.equal(unknownField.ok, false);
 if (!unknownField.ok) assert.equal(unknownField.error, "Request contains unsupported fields.");
 
+const linkPairs = validateAnalyzeRequest({
+  body: "Synthetic message",
+  linkPairs: [{
+    displayedUrl: "https://service.example/account",
+    destinationUrl: "https://service-review.invalid/account",
+  }],
+});
+assert.equal(linkPairs.ok, true);
+if (linkPairs.ok) assert.equal(linkPairs.input.linkPairs?.length, 1);
+
+const malformedLinkPairs = validateAnalyzeRequest({
+  body: "Synthetic message",
+  linkPairs: [{ displayedUrl: "javascript:alert(1)", destinationUrl: "https://example.test" }],
+});
+assert.equal(malformedLinkPairs.ok, false);
+
 console.log("Checked hosted analysis request validation.");

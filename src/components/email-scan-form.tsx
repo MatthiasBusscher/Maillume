@@ -19,6 +19,7 @@ import {
   type AnalyzeErrorResponse,
   type AnalyzeResponse,
   type EmailAnalysisResult,
+  type EmailLinkPair,
   type ScanSource,
 } from "@/lib/types";
 import { parseEml } from "@/lib/eml/parse-eml";
@@ -57,6 +58,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale }: EmailScan
   const [subject, setSubject] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
   const [body, setBody] = useState("");
+  const [linkPairs, setLinkPairs] = useState<EmailLinkPair[]>([]);
   const [result, setResult] = useState<EmailAnalysisResult | null>(null);
   const [analysisVersion, setAnalysisVersion] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -87,6 +89,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale }: EmailScan
           senderEmail,
           body,
           locale,
+          linkPairs,
         }),
       });
 
@@ -113,6 +116,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale }: EmailScan
     setSubject("Action required: mailbox access expiring");
     setSenderEmail("security-alert@microsoft-support-login.click");
     setBody(sampleEmail);
+    setLinkPairs([]);
     setResult(null);
     setError("");
     setFileName("");
@@ -124,6 +128,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale }: EmailScan
     setSubject("");
     setSenderEmail("");
     setBody("");
+    setLinkPairs([]);
     setResult(null);
     setError("");
     setFileName("");
@@ -169,6 +174,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale }: EmailScan
       setSubject(file.name.replace(/\.[^.]+$/, ""));
       setSenderEmail("");
       setBody(extractedText);
+      setLinkPairs([]);
       setFileStatus(dictionary.form.extractedTextReady);
     } catch {
       setError(dictionary.form.extractionFailed);
@@ -218,6 +224,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale }: EmailScan
       setSubject(parsed.subject ?? file.name.replace(/\.eml$/i, ""));
       setSenderEmail(parsed.senderEmail ?? "");
       setBody(parsed.body);
+      setLinkPairs(parsed.linkPairs);
       setFileStatus(dictionary.form.parsedEmlReady);
     } catch {
       setError(dictionary.form.extractionFailed);
@@ -585,6 +592,9 @@ function AnalysisResult({
           <h2 className="mt-1 text-xl font-semibold text-[#111711] sm:text-2xl">
             {dictionary.result.summaryTitle}
           </h2>
+          <p className="mt-2 font-mono text-[10px] uppercase text-[#59646f]">
+            {dictionary.result.classification}: {dictionary.result.classifications[result.classification]}
+          </p>
         </div>
       </div>
 
@@ -596,6 +606,26 @@ function AnalysisResult({
           levels: dictionary.result.levels,
         }}
       />
+
+      <section className="border-b border-[#d5d9de] py-5">
+        <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#26313b]">
+          <ScanLine className="h-4 w-4 text-[#087b72]" aria-hidden="true" />
+          {dictionary.result.scoreBasisTitle}
+        </h3>
+        <p className="text-sm leading-6 text-[#59646f]">{dictionary.result.scoreBasisBody}</p>
+        {result.score_factors.length > 0 ? (
+          <ul className="mt-4 divide-y divide-[#d5d9de] border-y border-[#d5d9de]">
+            {result.score_factors.map((factor) => (
+              <li key={factor.id} className="grid grid-cols-[1fr_auto] gap-4 py-3 text-sm leading-5">
+                <span className="text-[#414c57]">{factor.label}</span>
+                <span className="font-mono text-xs font-semibold text-[#087b72]">
+                  +{factor.contribution} {dictionary.result.points}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
 
       <section className="border-b border-[#d5d9de] py-5">
         <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#26313b]">

@@ -42,7 +42,7 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Uses the server-side `analyzeEmail` provider interface.
    - Uses local heuristics in public demo mode.
    - Selects AI mode only when self-hosted environment variables are set.
-   - Validates and normalizes the model response before returning it.
+   - Accepts evidence IDs from optional AI providers, then derives links, score, level, and classification server-side.
    - Does not persist raw scan content or scan results.
 
 4. Input Processing Layer
@@ -103,6 +103,7 @@ src/
   lib/
     analysis/
       analyze-email.ts
+      evidence.ts
       ai-prompt.ts
       ai-schema.ts
       config.ts
@@ -117,6 +118,8 @@ src/
     evaluation/
       email-fixtures.ts
       email-fixtures.test.ts
+      synthetic-corpus.ts
+      synthetic-corpus.test.ts
     eml/
       parse-eml.ts
     feedback/
@@ -152,7 +155,9 @@ The implementation includes the Maillume marketing and trust pages, `/app` scann
 
 ## Evaluation And Calibration
 
-The public demo uses local heuristic analysis so it can run without the maintainer's paid AI key. Shared evaluation fixtures live in `src/lib/evaluation/email-fixtures.ts` and must use synthetic or fully sanitized examples only. The heuristic analyzer consumes those fixtures today, and AI prompt/validation checks can reuse them as provider support grows.
+The public demo uses local heuristic analysis so it can run without the maintainer's paid AI key. CI uses a repository-only corpus of 300 synthetic English/Dutch cases: 100 phishing/fraud, 50 spam, and 150 legitimate hard negatives. Scenarios, paraphrases, and format variants stay on one side of the 200-case development / 100-case locked split.
+
+Production scans do not become fixtures and Maillume does not maintain a database of collected user or spam emails. Maintainers translate abstract patterns from public advisories or feedback metadata into new synthetic cases without copying private messages.
 
 Run `npm run test:analysis` after changing scoring rules, parser output, prompt copy, response validation, or suspicious-signal copy.
 
@@ -163,7 +168,8 @@ Run `npm run test:analysis` after changing scoring rules, parser output, prompt 
 - `ANALYSIS_MODE=heuristic` uses the local heuristic provider and does not require AI keys.
 - `ANALYSIS_MODE=ai` requires `AI_PROVIDER=openai|anthropic|openai-compatible`, the matching server-side key, and an explicit model ID.
 - `AI_PROVIDER=openai-compatible` requires `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`, then sends requests to `{AI_BASE_URL}/chat/completions`.
-- AI mode sends normalized scan text to the selected provider and asks for strict structured JSON.
+- AI mode sends normalized scan text to the selected provider and asks only for strict, stable evidence IDs.
+- Maillume derives detected links, applied factors, score, risk level, and classification server-side.
 - AI provider keys are held only in server-side config objects and are never returned from `/api/analyze`.
 - AI mode uses `AI_RATE_LIMIT_ENABLED`, `AI_RATE_LIMIT_MAX_REQUESTS`, and `AI_RATE_LIMIT_WINDOW_SECONDS` to block excess requests before provider calls.
 - Provider-specific request bodies and response extraction live behind provider adapters. The UI and `/api/analyze` should use the shared `EmailAnalysisInput` and `EmailAnalysisResult` contracts instead of hardcoding provider payload shapes.
@@ -171,12 +177,19 @@ Run `npm run test:analysis` after changing scoring rules, parser output, prompt 
 
 Run `npm run test:analysis` after changing provider selection or scoring logic.
 
-## AI Result Contract
+## Analysis Result Contract
 
 ```ts
 type EmailAnalysisResult = {
+  classification: "likely_phishing" | "likely_spam" | "likely_legitimate" | "uncertain";
   risk_level: "low" | "medium" | "high";
   risk_score: number;
+  score_factors: Array<{
+    id: string;
+    family: "identity" | "destination" | "intent" | "delivery" | "style";
+    contribution: number;
+    label: string;
+  }>;
   suspicious_signals: string[];
   detected_links: string[];
   recommended_action: string;
@@ -186,8 +199,11 @@ type EmailAnalysisResult = {
 
 Server-side validation should enforce:
 
-- `risk_score` is an integer from 0 to 100.
-- `risk_level` matches the score band after normalization.
+- `risk_score` is an integer from 0 to 100 and equals the sum of applied factor contributions.
+- Evidence is grouped into capped identity, destination, intent, delivery, and style families.
+- Weak evidence cannot produce medium risk by itself; high risk requires strong evidence from at least two families.
+- Missing evidence can produce `uncertain` and must not be presented as reassurance.
+- `risk_level` and `classification` are derived by Maillume, not trusted from a provider response.
 - Arrays are present even when empty.
 - The response does not claim certainty.
 - The required disclaimer is displayed in the UI, not delegated to the model.
@@ -243,6 +259,7 @@ type AnalyzeResponse = {
   result: EmailAnalysisResult;
   analysis_mode: "heuristic" | "ai";
   analysis_provider: "heuristic" | "openai" | "anthropic" | "openai-compatible";
+  analysis_version: "analysis-v2";
   disclaimer: string;
   privacy: {
     stored: false;

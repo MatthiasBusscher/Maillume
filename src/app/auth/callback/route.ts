@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getSafeOAuthRedirectUrl } from "./redirect";
+
+const DEFAULT_REDIRECT_PATH = "/account";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const requestedNext = requestUrl.searchParams.get("next") ?? "/account";
-  const next = requestedNext.startsWith("/") && !requestedNext.startsWith("//")
-    ? requestedNext
-    : "/account";
+  const requestedNext = requestUrl.searchParams.get("next") ?? DEFAULT_REDIRECT_PATH;
+  const redirectUrl = getSafeOAuthRedirectUrl(requestedNext, requestUrl.origin);
 
   if (code) {
     const supabase = await createServerSupabaseClient();
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (!error) {
-        return privateRedirect(new URL(next, requestUrl.origin));
+        return privateRedirect(redirectUrl);
       }
     }
   }

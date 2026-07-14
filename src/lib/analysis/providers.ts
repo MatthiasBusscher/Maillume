@@ -11,7 +11,8 @@ import {
 } from "./config";
 import { AI_ANALYSIS_SYSTEM_PROMPT, buildAiAnalysisUserPrompt } from "./ai-prompt";
 import { AI_ANALYSIS_SCHEMA, AiResponseValidationError, parseAiAnalysisJson } from "./ai-schema";
-import { analyzeEmailHeuristic } from "./heuristic-analysis";
+import { buildAnalysisResult, type EvidenceId } from "./evidence";
+import { analyzeEmailHeuristic, collectHeuristicEvidence } from "./heuristic-analysis";
 
 type Fetcher = typeof fetch;
 
@@ -111,7 +112,7 @@ async function analyzeWithOpenAi(
       const payload = await readProviderJson(response);
       const content = extractOpenAiText(payload);
 
-      return parseAiAnalysisJson(content);
+      return finalizeAiAnalysis(parseAiAnalysisJson(content), input);
     },
   );
 }
@@ -162,7 +163,7 @@ async function analyzeWithAnthropic(
       const payload = await readProviderJson(response);
       const content = extractAnthropicText(payload);
 
-      return parseAiAnalysisJson(content);
+      return finalizeAiAnalysis(parseAiAnalysisJson(content), input);
     },
   );
 }
@@ -218,9 +219,16 @@ async function analyzeWithOpenAiCompatible(
       const payload = await readProviderJson(response);
       const content = extractChatCompletionText(payload);
 
-      return parseAiAnalysisJson(content);
+      return finalizeAiAnalysis(parseAiAnalysisJson(content), input);
     },
   );
+}
+
+function finalizeAiAnalysis(aiEvidence: EvidenceId[], input: EmailAnalysisInput): EmailAnalysisResult {
+  const deterministic = collectHeuristicEvidence(input);
+  const evidence = [...deterministic.evidence, ...aiEvidence];
+
+  return buildAnalysisResult(evidence, deterministic.links, input.locale ?? "en");
 }
 
 async function fetchProvider<T>(

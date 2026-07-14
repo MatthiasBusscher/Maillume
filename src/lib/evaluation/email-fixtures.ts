@@ -35,7 +35,7 @@ export const emailEvaluationFixtures: EvaluationFixture[] = [
     expectedRiskLevel: "high",
     minScore: 70,
     minSignals: 5,
-    requiredSignalSnippets: ["urgent language", "account credentials", "shortened URL"],
+    requiredSignalSnippets: ["credentials", "account blocking", "shortened URL"],
   },
   {
     id: "nl_antivirus_subscription_phish",
@@ -55,7 +55,7 @@ export const emailEvaluationFixtures: EvaluationFixture[] = [
     expectedRiskLevel: "high",
     minScore: 70,
     minSignals: 6,
-    requiredSignalSnippets: ["subscription will expire", "fake security", "brand"],
+    requiredSignalSnippets: ["subscription expiry", "payment", "brand"],
   },
   {
     id: "eml_hidden_link_phish",
@@ -73,8 +73,8 @@ export const emailEvaluationFixtures: EvaluationFixture[] = [
     },
     expectedRiskLevel: "high",
     minScore: 70,
-    minSignals: 5,
-    requiredSignalSnippets: ["different domain", "known brand", "external links"],
+    minSignals: 4,
+    requiredSignalSnippets: ["one domain", "known brand", "credentials"],
   },
   {
     id: "nl_delivery_fee_phish",
@@ -94,7 +94,7 @@ export const emailEvaluationFixtures: EvaluationFixture[] = [
     expectedRiskLevel: "high",
     minScore: 70,
     minSignals: 5,
-    requiredSignalSnippets: ["payment", "known brand", "external links"],
+    requiredSignalSnippets: ["payment", "known brand", "external link"],
   },
   {
     id: "en_unsolicited_sales_spam",
