@@ -44,7 +44,7 @@ Release artifact: `dist/maillume-gmail-addon.zip`.
 OAuth scope justifications:
 
 - `gmail.addons.execute`: runs the add-on cards and button actions.
-- `gmail.addons.current.message.readonly`: grants temporary access to only the message currently open while the add-on is active.
+- `gmail.addons.current.message.action`: grants temporary access to the open message only after the user presses the add-on's Analyze action.
 - `script.external_request`: sends the user-initiated assessment to the fixed Maillume endpoint.
 
 The contextual trigger builds a ready card without reading the message. `getPlainBody()` is called only from the Analyze button handler. The manifest allowlists only `https://app.maillume.io/`.

@@ -45,6 +45,12 @@ jobs:
       - name: Integration behavior tests
         run: npm run test:integrations
 
+      - name: Package integration artifacts
+        run: npm run package:integrations
+
+      - name: Load browser extension
+        run: npm run test:extension
+
       - name: Build public demo configuration
         run: npm run build
         env:

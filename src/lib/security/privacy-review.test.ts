@@ -148,7 +148,8 @@ function main() {
   assert.match(extensionManifest, /"activeTab"/);
   assert.doesNotMatch(extensionManifest, /"content_scripts"|"tabs"|mail\.google\.com|outlook\.office\.com/);
   assert.doesNotMatch(extensionPanel, /storage\.local\.set\([^)]*(?:body|result)[\s\S]*?\)/);
-  assert.match(gmailManifest, /gmail\.addons\.current\.message\.readonly/);
+  assert.match(gmailManifest, /gmail\.addons\.current\.message\.action/);
+  assert.doesNotMatch(gmailManifest, /gmail\.addons\.current\.message\.readonly/);
   assert.doesNotMatch(gmailManifest, /auth\/gmail\.readonly|auth\/gmail\.modify|auth\/gmail\"/);
   assert.ok(
     gmailCode.indexOf("Analyze this message") < gmailCode.indexOf("message.getPlainBody()"),
@@ -156,6 +157,8 @@ function main() {
   );
   assert.match(outlookManifest, /<Permissions>ReadItem<\/Permissions>/);
   assert.doesNotMatch(outlookManifest, /ReadWriteMailbox/);
+  assert.match(outlookManifest, /<Version>1\.0\.0\.0<\/Version>/);
+  assert.doesNotMatch(outlookManifest, /SupportsPinning/);
   assert.doesNotMatch(outlookComponent, /localStorage\.setItem\([^)]*(?:body|result|subject|sender)[\s\S]*?\)/);
   assert.match(licenseContent, /GNU AFFERO GENERAL PUBLIC LICENSE/);
   assert.match(licenseContent, /13\. Remote Network Interaction/);

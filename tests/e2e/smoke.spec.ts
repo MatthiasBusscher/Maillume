@@ -469,8 +469,11 @@ test("Outlook task pane explains explicit current-message access", async ({ page
 
 test("Outlook reads only after confirmation and can be embedded by Office", async ({ page, request }) => {
   const paneResponse = await request.get("/integrations/outlook");
+  const dutchPaneResponse = await request.get("/nl/integrations/outlook");
   expect(paneResponse.headers()["x-frame-options"]).toBeUndefined();
   expect(paneResponse.headers()["content-security-policy"]).toContain("https://*.office.com");
+  expect(dutchPaneResponse.headers()["x-frame-options"]).toBeUndefined();
+  expect(dutchPaneResponse.headers()["content-security-policy"]).toContain("https://*.office.com");
 
   await page.route("https://appsforoffice.microsoft.com/**", async (route) => {
     await route.fulfill({ contentType: "application/javascript", body: "" });
@@ -495,11 +498,17 @@ test("Outlook reads only after confirmation and can be embedded by Office", asyn
     };
   });
   let submitted: Record<string, unknown> | undefined;
+  let analysisRequests = 0;
   await page.route("**/api/v1/analyze", async (route) => {
+    analysisRequests += 1;
     submitted = route.request().postDataJSON() as Record<string, unknown>;
+    if (analysisRequests === 1) {
+      await route.fulfill({ contentType: "application/json", json: { result: { risk_score: 10 } } });
+      return;
+    }
     await route.fulfill({ contentType: "application/json", json: { result: {
-      risk_level: "low", risk_score: 10, suspicious_signals: [], detected_links: [],
-      recommended_action: "Continue with normal caution.", short_explanation: "No major warning signs.",
+      risk_level: "high", risk_score: 82, suspicious_signals: ["Synthetic warning"], detected_links: [],
+      recommended_action: "Verify through a known channel.", short_explanation: "Suspicious pattern detected.",
     } } });
   });
   await page.goto("/nl/integrations/outlook");
@@ -508,5 +517,13 @@ test("Outlook reads only after confirmation and can be embedded by Office", asyn
   await expect(analyze).toBeEnabled();
   await analyze.click();
   await expect.poll(() => page.evaluate(() => (window as typeof window & { __outlookReads: number }).__outlookReads)).toBe(1);
+  await expect(page.getByRole("status")).toHaveText("Maillume gaf een ongeldig analyseresultaat terug.");
+  await analyze.click();
+  await expect.poll(() => page.evaluate(() => (window as typeof window & { __outlookReads: number }).__outlookReads)).toBe(2);
+  await expect(page.getByText("Hoog", { exact: true })).toBeVisible();
   expect(submitted).toMatchObject({ body: "Synthetic message body", locale: "nl", subject: "Synthetic Outlook message" });
+  await page.getByText("API-sleutel", { exact: true }).click();
+  await page.getByRole("button", { name: "Sleutel verwijderen" }).click();
+  await expect(analyze).toBeDisabled();
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("maillume-outlook-api-key"))).toBeNull();
 });
