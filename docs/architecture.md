@@ -169,7 +169,7 @@ Run `npm run test:analysis` after changing scoring rules, parser output, prompt 
 
 - `ANALYSIS_MODE=heuristic` uses the local heuristic provider and does not require AI keys.
 - `ANALYSIS_MODE=ai` requires `AI_PROVIDER=openai|anthropic|openai-compatible`, the matching server-side key, and an explicit model ID.
-- `AI_PROVIDER=openai-compatible` requires `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`, then sends requests to `{AI_BASE_URL}/chat/completions`.
+- `AI_PROVIDER=openai-compatible` requires `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`, then sends requests to `{AI_BASE_URL}/chat/completions`. Production also requires `AI_ALLOWED_HOSTS` to explicitly allow the endpoint hostname; the URL must use HTTPS and cannot contain credentials, query parameters, or a fragment.
 - AI mode sends normalized scan text to the selected provider and asks only for strict, stable evidence IDs.
 - Maillume derives detected links, applied factors, score, risk level, and classification server-side.
 - AI provider keys are held only in server-side config objects and are never returned from `/api/analyze`.
@@ -217,6 +217,7 @@ ANALYSIS_MODE=heuristic
 AI_PROVIDER=
 AI_API_KEY=
 AI_BASE_URL=
+AI_ALLOWED_HOSTS=
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 AI_MODEL=
@@ -244,6 +245,7 @@ OpenAI-compatible examples:
 ```text
 AI_PROVIDER=openai-compatible
 AI_BASE_URL=https://your-provider.example/v1
+AI_ALLOWED_HOSTS=your-provider.example
 AI_API_KEY=your-own-provider-key
 AI_MODEL=your-provider-model-id
 ```

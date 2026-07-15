@@ -136,6 +136,7 @@ Heuristic mode is the default. A self-hoster can opt into AI analysis with serve
 ANALYSIS_MODE=ai
 AI_PROVIDER=openai-compatible
 AI_BASE_URL=https://your-provider.example/v1
+AI_ALLOWED_HOSTS=your-provider.example
 AI_API_KEY=your-own-provider-key
 AI_MODEL=your-model-id
 ```

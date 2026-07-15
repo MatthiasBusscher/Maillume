@@ -201,6 +201,91 @@ async function main() {
     "production OpenAI-compatible endpoints should require HTTPS",
   );
 
+  assert.throws(
+    () =>
+      getAnalysisConfig({
+        ANALYSIS_MODE: "ai",
+        AI_PROVIDER: "openai-compatible",
+        AI_API_KEY: "fake-compatible-key-for-tests",
+        AI_BASE_URL: "https://api.deepseek.com/v1",
+        AI_MODEL: "deepseek-test-model",
+        NODE_ENV: "production",
+      }),
+    /requires AI_ALLOWED_HOSTS in production/,
+    "production OpenAI-compatible endpoints should require an explicit host allowlist",
+  );
+
+  assert.throws(
+    () =>
+      getAnalysisConfig({
+        ANALYSIS_MODE: "ai",
+        AI_PROVIDER: "openai-compatible",
+        AI_API_KEY: "fake-compatible-key-for-tests",
+        AI_BASE_URL: "https://api.deepseek.com/v1",
+        AI_ALLOWED_HOSTS: "api.perplexity.ai",
+        AI_MODEL: "deepseek-test-model",
+        NODE_ENV: "production",
+      }),
+    /is not included in AI_ALLOWED_HOSTS/,
+    "the configured endpoint must match the host allowlist",
+  );
+
+  const productionCompatibleConfig = getAnalysisConfig({
+    ANALYSIS_MODE: "ai",
+    AI_PROVIDER: "openai-compatible",
+    AI_API_KEY: "fake-compatible-key-for-tests",
+    AI_BASE_URL: "https://api.deepseek.com/v1/",
+    AI_ALLOWED_HOSTS: " API.DEEPSEEK.COM. , api.perplexity.ai ",
+    AI_MODEL: "deepseek-test-model",
+    NODE_ENV: "production",
+  });
+
+  assert.equal(productionCompatibleConfig.mode, "ai");
+  assert.equal(productionCompatibleConfig.baseUrl, "https://api.deepseek.com/v1");
+
+  for (const unsafeBaseUrl of [
+    "https://user:password@api.deepseek.com/v1",
+    "https://api.deepseek.com/v1?destination=internal",
+    "https://api.deepseek.com/v1#fragment",
+  ]) {
+    assert.throws(
+      () =>
+        getAnalysisConfig({
+          ANALYSIS_MODE: "ai",
+          AI_PROVIDER: "openai-compatible",
+          AI_API_KEY: "fake-compatible-key-for-tests",
+          AI_BASE_URL: unsafeBaseUrl,
+          AI_ALLOWED_HOSTS: "api.deepseek.com",
+          AI_MODEL: "deepseek-test-model",
+          NODE_ENV: "production",
+        }),
+      /must not include credentials, query parameters, or a fragment/,
+      `unsafe provider URL should be rejected: ${unsafeBaseUrl}`,
+    );
+  }
+
+  for (const malformedAllowlist of [
+    "https://api.deepseek.com",
+    "api.deepseek.com:443",
+    "api.deepseek.com/v1",
+    "api.deepseek.com,,api.perplexity.ai",
+  ]) {
+    assert.throws(
+      () =>
+        getAnalysisConfig({
+          ANALYSIS_MODE: "ai",
+          AI_PROVIDER: "openai-compatible",
+          AI_API_KEY: "fake-compatible-key-for-tests",
+          AI_BASE_URL: "https://api.deepseek.com/v1",
+          AI_ALLOWED_HOSTS: malformedAllowlist,
+          AI_MODEL: "deepseek-test-model",
+          NODE_ENV: "production",
+        }),
+      /AI_ALLOWED_HOSTS must be a comma-separated list of hostnames/,
+      `malformed host allowlist should be rejected: ${malformedAllowlist}`,
+    );
+  }
+
   const openAiGenericKeyConfig = getAnalysisConfig({
     ANALYSIS_MODE: "ai",
     AI_PROVIDER: "openai",

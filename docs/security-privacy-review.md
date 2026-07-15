@@ -35,6 +35,8 @@ Production source files must not call `console.log`, `console.warn`, `console.er
 
 AI provider keys are read only from server-side config. Client components must not read `process.env` or reference server secret names such as `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_API_KEY`, or service-role keys. The public/demo deployment should keep `ANALYSIS_MODE=heuristic` and leave provider keys unset.
 
+OpenAI-compatible endpoints require HTTPS in production and must match an exact hostname in `AI_ALLOWED_HOSTS`. Provider URLs containing credentials, query parameters, or fragments are rejected before a request can include the provider key.
+
 ## Security Headers
 
 `next.config.ts` applies conservative headers across the app:

@@ -196,7 +196,58 @@ function getAiBaseUrl(provider: AiProviderName, env: AnalysisEnv): string | unde
     throw new AnalysisConfigError("AI_BASE_URL must use https in production.");
   }
 
+  if (parsed.username || parsed.password || parsed.search || parsed.hash) {
+    throw new AnalysisConfigError(
+      "AI_BASE_URL must not include credentials, query parameters, or a fragment.",
+    );
+  }
+
+  const allowedHosts = getAllowedAiHosts(env.AI_ALLOWED_HOSTS);
+
+  if (env.NODE_ENV === "production" && allowedHosts.size === 0) {
+    throw new AnalysisConfigError(
+      "AI mode with openai-compatible requires AI_ALLOWED_HOSTS in production.",
+    );
+  }
+
+  const endpointHost = normalizeHostname(parsed.hostname);
+  if (allowedHosts.size > 0 && !allowedHosts.has(endpointHost)) {
+    throw new AnalysisConfigError(
+      `AI_BASE_URL hostname ${endpointHost} is not included in AI_ALLOWED_HOSTS.`,
+    );
+  }
+
   return baseUrl.replace(/\/+$/, "");
+}
+
+function getAllowedAiHosts(value: string | undefined): Set<string> {
+  if (!value?.trim()) {
+    return new Set();
+  }
+
+  const hosts = value.split(",").map((entry) => normalizeHostname(entry));
+  if (hosts.some((host) => !isValidAllowedHostname(host))) {
+    throw new AnalysisConfigError(
+      "AI_ALLOWED_HOSTS must be a comma-separated list of hostnames without schemes, ports, or paths.",
+    );
+  }
+
+  return new Set(hosts);
+}
+
+function normalizeHostname(value: string): string {
+  return value.trim().toLowerCase().replace(/\.$/, "");
+}
+
+function isValidAllowedHostname(value: string): boolean {
+  if (!value || value.length > 253) return false;
+
+  return value.split(".").every(
+    (label) =>
+      label.length > 0
+      && label.length <= 63
+      && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label),
+  );
 }
 
 function getMaxOutputTokens(value: string | undefined): number {
