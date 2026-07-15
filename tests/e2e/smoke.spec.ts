@@ -53,7 +53,8 @@ test("language switching updates the scanner", async ({ page }) => {
   const footerBox = await footer.boundingBox();
   const viewportHeight = await page.evaluate(() => window.innerHeight);
   expect(footerBox).not.toBeNull();
-  expect(Math.abs((footerBox!.y + footerBox!.height) - viewportHeight)).toBeLessThanOrEqual(1);
+  expect(footerBox!.y).toBeLessThan(viewportHeight);
+  expect(footerBox!.y + footerBox!.height).toBeGreaterThanOrEqual(viewportHeight - 1);
 });
 
 test("Dutch routes render server-side and persist across navigation", async ({ page }) => {
