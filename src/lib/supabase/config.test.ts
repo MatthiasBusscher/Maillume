@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { getPublicSupabaseConfig } from "./config";
+import { arePasskeysEnabled, getPublicSupabaseConfig } from "./config";
 
 function main() {
   assert.equal(getPublicSupabaseConfig({}), null);
@@ -22,6 +22,10 @@ function main() {
       url: "https://project.supabase.co/",
     },
   );
+
+  assert.equal(arePasskeysEnabled({}), false);
+  assert.equal(arePasskeysEnabled({ NEXT_PUBLIC_PASSKEYS_ENABLED: "false" }), false);
+  assert.equal(arePasskeysEnabled({ NEXT_PUBLIC_PASSKEYS_ENABLED: "true" }), true);
 
   assert.deepEqual(
     getPublicSupabaseConfig({

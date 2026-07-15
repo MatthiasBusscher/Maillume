@@ -46,7 +46,7 @@ Maillume is a release candidate preparing for private beta. The scanner works to
 | Paste, screenshot OCR, and `.eml` input | Available |
 | Local heuristic assessment | Available |
 | Self-hosted AI with an operator-owned key | Available from source |
-| Google accounts and hosted API keys | Implemented; production acceptance in progress |
+| Email/Google accounts, TOTP 2FA, and hosted API keys | Implemented; production acceptance in progress |
 | Chrome, Gmail, and Outlook integrations | Source beta; marketplace publication pending |
 | Maintainer-hosted AI and payments | Not implemented |
 
@@ -80,7 +80,7 @@ The integration source is available for testing, but none of the three integrati
 
 | Surface | Access boundary | Local verification |
 | --- | --- | --- |
-| Chrome extension | Text explicitly selected in the active tab | Manifest V3 load test, permission tests, and packaged-artifact checks |
+| Chrome extension | Selected text, or the visibly open Gmail/Outlook message when unambiguous | Manifest V3 load test, permission tests, and packaged-artifact checks |
 | Gmail add-on | Open message after the user presses Analyze | Mocked Apps Script behavior, scope audit, and packaged-artifact checks |
 | Outlook add-in | Open message after the user presses Analyze | Office.js browser test and production manifest validation |
 

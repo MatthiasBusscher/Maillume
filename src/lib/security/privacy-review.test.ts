@@ -76,6 +76,9 @@ function main() {
   const apiLifecycleMigration = readProjectFile(
     "supabase/migrations/20260714183000_harden_api_key_lifecycle.sql",
   );
+  const apiMfaMigration = readProjectFile(
+    "supabase/migrations/20260715120000_require_mfa_for_api_key_metadata.sql",
+  );
   const hostedApiRoute = readProjectFile("src/app/api/v1/analyze/route.ts");
   const accountApiKeysRoute = readProjectFile("src/app/account/api-keys/route.ts");
   const extensionManifest = readProjectFile("integrations/browser-extension/manifest.json");
@@ -201,6 +204,8 @@ function main() {
   assert.match(apiLifecycleMigration, /revoke all on table public\.api_account_limits from public, anon, authenticated, service_role/);
   assert.match(apiLifecycleMigration, /on delete cascade/);
   assert.doesNotMatch(apiLifecycleMigration, /^\s*(body|subject|sender_email|message_text|links|result|ip_address)\s+/im);
+  assert.equal((apiMfaMigration.match(/auth\.jwt\(\) ->> 'aal'\) = 'aal2'/g) ?? []).length, 3);
+  assert.match(accountApiKeysRoute, /hasAal2Session/);
   assert.match(accountApiKeysRoute, /create_hosted_api_key/);
   assert.match(accountApiKeysRoute, /rotate_hosted_api_key/);
   assert.match(accountApiKeysRoute, /revoke_hosted_api_key/);
@@ -233,9 +238,15 @@ function main() {
       "https://www.googleapis.com/auth/script.locale",
     ],
   );
-  assert.doesNotMatch(gmailCode, /PropertiesService/);
-  assert.match(gmailCode, /CacheService\.getUserCache\(\)/);
-  assert.match(gmailCode, /MAILLUME_API_KEY_CACHE_SECONDS = 21600/);
+  assert.match(gmailCode, /PropertiesService\.getUserProperties\(\)/);
+  assert.doesNotMatch(gmailCode, /CacheService/);
+  assert.doesNotMatch(
+    gmailCode,
+    /setPropert(?:y|ies)\([^\n]*(?:body|subject|sender|message|result)/i,
+  );
+  assert.match(gmailCode, /if \(status === 401\)[\s\S]*?clearStoredApiKey\(\)/);
+  const forbiddenHandler = gmailCode.match(/if \(status === 403\) \{([\s\S]*?)\n  \}/)?.[1] ?? "";
+  assert.doesNotMatch(forbiddenHandler, /clearStoredApiKey\(\)/);
   assert.ok(
     gmailCode.indexOf("Analyze this message") < gmailCode.indexOf("message.getPlainBody()"),
     "Gmail UI must require an explicit analysis action before message reading",

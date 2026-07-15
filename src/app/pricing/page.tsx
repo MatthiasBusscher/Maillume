@@ -132,7 +132,7 @@ export default async function PricingPage() {
           </div>
           <div className="border-t border-[#aeb6ac]">
             <PricingQuestion question="Will free scans require an account?">
-              No. Anonymous heuristic scanning is a permanent product boundary. A Google account may later unlock preferences or paid conveniences, but it is not required for the core check.
+              No. Anonymous heuristic scanning is a permanent product boundary. An optional email or Google account may later unlock preferences or paid conveniences, but it is not required for the core check.
             </PricingQuestion>
             <PricingQuestion question="Do paid plans make results more certain?">
               No. Every mode remains an automated risk assessment and never a guarantee. Paid value must come from managed capacity, integrations, and support rather than inflated certainty claims.

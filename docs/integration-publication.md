@@ -20,13 +20,13 @@ Package: `dist/maillume-browser-extension.zip`, produced with the other signed-o
 
 Permission justifications:
 
-- `activeTab`: temporary access after the toolbar action so the extension can read text the user selected on the current page.
-- `scripting`: executes the small selection-reading function in that temporary active tab.
+- `activeTab`: temporary access after the toolbar action so the extension can read text selected by the user or the visibly open Gmail/Outlook message.
+- `scripting`: executes the small, one-time capture function in that temporary active tab.
 - `sidePanel`: keeps the review and result interface beside the email.
-- `storage`: stores deployment URL and API key only; never message content or results.
+- `storage`: stores the deployment URL locally and the API key for the Chrome session only; never message content or results.
 - Optional host access: requested interactively for the exact Maillume deployment selected by the user so the extension can call its API.
 
-Changing deployments revokes the previous origin grant. Removing the saved connection clears the API key and revokes the active origin grant. The English and Dutch interfaces request assessment output in the browser UI language.
+Changing deployments revokes the previous origin grant. Removing the saved connection clears the session key and revokes the active origin grant. Captured text uses a one-time in-memory handoff and expires if it is not consumed. The English and Dutch interfaces request assessment output in the browser UI language.
 
 The package declares no content scripts, persistent Gmail/Outlook host access, tabs permission, cookies permission, webRequest permission, or background mailbox behavior.
 
@@ -46,9 +46,10 @@ OAuth scope justifications:
 - `gmail.addons.execute`: runs the add-on cards and button actions.
 - `gmail.addons.current.message.action`: grants temporary access to the open message only after the user presses the add-on's Analyze action.
 - `script.external_request`: sends the user-initiated assessment to the fixed Maillume endpoint.
+- `script.locale`: reads Gmail's locale so the add-on can choose its English or Dutch interface.
 
 The contextual trigger builds a ready card without reading the message. `getPlainBody()` is called only from the Analyze button handler. The manifest allowlists only `https://app.maillume.io/`.
-The add-on follows Gmail's English or Dutch locale, requests analysis in that language, never redisplays a saved key, and provides a key-removal action. A self-hosted operator must publish a separate add-on build because Google requires outbound destinations to be declared in the add-on manifest.
+The add-on follows Gmail's English or Dutch locale, requests analysis in that language, never redisplays a saved key, and provides replace and removal actions. The key stays in user-scoped Apps Script properties until removal, replacement, or a `401`/`403` response; message content and results are never saved there. A self-hosted operator must publish a separate add-on build because Google requires outbound destinations to be declared in the add-on manifest.
 
 Before submission:
 

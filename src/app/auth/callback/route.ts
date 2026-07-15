@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { getOAuthFailureUrl, hasOAuthErrorReturn } from "@/lib/auth/oauth-return";
+import {
+  PASSWORD_RECOVERY_COOKIE,
+  PASSWORD_RECOVERY_COOKIE_VALUE,
+  PASSWORD_RECOVERY_MAX_AGE_SECONDS,
+} from "@/lib/auth/recovery";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getPublicAppOrigin } from "./origin";
 import { getSafeOAuthRedirectUrl } from "./redirect";
@@ -32,7 +37,16 @@ export async function GET(request: Request) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
 
         if (!error) {
-          return privateRedirect(redirectUrl);
+          const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+          if (assurance?.currentLevel === "aal1" && assurance.nextLevel === "aal2") {
+            const mfaUrl = new URL("/auth/mfa", publicOrigin);
+            mfaUrl.searchParams.set(
+              "next",
+              `${redirectUrl.pathname}${redirectUrl.search}${redirectUrl.hash}`,
+            );
+            return privateRedirect(mfaUrl, false);
+          }
+          return privateRedirect(redirectUrl, isPasswordRecoveryDestination(redirectUrl));
         }
       }
     } catch {
@@ -45,8 +59,17 @@ export async function GET(request: Request) {
   return privateRedirect(signInUrl);
 }
 
-function privateRedirect(url: URL) {
+function privateRedirect(url: URL, passwordRecovery = false) {
   const response = NextResponse.redirect(url);
+  if (passwordRecovery) {
+    response.cookies.set(PASSWORD_RECOVERY_COOKIE, PASSWORD_RECOVERY_COOKIE_VALUE, {
+      httpOnly: true,
+      maxAge: PASSWORD_RECOVERY_MAX_AGE_SECONDS,
+      path: "/",
+      sameSite: "lax",
+      secure: url.protocol === "https:",
+    });
+  }
   response.headers.set(
     "Cache-Control",
     "private, no-cache, no-store, must-revalidate, max-age=0",
@@ -54,4 +77,8 @@ function privateRedirect(url: URL) {
   response.headers.set("Expires", "0");
   response.headers.set("Pragma", "no-cache");
   return response;
+}
+
+function isPasswordRecoveryDestination(url: URL) {
+  return /\/(?:auth\/)?update-password$/.test(url.pathname);
 }

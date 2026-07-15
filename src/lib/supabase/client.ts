@@ -2,7 +2,7 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-import { getPublicSupabaseConfig } from "@/lib/supabase/config";
+import { arePasskeysEnabled, getPublicSupabaseConfig } from "@/lib/supabase/config";
 
 export function createBrowserSupabaseClient() {
   const config = getPublicSupabaseConfig();
@@ -11,5 +11,9 @@ export function createBrowserSupabaseClient() {
     return null;
   }
 
-  return createBrowserClient(config.url, config.publishableKey);
+  return createBrowserClient(config.url, config.publishableKey, {
+    auth: {
+      experimental: { passkey: arePasskeysEnabled() },
+    },
+  });
 }

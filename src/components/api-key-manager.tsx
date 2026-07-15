@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, KeyRound, Plus, RotateCw, Trash2 } from "lucide-react";
+import { Check, Copy, Eye, EyeOff, KeyRound, Plus, RotateCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import type {
@@ -33,6 +33,7 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
   const [name, setName] = useState<string>(labels.defaultName);
   const [lifetimeDays, setLifetimeDays] = useState<ApiKeyLifetimeDays>(90);
   const [plaintext, setPlaintext] = useState<string>();
+  const [plaintextVisible, setPlaintextVisible] = useState(false);
   const [message, setMessage] = useState<string>(labels.loading);
   const [busy, setBusy] = useState(false);
 
@@ -56,6 +57,7 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
   async function createKey() {
     setBusy(true);
     setPlaintext(undefined);
+    setPlaintextVisible(false);
     setMessage("");
 
     try {
@@ -84,6 +86,7 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
 
     setBusy(true);
     setPlaintext(undefined);
+    setPlaintextVisible(false);
     setMessage("");
 
     try {
@@ -146,6 +149,7 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
         <KeyRound className="h-5 w-5 text-[#087b72]" aria-hidden="true" />
         <h2 className="mt-4 text-xl font-semibold">{labels.title}</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-[#59655a]">{labels.description}</p>
+        <p className="mt-3 max-w-2xl border-l-4 border-[#087b72] pl-3 text-xs leading-5 text-[#59655a]">{labels.limitsNote}</p>
       </div>
 
       {usage ? (
@@ -206,7 +210,10 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
         <div className="border-b border-[#aeb6ac] bg-[#dfff52] p-6">
           <p className="font-semibold">{labels.copyWarning}</p>
           <div className="mt-3 flex gap-2">
-            <code className="min-w-0 flex-1 overflow-x-auto border border-[#111711] bg-white p-3 text-xs">{plaintext}</code>
+            <input readOnly type={plaintextVisible ? "text" : "password"} value={plaintext} className="h-11 min-w-0 flex-1 border border-[#111711] bg-white px-3 font-mono text-xs" aria-label={labels.copyTitle} />
+            <button type="button" onClick={() => setPlaintextVisible((visible) => !visible)} title={plaintextVisible ? labels.hideTitle : labels.revealTitle} aria-label={plaintextVisible ? labels.hideTitle : labels.revealTitle} className="grid h-11 w-11 flex-none place-items-center border border-[#111711] bg-white">
+              {plaintextVisible ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+            </button>
             <button type="button" onClick={copyPlaintext} title={labels.copyTitle} aria-label={labels.copyTitle} className="grid h-11 w-11 flex-none place-items-center border border-[#111711] bg-white">
               <Copy className="h-4 w-4" aria-hidden="true" />
             </button>

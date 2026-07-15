@@ -20,7 +20,9 @@
 ## Identity and Operations
 
 - [ ] Supabase production migrations and RLS are verified.
-- [ ] Google OAuth permits only the production callback and account deletion works.
+- [ ] Email confirmation/recovery and Google OAuth permit only production callbacks; branded SMTP is active.
+- [ ] TOTP enrollment, AAL2 challenge, factor removal, new-session behavior, and account deletion pass in production.
+- [ ] Passkeys remain disabled or the documented real-device beta matrix and rollback have passed.
 - [ ] API-key creation, one-time display, revocation, quota exhaustion, and account-deletion cascade pass against production Supabase.
 - [ ] Chrome extension, Gmail add-on, and Outlook add-in pass provider validation using synthetic messages and published privacy disclosures.
 - [ ] Uptime and VPS alerts reach the operator without including scan content.

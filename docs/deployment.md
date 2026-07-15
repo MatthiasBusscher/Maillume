@@ -70,17 +70,20 @@ Do not configure AI provider keys on the official public service. Build-time `NE
 
 Make `scripts/deploy-production.sh` executable. Authenticate Docker to GHCR using a read-only package token if the package is private.
 
-## 4. Configure Supabase and Google
+## 4. Configure Supabase Authentication
 
 Anonymous scanning remains available when authentication is enabled.
 
 1. Create a production Supabase project in an EU region and apply every migration in `supabase/migrations`, including the account-level API quota and expiring key lifecycle migration. Follow the verification and rollback notes in `docs/api-key-lifecycle.md`.
-2. Create a Google Web OAuth client and use the Supabase callback shown in its Google-provider settings as the Google authorized redirect URI.
-3. Enable Google in Supabase with only OpenID, email, and profile scopes.
-4. Set the Supabase site URL to `https://app.maillume.io` and allow only `https://app.maillume.io/auth/callback` in production. Keep localhost only in a separate development project.
-5. Add public Supabase URL/publishable key and the server-only secret to `.env.production`.
-6. Enable production sign-in only after sign-in, sign-out, session refresh, and confirmation-gated account deletion pass.
-7. Verify Row Level Security is enabled. The feedback table accepts writes only through the server role and contains no scan-content columns.
+2. Enable email/password sign-in, require email confirmation, configure branded SMTP/templates, and keep secure password changes enabled.
+3. Create a Google Web OAuth client and use the Supabase callback shown in its Google-provider settings as the Google authorized redirect URI.
+4. Enable Google in Supabase with only OpenID, email, and profile scopes.
+5. Set the Supabase site URL to `https://app.maillume.io` and allow only `https://app.maillume.io/auth/callback` in production. Keep localhost only in a separate development project.
+6. Add only the server-side Supabase secret to the VPS `.env.production`. Public Supabase values are embedded from GitHub repository variables during the image build.
+7. Confirm TOTP APIs are enabled and complete the MFA acceptance matrix in `docs/authentication.md`.
+8. Leave passkeys disabled for the first production image. Enable them only after configuring the WebAuthn relying party and completing the real-device matrix.
+9. Enable production sign-in only after email confirmation, password reset, Google sign-in, sign-out, session refresh, MFA challenge, and confirmation-gated account deletion pass.
+10. Verify Row Level Security is enabled. The feedback table accepts writes only through the server role and contains no scan-content columns.
 
 Never prefix a Supabase server secret or AI provider key with `NEXT_PUBLIC_`.
 
@@ -94,7 +97,7 @@ Create a protected GitHub environment named `production`, require reviewer appro
 - `PRODUCTION_USER`: non-root deployment user.
 - `PRODUCTION_SSH_KEY`: dedicated private deployment key.
 
-Add repository variables `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` before enabling production authentication. These public browser values are intentionally supplied while the image is built. Server secrets remain only in the VPS `.env.production` file.
+Add repository variables `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_PASSKEYS_ENABLED` before enabling production authentication. Keep the passkey variable `false` until its acceptance matrix passes. These public browser values are intentionally supplied while the image is built. Server secrets remain only in the VPS `.env.production` file.
 
 The remote deploy script pulls the immutable image, waits for `/api/health`, and restores the previous image if health checks fail. GitHub Actions builds images; production never builds source code.
 
@@ -108,7 +111,7 @@ Use synthetic data only.
 4. Confirm `/api/analyze` and `/api/v1/analyze` return `Cache-Control: no-store`, reject oversized requests with `413`, and reject excess requests with `429` before analysis.
 5. Confirm production reports `analysis_mode: heuristic` and has no provider key.
 6. Confirm screenshot and `.eml` source files remain browser-side.
-7. Test Google authentication and account deletion with a dedicated test account.
+7. Test email/password confirmation and recovery, Google authentication, TOTP enrollment/challenge, and account deletion with dedicated test accounts.
 8. Rehearse deployment rollback and VPS restart recovery before private beta.
 
 ## Future Migration

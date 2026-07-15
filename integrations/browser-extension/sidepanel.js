@@ -5,19 +5,26 @@ const elements = Object.fromEntries(
 let activeTabId;
 let committedEndpoint = "";
 let committedApiKey = "";
+let captureQueue = Promise.resolve();
+let latestCaptureId = "";
+let lastAppliedCaptureId = "";
+let captureRetryTimer;
+let captureRetryCount = 0;
 
 const dynamicCopy = {
   en: {
-    noTab: "No active browser tab is available. Select the email text and click the Maillume toolbar action again.",
-    capturing: "Capturing the selection from this tab...",
-    captured: "Selection captured. Review it before analysis.",
+    noTab: "No active browser tab is available. Open an email and click the Maillume toolbar action again.",
+    capturing: "Capturing selected text or the open message...",
+    captured: "Selected text captured. Review it before analysis.",
+    openMessageCaptured: "Open message captured. Review the subject, sender, and text before analysis.",
     captureErrors: {
       no_active_tab: "No active browser tab is available.",
-      no_selection: "No selected text was found. Select visible email text and click the Maillume toolbar action again.",
+      no_selection: "No selection or open Gmail/Outlook message was found. Open a message, optionally select text, and click the Maillume toolbar action again.",
+      multiple_messages: "More than one message is expanded. Select the text you want to check, then click the Maillume toolbar action again.",
       restricted_page: "Chrome does not allow extensions to read selections on this page. Open the message in a regular webmail tab.",
       capture_failed: "Chrome could not read the selection from this tab. Reload the message and try the toolbar action again.",
-      handoff_missing: "The one-time selection is no longer available. Select the text and click the Maillume toolbar action again.",
-      handoff_expired: "The one-time selection expired. Select the text and click the Maillume toolbar action again.",
+      handoff_missing: "The one-time capture is no longer available. Open the message and click the Maillume toolbar action again.",
+      handoff_expired: "The one-time capture expired. Open the message and click the Maillume toolbar action again.",
       panel_unavailable: "Chrome could not open the side panel for this tab. Close other side panels and try again.",
     },
     invalidEndpoint: "Enter an HTTPS deployment URL, or an HTTP localhost URL for local testing.",
@@ -30,12 +37,12 @@ const dynamicCopy = {
     removed: "Connection, session key, and deployment permission removed.",
     removeStorageFailed: "Chrome could not clear all connection settings. Try removing the connection again.",
     removePermissionFailed: "The connection and session key were cleared, but Chrome could not remove the deployment permission.",
-    bodyRequired: "Capture or enter selected email text first.",
+    bodyRequired: "Capture or enter the email text first.",
     connectionRequired: "Save a deployment and API key for this browser session first.",
     sending: (origin) => `Sending the reviewed text to ${origin}...`,
     invalidResult: "The deployment returned an invalid analysis response.",
     authenticationFailed: "The deployment rejected the API key.",
-    quotaExceeded: "The API key quota has been reached. Check the account before trying again.",
+    quotaExceeded: "This request was limited. Check account usage or wait before trying again.",
     requestFailed: (status) => `The deployment returned HTTP ${status}.`,
     unreachable: "The deployment could not be reached. Check the URL and connection permission.",
     complete: "Assessment complete. Message content and results were not saved by the extension.",
@@ -50,16 +57,18 @@ const dynamicCopy = {
     points: "points",
   },
   nl: {
-    noTab: "Er is geen actief browsertabblad beschikbaar. Selecteer de e-mailtekst en klik opnieuw op de Maillume-knop in de werkbalk.",
-    capturing: "De selectie uit dit tabblad wordt vastgelegd...",
-    captured: "Selectie vastgelegd. Controleer de tekst voor de analyse.",
+    noTab: "Er is geen actief browsertabblad beschikbaar. Open een e-mail en klik opnieuw op de Maillume-knop in de werkbalk.",
+    capturing: "Geselecteerde tekst of het geopende bericht wordt vastgelegd...",
+    captured: "Geselecteerde tekst vastgelegd. Controleer deze voor de analyse.",
+    openMessageCaptured: "Geopend bericht vastgelegd. Controleer onderwerp, afzender en tekst voor de analyse.",
     captureErrors: {
       no_active_tab: "Er is geen actief browsertabblad beschikbaar.",
-      no_selection: "Er is geen geselecteerde tekst gevonden. Selecteer zichtbare e-mailtekst en klik opnieuw op de Maillume-knop in de werkbalk.",
+      no_selection: "Er is geen geselecteerde tekst gevonden en er kon geen geopend Gmail-/Outlook-bericht worden vastgelegd. Open een bericht, selecteer eventueel tekst en klik opnieuw op de Maillume-knop in de werkbalk.",
+      multiple_messages: "Er zijn meerdere berichten uitgeklapt. Selecteer de tekst die u wilt controleren en klik opnieuw op de Maillume-knop in de werkbalk.",
       restricted_page: "Chrome staat extensies niet toe selecties op deze pagina te lezen. Open het bericht in een normaal webmailtabblad.",
       capture_failed: "Chrome kon de selectie uit dit tabblad niet lezen. Laad het bericht opnieuw en probeer de werkbalkknop nogmaals.",
-      handoff_missing: "De eenmalige selectie is niet meer beschikbaar. Selecteer de tekst en klik opnieuw op de Maillume-knop in de werkbalk.",
-      handoff_expired: "De eenmalige selectie is verlopen. Selecteer de tekst en klik opnieuw op de Maillume-knop in de werkbalk.",
+      handoff_missing: "De eenmalige vastlegging is niet meer beschikbaar. Open het bericht en klik opnieuw op de Maillume-knop in de werkbalk.",
+      handoff_expired: "De eenmalige vastlegging is verlopen. Open het bericht en klik opnieuw op de Maillume-knop in de werkbalk.",
       panel_unavailable: "Chrome kon het zijpaneel voor dit tabblad niet openen. Sluit andere zijpanelen en probeer het opnieuw.",
     },
     invalidEndpoint: "Voer een HTTPS-implementatie-URL in, of een HTTP-localhost-URL voor lokale tests.",
@@ -72,12 +81,12 @@ const dynamicCopy = {
     removed: "Verbinding, sessiesleutel en implementatiemachtiging verwijderd.",
     removeStorageFailed: "Chrome kon niet alle verbindingsinstellingen wissen. Probeer de verbinding opnieuw te verwijderen.",
     removePermissionFailed: "De verbinding en sessiesleutel zijn gewist, maar Chrome kon de implementatiemachtiging niet verwijderen.",
-    bodyRequired: "Leg eerst geselecteerde e-mailtekst vast of voer die in.",
+    bodyRequired: "Leg eerst de e-mailtekst vast of voer die in.",
     connectionRequired: "Sla eerst een implementatie en API-sleutel voor deze browsersessie op.",
     sending: (origin) => `De gecontroleerde tekst wordt naar ${origin} verzonden...`,
     invalidResult: "De implementatie gaf een ongeldig analyseresultaat terug.",
     authenticationFailed: "De implementatie heeft de API-sleutel geweigerd.",
-    quotaExceeded: "Het quotum van de API-sleutel is bereikt. Controleer het account voordat u het opnieuw probeert.",
+    quotaExceeded: "Deze aanvraag is beperkt. Controleer het accountgebruik of wacht voordat u het opnieuw probeert.",
     requestFailed: (status) => `De implementatie gaf HTTP ${status} terug.`,
     unreachable: "De implementatie is niet bereikbaar. Controleer de URL en verbindingsmachtiging.",
     complete: "Beoordeling voltooid. De extensie heeft berichtinhoud en resultaten niet opgeslagen.",
@@ -95,7 +104,7 @@ const dynamicCopy = {
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message?.type === "capture-started" || message?.type === "capture-ready") {
-    void handleCaptureNotification(message);
+    queueCaptureOperation(() => handleCaptureNotification(message));
   }
 });
 
@@ -116,7 +125,7 @@ async function initialize() {
 
   activeTabId = await getActiveTabId();
   if (!Number.isInteger(activeTabId)) return setStatus(getDynamicCopy().noTab, true);
-  await consumeCapture(activeTabId);
+  await queueCaptureOperation(() => consumeCapture(activeTabId));
 }
 
 function localizeUi() {
@@ -130,9 +139,18 @@ async function handleCaptureNotification(message) {
   if (!Number.isInteger(activeTabId) || activeTabId !== message.tabId) return;
 
   if (message.type === "capture-started") {
+    if (typeof message.captureId === "string") {
+      latestCaptureId = message.captureId;
+    }
+    cancelCaptureRetry();
+    captureRetryCount = 0;
     clearMessageData();
     setStatus(getDynamicCopy().capturing);
     return;
+  }
+  if (typeof message.captureId === "string") {
+    if (latestCaptureId && message.captureId !== latestCaptureId) return;
+    latestCaptureId = message.captureId;
   }
   await consumeCapture(activeTabId);
 }
@@ -140,22 +158,53 @@ async function handleCaptureNotification(message) {
 async function consumeCapture(tabId) {
   let capture;
   try {
-    capture = await chrome.runtime.sendMessage({ type: "consume-capture", tabId });
+    capture = await chrome.runtime.sendMessage({ type: "consume-capture", tabId, includeMetadata: true });
   } catch {
     capture = { status: "error", code: "handoff_missing" };
   }
 
   const copy = getDynamicCopy();
-  if (capture?.status === "pending") return setStatus(copy.capturing);
-  clearMessageData();
+  if (typeof capture?.captureId === "string") latestCaptureId = capture.captureId;
+  if (capture?.status === "pending") {
+    setStatus(copy.capturing);
+    scheduleCaptureRetry(tabId);
+    return;
+  }
+  cancelCaptureRetry();
   if (capture?.status === "success" && typeof capture.text === "string" && capture.text.trim()) {
+    clearMessageData();
     elements.body.value = capture.text.slice(0, 20_000);
+    if (typeof capture.subject === "string") elements.subject.value = capture.subject.slice(0, 300);
+    if (typeof capture.sender === "string") elements.sender.value = capture.sender.slice(0, 320);
+    lastAppliedCaptureId = capture.captureId || latestCaptureId;
     updateAnalyzeState();
-    setStatus(copy.captured);
+    setStatus(capture.source === "open_message" ? copy.openMessageCaptured : copy.captured);
     return;
   }
   const code = capture?.code || "handoff_missing";
+  if (code === "handoff_missing" && elements.body.value.trim() && lastAppliedCaptureId && lastAppliedCaptureId === latestCaptureId) return;
+  clearMessageData();
   setStatus(copy.captureErrors[code] || copy.captureErrors.capture_failed, true);
+}
+
+function queueCaptureOperation(operation) {
+  captureQueue = captureQueue.then(operation, operation);
+  return captureQueue;
+}
+
+function scheduleCaptureRetry(tabId) {
+  cancelCaptureRetry();
+  if (captureRetryCount >= 20) return;
+  captureRetryCount += 1;
+  captureRetryTimer = setTimeout(() => {
+    captureRetryTimer = undefined;
+    queueCaptureOperation(() => consumeCapture(tabId));
+  }, 50);
+}
+
+function cancelCaptureRetry() {
+  if (captureRetryTimer !== undefined) clearTimeout(captureRetryTimer);
+  captureRetryTimer = undefined;
 }
 
 async function getActiveTabId() {

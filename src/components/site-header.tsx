@@ -46,7 +46,7 @@ export async function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <LanguageLinks locale={locale} pathname={pathname} />
+          <SiteLanguageLinks locale={locale} pathname={pathname} />
           <Link
             href={signInHref}
             className="inline-flex h-10 items-center gap-2 border border-[#aeb6ac] px-4 text-sm font-semibold text-[#2b342c] transition hover:border-[#111711] hover:bg-white"
@@ -92,7 +92,7 @@ export async function SiteHeader() {
               </a>
             </nav>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <div className="col-span-2"><LanguageLinks locale={locale} pathname={pathname} /></div>
+              <div className="col-span-2"><SiteLanguageLinks locale={locale} pathname={pathname} /></div>
               <Link
                 href={signInHref}
                 className="inline-flex h-10 items-center justify-center border border-[#aeb6ac] bg-white px-3 text-sm font-semibold"
@@ -113,7 +113,7 @@ export async function SiteHeader() {
   );
 }
 
-function LanguageLinks({ locale, pathname }: { locale: "en" | "nl"; pathname: string }) {
+export function SiteLanguageLinks({ locale, pathname }: { locale: "en" | "nl"; pathname: string }) {
   return (
     <div className="inline-flex border border-[#aeb6ac] bg-white p-1" aria-label={locale === "nl" ? "Taal" : "Language"}>
       {(["en", "nl"] as const).map((option) => (

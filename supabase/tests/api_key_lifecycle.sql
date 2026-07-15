@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(48);
+select plan(51);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values
@@ -223,6 +223,11 @@ select results_eq(
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claims', '{"sub":"10000000-0000-4000-8000-000000000001","aal":"aal1"}', true);
+select is((select count(id) from public.api_keys), 0::bigint, 'AAL1 cannot read API key metadata');
+select is((select count(user_id) from public.api_account_limits), 0::bigint, 'AAL1 cannot read the API account limit');
+select is((select count(user_id) from public.api_account_usage_monthly), 0::bigint, 'AAL1 cannot read API usage');
+select set_config('request.jwt.claims', '{"sub":"10000000-0000-4000-8000-000000000001","aal":"aal2"}', true);
 select is((select count(id) from public.api_keys), 3::bigint, 'RLS exposes only the signed-in account keys');
 select is((select count(user_id) from public.api_account_limits), 1::bigint, 'RLS exposes only the signed-in account limit');
 select is((select count(user_id) from public.api_account_usage_monthly), 1::bigint, 'RLS exposes only the signed-in account usage');

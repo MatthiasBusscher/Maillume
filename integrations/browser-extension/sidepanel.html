@@ -11,7 +11,7 @@
       <div class="mark" aria-hidden="true">M</div>
       <div>
         <h1>Maillume</h1>
-        <p data-nl="Beoordeling van geselecteerde tekst">Selected-text assessment</p>
+        <p data-nl="Beoordeling van geopende e-mail">Open-email assessment</p>
       </div>
     </header>
 
@@ -19,8 +19,8 @@
       <section class="step">
         <span class="number">01</span>
         <div>
-          <h2 data-nl="Selectie uit de werkbalk">Selection from the toolbar</h2>
-          <p data-nl="Selecteer de zichtbare e-mailtekst en klik op de Maillume-knop in de Chrome-werkbalk. De eenmalig vastgelegde tekst verschijnt hieronder.">Select the visible email text and click the Maillume action in the Chrome toolbar. The one-time capture appears below.</p>
+          <h2 data-nl="Leg het geopende bericht vast">Capture the open message</h2>
+          <p data-nl="Open een bericht in Gmail of Outlook en klik op de Maillume-knop in de Chrome-werkbalk. Een selectie krijgt voorrang; zonder selectie legt Maillume het geopende bericht vast.">Open a message in Gmail or Outlook and click the Maillume action in the Chrome toolbar. A text selection takes priority; without one, Maillume captures the open message.</p>
         </div>
       </section>
 
@@ -30,7 +30,7 @@
           <h2 data-nl="Controleer vóór verzending">Review before sending</h2>
           <label><span data-nl="Onderwerp">Subject</span> <input id="subject" maxlength="300" autocomplete="off" /></label>
           <label><span data-nl="Afzender">Sender</span> <input id="sender" maxlength="320" autocomplete="off" /></label>
-          <label><span data-nl="Geselecteerde tekst">Selected text</span> <textarea id="body" maxlength="20000" rows="9"></textarea></label>
+          <label><span data-nl="Berichttekst">Message text</span> <textarea id="body" maxlength="20000" rows="9"></textarea></label>
         </div>
       </section>
 
@@ -46,7 +46,7 @@
       </details>
 
       <div id="destination" class="destination"></div>
-      <button id="analyze" type="button" disabled data-nl="Geselecteerde tekst analyseren">Analyze selected text</button>
+      <button id="analyze" type="button" disabled data-nl="Bericht analyseren">Analyze message</button>
       <p id="status" role="status" aria-live="polite"></p>
 
       <section id="result" class="result" hidden>

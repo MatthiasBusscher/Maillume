@@ -19,7 +19,7 @@ Content-Type: application/json
 }
 ```
 
-The response uses the same `AnalyzeResponse` envelope as the scanner and includes `X-RateLimit-Limit` and `X-RateLimit-Remaining`. Beta keys receive 100 calls per UTC calendar month. A `429` response indicates monthly quota, per-client abuse limit, or temporary analysis capacity.
+The response uses the same `AnalyzeResponse` envelope as the scanner and includes `X-RateLimit-Limit` and `X-RateLimit-Remaining`. During private beta, an account receives 100 calls per UTC calendar month shared across at most five active keys. This allowance is for the hosted heuristic integration API; it is not an AI allowance and it does not mean 100 keys. A `429` response indicates monthly quota, per-client abuse limit, or temporary analysis capacity.
 
 The machine-readable contract is published at `/openapi.json`.
 
@@ -27,20 +27,22 @@ Stored API metadata is limited to key owner, name, prefix, hash, quota, creation
 
 ## Browser Extension
 
-`integrations/browser-extension` is an unpacked Manifest V3 extension for Chrome 114+.
+`integrations/browser-extension` is an unpacked Manifest V3 extension for Chrome 116+.
 
-- Temporary `activeTab` and `scripting` access captures the current text selection.
+- A toolbar click grants temporary `activeTab` and `scripting` access. Maillume first captures a text selection and otherwise captures the visibly open Gmail or Outlook message when the page is accessible.
 - There are no persistent Gmail or Outlook host permissions and no content script.
 - Optional host access is requested only for the deployment chosen by the user.
-- Endpoint and API key are stored locally; selected text and results are not.
+- The endpoint is stored locally; the API key lives only in Chrome session storage. Captured text crosses to the tab-specific panel through a one-time in-memory handoff and message content and results are never written to extension storage.
 
 ## Gmail Add-on
 
 `integrations/gmail-addon` is a Google Workspace add-on source project.
 
 - Scope: `gmail.addons.current.message.action`.
+- Locale scope: `script.locale`, used only to show the English or Dutch interface that Gmail selected.
 - The contextual card does not read the message.
 - Pressing **Analyze this message** activates temporary access, reads that message, and calls the fixed official endpoint.
+- The API key is saved in user-scoped Apps Script properties until the user removes/replaces it or Maillume rejects it. No message content or result is saved there.
 - Self-hosters publish their own add-on after changing the endpoint allowlist.
 
 ## Outlook Add-in
@@ -49,7 +51,7 @@ Stored API metadata is limited to key owner, name, prefix, hash, quota, creation
 
 - Permission: `ReadItem`.
 - The task pane waits for **Analyze this message** before calling `body.getAsync`.
-- API key is stored in task-pane local storage and can be removed there; message content and result are not persisted.
+- API key is stored in task-pane session storage and can be removed there; message content and result are not persisted.
 - The production add-in uses `https://app.maillume.io` as its fixed destination.
 
 Provider marketplace publication requires final icons, operator identity, privacy-policy URLs, test accounts, validation, and review. Those are release operations and must be completed before claiming store availability.
