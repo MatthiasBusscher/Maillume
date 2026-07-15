@@ -43,6 +43,7 @@ jobs:
       - run: npm run lint
       - run: npm run test:analysis
       - run: npm run test:security
+      - run: npm run test:deployment
       - run: node --test src/app/auth/callback/route.test.mjs
       - run: npm run test:integrations
       - run: npm run test:extension
@@ -227,3 +228,7 @@ jobs:
             cd /opt/maillume
             chmod 750 ./scripts/deploy-production.sh
             ./scripts/deploy-production.sh '${{ needs.image.outputs.image }}' '${{ github.sha }}'
+      - name: Verify public deployment revision
+        env:
+          EXPECTED_REVISION: ${{ github.sha }}
+        run: node scripts/verify-public-deployment.mjs

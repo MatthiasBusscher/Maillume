@@ -58,6 +58,9 @@ jobs:
       - name: Security tests
         run: npm run test:security
 
+      - name: Deployment contract tests
+        run: npm run test:deployment
+
       - name: OAuth callback security tests
         run: node --test src/app/auth/callback/route.test.mjs
 
