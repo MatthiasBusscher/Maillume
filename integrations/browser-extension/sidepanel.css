@@ -8,6 +8,8 @@ h1 { margin-bottom: 2px; font-size: 18px; }
 header p { margin-bottom: 0; color: #bac4b8; font: 10px ui-monospace, monospace; text-transform: uppercase; }
 main { padding: 16px; }
 .step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; border-bottom: 1px solid #bfc5bc; padding: 18px 0; }
+.capture-intro { min-width: 0; }
+.capture-intro button { margin-top: 2px; }
 .number { color: #087b72; font: 10px ui-monospace, monospace; }
 h2 { font-size: 14px; }
 p, label { color: #4f5b50; font-size: 13px; line-height: 1.5; }
@@ -17,6 +19,7 @@ input, textarea { width: 100%; border: 1px solid #aeb6ac; border-radius: 0; back
 textarea { resize: vertical; }
 button { width: 100%; border: 1px solid #111711; border-radius: 0; background: #111711; color: white; padding: 11px 12px; font-weight: 700; cursor: pointer; }
 button:hover { background: #087b72; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid #087b72; outline-offset: 2px; }
 button:disabled { cursor: not-allowed; opacity: .45; }
 .secondary { background: white; color: #111711; }
 .danger { border-color: #d08b82; background: white; color: #8f251b; }

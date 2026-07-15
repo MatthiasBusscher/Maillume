@@ -40,7 +40,11 @@ async function testBrowserServiceWorker() {
       sendMessage: async (message) => { runtimeMessages.push(message); },
     },
     action: { onClicked: onActionClicked },
-    tabs: { onUpdated: onTabUpdated, onRemoved: onTabRemoved },
+    tabs: {
+      onUpdated: onTabUpdated,
+      onRemoved: onTabRemoved,
+      get: async (tabId) => ({ id: tabId, url: "https://mail.google.com/mail/u/0/#inbox/thread" }),
+    },
     sidePanel: {
       setOptions: async (options) => { panelOptions.push(options); },
       open: async (options) => { openedPanels.push(options); },
@@ -87,8 +91,22 @@ async function testBrowserServiceWorker() {
   onMessage.listener({ type: "consume-capture", tabId: 17 }, {}, (value) => { response = value; });
   assert.deepEqual(plain(response), { status: "error", code: "handoff_missing" }, "capture handoff must be one-time");
 
+  let recaptureResponse;
+  assert.equal(onMessage.listener(
+    { type: "capture-active-tab", tabId: 17 },
+    {},
+    (value) => { recaptureResponse = value; },
+  ), true);
+  await flush();
+  assert.equal(recaptureResponse.accepted, true);
+  assert.equal(scriptExecutions, 2, "an open panel can explicitly capture the next message");
+  onTabUpdated.listener(17, { url: "https://mail.google.com/mail/u/0/#inbox/next" });
+  onMessage.listener({ type: "consume-capture", tabId: 17 }, {}, (value) => { response = value; });
+  assert.deepEqual(plain(response), { status: "error", code: "handoff_missing" }, "SPA navigation must clear stale captures");
+  assert.equal(runtimeMessages.at(-1).type, "capture-cleared");
+
   await onActionClicked.listener({ id: 18, url: "chrome://settings/" });
-  assert.equal(scriptExecutions, 1, "restricted browser pages must not receive injected scripts");
+  assert.equal(scriptExecutions, 2, "restricted browser pages must not receive injected scripts");
   onMessage.listener({ type: "consume-capture", tabId: 18 }, {}, (value) => { response = value; });
   assert.deepEqual(plain(response), { status: "error", code: "restricted_page" });
 
@@ -143,7 +161,7 @@ async function testBrowserSidePanel() {
   const listeners = new Map();
   const runtimeEvent = createEvent();
   const elements = new Map();
-  const ids = ["subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"];
+  const ids = ["capture", "subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"];
   for (const id of ids) {
     const element = createElement();
     element.addEventListener = (type, callback) => listeners.set(`${id}:${type}`, callback);
@@ -162,11 +180,17 @@ async function testBrowserSidePanel() {
     set: async (value) => { storageWrites.push({ name, value }); Object.assign(area, value); },
     remove: async (keys) => keys.forEach((key) => delete area[key]),
   });
+  const panelMessages = [];
   const chrome = {
     i18n: { getUILanguage: () => browserLocale },
     runtime: {
       onMessage: runtimeEvent,
-      sendMessage: async (message) => message.type === "consume-capture" ? captureResponse : undefined,
+      sendMessage: async (message) => {
+        panelMessages.push(message);
+        if (message.type === "consume-capture") return captureResponse;
+        if (message.type === "capture-active-tab") return { accepted: true, captureId: "capture-panel" };
+        return undefined;
+      },
     },
     permissions: {
       request: async ({ origins }) => { requestedOrigins.push(...origins); return true; },
@@ -198,10 +222,23 @@ async function testBrowserSidePanel() {
   assert.equal(elements.get("analyze").disabled, false);
   assert.equal(elements.get("result").hidden, true);
 
+  await listeners.get("capture:click")();
+  assert.ok(panelMessages.some(({ type, tabId }) => type === "capture-active-tab" && tabId === 17));
+  assert.equal(elements.get("body").value, "", "recapturing clears the previous reviewed message immediately");
+  assert.equal(elements.get("capture").disabled, false);
+
+  elements.get("body").value = "Stale message";
+  elements.get("result").hidden = false;
+  runtimeEvent.listener({ type: "capture-cleared", tabId: 17 });
+  await flush();
+  assert.equal(elements.get("body").value, "", "SPA navigation must clear the reviewed message");
+  assert.equal(elements.get("result").hidden, true);
+  assert.match(elements.get("status").textContent, /webmail page changed/i);
+
   queriedTabId = 18;
   runtimeEvent.listener({ type: "capture-started", tabId: 18 });
   await flush();
-  assert.equal(elements.get("body").value, "Synthetic selected message", "a hidden panel must not consume another tab's capture");
+  assert.equal(elements.get("body").value, "", "a hidden panel must not consume another tab's capture");
   queriedTabId = 17;
 
   elements.get("endpoint").value = "https://new.example";
@@ -218,7 +255,7 @@ async function testBrowserSidePanel() {
   assert.ok(storageWrites.some(({ name, value }) => name === "local" && Object.keys(value).join() === "endpoint"));
   assert.ok(storageWrites.some(({ name, value }) => name === "session" && Object.keys(value).join() === "apiKey"));
   assert.deepEqual(removedOrigins, ["https://old.example/*"], "old deployment permission must be revoked");
-  assert.equal(elements.get("analyze").disabled, false);
+  assert.equal(elements.get("analyze").disabled, true, "a newly saved connection still needs a freshly captured message");
 
   removalFailureOrigin = "https://new.example/*";
   elements.get("endpoint").value = "https://third.example";
@@ -284,7 +321,7 @@ async function testBrowserSidePanel() {
 
   const sidePanelSource = fs.readFileSync("integrations/browser-extension/sidepanel.js", "utf8");
   assert.doesNotMatch(sidePanelSource, /chrome\.scripting/, "the panel must not capture after activeTab expires");
-  assert.doesNotMatch(fs.readFileSync("integrations/browser-extension/sidepanel.html", "utf8"), /id="capture"/);
+  assert.match(fs.readFileSync("integrations/browser-extension/sidepanel.html", "utf8"), /id="capture"/);
 }
 
 function fluent() {
@@ -386,7 +423,7 @@ function testGmailAddOn() {
 }
 
 function testOutlookIntegration() {
-  const source = fs.readFileSync("src/components/outlook-integration.tsx", "utf8");
+  const source = fs.readFileSync("integrations/outlook-addin/outlook-integration.tsx", "utf8");
   assert.match(source, /window\.sessionStorage\.getItem\("maillume-outlook-api-key"\)/);
   assert.match(source, /window\.sessionStorage\.setItem\("maillume-outlook-api-key"/);
   assert.match(source, /window\.sessionStorage\.removeItem\("maillume-outlook-api-key"\)/);

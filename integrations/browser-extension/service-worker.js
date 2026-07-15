@@ -8,15 +8,24 @@ chrome.runtime.onStartup.addListener(disableGlobalPanel);
 chrome.action.onClicked.addListener(handleToolbarAction);
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type !== "consume-capture") return undefined;
-  sendResponse(consumeCapture(message.tabId, message.includeMetadata === true));
-  return false;
+  if (message?.type === "consume-capture") {
+    sendResponse(consumeCapture(message.tabId, message.includeMetadata === true));
+    return false;
+  }
+  if (message?.type === "capture-active-tab") {
+    recaptureTab(message.tabId).then(sendResponse);
+    return true;
+  }
+  return undefined;
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-  if (changeInfo.status !== "loading") return;
+  if (changeInfo.status !== "loading" && typeof changeInfo.url !== "string") return;
   clearCapture(tabId);
-  chrome.sidePanel.setOptions({ tabId, enabled: false }).catch(() => {});
+  notifyPanel("capture-cleared", tabId);
+  if (changeInfo.status === "loading") {
+    chrome.sidePanel.setOptions({ tabId, enabled: false }).catch(() => {});
+  }
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
@@ -92,6 +101,23 @@ async function captureMessage(tab, captureId) {
       : { status: "error", code: captureError || "no_selection" });
   } catch {
     finishCapture(tabId, captureId, { status: "error", code: "capture_failed" });
+  }
+}
+
+async function recaptureTab(tabId) {
+  if (!Number.isInteger(tabId)) return { accepted: false, code: "no_active_tab" };
+
+  const captureId = crypto.randomUUID();
+  setCapture(tabId, { status: "pending", captureId });
+  notifyPanel("capture-started", tabId, captureId);
+
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    await captureMessage(tab, captureId);
+    return { accepted: true, captureId };
+  } catch {
+    finishCapture(tabId, captureId, { status: "error", code: "capture_failed" });
+    return { accepted: false, code: "capture_failed", captureId };
   }
 }
 

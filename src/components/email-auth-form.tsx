@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Eye, EyeOff, LoaderCircle, LockKeyhole, Mail } from "lucide-react";
 
 import type { AccountDictionary } from "@/lib/i18n/account-en";
@@ -15,10 +15,12 @@ export function EmailAuthForm({
   configured,
   labels,
   locale,
+  onEngagementChange,
 }: {
   configured: boolean;
   labels: AccountDictionary["signIn"]["email"];
   locale: SiteLocale;
+  onEngagementChange?: (engaged: boolean) => void;
 }) {
   const [mode, setMode] = useState<EmailAuthMode>("sign-in");
   const [email, setEmail] = useState("");
@@ -27,11 +29,17 @@ export function EmailAuthForm({
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [canResendConfirmation, setCanResendConfirmation] = useState(false);
+
+  useEffect(() => {
+    onEngagementChange?.(Boolean(email.trim() || password));
+  }, [email, onEngagementChange, password]);
 
   function selectMode(nextMode: EmailAuthMode) {
     setMode(nextMode);
     setMessage("");
     setError("");
+    setCanResendConfirmation(false);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -45,6 +53,7 @@ export function EmailAuthForm({
     setIsLoading(true);
     setMessage("");
     setError("");
+    setCanResendConfirmation(false);
 
     try {
       if (mode === "forgot") {
@@ -77,6 +86,7 @@ export function EmailAuthForm({
           await continueAfterPrimarySignIn(supabase, locale);
           return;
         }
+        setCanResendConfirmation(true);
         setMessage(labels.confirmEmail);
         return;
       }
@@ -92,6 +102,31 @@ export function EmailAuthForm({
       await continueAfterPrimarySignIn(supabase, locale);
     } catch {
       setError(getEmailAuthFailureMessage(mode, labels));
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function resendConfirmation() {
+    const supabase = createBrowserSupabaseClient();
+    if (!configured || !supabase || !email.trim()) {
+      setError(labels.resendFailed);
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+    try {
+      const callback = new URL("/auth/callback", window.location.origin);
+      callback.searchParams.set("next", localizePath("/account", locale));
+      await supabase.auth.resend({
+        type: "signup",
+        email: email.trim(),
+        options: { emailRedirectTo: callback.toString() },
+      });
+      setMessage(labels.confirmationResent);
+    } catch {
+      setError(labels.resendFailed);
     } finally {
       setIsLoading(false);
     }
@@ -169,6 +204,16 @@ export function EmailAuthForm({
       </button>
 
       {message ? <p className="mt-4 border-l-4 border-[#087b72] bg-[#eaf6f5] px-4 py-3 text-sm leading-6 text-[#204e51]" role="status">{message}</p> : null}
+      {canResendConfirmation ? (
+        <button
+          type="button"
+          onClick={resendConfirmation}
+          disabled={isLoading}
+          className="mt-3 text-xs font-semibold text-[#087b72] hover:text-[#111711] disabled:text-[#778177]"
+        >
+          {labels.resendConfirmation}
+        </button>
+      ) : null}
       {error ? <p className="mt-4 border-l-4 border-[#b2382b] bg-[#fff0ed] px-4 py-3 text-sm leading-6 text-[#7a2b23]" role="alert">{error}</p> : null}
     </div>
   );

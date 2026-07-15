@@ -402,6 +402,22 @@ test("Google sign-in degrades safely when Supabase auth is not configured", asyn
   await expect(page.getByRole("link", { name: "Open scanner" })).toHaveAttribute("href", "/app");
 });
 
+test("email entry keeps the sign-in card compact", async ({ page }) => {
+  await page.goto("/auth/sign-in");
+  await page.getByRole("button", { name: "Create account", exact: true }).first().click();
+
+  const googleButton = page.getByRole("button", { name: "Continue with Google" });
+  await expect(googleButton).toBeVisible();
+  await page.getByLabel("Email address").fill("person@example.com");
+  await expect(googleButton).toBeHidden();
+  const otherMethods = page.getByRole("button", { name: "Other sign-in methods" });
+  await expect(otherMethods).toHaveAttribute("aria-expanded", "false");
+  await otherMethods.click();
+  await expect(googleButton).toBeVisible();
+  await page.getByLabel("Email address").fill("");
+  await expect(googleButton).toBeVisible();
+});
+
 test("trust pages are publicly accessible", async ({ page }) => {
   for (const [path, heading] of [
     ["/privacy", "Privacy notice"],
@@ -626,76 +642,11 @@ test("hosted API publishes its machine-readable contract", async ({ request }) =
   expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v2.1");
 });
 
-test("Outlook task pane explains explicit current-message access", async ({ page }) => {
-  await page.goto("/integrations/outlook");
-  await expect(page.getByRole("heading", { name: "Maillume for Outlook" })).toBeVisible();
-  await expect(page.getByText(/reads the open message only after/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Analyze this message" })).toBeDisabled();
-});
-
-test("Outlook reads only after confirmation and can be embedded by Office", async ({ page, request }) => {
-  const paneResponse = await request.get("/integrations/outlook");
-  const dutchPaneResponse = await request.get("/nl/integrations/outlook");
-  expect(paneResponse.headers()["x-frame-options"]).toBeUndefined();
-  expect(paneResponse.headers()["content-security-policy"]).toContain("https://*.office.com");
-  expect(dutchPaneResponse.headers()["x-frame-options"]).toBeUndefined();
-  expect(dutchPaneResponse.headers()["content-security-policy"]).toContain("https://*.office.com");
-
-  await page.route("https://appsforoffice.microsoft.com/**", async (route) => {
-    await route.fulfill({ contentType: "application/javascript", body: "" });
-  });
-
-  await page.addInitScript(() => {
-    const state = window as typeof window & { __outlookReads: number; Office: unknown };
-    state.__outlookReads = 0;
-    window.sessionStorage.setItem("maillume-outlook-api-key", `mlm_${"a".repeat(43)}`);
-    state.Office = {
-      AsyncResultStatus: { Succeeded: "succeeded" },
-      CoercionType: { Text: "text" },
-      onReady: (callback: (info: { host: string }) => void) => callback({ host: "Outlook" }),
-      context: { mailbox: { item: {
-        subject: "Synthetic Outlook message",
-        from: { emailAddress: "sender@example.com" },
-        body: { getAsync: (_type: string, callback: (result: { status: string; value?: string; error?: { message?: string } }) => void) => {
-          state.__outlookReads += 1;
-          callback({ status: "succeeded", value: "Synthetic message body" });
-        } },
-      } } },
-    };
-  });
-  let submitted: Record<string, unknown> | undefined;
-  let analysisRequests = 0;
-  await page.route("**/api/v1/analyze", async (route) => {
-    analysisRequests += 1;
-    submitted = route.request().postDataJSON() as Record<string, unknown>;
-    if (analysisRequests === 1) {
-      await route.fulfill({ contentType: "application/json", json: { result: { risk_score: 10 } } });
-      return;
-    }
-    await route.fulfill({ contentType: "application/json", json: { result: {
-      classification: "likely_phishing", risk_level: "high", risk_score: 82,
-      score_factors: [
-        { id: "synthetic-destination", family: "destination", contribution: 30, label: "Synthetic destination warning" },
-        { id: "synthetic-intent", family: "intent", contribution: 30, label: "Synthetic intent warning" },
-        { id: "synthetic-identity", family: "identity", contribution: 22, label: "Synthetic identity warning" },
-      ],
-      suspicious_signals: ["Synthetic warning"], detected_links: [],
-      recommended_action: "Verify through a known channel.", short_explanation: "Suspicious pattern detected.",
-    } } });
-  });
-  await page.goto("/nl/integrations/outlook");
-  await expect.poll(() => page.evaluate(() => (window as typeof window & { __outlookReads: number }).__outlookReads)).toBe(0);
-  const analyze = page.getByRole("button", { name: "Dit bericht analyseren" });
-  await expect(analyze).toBeEnabled();
-  await analyze.click();
-  await expect.poll(() => page.evaluate(() => (window as typeof window & { __outlookReads: number }).__outlookReads)).toBe(1);
-  await expect(page.getByRole("status")).toHaveText("Maillume gaf een ongeldig analyseresultaat terug.");
-  await analyze.click();
-  await expect.poll(() => page.evaluate(() => (window as typeof window & { __outlookReads: number }).__outlookReads)).toBe(2);
-  await expect(page.getByText("Hoog", { exact: true })).toBeVisible();
-  expect(submitted).toMatchObject({ body: "Synthetic message body", locale: "nl", subject: "Synthetic Outlook message" });
-  await page.getByText("API-sleutel", { exact: true }).click();
-  await page.getByRole("button", { name: "Sleutel verwijderen" }).click();
-  await expect(analyze).toBeDisabled();
-  await expect.poll(() => page.evaluate(() => window.sessionStorage.getItem("maillume-outlook-api-key"))).toBeNull();
+test("retired Outlook task-pane routes are not shipped", async ({ request }) => {
+  for (const path of ["/integrations/outlook", "/nl/integrations/outlook"]) {
+    const response = await request.get(path);
+    expect(response.status()).toBe(404);
+    expect(response.headers()["x-frame-options"]).toBe("DENY");
+    expect(response.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
+  }
 });

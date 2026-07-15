@@ -6,7 +6,10 @@ type BoundedBodyResult =
   | { ok: true; text: string }
   | { ok: false; reason: "too_large" };
 
-export function isStrictSameOriginMutation(request: Request): boolean {
+export function isStrictSameOriginMutation(
+  request: Request,
+  configuredPublicOrigin?: string,
+): boolean {
   const origin = request.headers.get("origin");
   if (!origin) return false;
 
@@ -15,6 +18,8 @@ export function isStrictSameOriginMutation(request: Request): boolean {
     const requestUrl = new URL(request.url);
     const fetchSite = request.headers.get("sec-fetch-site");
     const acceptedOrigins = new Set([requestUrl.origin]);
+    const publicOrigin = getOriginOnly(configuredPublicOrigin);
+    if (publicOrigin) acceptedOrigins.add(publicOrigin);
     const requestHost = request.headers.get("host")?.trim();
     const forwardedProtocol = request.headers.get("x-forwarded-proto")
       ?.split(",", 1)[0]
@@ -50,6 +55,27 @@ export function isStrictSameOriginMutation(request: Request): boolean {
     return !fetchSite || fetchSite === "same-origin";
   } catch {
     return false;
+  }
+}
+
+function getOriginOnly(value?: string): string | null {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    if (
+      (url.protocol !== "http:" && url.protocol !== "https:")
+      || url.username
+      || url.password
+      || url.pathname !== "/"
+      || url.search
+      || url.hash
+    ) {
+      return null;
+    }
+    return url.origin;
+  } catch {
+    return null;
   }
 }
 

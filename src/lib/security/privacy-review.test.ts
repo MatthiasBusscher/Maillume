@@ -85,8 +85,8 @@ function main() {
   const extensionPanel = readProjectFile("integrations/browser-extension/sidepanel.js");
   const gmailManifest = readProjectFile("integrations/gmail-addon/appsscript.json");
   const gmailCode = readProjectFile("integrations/gmail-addon/Code.gs");
-  const outlookManifest = readProjectFile("public/outlook-manifest.xml");
-  const outlookComponent = readProjectFile("src/components/outlook-integration.tsx");
+  const outlookManifest = readProjectFile("integrations/outlook-addin/outlook-manifest.xml");
+  const outlookComponent = readProjectFile("integrations/outlook-addin/outlook-integration.tsx");
   const ciWorkflow = readProjectFile(".github/workflows/ci.yml");
   const releaseWorkflow = readProjectFile(".github/workflows/release.yml");
   const deployScript = readProjectFile("scripts/deploy-production.sh");
@@ -143,8 +143,9 @@ function main() {
   }
   assert.match(nextConfigContent, /X-Content-Type-Options/);
   assert.match(nextConfigContent, /X-Frame-Options/);
-  assert.match(nextConfigContent, /source: "\/integrations\/outlook"/);
-  assert.match(nextConfigContent, /frame-ancestors https:\/\/\*\.office\.com/);
+  assert.match(nextConfigContent, /source: "\/\(\.\*\)"/);
+  assert.match(nextConfigContent, /frame-ancestors 'none'/);
+  assert.doesNotMatch(nextConfigContent, /office\.com|outlook\.com/);
   assert.match(nextConfigContent, /Referrer-Policy/);
   assert.match(nextConfigContent, /Permissions-Policy/);
   assert.match(nextConfigContent, /output: "standalone"/);

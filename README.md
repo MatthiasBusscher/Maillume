@@ -33,12 +33,12 @@ Paste an email, add a screenshot, or open an exported `.eml` file. Maillume show
 - **No scan history:** email content and completed assessments are not written to a scan database.
 - **Useful without an account:** anonymous heuristic scanning is the permanent free core.
 - **Self-hostable:** run the complete scanner in Docker and optionally connect your own AI provider.
-- **Bilingual from the start:** the web interface and current integration betas support English and Dutch.
+- **Bilingual from the start:** the web interface and Chrome extension source beta support English and Dutch.
 - **Built in the open:** AGPL-3.0 source, public issues, security guidance, and a documented result contract.
 
 ## Project Status
 
-Maillume is a release candidate preparing for private beta. The scanner works today; production acceptance and marketplace publication remain explicit launch gates.
+Maillume is a release candidate preparing for private beta. The scanner works today; production acceptance and Chrome Web Store publication remain explicit launch gates.
 
 | Capability | Status |
 | --- | --- |
@@ -47,7 +47,8 @@ Maillume is a release candidate preparing for private beta. The scanner works to
 | Local heuristic assessment | Available |
 | Self-hosted AI with an operator-owned key | Available from source |
 | Email/Google accounts, TOTP 2FA, and hosted API keys | Implemented; production acceptance in progress |
-| Chrome, Gmail, and Outlook integrations | Source beta; marketplace publication pending |
+| Chrome extension | Source beta; Chrome Web Store publication pending |
+| Gmail and Outlook add-ons | Retired experiments; legacy source retained but not shipped |
 | Maintainer-hosted AI and payments | Not implemented |
 
 Follow [production acceptance](https://github.com/MatthiasBusscher/Maillume/issues/38), [integration publication](https://github.com/MatthiasBusscher/Maillume/issues/39), and the [private-beta rehearsal](https://github.com/MatthiasBusscher/Maillume/issues/40) on GitHub.
@@ -76,21 +77,19 @@ Self-hosted AI mode sends normalized scan text to the provider selected by the o
 
 ## Integrations
 
-The integration source is available for testing, but none of the three integrations should be presented as marketplace-ready yet.
+The Chrome extension is Maillume's only planned inbox integration. It is available for source testing but must not be presented as Chrome Web Store-ready until publication checks pass.
 
 | Surface | Access boundary | Local verification |
 | --- | --- | --- |
-| Chrome extension | Selected text, or the visibly open Gmail/Outlook message when unambiguous | Manifest V3 load test, permission tests, and packaged-artifact checks |
-| Gmail add-on | Open message after the user presses Analyze | Mocked Apps Script behavior, scope audit, and packaged-artifact checks |
-| Outlook add-in | Open message after the user presses Analyze | Office.js browser test and production manifest validation |
+| Chrome extension | Selected text, or the visibly open message in a supported webmail client when unambiguous | Manifest V3 load test, permission tests, and packaged-artifact checks |
 
-Build the submission artifacts with:
+Build the Chrome Web Store candidate and checksum with:
 
 ```bash
 npm run package:integrations
 ```
 
-Real Gmail, Outlook, and marketplace acceptance tests are tracked in the [publication packet](docs/integration-publication.md).
+Only the Chrome artifact is produced by the release packaging command. The Gmail and Outlook experiments remain in the repository as unshipped legacy source so their historical permission and privacy controls stay reviewable. Chrome Web Store acceptance is tracked in the [publication packet](docs/integration-publication.md).
 
 ## How It Works
 

@@ -18,7 +18,7 @@ The earlier PhishGuard working name is not used because similar names already ex
 
 The official hosted service and the self-hosted project share the same scanner core. The official cloud should be the easiest way to use the product, not the only way to access useful functionality.
 
-- Hosted by us: managed deployment, optional hosted AI allowances, official integrations, reliability, and support.
+- Hosted by us: managed deployment, optional hosted AI allowances, the official Chrome extension, reliability, and support.
 - Hosted by you: the complete heuristic scanner, file inputs, translations, privacy-safe feedback option, and bring-your-own-key AI.
 - Open development: public source, issue roadmap, changelog, security process, and clear release notes.
 - Honest assessment: results remain probabilistic and always include the automated-assessment disclaimer.
@@ -29,11 +29,11 @@ The official hosted service and the self-hosted project share the same scanner c
 | --- | --- | --- | --- |
 | Anonymous official cloud | No | Heuristic scanning, paste, screenshot OCR, `.eml`, English/Dutch, result explanation | None required for the core flow |
 | Optional free account | Yes | Anonymous features plus account identity | Future preferences and a small hosted AI allowance after launch gates pass |
-| Plus | Yes | All free features | Managed AI capacity, official mail integration, convenience, and support |
+| Plus | Yes | All free features | Managed AI capacity, Chrome extension convenience, and support |
 | Business | Yes | Core scanner access | Team policy, administration, reporting, and higher support level |
 | Self-hosted | Chosen by operator | Complete scanner and bring-your-own-key AI | Optional commercial support may be offered later |
 
-Email/password and Google authentication are optional foundations, with authenticator-app 2FA available for account protection. Passkeys remain feature-gated while the upstream Supabase support is experimental. Accounts do not create scan history or enable hosted AI today. Planning hypotheses remain five hosted AI scans per free account and 100 per EUR 9 Plus subscription. They are not launch promises and must pass the cost and demand gates in `docs/hosted-service.md`.
+Email/password and Google authentication are optional foundations, with authenticator-app 2FA available for account protection. Passkeys remain feature-gated while the upstream Supabase support is experimental. Accounts do not create scan history or enable hosted AI today. No Plus launch price is set; hosted AI allowances and pricing must pass the cost and demand gates in `docs/hosted-service.md`.
 
 ## Permanently Free Core
 
@@ -54,7 +54,7 @@ The project does not paywall:
 Paid plans may fund costs and convenience that the project operator must actively provide:
 
 - maintainer-funded hosted AI calls with hard quotas;
-- official Gmail, Outlook, or browser integrations;
+- the official Chrome browser extension;
 - shared team policy and administration;
 - managed uptime, monitoring, and incident response;
 - support and deployment assistance;

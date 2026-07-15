@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { ArrowLeft, LockKeyhole, ScanSearch } from "lucide-react";
+import { LockKeyhole } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
-import { GoogleSignInButton } from "@/components/google-sign-in-button";
-import { EmailAuthForm } from "@/components/email-auth-form";
+import { AuthMethodPanel } from "@/components/auth-method-panel";
 import { SiteLanguageLinks } from "@/components/site-header";
-import { PasskeySignInButton } from "@/components/passkey-sign-in-button";
 import { getAppHref, getMarketingHref } from "@/lib/site";
 import { accountEn } from "@/lib/i18n/account-en";
 import { accountNl } from "@/lib/i18n/account-nl";
@@ -57,34 +55,15 @@ export default async function SignInPage({
           <p className="font-mono text-[10px] uppercase text-[#087b72]">{copy.accountEyebrow}</p>
           <h2 className="mt-3 text-2xl font-semibold text-[#111711]">{copy.continueTitle}</h2>
           <p className="mt-3 text-sm leading-6 text-[#59655a]">{copy.continueBody}</p>
-          <div className="mt-7">
-            <EmailAuthForm configured={configured} labels={copy.email} locale={locale} />
-          </div>
-          <div className="my-5 flex items-center gap-3 text-[10px] uppercase text-[#778177]">
-            <span className="h-px flex-1 bg-[#cbd0c5]" />
-            Google
-            <span className="h-px flex-1 bg-[#cbd0c5]" />
-          </div>
-          <div>
-            <GoogleSignInButton configured={configured} labels={copy.google} />
-            <PasskeySignInButton enabled={configured && arePasskeysEnabled()} labels={copy.passkey} locale={locale} />
-          </div>
-          {authErrorMessage ? (
-            <p role="alert" className="mt-4 border-l-4 border-[#b2382b] bg-[#fff0ed] px-4 py-3 text-sm leading-6 text-[#7a2b23]">
-              {authErrorMessage}
-            </p>
-          ) : null}
-          <div className="my-7 flex items-center gap-3 text-[10px] uppercase text-[#778177]">
-            <span className="h-px flex-1 bg-[#cbd0c5]" />
-            {copy.separator}
-            <span className="h-px flex-1 bg-[#cbd0c5]" />
-          </div>
-          <a href={getAppHref()} className="inline-flex h-12 w-full items-center justify-center gap-2 bg-[#111711] px-5 text-sm font-semibold text-white hover:bg-[#087b72]">
-            <ScanSearch className="h-4 w-4 text-[#dfff52]" aria-hidden="true" /> {copy.openScanner}
-          </a>
-          <a href={marketingHref} className="mt-6 inline-flex items-center gap-2 text-xs font-semibold text-[#59655a] hover:text-[#087b72]">
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> {copy.back}
-          </a>
+          <AuthMethodPanel
+            authErrorMessage={authErrorMessage}
+            configured={configured}
+            copy={copy}
+            locale={locale}
+            marketingHref={marketingHref}
+            passkeysEnabled={arePasskeysEnabled()}
+            scannerHref={getAppHref()}
+          />
         </div>
       </section>
     </main>

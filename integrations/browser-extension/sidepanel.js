@@ -1,5 +1,5 @@
 const elements = Object.fromEntries(
-  ["subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"]
+  ["capture", "subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"]
     .map((id) => [id, document.getElementById(id)]),
 );
 let activeTabId;
@@ -10,6 +10,7 @@ let latestCaptureId = "";
 let lastAppliedCaptureId = "";
 let captureRetryTimer;
 let captureRetryCount = 0;
+let capturePending = false;
 
 const dynamicCopy = {
   en: {
@@ -17,6 +18,7 @@ const dynamicCopy = {
     capturing: "Capturing selected text or the open message...",
     captured: "Selected text captured. Review it before analysis.",
     openMessageCaptured: "Open message captured. Review the subject, sender, and text before analysis.",
+    messageChanged: "The webmail page changed. Use the current message before analyzing.",
     captureErrors: {
       no_active_tab: "No active browser tab is available.",
       no_selection: "No selection or open Gmail/Outlook message was found. Open a message, optionally select text, and click the Maillume toolbar action again.",
@@ -61,6 +63,7 @@ const dynamicCopy = {
     capturing: "Geselecteerde tekst of het geopende bericht wordt vastgelegd...",
     captured: "Geselecteerde tekst vastgelegd. Controleer deze voor de analyse.",
     openMessageCaptured: "Geopend bericht vastgelegd. Controleer onderwerp, afzender en tekst voor de analyse.",
+    messageChanged: "De webmailpagina is gewijzigd. Gebruik het huidige bericht voordat u analyseert.",
     captureErrors: {
       no_active_tab: "Er is geen actief browsertabblad beschikbaar.",
       no_selection: "Er is geen geselecteerde tekst gevonden en er kon geen geopend Gmail-/Outlook-bericht worden vastgelegd. Open een bericht, selecteer eventueel tekst en klik opnieuw op de Maillume-knop in de werkbalk.",
@@ -103,7 +106,7 @@ const dynamicCopy = {
 };
 
 chrome.runtime.onMessage.addListener((message) => {
-  if (message?.type === "capture-started" || message?.type === "capture-ready") {
+  if (["capture-started", "capture-ready", "capture-cleared"].includes(message?.type)) {
     queueCaptureOperation(() => handleCaptureNotification(message));
   }
 });
@@ -138,6 +141,16 @@ async function handleCaptureNotification(message) {
   if (!Number.isInteger(activeTabId)) activeTabId = await getActiveTabId();
   if (!Number.isInteger(activeTabId) || activeTabId !== message.tabId) return;
 
+  if (message.type === "capture-cleared") {
+    latestCaptureId = "";
+    lastAppliedCaptureId = "";
+    cancelCaptureRetry();
+    clearMessageData();
+    setCapturePending(false);
+    setStatus(getDynamicCopy().messageChanged);
+    return;
+  }
+
   if (message.type === "capture-started") {
     if (typeof message.captureId === "string") {
       latestCaptureId = message.captureId;
@@ -145,6 +158,7 @@ async function handleCaptureNotification(message) {
     cancelCaptureRetry();
     captureRetryCount = 0;
     clearMessageData();
+    setCapturePending(true);
     setStatus(getDynamicCopy().capturing);
     return;
   }
@@ -152,7 +166,8 @@ async function handleCaptureNotification(message) {
     if (latestCaptureId && message.captureId !== latestCaptureId) return;
     latestCaptureId = message.captureId;
   }
-  await consumeCapture(activeTabId);
+  const completed = await consumeCapture(activeTabId);
+  if (completed) setCapturePending(false);
 }
 
 async function consumeCapture(tabId) {
@@ -168,7 +183,7 @@ async function consumeCapture(tabId) {
   if (capture?.status === "pending") {
     setStatus(copy.capturing);
     scheduleCaptureRetry(tabId);
-    return;
+    return false;
   }
   cancelCaptureRetry();
   if (capture?.status === "success" && typeof capture.text === "string" && capture.text.trim()) {
@@ -179,12 +194,13 @@ async function consumeCapture(tabId) {
     lastAppliedCaptureId = capture.captureId || latestCaptureId;
     updateAnalyzeState();
     setStatus(capture.source === "open_message" ? copy.openMessageCaptured : copy.captured);
-    return;
+    return true;
   }
   const code = capture?.code || "handoff_missing";
-  if (code === "handoff_missing" && elements.body.value.trim() && lastAppliedCaptureId && lastAppliedCaptureId === latestCaptureId) return;
+  if (code === "handoff_missing" && elements.body.value.trim() && lastAppliedCaptureId && lastAppliedCaptureId === latestCaptureId) return true;
   clearMessageData();
   setStatus(copy.captureErrors[code] || copy.captureErrors.capture_failed, true);
+  return true;
 }
 
 function queueCaptureOperation(operation) {
@@ -260,6 +276,28 @@ elements.save.addEventListener("click", async () => {
   updateDestination();
   updateAnalyzeState();
   setStatus(copy.saved);
+});
+
+elements.capture.addEventListener("click", async () => {
+  if (capturePending) return;
+  activeTabId = await getActiveTabId();
+  const copy = getDynamicCopy();
+  if (!Number.isInteger(activeTabId)) return setStatus(copy.noTab, true);
+
+  clearMessageData();
+  setCapturePending(true);
+  setStatus(copy.capturing);
+  try {
+    const response = await chrome.runtime.sendMessage({ type: "capture-active-tab", tabId: activeTabId });
+    if (response?.captureId && latestCaptureId && response.captureId !== latestCaptureId) return;
+    if (!response?.accepted) {
+      setStatus(copy.captureErrors[response?.code] || copy.captureErrors.capture_failed, true);
+    }
+  } catch {
+    setStatus(copy.captureErrors.capture_failed, true);
+  } finally {
+    setCapturePending(false);
+  }
 });
 
 elements.reset.addEventListener("click", async () => {
@@ -390,6 +428,11 @@ function updateAnalyzeState() {
     && endpoint === committedEndpoint
     && elements.apiKey.value.trim() === committedApiKey
   );
+}
+
+function setCapturePending(pending) {
+  capturePending = pending;
+  elements.capture.disabled = pending;
 }
 
 function permissionPattern(endpoint) {

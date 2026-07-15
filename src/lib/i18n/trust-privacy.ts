@@ -39,10 +39,11 @@ export const trustPrivacyCopy = {
         ],
       },
       integrations: {
-        title: "Browser and mail integrations",
+        title: "Chrome browser extension",
         paragraphs: [
-          "The browser extension captures only text you explicitly select. The Gmail and Outlook add-ons access only the currently open message after you press their Analyze action. They send the reviewed or current message fields to the displayed or fixed Maillume deployment for that assessment.",
-          "The integrations do not perform background mailbox scanning and do not persist message content or results. Their local credential storage is controlled by the browser, Google, or Microsoft host environment.",
+          "The Chrome extension captures text you explicitly select or, when supported and unambiguous, the visibly open webmail message after you start the action. It sends those fields to the Maillume deployment displayed in the extension for that assessment.",
+          "The extension does not perform background mailbox scanning and does not persist message content or results. Its endpoint preference is stored locally and its API key is kept in browser session storage.",
+          "Earlier Gmail and Outlook add-on experiments are retired and are not shipped as part of the Maillume service. Their source remains in the repository for historical and security review.",
         ],
       },
       providers: {
@@ -104,10 +105,11 @@ export const trustPrivacyCopy = {
         ],
       },
       integrations: {
-        title: "Browser- en mailintegraties",
+        title: "Chrome-browserextensie",
         paragraphs: [
-          "De browserextensie legt alleen tekst vast die u uitdrukkelijk selecteert. De Gmail- en Outlook-add-ins openen alleen het huidige bericht nadat u op de analyseactie drukt. Ze sturen de bekeken of huidige berichtvelden voor die beoordeling naar de getoonde of vaste Maillume-omgeving.",
-          "De integraties scannen postvakken niet op de achtergrond en bewaren geen berichtinhoud of resultaten. Lokale opslag van toegangsgegevens wordt beheerd door de browser of de omgeving van Google of Microsoft.",
+          "De Chrome-extensie legt tekst vast die u uitdrukkelijk selecteert of, wanneer dit wordt ondersteund en ondubbelzinnig is, het zichtbaar geopende webmailbericht nadat u de actie start. De extensie stuurt die velden voor de beoordeling naar de Maillume-omgeving die in de extensie wordt getoond.",
+          "De extensie scant postvakken niet op de achtergrond en bewaart geen berichtinhoud of resultaten. De voorkeur voor het endpoint wordt lokaal opgeslagen en de API-sleutel blijft in de sessieopslag van de browser.",
+          "Eerdere experimenten met Gmail- en Outlook-add-ons zijn beëindigd en worden niet als onderdeel van de Maillume-dienst uitgebracht. De broncode blijft in de repository staan voor historische en beveiligingscontrole.",
         ],
       },
       providers: {
