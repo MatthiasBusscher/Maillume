@@ -44,6 +44,12 @@ Before enabling public email/password registration:
 - verify allowed redirect URLs contain production origins only;
 - test account deletion and factor cleanup with email, Google, and passkey users.
 
+## Google Sign-In Identity
+
+Google security notifications can currently mention the Supabase project hostname because it owns the OAuth callback. That message is expected and is not evidence of a breach. Complete the free Google branding work before public beta. Replacing the project hostname with `auth.maillume.io` is a separate paid Supabase custom-domain decision.
+
+Follow `docs/google-oauth-branding.md` for brand verification, cost approval, DNS and callback ordering, production acceptance, and rollback.
+
 ## Secret Boundaries
 
 The browser receives only the Supabase project URL and publishable key. `SUPABASE_SECRET_KEY` or the legacy service-role key remains server-only. Passkeys store public credential material in Supabase; private key material remains with the user's authenticator. TOTP secrets are handled by Supabase Auth and shown to the user only during enrollment.

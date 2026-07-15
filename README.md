@@ -172,7 +172,7 @@ npm run build
 
 Reusable scoring fixtures must be synthetic or fully sanitized. The CI corpus contains 300 English/Dutch synthetic cases split by scenario into development and locked sets. It is a regression benchmark, not evidence of real-world accuracy. Never commit real private email content, inbox screenshots, raw `.eml` files, private headers, or credentials.
 
-Useful guides: [architecture](docs/architecture.md), [evaluation](docs/evaluation.md), [operations](docs/operations.md), [launch checklist](docs/launch-checklist.md), and [roadmap](docs/roadmap.md).
+Useful guides: [architecture](docs/architecture.md), [authentication](docs/authentication.md), [Google sign-in identity](docs/google-oauth-branding.md), [evaluation](docs/evaluation.md), [operations](docs/operations.md), [launch checklist](docs/launch-checklist.md), and [roadmap](docs/roadmap.md).
 
 ## Community and Security
 

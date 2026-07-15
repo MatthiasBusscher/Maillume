@@ -21,6 +21,7 @@
 
 - [ ] Supabase production migrations and RLS are verified.
 - [ ] Email confirmation/recovery and Google OAuth permit only production callbacks; branded SMTP is active.
+- [ ] Google OAuth branding identifies Maillume and `maillume.io` ownership is verified; the `auth.maillume.io` cost decision is recorded.
 - [ ] TOTP enrollment, AAL2 challenge, factor removal, new-session behavior, and account deletion pass in production.
 - [ ] Passkeys remain disabled or the documented real-device beta matrix and rollback have passed.
 - [ ] API-key creation, one-time display, revocation, quota exhaustion, and account-deletion cascade pass against production Supabase.

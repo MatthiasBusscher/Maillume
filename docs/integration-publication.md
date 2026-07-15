@@ -49,7 +49,7 @@ OAuth scope justifications:
 - `script.locale`: reads Gmail's locale so the add-on can choose its English or Dutch interface.
 
 The contextual trigger builds a ready card without reading the message. `getPlainBody()` is called only from the Analyze button handler. The manifest allowlists only `https://app.maillume.io/`.
-The add-on follows Gmail's English or Dutch locale, requests analysis in that language, never redisplays a saved key, and provides replace and removal actions. The key stays in user-scoped Apps Script properties until removal, replacement, or a `401`/`403` response; message content and results are never saved there. A self-hosted operator must publish a separate add-on build because Google requires outbound destinations to be declared in the add-on manifest.
+The add-on follows Gmail's English or Dutch locale, requests analysis in that language, never redisplays a saved key, and provides replace and removal actions. The key stays in user-scoped Apps Script properties until removal, replacement, or a `401` response; a generic `403` is treated as a possibly temporary policy denial and does not erase the key. Message content and results are never saved there. A self-hosted operator must publish a separate add-on build because Google requires outbound destinations to be declared in the add-on manifest.
 
 Before submission:
 
