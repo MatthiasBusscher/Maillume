@@ -46,6 +46,7 @@ export const accountNl = {
       working: "Even geduld...",
       confirmEmail: "Controleer je inbox en bevestig je e-mailadres om het account af te ronden.",
       resetSent: "Als voor dit adres een account bestaat, is een link voor wachtwoordherstel verstuurd.",
+      resetFailed: "De herstellink kon niet worden verstuurd. Wacht even en probeer het opnieuw.",
       updateTitle: "Kies een nieuw wachtwoord",
       updateBody: "Voer een nieuw wachtwoord voor je Maillume-account in.",
       update: "Wachtwoord bijwerken",

@@ -44,6 +44,7 @@ export const accountEn = {
       working: "Please wait...",
       confirmEmail: "Check your inbox and confirm your email address to finish creating the account.",
       resetSent: "If an account exists for that address, a password-reset link has been sent.",
+      resetFailed: "The reset link could not be sent. Wait a moment and try again.",
       updateTitle: "Choose a new password",
       updateBody: "Enter a new password for your Maillume account.",
       update: "Update password",
