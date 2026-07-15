@@ -38,6 +38,22 @@ test("language switching updates the scanner", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page).toHaveURL(/\/app$/);
   await expect(page.getByRole("heading", { name: "Check a suspicious email" })).toBeVisible();
+
+  await page.goto("/pricing");
+  await expect(page).toHaveURL(/\/pricing$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByRole("heading", { name: "The safety workflow stays free." })).toBeVisible();
+
+  await page.goto("/account");
+  await expect(page).toHaveURL(/\/account$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  const privacyLink = page.getByRole("link", { name: "Privacy" });
+  await expect(privacyLink).toBeVisible();
+  const footer = privacyLink.locator("xpath=ancestor::footer");
+  const footerBox = await footer.boundingBox();
+  const viewportHeight = await page.evaluate(() => window.innerHeight);
+  expect(footerBox).not.toBeNull();
+  expect(Math.abs((footerBox!.y + footerBox!.height) - viewportHeight)).toBeLessThanOrEqual(1);
 });
 
 test("Dutch routes render server-side and persist across navigation", async ({ page }) => {
@@ -160,7 +176,7 @@ test("scanner explains a non-JSON upstream 413 response", async ({ page }) => {
   );
 });
 
-test("initial scanner workspace fits common desktop viewports", async ({ page }) => {
+test("initial scanner workspace stays visible and contained on common desktop viewports", async ({ page }) => {
   for (const viewport of [
     { width: 1024, height: 768 },
     { width: 1280, height: 800 },
@@ -171,7 +187,9 @@ test("initial scanner workspace fits common desktop viewports", async ({ page })
     const box = await page.getByTestId("scanner-workspace").boundingBox();
     expect(box).not.toBeNull();
     expect(box!.y).toBeGreaterThanOrEqual(64);
-    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height + 1);
+    expect(box!.y).toBeLessThan(viewport.height);
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width + 1);
   }
 });
 
@@ -444,6 +462,23 @@ test("account deletion rejects cross-origin requests", async ({ request }) => {
 
   expect(response.status()).toBe(403);
   expect(response.headers()["cache-control"]).toContain("no-store");
+});
+
+test("sign-out rejects cross-origin requests", async ({ request }) => {
+  const response = await request.post("/auth/sign-out", {
+    headers: { Origin: "https://attacker.example" },
+  });
+
+  expect(response.status()).toBe(403);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+});
+
+test("password updates require a recovery callback", async ({ request }) => {
+  for (const path of ["/auth/update-password", "/nl/auth/update-password"]) {
+    const response = await request.get(path, { maxRedirects: 0 });
+    expect(response.status()).toBe(307);
+    expect(new URL(response.headers().location).pathname).toMatch(/\/auth\/sign-in$/);
+  }
 });
 
 test("account mutations reject missing origins and oversized bodies", async ({ request }) => {

@@ -32,8 +32,10 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Client components for interactive form state and result display.
 
 2. Optional Authentication
-   - Supabase Auth provides Google OAuth when public project configuration is present.
-   - `/auth/callback` exchanges the OAuth code for a cookie-backed session.
+   - Supabase Auth provides email/password, Google OAuth, and TOTP MFA when public project configuration is present.
+   - Experimental passkeys are build-time feature-gated and disabled by default.
+   - `/auth/callback` exchanges OAuth, confirmation, and recovery codes for a cookie-backed session.
+   - Enrolled MFA sessions must reach AAL2 before API-key management or account deletion.
    - Accounts are optional and the scanner remains usable while signed out.
    - Account identity does not create scan history or assessment storage.
 
@@ -57,7 +59,7 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Ordinary scans never become training or evaluation data.
    - Optional feedback uses a separate strict schema containing labels and high-level categories only.
    - Production feedback storage uses a server-only Supabase service-role key, Row Level Security, and automatic expiry. The scanner remains available when feedback is disabled.
-   - Optional Google accounts store provider identity and session data in Supabase Auth. Future preferences, quota counters, entitlements, and billing references may be added, but not scan history or assessment content.
+   - Optional accounts store identity, session, and authentication-factor metadata in Supabase Auth. Hashed integration-key metadata and aggregate quotas are implemented; future preferences, paid entitlements, and billing references may be added, but not scan history or assessment content.
 
 6. Deployment
    - A standalone Next.js container runs on the Hostinger VPS behind Cloudflare Tunnel.
@@ -151,7 +153,7 @@ supabase/
     20260710150000_create_detection_feedback.sql
 ```
 
-The implementation includes the Maillume marketing and trust pages, `/app` scanner workspace, optional Supabase Google authentication, scan form, risk meter, no-storage analysis route, English/Dutch UI foundation, screenshot OCR input, `.eml` parsing input, shared synthetic evaluation fixtures, and optional self-hosted AI provider calls behind server environment variables.
+The implementation includes the Maillume marketing and trust pages, `/app` scanner workspace, optional Supabase email/Google authentication with TOTP MFA and gated passkeys, scan form, risk meter, no-storage analysis route, English/Dutch UI foundation, screenshot OCR input, `.eml` parsing input, shared synthetic evaluation fixtures, and optional self-hosted AI provider calls behind server environment variables.
 
 ## Evaluation And Calibration
 
@@ -284,4 +286,4 @@ The route must not write raw scan content, OCR text, `.eml` data, prompts, or re
 
 ## Future-Ready Boundaries
 
-The design leaves room for forwarded email ingestion, account preferences, team accounts, and paid hosted plans. Google authentication, hashed API keys, atomic quotas, and explicit-action Chrome/Gmail/Outlook integrations are implemented. Hosted AI, billing, scan history, and teams remain unimplemented. See `docs/hosted-service.md` for the approved launch gates.
+The design leaves room for forwarded email ingestion, account preferences, team accounts, and paid hosted plans. Email/Google authentication, TOTP MFA, feature-gated passkeys, hashed API keys, atomic quotas, and explicit-action Chrome/Gmail/Outlook integrations are implemented. Hosted AI, billing, scan history, and teams remain unimplemented. See `docs/hosted-service.md` for the approved launch gates.

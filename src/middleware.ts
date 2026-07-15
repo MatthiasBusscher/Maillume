@@ -40,6 +40,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(targetUrl, 301);
   }
 
+  if (
+    (hostname === "maillume.io" || hostname === "www.maillume.io")
+    && /^\/(?:auth|account)(?:\/|$)/.test(originalPathname)
+  ) {
+    targetUrl.protocol = "https:";
+    targetUrl.hostname = "app.maillume.io";
+    targetUrl.port = "";
+    return NextResponse.redirect(targetUrl, 307);
+  }
+
   if (hostname === "www.maillume.io") {
     targetUrl.protocol = "https:";
     targetUrl.hostname = "maillume.io";
@@ -60,7 +70,9 @@ export async function middleware(request: NextRequest) {
 
   if (pathLocale === DEFAULT_SITE_LOCALE) {
     targetUrl.pathname = stripSiteLocale(originalPathname);
-    return NextResponse.redirect(targetUrl, 308);
+    const redirectResponse = NextResponse.redirect(targetUrl, 308);
+    setLocalePreferenceCookies(redirectResponse, request, DEFAULT_SITE_LOCALE);
+    return redirectResponse;
   }
 
   if (pathLocale && !shouldUseLocalizedPage(request, stripSiteLocale(originalPathname))) {
@@ -101,12 +113,7 @@ export async function middleware(request: NextRequest) {
       : NextResponse.next({ request: { headers: requestHeaders } });
 
     if (pathLocale) {
-      nextResponse.cookies.set(SITE_LOCALE_COOKIE, locale, {
-        maxAge: 60 * 60 * 24 * 365,
-        path: "/",
-        sameSite: "lax",
-        secure: request.nextUrl.protocol === "https:",
-      });
+      setLocalePreferenceCookies(nextResponse, request, locale);
     }
 
     return nextResponse;
@@ -147,6 +154,29 @@ export async function middleware(request: NextRequest) {
   }
 
   return response;
+}
+
+function setLocalePreferenceCookies(
+  response: NextResponse,
+  request: NextRequest,
+  locale: SiteLocale,
+) {
+  const options = {
+    httpOnly: false,
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
+    sameSite: "lax" as const,
+    secure: request.nextUrl.protocol === "https:",
+  };
+  const hostname = request.headers.get("host")?.split(":")[0] ?? request.nextUrl.hostname;
+
+  response.cookies.set(SITE_LOCALE_COOKIE, locale, options);
+  if (hostname === "maillume.io" || hostname.endsWith(".maillume.io")) {
+    response.cookies.set(SITE_LOCALE_COOKIE, locale, {
+      ...options,
+      domain: ".maillume.io",
+    });
+  }
 }
 
 function shouldUseLocalizedPage(request: NextRequest, pathname = request.nextUrl.pathname) {

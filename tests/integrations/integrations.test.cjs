@@ -30,6 +30,7 @@ async function testBrowserServiceWorker() {
   const runtimeMessages = [];
   let scriptRequest;
   let scriptExecutions = 0;
+  let captureSequence = 0;
 
   const chrome = {
     runtime: {
@@ -55,7 +56,16 @@ async function testBrowserServiceWorker() {
       },
     },
   };
-  const context = { chrome, console, Date, Map, Number, Promise, setTimeout: () => 1 };
+  const context = {
+    chrome,
+    console,
+    crypto: { randomUUID: () => `capture-${++captureSequence}` },
+    Date,
+    Map,
+    Number,
+    Promise,
+    setTimeout: () => 1,
+  };
   vm.createContext(context);
   vm.runInContext(fs.readFileSync("integrations/browser-extension/service-worker.js", "utf8"), context);
 
@@ -294,13 +304,12 @@ function testGmailAddOn() {
   let messageReads = 0;
   let fetches = 0;
   let requestPayload;
-  let cacheTtl;
-  const userCache = new Map([["MAILLUME_API_KEY", `mlm_${"a".repeat(43)}`]]);
+  const userProperties = new Map([["MAILLUME_API_KEY", `mlm_${"a".repeat(43)}`]]);
   const context = {
-    CacheService: { getUserCache: () => ({
-      get: (key) => userCache.get(key) ?? null,
-      put: (key, value, ttl) => { userCache.set(key, value); cacheTtl = ttl; },
-      remove: (key) => userCache.delete(key),
+    PropertiesService: { getUserProperties: () => ({
+      getProperty: (key) => userProperties.get(key) ?? null,
+      setProperty: (key, value) => userProperties.set(key, value),
+      deleteProperty: (key) => userProperties.delete(key),
     }) },
     GmailApp: {
       setCurrentMessageAccessToken() {},
@@ -324,7 +333,9 @@ function testGmailAddOn() {
   const gmailSource = fs.readFileSync("integrations/gmail-addon/Code.gs", "utf8");
   vm.runInContext(gmailSource, context);
 
-  assert.doesNotMatch(gmailSource, /PropertiesService/, "the API key must not be persisted in UserProperties");
+  assert.match(gmailSource, /PropertiesService\.getUserProperties\(\)/, "the API key must be stored per Google user");
+  assert.doesNotMatch(gmailSource, /CacheService/, "the API key must not silently expire after six hours");
+  assert.doesNotMatch(gmailSource, /setPropert(?:y|ies)\([^\n]*(?:body|subject|sender|message|result)/i, "message data must not be persisted");
   assert.equal(messageReads, 0, "loading the add-on must not read a message");
   assert.equal(fetches, 0, "loading the add-on must not call Maillume");
   const manifest = JSON.parse(fs.readFileSync("integrations/gmail-addon/appsscript.json", "utf8"));
@@ -349,8 +360,7 @@ function testGmailAddOn() {
       formInputs: { apiKey: { stringInputs: { value: [replacementKey] } } },
     },
   });
-  assert.equal(userCache.get("MAILLUME_API_KEY"), replacementKey);
-  assert.equal(cacheTtl, 21_600, "the per-user cache lifetime must be at most six hours");
+  assert.equal(userProperties.get("MAILLUME_API_KEY"), replacementKey);
 
   const resultCard = context.buildResultCard({
     classification: "likely_phishing", risk_level: "high", risk_score: 82,
@@ -363,7 +373,8 @@ function testGmailAddOn() {
     recommended_action: "Controleer via een bekend kanaal.", short_explanation: "Verdacht patroon.",
   }, "nl");
   const resultHeader = resultCard.__calls.setHeader[0][0];
-  assert.match(resultHeader.__calls.setTitle[0][0], /HOOG/);
+  assert.equal(resultHeader.__calls.setTitle[0][0], "Maillume");
+  assert.match(resultHeader.__calls.setSubtitle[0][0], /HOOG/);
   assert.equal(context.isAnalysisResult({
     classification: "likely_phishing", risk_level: "high", risk_score: 82,
     score_factors: [{ id: "synthetic", family: "intent", contribution: 82, label: "Synthetic warning" }], suspicious_signals: [],
@@ -371,7 +382,7 @@ function testGmailAddOn() {
   }), false, "incomplete API results must be rejected");
 
   context.removeApiKey({ commonEventObject: { userLocale: "nl-NL" } });
-  assert.equal(userCache.has("MAILLUME_API_KEY"), false, "users must be able to remove the cached key");
+  assert.equal(userProperties.has("MAILLUME_API_KEY"), false, "users must be able to remove the saved key");
 }
 
 function testOutlookIntegration() {

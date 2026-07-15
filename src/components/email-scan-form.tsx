@@ -251,9 +251,9 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     <div data-testid="scanner-workspace" className="overflow-hidden border border-[#aeb6bf] bg-white lg:grid lg:grid-cols-[minmax(0,1.06fr)_minmax(390px,0.94fr)]">
       <form
         onSubmit={handleSubmit}
-        className="min-w-0 border-b border-[#aeb6bf] p-4 lg:border-b-0 lg:border-r lg:p-3"
+        className="min-w-0 border-b border-[#aeb6bf] p-5 sm:p-7 lg:border-b-0 lg:border-r"
       >
-        <div className="mb-3 flex flex-wrap items-start justify-between gap-3 border-b border-[#d5d9de] pb-3">
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-[#d5d9de] pb-5">
           <div className="flex items-start gap-3">
             <span
               className="flex h-8 w-8 flex-none items-center justify-center bg-[#dfff52] font-mono text-xs font-bold text-[#111711]"
@@ -280,8 +280,8 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
           </button>
         </div>
 
-        <div className="mb-3">
-          <p className="mb-1 font-mono text-[11px] uppercase text-[#58636e]">
+        <div className="mb-6">
+          <p className="mb-2 font-mono text-[11px] uppercase text-[#58636e]">
             {dictionary.form.inputModeLabel}
           </p>
           <div
@@ -338,31 +338,31 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
           />
         ) : null}
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1 font-mono text-[11px] uppercase text-[#58636e]">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="grid gap-2 font-mono text-[11px] uppercase text-[#58636e]">
             {dictionary.form.subject}
             <input
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
               maxLength={300}
               placeholder={dictionary.form.subjectPlaceholder}
-              className="h-10 border border-[#b7bec5] bg-[#fafbfb] px-3 font-sans text-sm normal-case text-[#111711] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
+              className="h-11 border border-[#b7bec5] bg-[#fafbfb] px-3 font-sans text-sm normal-case text-[#111711] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
             />
           </label>
 
-          <label className="grid gap-1 font-mono text-[11px] uppercase text-[#58636e]">
+          <label className="grid gap-2 font-mono text-[11px] uppercase text-[#58636e]">
             {dictionary.form.senderEmail}
             <input
               value={senderEmail}
               onChange={(event) => setSenderEmail(event.target.value)}
               maxLength={320}
               placeholder={dictionary.form.senderPlaceholder}
-              className="h-10 border border-[#b7bec5] bg-[#fafbfb] px-3 font-sans text-sm normal-case text-[#111711] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
+              className="h-11 border border-[#b7bec5] bg-[#fafbfb] px-3 font-sans text-sm normal-case text-[#111711] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
             />
           </label>
         </div>
 
-        <label className="mt-3 grid gap-1 font-mono text-[11px] uppercase text-[#58636e]">
+        <label className="mt-4 grid gap-2 font-mono text-[11px] uppercase text-[#58636e]">
           <span className="flex flex-wrap items-center justify-between gap-2">
             <span>{dictionary.form.emailContent}</span>
             <span className={bodyIsTooLong ? "text-[#b2382b]" : "text-[#6a747e]"}>
@@ -373,12 +373,12 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
             value={body}
             onChange={(event) => setBody(event.target.value)}
             placeholder={dictionary.form.bodyPlaceholder}
-            rows={3}
+            rows={13}
             required
             readOnly={isExtracting}
             aria-invalid={Boolean(inputLimitError)}
             aria-describedby="scan-request-size"
-            className="min-h-20 resize-y border border-[#b7bec5] bg-[#fafbfb] px-3 py-2 font-sans text-sm leading-6 normal-case text-[#111711] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
+            className="min-h-72 resize-y border border-[#b7bec5] bg-[#fafbfb] px-3 py-3 font-sans text-sm leading-6 normal-case text-[#111711] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
           />
         </label>
 
@@ -401,7 +401,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
           </div>
         ) : null}
 
-        <div className="mt-3 flex flex-col gap-3 border-t border-[#d5d9de] pt-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-5 flex flex-col gap-4 border-t border-[#d5d9de] pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="flex max-w-xl items-start gap-2 text-xs leading-5 text-[#5d6670]">
             <DatabaseZap className="mt-0.5 h-4 w-4 flex-none text-[#087b72]" aria-hidden="true" />
             <span>{dictionary.form.privacyNote}</span>
@@ -409,7 +409,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
           <button
             type="submit"
             disabled={!body.trim() || isAnalyzing || isExtracting || Boolean(inputLimitError)}
-            className="inline-flex h-10 min-w-40 flex-none items-center justify-center gap-2 whitespace-nowrap border-l-4 border-[#dfff52] bg-[#111711] px-4 text-sm font-semibold text-white transition hover:bg-[#087b72] disabled:cursor-not-allowed disabled:border-[#cbd1d6] disabled:bg-[#cbd1d6] disabled:text-[#77818b]"
+            className="inline-flex h-11 min-w-40 flex-none items-center justify-center gap-2 whitespace-nowrap border-l-4 border-[#dfff52] bg-[#111711] px-4 text-sm font-semibold text-white transition hover:bg-[#087b72] disabled:cursor-not-allowed disabled:border-[#cbd1d6] disabled:bg-[#cbd1d6] disabled:text-[#77818b]"
           >
             {isAnalyzing ? (
               <>
@@ -429,7 +429,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
       <section
         aria-live="polite"
         aria-busy={isAnalyzing}
-        className="min-w-0 bg-[#f5f7f2] p-4"
+        className="min-w-0 bg-[#f5f7f2] p-5 sm:p-7"
       >
         {result ? (
           <AnalysisResult
@@ -493,7 +493,7 @@ function ModeButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-10 min-w-0 items-center justify-center gap-2 px-2 text-xs font-semibold transition sm:px-3 sm:text-sm ${
+      className={`inline-flex h-12 min-w-0 items-center justify-center gap-2 px-2 text-xs font-semibold transition sm:px-3 sm:text-sm ${
         active
           ? "bg-[#111711] text-white shadow-[inset_0_3px_0_#dfff52]"
           : "bg-white text-[#4e5965] hover:bg-[#eef2f3] hover:text-[#111711]"
@@ -558,7 +558,7 @@ function UploadPanel({
 
 function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
   return (
-    <div className="flex h-full min-h-[24rem] flex-col">
+    <div className="flex h-full min-h-[34rem] flex-col">
       <div className="flex items-start gap-3 border-b border-[#d5d9de] pb-4">
         <span
           className="flex h-8 w-8 flex-none items-center justify-center bg-[#bdebf0] font-mono text-xs font-bold text-[#173b40]"
@@ -576,7 +576,7 @@ function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
         </div>
       </div>
 
-      <div className="border-b border-[#d5d9de] py-5">
+      <div className="border-b border-[#d5d9de] py-8">
         <div className="flex items-end justify-between gap-5">
           <div>
             <p className="font-mono text-[10px] uppercase text-[#69737d]">
@@ -586,25 +586,25 @@ function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
           </div>
           <ScanLine className="h-14 w-14 text-[#aeb6bf]" strokeWidth={1.25} aria-hidden="true" />
         </div>
-        <div className="mt-4 grid h-3 grid-cols-3 gap-1" aria-hidden="true">
+        <div className="mt-6 grid h-3 grid-cols-3 gap-1" aria-hidden="true">
           <span className="bg-[#bfc7c2]" />
           <span className="bg-[#d4c9ae]" />
           <span className="bg-[#d6bbb7]" />
         </div>
-        <p className="mt-3 max-w-lg text-sm leading-5 text-[#59646f]">
+        <p className="mt-5 max-w-lg text-sm leading-6 text-[#59646f]">
           {dictionary.empty.description}
         </p>
       </div>
 
-      <div className="my-4 border-l-4 border-[#087b72] bg-[#eaf6f5] px-4 py-3 text-sm leading-5 text-[#204e51]">
-        <div className="mb-1 flex items-center gap-2 font-semibold text-[#173b40]">
+      <div className="my-6 border-l-4 border-[#087b72] bg-[#eaf6f5] px-4 py-4 text-sm leading-6 text-[#204e51]">
+        <div className="mb-2 flex items-center gap-2 font-semibold text-[#173b40]">
           <DatabaseZap className="h-4 w-4" aria-hidden="true" />
           {dictionary.empty.privacyTitle}
         </div>
         {dictionary.empty.privacyBody}
       </div>
 
-      <div className="mt-auto border-t border-[#d5d9de] pt-3 text-xs leading-5 text-[#69737d]">
+      <div className="mt-auto border-t border-[#d5d9de] pt-4 text-xs leading-5 text-[#69737d]">
         {dictionary.result.disclaimer}
       </div>
     </div>

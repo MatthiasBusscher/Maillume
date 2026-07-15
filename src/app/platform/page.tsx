@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> { const locale = awa
 
 const roadmap = [
   { status: "Acceptance pending", title: "Hosted API access", description: "The authenticated key and quota flow is implemented in source; production acceptance is still in progress." },
-  { status: "Source beta", title: "Browser extension", description: "A Manifest V3 side panel that sends only text the user explicitly selects to a chosen deployment." },
+  { status: "Source beta", title: "Browser extension", description: "A Manifest V3 side panel that captures selected text or the visibly open Gmail or Outlook message." },
   { status: "Source beta", title: "Gmail add-on", description: "A current-message-only Workspace add-on that reads content after the user presses Analyze." },
   { status: "Source beta", title: "Outlook add-in", description: "A ReadItem task pane for the open message, with no read/write mailbox permission or background scan." },
 ];

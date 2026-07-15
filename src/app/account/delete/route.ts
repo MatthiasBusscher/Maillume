@@ -9,9 +9,17 @@ import {
 } from "@/lib/security/account-request";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { requiresMfaChallenge } from "@/lib/auth/mfa";
+import { getPublicAppOrigin } from "@/app/auth/callback/origin";
 
 export async function POST(request: Request) {
-  const requestUrl = new URL(request.url);
+  const publicOrigin = getPublicAppOrigin({
+    configuredAppUrl: process.env.NEXT_PUBLIC_APP_URL,
+    forwardedHost: request.headers.get("x-forwarded-host"),
+    forwardedProto: request.headers.get("x-forwarded-proto"),
+    host: request.headers.get("host"),
+    requestUrl: request.url,
+  });
 
   if (!isStrictSameOriginMutation(request)) {
     return privateResponse("Cross-origin account deletion is not allowed.", 403);
@@ -29,38 +37,44 @@ export async function POST(request: Request) {
   const formData = new URLSearchParams(rawBody.text);
 
   if (formData.get("confirm") !== "delete") {
-    return privateRedirect(new URL("/account?error=confirmation_required", requestUrl.origin));
+    return privateRedirect(new URL("/account?error=confirmation_required", publicOrigin));
   }
 
   const supabase = await createServerSupabaseClient();
   const admin = createSupabaseAdminClient();
 
   if (!supabase) {
-    return privateRedirect(new URL("/auth/sign-in", requestUrl.origin));
+    return privateRedirect(new URL("/auth/sign-in", publicOrigin));
   }
 
   const { data, error: userError } = await supabase.auth.getUser();
 
   if (userError || !data.user) {
-    return privateRedirect(new URL("/auth/sign-in", requestUrl.origin));
+    return privateRedirect(new URL("/auth/sign-in", publicOrigin));
+  }
+
+  if (await requiresMfaChallenge(supabase)) {
+    const challengeUrl = new URL("/auth/mfa", publicOrigin);
+    challengeUrl.searchParams.set("next", "/account");
+    return privateRedirect(challengeUrl);
   }
 
   if (!hasRecentAuthentication(data.user.last_sign_in_at)) {
-    return privateRedirect(new URL("/account?error=recent_auth_required", requestUrl.origin));
+    return privateRedirect(new URL("/account?error=recent_auth_required", publicOrigin));
   }
 
   if (!admin) {
-    return privateRedirect(new URL("/account?error=deletion_unavailable", requestUrl.origin));
+    return privateRedirect(new URL("/account?error=deletion_unavailable", publicOrigin));
   }
 
   const { error: deletionError } = await admin.auth.admin.deleteUser(data.user.id);
 
   if (deletionError) {
-    return privateRedirect(new URL("/account?error=deletion_failed", requestUrl.origin));
+    return privateRedirect(new URL("/account?error=deletion_failed", publicOrigin));
   }
 
   await supabase.auth.signOut({ scope: "local" });
-  return privateRedirect(new URL("/auth/sign-in?deleted=1", requestUrl.origin));
+  return privateRedirect(new URL("/auth/sign-in?deleted=1", publicOrigin));
 }
 
 function privateRedirect(url: URL) {

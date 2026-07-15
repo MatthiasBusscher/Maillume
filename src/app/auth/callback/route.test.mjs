@@ -114,6 +114,18 @@ test("uses trusted proxy headers when no app URL is configured", () => {
   );
 });
 
+test("ignores untrusted proxy hosts when no app URL is configured", () => {
+  assert.equal(
+    getPublicAppOrigin({
+      forwardedHost: "attacker.example",
+      forwardedProto: "https",
+      host: "0.0.0.0:3000",
+      requestUrl: "http://0.0.0.0:3000/auth/callback",
+    }),
+    "http://0.0.0.0:3000",
+  );
+});
+
 test("falls back to the request origin for invalid public origin inputs", () => {
   assert.equal(
     getPublicAppOrigin({

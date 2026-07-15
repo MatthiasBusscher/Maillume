@@ -1,6 +1,6 @@
 # Hosted Service Architecture
 
-Status: active architecture record. Optional Google authentication, hashed integration API keys, aggregate quotas, and source-beta Chrome/Gmail/Outlook integrations are implemented. Hosted AI, paid entitlements, and payments are not implemented.
+Status: active architecture record. Optional email/Google authentication, TOTP MFA, feature-gated passkeys, hashed integration API keys, aggregate quotas, and source-beta Chrome/Gmail/Outlook integrations are implemented. Hosted AI, paid entitlements, and payments are not implemented.
 
 ## Decision Summary
 
@@ -13,6 +13,9 @@ Maillume remains an open-source, privacy-first scanner first and a hosted servic
 - Self-hosting and bring-your-own-key AI remain free under the repository license.
 - Raw email content, screenshots, `.eml` files, OCR text, links, and assessment results are not retained after scoring.
 - Detection improvements use synthetic fixtures and optional non-content feedback. Production emails do not become a dataset.
+- Moneybird is the preferred first billing and invoicing system for the Dutch operator. Stripe is deferred unless international payment coverage, marketplace requirements, or measured conversion needs justify the extra provider and reconciliation complexity.
+- A hosted account may have at most five active API keys. The private-beta quota is 100 heuristic integration requests per account per UTC month, shared by those keys. Creating or managing integration keys requires authenticator-app 2FA and an AAL2 session.
+- Organization administration, colleague invitations, role-based access, and audit logs are a later team-account project. A broad application-wide admin role is not part of the beta.
 
 ## Product Boundaries
 
@@ -23,7 +26,7 @@ Maillume remains an open-source, privacy-first scanner first and a hosted servic
 | Plus account | Yes | Heuristic plus hosted AI | Hypothesis: 20 AI scans/day and 100/month | Request lifetime only |
 | Self-hosted | Determined by installer | Heuristic or installer-selected AI provider | Determined and paid by installer | Determined by installer; no-storage remains the project default |
 
-The free and Plus allowances are hypotheses for cost validation, not a public pricing promise. There are no automatic overages, rollover credits, unlimited AI claims, scan history, or team features in this phase.
+The free and Plus allowances are hypotheses for cost validation, not a public pricing promise. There are no automatic overages, rollover credits, unlimited AI claims, scan history, or team features in this phase. API keys expire after 30, 90, or 180 days; non-expiring bearer credentials are intentionally unsupported.
 
 ## Data Flow
 
@@ -140,6 +143,10 @@ The application database is authoritative for entitlements and hard quota enforc
 | Self-hosted | EUR 0 from the project | Full source code and bring-your-own-key provider usage |
 
 The Plus price is a validation target, not final public copy. Launch pricing requires measured cost, payment fees, hosting costs, tax handling, support expectations, and user interviews. Team plans remain out of scope.
+
+### Billing Provider Decision
+
+Use Moneybird Subscriptions as the initial source of truth for checkout, recurring payments, invoices, and customer self-service. Verified Moneybird webhooks may update a minimal entitlement record in Supabase; they must never carry scan content. Keep billing behind a server-only adapter so Stripe or another provider can be added later without changing plan or quota logic. Do not connect Moneybird to the scanner until webhook signature verification, idempotency, entitlement reconciliation, refunds/cancellations, and account deletion behavior have automated tests.
 
 ## Account And Failure Behavior
 

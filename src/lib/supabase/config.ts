@@ -21,3 +21,7 @@ export function getPublicSupabaseConfig(
 
   return { publishableKey, url };
 }
+
+export function arePasskeysEnabled(env?: Partial<NodeJS.ProcessEnv>): boolean {
+  return (env ? env.NEXT_PUBLIC_PASSKEYS_ENABLED : process.env.NEXT_PUBLIC_PASSKEYS_ENABLED) === "true";
+}

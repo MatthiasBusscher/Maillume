@@ -33,7 +33,7 @@ The official hosted service and the self-hosted project share the same scanner c
 | Business | Yes | Core scanner access | Team policy, administration, reporting, and higher support level |
 | Self-hosted | Chosen by operator | Complete scanner and bring-your-own-key AI | Optional commercial support may be offered later |
 
-Google authentication is implemented as an optional foundation. It does not create scan history or enable hosted AI today. Planning hypotheses remain five hosted AI scans per free account and 100 per EUR 9 Plus subscription. They are not launch promises and must pass the cost and demand gates in `docs/hosted-service.md`.
+Email/password and Google authentication are optional foundations, with authenticator-app 2FA available for account protection. Passkeys remain feature-gated while the upstream Supabase support is experimental. Accounts do not create scan history or enable hosted AI today. Planning hypotheses remain five hosted AI scans per free account and 100 per EUR 9 Plus subscription. They are not launch promises and must pass the cost and demand gates in `docs/hosted-service.md`.
 
 ## Permanently Free Core
 
@@ -61,6 +61,8 @@ Paid plans may fund costs and convenience that the project operator must activel
 - future enterprise controls that do not weaken the open scanner core.
 
 There are no unlimited AI promises, paid scan history, advertising, data resale, or payment implementation in the public beta.
+
+Moneybird is the preferred first subscription, payment, and invoicing provider for the official hosted service. Stripe is not part of the initial billing implementation. Billing remains behind an internal adapter so a second provider can be added when international coverage or customer demand warrants it.
 
 ## License Decision
 

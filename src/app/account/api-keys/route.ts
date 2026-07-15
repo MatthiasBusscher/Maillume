@@ -13,6 +13,7 @@ import {
 } from "@/lib/api-keys";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { hasAal2Session } from "@/lib/auth/mfa";
 import {
   ACCOUNT_API_KEY_MAX_REQUEST_BYTES,
   hasRequestContentType,
@@ -37,6 +38,7 @@ type RpcKeyRow = {
 export async function GET() {
   const context = await getAccountContext();
   if (!context) return errorResponse("Authentication required.", 401);
+  if (!(await hasAal2Session(context.client))) return errorResponse("Two-factor verification required.", 403);
 
   const periodStart = getCurrentPeriodStart();
   const [keysResult, limitResult, usageResult] = await Promise.all([
@@ -102,6 +104,7 @@ export async function POST(request: Request) {
 
   const context = await getAccountContext();
   if (!context) return errorResponse("Authentication required.", 401);
+  if (!(await hasAal2Session(context.client))) return errorResponse("Two-factor verification required.", 403);
 
   const key = createApiKey();
   const { data, error } = await context.admin.rpc("create_hosted_api_key", {
@@ -139,6 +142,7 @@ export async function PUT(request: Request) {
 
   const context = await getAccountContext();
   if (!context) return errorResponse("Authentication required.", 401);
+  if (!(await hasAal2Session(context.client))) return errorResponse("Two-factor verification required.", 403);
 
   const key = createApiKey();
   const { data, error } = await context.admin.rpc("rotate_hosted_api_key", {
@@ -174,6 +178,7 @@ export async function DELETE(request: Request) {
 
   const context = await getAccountContext();
   if (!context) return errorResponse("Authentication required.", 401);
+  if (!(await hasAal2Session(context.client))) return errorResponse("Two-factor verification required.", 403);
 
   const { data, error } = await context.admin.rpc("revoke_hosted_api_key", {
     p_api_key_id: id,

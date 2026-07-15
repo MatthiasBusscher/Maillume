@@ -1,32 +1,67 @@
 var MAILLUME_ENDPOINT = "https://app.maillume.io";
-var MAILLUME_API_KEY_CACHE_KEY = "MAILLUME_API_KEY";
-var MAILLUME_API_KEY_CACHE_SECONDS = 21600;
+var MAILLUME_ACCOUNT_URL = "https://app.maillume.io/account";
+var MAILLUME_LOGO_URL = "https://maillume.io/integration-icons/icon-80.png";
+var MAILLUME_API_KEY_PROPERTY = "MAILLUME_API_KEY";
 
 function buildHomeCard(e) {
-  var apiKey = getCachedApiKey();
+  var apiKey = getStoredApiKey();
   var nl = getLocale(e) === "nl";
+  var connected = Boolean(apiKey);
+  var connectionText = connected
+    ? (nl ? "<b>Verbonden</b><br>Actieve sleutel " : "<b>Connected</b><br>Active key ") + escapeHtml(formatApiKeyPrefix(apiKey))
+    : (nl ? "<b>Niet verbonden</b><br>Voeg een Maillume API-sleutel toe om berichten te analyseren." : "<b>Not connected</b><br>Add a Maillume API key to analyze messages.");
+
+  var connectionSection = CardService.newCardSection()
+    .setHeader(nl ? "Verbinding" : "Connection")
+    .addWidget(
+      CardService.newDecoratedText()
+        .setTopLabel(nl ? "STATUS" : "STATUS")
+        .setText(connectionText)
+        .setWrapText(true),
+    )
+    .addWidget(
+      CardService.newTextInput()
+        .setFieldName("apiKey")
+        .setTitle(connected ? (nl ? "API-sleutel vervangen" : "Replace API key") : (nl ? "Maillume API-sleutel" : "Maillume API key"))
+        .setHint(connected ? (nl ? "Plak alleen een nieuwe sleutel om de huidige te vervangen" : "Paste a new key only to replace the current one") : "mlm_..."),
+    );
+
+  var connectionButtons = CardService.newButtonSet().addButton(
+    CardService.newTextButton()
+      .setText(connected ? (nl ? "Sleutel vervangen" : "Replace key") : (nl ? "Sleutel opslaan" : "Save key"))
+      .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+      .setOnClickAction(CardService.newAction().setFunctionName("saveApiKey")),
+  );
+  if (connected) {
+    connectionButtons.addButton(
+      CardService.newTextButton()
+        .setText(nl ? "Verwijderen" : "Remove")
+        .setOnClickAction(CardService.newAction().setFunctionName("removeApiKey")),
+    );
+  }
+  connectionSection.addWidget(connectionButtons);
 
   return CardService.newCardBuilder()
-    .setHeader(CardService.newCardHeader().setTitle("Maillume").setSubtitle(nl ? "Risicobeoordeling van huidig bericht" : "Current-message risk assessment"))
+    .setHeader(buildBrandHeader(nl ? "Veilige controle van het geopende bericht" : "A safer check for the message you opened"))
+    .addSection(connectionSection)
     .addSection(
       CardService.newCardSection()
-        .addWidget(CardService.newTextParagraph().setText(nl ? "Maillume leest een bericht pas nadat u Dit bericht analyseren kiest. De add-on slaat berichtinhoud en resultaten niet op." : "Maillume reads a message only after you explicitly choose Analyze this message. Message content and results are not stored by the add-on."))
+        .setHeader(nl ? "Privacy voorop" : "Private by design")
         .addWidget(
-          CardService.newTextInput()
-            .setFieldName("apiKey")
-            .setTitle(nl ? "Maillume API-sleutel" : "Maillume API key")
-            .setHint(apiKey ? (nl ? "Sleutel tijdelijk ingesteld; voer alleen een nieuwe sleutel in om deze te vervangen" : "Key temporarily configured; enter a new key only to replace it") : "mlm_..."),
-        )
+          CardService.newTextParagraph().setText(
+            nl
+              ? "Alleen uw API-sleutel wordt voor uw Google-account bewaard. Maillume leest pas een bericht nadat u <b>Dit bericht analyseren</b> kiest. Berichtinhoud en resultaten worden niet door de add-on opgeslagen."
+              : "Only your API key is saved for your Google account. Maillume reads a message only after you choose <b>Analyze this message</b>. Message content and results are not stored by the add-on.",
+          ),
+        ),
+    )
+    .addSection(
+      CardService.newCardSection()
+        .setHeader(nl ? "API-sleutel nodig?" : "Need an API key?")
         .addWidget(
           CardService.newTextButton()
-            .setText(nl ? "Sleutel maximaal 6 uur onthouden" : "Remember key for up to 6 hours")
-            .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
-            .setOnClickAction(CardService.newAction().setFunctionName("saveApiKey")),
-        )
-        .addWidget(
-          CardService.newTextButton()
-            .setText(nl ? "Tijdelijke sleutel verwijderen" : "Remove temporary key")
-            .setOnClickAction(CardService.newAction().setFunctionName("removeApiKey")),
+            .setText(nl ? "Open Maillume-account" : "Open Maillume account")
+            .setOpenLink(CardService.newOpenLink().setUrl(MAILLUME_ACCOUNT_URL)),
         ),
     )
     .build();
@@ -34,50 +69,97 @@ function buildHomeCard(e) {
 
 function buildMessageCard(e) {
   var nl = getLocale(e) === "nl";
-  var configured = Boolean(getCachedApiKey());
-  var section = CardService.newCardSection()
-    .addWidget(CardService.newTextParagraph().setText(nl ? "Er is niets verzonden. Druk op de knop om alleen het bericht te analyseren dat nu in Gmail is geopend." : "Nothing has been sent. Press the button to analyze only the message currently open in Gmail."));
+  var apiKey = getStoredApiKey();
+  var configured = Boolean(apiKey);
+  var actionSection = CardService.newCardSection()
+    .setHeader(nl ? "Geopend bericht" : "Open message")
+    .addWidget(
+      CardService.newDecoratedText()
+        .setTopLabel(nl ? "VERBINDING" : "CONNECTION")
+        .setText(configured
+          ? (nl ? "<b>Klaar voor analyse</b><br>" : "<b>Ready to analyze</b><br>") + escapeHtml(formatApiKeyPrefix(apiKey))
+          : (nl ? "<b>API-sleutel vereist</b><br>Verbind eerst uw Maillume-account." : "<b>API key required</b><br>Connect your Maillume account first."))
+        .setWrapText(true),
+    );
 
   if (configured) {
-    section.addWidget(
+    actionSection.addWidget(
       CardService.newTextButton()
         .setText(nl ? "Dit bericht analyseren" : "Analyze this message")
         .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
         .setOnClickAction(CardService.newAction().setFunctionName("analyzeCurrentMessage")),
     );
   } else {
-    section.addWidget(CardService.newTextParagraph().setText(nl ? "Open eerst het startscherm van de Maillume-add-on en stel tijdelijk een API-sleutel in." : "Open the Maillume add-on home screen and temporarily configure an API key first."));
+    actionSection.addWidget(
+      CardService.newTextButton()
+        .setText(nl ? "API-sleutel instellen" : "Set up API key")
+        .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+        .setOnClickAction(CardService.newAction().setFunctionName("openConnectionSettings")),
+    );
   }
 
   return CardService.newCardBuilder()
-    .setHeader(CardService.newCardHeader().setTitle("Maillume").setSubtitle(nl ? "Klaar wanneer u dat bent" : "Ready when you are"))
-    .addSection(section)
+    .setHeader(buildBrandHeader(nl ? "Controleer voordat u klikt of antwoordt" : "Check before you click or reply"))
+    .addSection(actionSection)
+    .addSection(
+      CardService.newCardSection()
+        .setHeader(nl ? "Wat wordt gedeeld?" : "What is shared?")
+        .addWidget(
+          CardService.newTextParagraph().setText(
+            nl
+              ? "Pas na uw klik stuurt de add-on de afzender, het onderwerp en de tekst van alleen dit geopende bericht naar Maillume. De add-on slaat het bericht en het resultaat niet op."
+              : "Only after your click, the add-on sends the sender, subject, and text of this open message to Maillume. The add-on does not store the message or result.",
+          ),
+        ),
+    )
+    .build();
+}
+
+function openConnectionSettings(e) {
+  return CardService.newActionResponseBuilder()
+    .setNavigation(CardService.newNavigation().pushCard(buildHomeCard(e)))
     .build();
 }
 
 function saveApiKey(e) {
   var nl = getLocale(e) === "nl";
-  var key = String(e.commonEventObject.formInputs.apiKey.stringInputs.value[0] || "").trim();
-  if (!/^mlm_[A-Za-z0-9_-]{43}$/.test(key)) return notification(nl ? "Voer een geldige Maillume API-sleutel in." : "Enter a valid Maillume API key.");
-  CacheService.getUserCache().put(MAILLUME_API_KEY_CACHE_KEY, key, MAILLUME_API_KEY_CACHE_SECONDS);
+  var key = getFormString(e, "apiKey").trim();
+  if (!/^mlm_[A-Za-z0-9_-]{43}$/.test(key)) {
+    return notification(nl ? "Voer een geldige Maillume API-sleutel in." : "Enter a valid Maillume API key.");
+  }
+
+  try {
+    PropertiesService.getUserProperties().setProperty(MAILLUME_API_KEY_PROPERTY, key);
+  } catch (error) {
+    return notification(nl ? "De API-sleutel kon niet worden opgeslagen. Probeer het opnieuw." : "The API key could not be saved. Please try again.");
+  }
+
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText(nl ? "API-sleutel tijdelijk onthouden, maximaal 6 uur." : "API key remembered temporarily, for up to 6 hours."))
+    .setNotification(
+      CardService.newNotification().setText(
+        nl
+          ? "API-sleutel opgeslagen. Deze blijft staan tot u hem verwijdert of Maillume hem afwijst."
+          : "API key saved. It remains until you remove it or Maillume rejects it.",
+      ),
+    )
     .setNavigation(CardService.newNavigation().updateCard(buildHomeCard(e)))
     .build();
 }
 
 function removeApiKey(e) {
-  CacheService.getUserCache().remove(MAILLUME_API_KEY_CACHE_KEY);
+  clearStoredApiKey();
   return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText(getLocale(e) === "nl" ? "Tijdelijke API-sleutel verwijderd." : "Temporary API key removed."))
+    .setNotification(CardService.newNotification().setText(getLocale(e) === "nl" ? "API-sleutel verwijderd." : "API key removed."))
     .setNavigation(CardService.newNavigation().updateCard(buildHomeCard(e)))
     .build();
 }
 
 function analyzeCurrentMessage(e) {
   var locale = getLocale(e);
-  var apiKey = getCachedApiKey();
-  if (!apiKey) return notification(locale === "nl" ? "Stel eerst tijdelijk een Maillume API-sleutel in." : "Temporarily configure a Maillume API key first.");
+  var apiKey = getStoredApiKey();
+  if (!apiKey) {
+    return notification(locale === "nl" ? "Stel eerst een Maillume API-sleutel in." : "Set up a Maillume API key first.");
+  }
 
   var message;
   try {
@@ -104,13 +186,38 @@ function analyzeCurrentMessage(e) {
       muteHttpExceptions: true
     });
   } catch (error) {
-    return notification(locale === "nl" ? "De Maillume-service is tijdelijk niet bereikbaar." : "The Maillume service is temporarily unreachable.");
+    return notification(locale === "nl" ? "Maillume is tijdelijk niet bereikbaar. Probeer het later opnieuw." : "Maillume is temporarily unreachable. Please try again later.");
   }
+
   var status = response.getResponseCode();
+  if (status === 401) {
+    clearStoredApiKey();
+    return CardService.newActionResponseBuilder()
+      .setNotification(
+        CardService.newNotification().setText(
+          locale === "nl"
+            ? "De API-sleutel is verlopen of niet meer geldig en is verwijderd. Voeg een nieuwe sleutel toe."
+            : "The API key expired or is no longer valid and was removed. Add a new key.",
+        ),
+      )
+      .setNavigation(CardService.newNavigation().updateCard(buildMessageCard(e)))
+      .build();
+  }
+  if (status === 403) {
+    return notification(locale === "nl" ? "De aanvraag werd geweigerd. Controleer de verbinding of probeer het later opnieuw." : "The request was denied. Check the connection or try again later.");
+  }
+  if (status === 429) {
+    return notification(locale === "nl" ? "De aanvraag is beperkt. Controleer uw gebruik of wacht voordat u het opnieuw probeert." : "The request was limited. Check your usage or wait before trying again.");
+  }
+
   var parsed;
   try { parsed = JSON.parse(response.getContentText()); } catch (error) { parsed = {}; }
-  if (status < 200 || status >= 300) return notification(locale === "nl" ? "De Maillume-analyse is mislukt." : "Maillume analysis failed.");
-  if (!isAnalysisResult(parsed.result)) return notification(locale === "nl" ? "De service gaf een ongeldig analyseresultaat terug." : "The service returned an invalid analysis result.");
+  if (status < 200 || status >= 300) {
+    return notification(locale === "nl" ? "De analyse is mislukt. Probeer het later opnieuw." : "The analysis failed. Please try again later.");
+  }
+  if (!isAnalysisResult(parsed.result)) {
+    return notification(locale === "nl" ? "Maillume gaf een ongeldig analyseresultaat terug." : "Maillume returned an invalid analysis result.");
+  }
 
   return CardService.newActionResponseBuilder()
     .setNavigation(CardService.newNavigation().pushCard(buildResultCard(parsed.result, locale)))
@@ -123,19 +230,67 @@ function buildResultCard(result, locale) {
   var classifications = nl
     ? { likely_phishing: "Waarschijnlijk phishing", likely_spam: "Waarschijnlijk spam", likely_legitimate: "Waarschijnlijk legitiem", uncertain: "Onzeker" }
     : { likely_phishing: "Likely phishing", likely_spam: "Likely spam", likely_legitimate: "Likely legitimate", uncertain: "Uncertain" };
-  var signals = result.suspicious_signals.length ? result.suspicious_signals.map(function (signal) { return "• " + escapeHtml(signal); }).join("<br>") : (nl ? "Er zijn geen specifieke verdachte signalen gevonden." : "No specific suspicious signals were detected.");
-  var factors = result.score_factors.length ? result.score_factors.map(function (factor) { return "• " + escapeHtml(factor.label) + ": +" + factor.contribution + (nl ? " punten" : " points"); }).join("<br>") : (nl ? "Geen scorefactoren toegepast." : "No score factors applied.");
+  var overflowLabel = nl ? "meer" : "more";
+  var signals = formatBullets(result.suspicious_signals, nl ? "Geen specifieke verdachte signalen gevonden." : "No specific suspicious signals detected.", 8, overflowLabel);
+  var factors = formatBullets(
+    result.score_factors.map(function (factor) {
+      return factor.label + ": +" + factor.contribution + (nl ? " punten" : " points");
+    }),
+    nl ? "Geen scorefactoren toegepast." : "No score factors applied.",
+    8,
+    overflowLabel,
+  );
+  var links = formatBullets(result.detected_links, nl ? "Geen links gevonden." : "No links detected.", 5, overflowLabel);
+
   return CardService.newCardBuilder()
-    .setHeader(CardService.newCardHeader().setTitle((nl ? "Risicoscore " : "Risk score ") + result.risk_score + " · " + riskLevels[result.risk_level]).setSubtitle(classifications[result.classification]))
+    .setHeader(
+      buildBrandHeader(
+        (nl ? "Risicoscore " : "Risk score ") + result.risk_score + " / 100 · " + riskLevels[result.risk_level],
+      ),
+    )
     .addSection(
       CardService.newCardSection()
-        .addWidget(CardService.newTextParagraph().setText(escapeHtml(result.short_explanation)))
-        .addWidget(CardService.newDecoratedText().setTopLabel(nl ? "ZO WERKT DEZE SCORE" : "HOW THIS SCORE WORKS").setText((nl ? "De score is een gewogen risico-index, geen waarschijnlijkheid of garantie.<br>" : "The score is a weighted risk index, not a probability or guarantee.<br>") + factors).setWrapText(true))
-        .addWidget(CardService.newDecoratedText().setTopLabel(nl ? "VERDACHTE SIGNALEN" : "SUSPICIOUS SIGNALS").setText(signals).setWrapText(true))
-        .addWidget(CardService.newDecoratedText().setTopLabel(nl ? "AANBEVOLEN VERVOLGSTAP" : "RECOMMENDED ACTION").setText(escapeHtml(result.recommended_action)).setWrapText(true))
-        .addWidget(CardService.newTextParagraph().setText(nl ? "Dit is een geautomatiseerde risicobeoordeling en biedt geen garantie." : "This is an automated risk assessment and should not be considered a guarantee.")),
+        .setHeader(classifications[result.classification])
+        .addWidget(CardService.newTextParagraph().setText(escapeHtml(result.short_explanation))),
+    )
+    .addSection(
+      CardService.newCardSection()
+        .setHeader(nl ? "Waarom deze score?" : "Why this score?")
+        .addWidget(
+          CardService.newTextParagraph().setText(
+            nl
+              ? "De score is een gewogen risico-index, geen waarschijnlijkheid of garantie."
+              : "The score is a weighted risk index, not a probability or guarantee.",
+          ),
+        )
+        .addWidget(CardService.newDecoratedText().setTopLabel(nl ? "SCOREFACTOREN" : "SCORE FACTORS").setText(factors).setWrapText(true))
+        .addWidget(CardService.newDecoratedText().setTopLabel(nl ? "VERDACHTE SIGNALEN" : "SUSPICIOUS SIGNALS").setText(signals).setWrapText(true)),
+    )
+    .addSection(
+      CardService.newCardSection()
+        .setHeader(nl ? "Gevonden links" : "Detected links")
+        .addWidget(CardService.newTextParagraph().setText(links)),
+    )
+    .addSection(
+      CardService.newCardSection()
+        .setHeader(nl ? "Aanbevolen vervolgstap" : "Recommended next step")
+        .addWidget(CardService.newTextParagraph().setText("<b>" + escapeHtml(result.recommended_action) + "</b>"))
+        .addWidget(
+          CardService.newTextParagraph().setText(
+            nl
+              ? "Dit is een geautomatiseerde risicobeoordeling en biedt geen garantie."
+              : "This is an automated risk assessment and should not be considered a guarantee.",
+          ),
+        ),
     )
     .build();
+}
+
+function buildBrandHeader(subtitle) {
+  return CardService.newCardHeader()
+    .setTitle("Maillume")
+    .setSubtitle(subtitle)
+    .setImageUrl(MAILLUME_LOGO_URL);
 }
 
 function notification(message) {
@@ -143,7 +298,24 @@ function notification(message) {
 }
 
 function escapeHtml(value) {
-  return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function formatBullets(values, emptyMessage, limit, overflowLabel) {
+  if (!values.length) return escapeHtml(emptyMessage);
+  var visible = values.slice(0, limit).map(function (value) { return "• " + escapeHtml(value); });
+  if (values.length > limit) visible.push("• +" + (values.length - limit) + " " + overflowLabel);
+  return visible.join("<br>");
+}
+
+function formatApiKeyPrefix(apiKey) {
+  return apiKey.slice(0, 10) + "…";
+}
+
+function getFormString(e, fieldName) {
+  var field = e && e.commonEventObject && e.commonEventObject.formInputs && e.commonEventObject.formInputs[fieldName];
+  var values = field && field.stringInputs && field.stringInputs.value;
+  return values && values.length ? String(values[0]) : "";
 }
 
 function getLocale(e) {
@@ -151,8 +323,12 @@ function getLocale(e) {
   return String(locale || "en").toLowerCase().indexOf("nl") === 0 ? "nl" : "en";
 }
 
-function getCachedApiKey() {
-  return CacheService.getUserCache().get(MAILLUME_API_KEY_CACHE_KEY) || "";
+function getStoredApiKey() {
+  return PropertiesService.getUserProperties().getProperty(MAILLUME_API_KEY_PROPERTY) || "";
+}
+
+function clearStoredApiKey() {
+  PropertiesService.getUserProperties().deleteProperty(MAILLUME_API_KEY_PROPERTY);
 }
 
 function isAnalysisResult(result) {

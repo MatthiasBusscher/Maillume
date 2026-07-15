@@ -22,10 +22,19 @@ export function getPublicAppOrigin({
 
   if (publicHost && (publicProto === "http" || publicProto === "https")) {
     const forwardedOrigin = getHttpOrigin(`${publicProto}://${publicHost}`);
-    if (forwardedOrigin) return forwardedOrigin;
+    if (forwardedOrigin && isTrustedFallbackHostname(new URL(forwardedOrigin).hostname)) {
+      return forwardedOrigin;
+    }
   }
 
   return requestOrigin;
+}
+
+function isTrustedFallbackHostname(hostname: string): boolean {
+  return hostname === "localhost"
+    || hostname === "127.0.0.1"
+    || hostname === "maillume.io"
+    || hostname.endsWith(".maillume.io");
 }
 
 function firstHeaderValue(value?: string | null): string {
