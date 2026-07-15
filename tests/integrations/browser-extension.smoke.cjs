@@ -98,14 +98,15 @@ async function run() {
     assert.equal(await panelPage.locator("#endpoint").inputValue(), "https://app.maillume.io");
     assert.equal(await panelPage.locator("#analyze").isDisabled(), true);
     assert.equal(await panelPage.locator("#result").isHidden(), true);
-    assert.equal(await panelPage.locator("#capture").count(), 0);
+    assert.equal(await panelPage.locator("#capture").count(), 1);
+    assert.equal(await panelPage.locator("#capture").textContent(), "Use current message");
   } finally {
     if (context) await context.close();
     await new Promise((resolve) => server.close(resolve));
     fs.rmSync(userDataDir, { force: true, recursive: true });
   }
 
-  console.log("Captured framed-input and window selections through the real extension action in Playwright Chromium.");
+  console.log("Captured framed-input and window selections and verified the in-panel recapture action in Playwright Chromium.");
 }
 
 async function waitForCapture(worker, tabId) {

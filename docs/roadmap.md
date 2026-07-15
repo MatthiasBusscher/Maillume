@@ -1,6 +1,6 @@
 # Maillume GitHub Issue Roadmap
 
-Implementation status: the scanner core and integration surfaces are implemented in source. Production auth/API acceptance, marketplace publication, security evidence, and private-beta release work remain open. GitHub issues are the source of truth.
+Implementation status: the scanner core and Chrome extension are implemented in source. Production auth/API acceptance, Chrome Web Store publication, security evidence, and private-beta release work remain open. The Gmail and Outlook experiments are retired and retained only as unshipped legacy source. GitHub issues are the source of truth.
 
 ## Release And Post-Launch Order
 
@@ -9,8 +9,8 @@ Implementation status: the scanner core and integration surfaces are implemented
 3. Issue #31: Privacy-Safe Detection Feedback and Synthetic Dataset Pipeline. Add optional label feedback and synthetic calibration without retaining scanned messages.
 4. Issue #34: Brand, License, and Public Beta Positioning. Complete the beta identity and hosted-by-us-or-you model before going public.
 5. Issue #35: Public Beta Deployment and Trust Pages. Deploy the heuristic beta, verify trust controls, then make the repository public.
-6. Issue #30: Mail Client Integration Feasibility Spike. Complete: Chrome, Gmail, and Outlook use explicit-action, minimum-permission designs.
-7. Browser extension, Gmail add-on, Outlook add-in, and authenticated hosted API. Implemented in source; issues #38 and #39 must close before public availability is claimed.
+6. Issue #30: Mail Client Integration Feasibility Spike. Complete: Chrome, Gmail, and Outlook explicit-action designs were evaluated; Chrome was selected as the sole release integration.
+7. Chrome extension and authenticated hosted API. Implemented in source; issues #38 and #39 must close before public availability is claimed. Gmail and Outlook marketplace work is retired.
 8. Hosted AI and billing remain gated by the Issue #29 privacy, cost, and legal decisions.
 
 The public heuristic scanner and self-hosted bring-your-own-key mode remain the launch product. See `docs/hosted-service.md` for the approved hosted-service planning baseline.
@@ -31,7 +31,7 @@ The public heuristic scanner and self-hosted bring-your-own-key mode remain the 
 12. Portable Deployment and Self-Hosting Docs
 13. v1 Launch Polish
 14. Browser Extension
-15. Gmail and Outlook Add-ins
+15. Gmail and Outlook Add-ins (retired experiment)
 16. Hosted API Keys and Quotas
 17. Integration Publication and Release Verification
 
@@ -208,13 +208,15 @@ Definition of Done:
 
 ## Issue #15: Gmail and Outlook Add-ins
 
-Definition of Done:
+Status: retired from release scope. The historical implementation remains in source but will not be published or advertised as supported.
+
+Historical Definition of Done:
 
 - Gmail requests temporary current-message read access only.
 - Outlook requests `ReadItem`, not read/write mailbox access.
 - Both integrations read content only after an explicit Analyze action.
 - Both render the structured result and required disclaimer.
-- Marketplace manifests and sideloading instructions are included.
+- Marketplace manifests and sideloading instructions were included for evaluation; they are not release artifacts.
 
 ## Issue #16: Hosted API Keys and Quotas
 
@@ -231,7 +233,7 @@ Definition of Done:
 Definition of Done:
 
 - Browser extension is packaged and reviewed against Chrome Web Store privacy requirements.
-- Gmail and Outlook add-ons pass provider validation using synthetic messages.
+- Retired Gmail and Outlook artifacts are excluded from marketplace publication and public release claims.
 - Production OAuth, API quotas, monitoring, DDoS controls, and zero-retention checks pass.
 - Mobile/desktop responsive screenshots show no clipped content.
 - Release documentation lists requested permissions and exact data flow.

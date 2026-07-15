@@ -221,6 +221,12 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
         </div>
       ) : null}
 
+      {keys.length ? (
+        <div className="border-b border-[#d8dcd3] bg-[#f9faf7] px-5 py-4">
+          <h3 className="text-sm font-semibold text-[#111711]">{labels.savedKeys}</h3>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#59655a]">{labels.savedKeysHelp}</p>
+        </div>
+      ) : null}
       <div className="divide-y divide-[#d8dcd3]">
         {keys.map((key) => (
           <div key={key.id} className="grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">

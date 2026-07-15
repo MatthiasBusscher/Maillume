@@ -33,14 +33,14 @@ const plans = [
   },
   {
     name: "Plus",
-    price: "EUR 9",
-    cadence: "per month target",
+    price: "To be decided",
+    cadence: "after private beta",
     description: "Managed convenience for people who want Maillume closer to their inbox.",
     status: "Planned, not for sale",
     features: [
       "Everything in Cloud Free",
       "Managed AI allowance with hard limits",
-      "Official browser and mail integrations",
+      "Managed Chrome extension convenience",
       "Account preferences",
       "Priority product support",
     ],
@@ -119,7 +119,7 @@ export default async function PricingPage() {
           </div>
 
           <div className="mt-5 border border-[#aeb6ac] bg-[#eef1eb] p-5 text-sm leading-6 text-[#4f5b50]">
-            <strong className="text-[#111711]">About the Plus price:</strong> EUR 9 is a planning target, not a launch offer. It will only become a real price after provider costs, privacy terms, quotas, and demand have been verified.
+            <strong className="text-[#111711]">About the Plus price:</strong> No launch price has been set. We will first measure provider costs, useful allowances, tax, support, and real beta demand.
           </div>
         </div>
       </section>

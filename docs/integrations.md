@@ -1,6 +1,6 @@
 # Integrations and Hosted API
 
-Maillume integrations share one rule: message content is accessed and sent only after a visible user action. No integration performs background mailbox scanning.
+The Chrome extension is Maillume's only planned inbox integration. Message content is accessed and sent only after a visible user action; the extension does not perform background mailbox scanning.
 
 ## Hosted API
 
@@ -29,29 +29,15 @@ Stored API metadata is limited to key owner, name, prefix, hash, quota, creation
 
 `integrations/browser-extension` is an unpacked Manifest V3 extension for Chrome 116+.
 
-- A toolbar click grants temporary `activeTab` and `scripting` access. Maillume first captures a text selection and otherwise captures the visibly open Gmail or Outlook message when the page is accessible.
+- A toolbar click grants temporary `activeTab` and `scripting` access. Maillume first captures a text selection and otherwise captures the visibly open message in a supported webmail client when the page is accessible.
 - There are no persistent Gmail or Outlook host permissions and no content script.
 - Optional host access is requested only for the deployment chosen by the user.
 - The endpoint is stored locally; the API key lives only in Chrome session storage. Captured text crosses to the tab-specific panel through a one-time in-memory handoff and message content and results are never written to extension storage.
 
-## Gmail Add-on
+## Retired Gmail And Outlook Experiments
 
-`integrations/gmail-addon` is a Google Workspace add-on source project.
+The Gmail add-on and Outlook add-in are retired and are not part of the release or marketplace publication scope. Their source remains in `integrations/gmail-addon` and `integrations/outlook-addin` for historical review, reproducible security tests, and possible reference by contributors. Their former production task-pane route and public manifest have been removed, and these artifacts are not shipped as supported Maillume integrations.
 
-- Scope: `gmail.addons.current.message.action`.
-- Locale scope: `script.locale`, used only to show the English or Dutch interface that Gmail selected.
-- The contextual card does not read the message.
-- Pressing **Analyze this message** activates temporary access, reads that message, and calls the fixed official endpoint.
-- The API key is saved in user-scoped Apps Script properties until the user removes/replaces it or Maillume rejects it. No message content or result is saved there.
-- Self-hosters publish their own add-on after changing the endpoint allowlist.
+The retained Gmail source used temporary current-message access and the retained Outlook source used `ReadItem`; neither requested background mailbox access. These statements document the legacy implementation and do not imply availability, maintenance, or marketplace submission.
 
-## Outlook Add-in
-
-`public/outlook-manifest.xml` installs the task pane at `/integrations/outlook`.
-
-- Permission: `ReadItem`.
-- The task pane waits for **Analyze this message** before calling `body.getAsync`.
-- API key is stored in task-pane session storage and can be removed there; message content and result are not persisted.
-- The production add-in uses `https://app.maillume.io` as its fixed destination.
-
-Provider marketplace publication requires final icons, operator identity, privacy-policy URLs, test accounts, validation, and review. Those are release operations and must be completed before claiming store availability.
+Chrome Web Store publication requires final icons, operator identity, privacy-policy URLs, test accounts, validation, and review. Those release operations must be completed before claiming store availability.

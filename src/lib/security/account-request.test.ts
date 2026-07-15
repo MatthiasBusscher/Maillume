@@ -50,6 +50,35 @@ async function main() {
     true,
   );
   assert.equal(
+    isStrictSameOriginMutation(
+      new Request("http://maillume:3000/account/delete", {
+        headers: {
+          Host: "maillume:3000",
+          Origin: "https://app.maillume.io",
+          "Sec-Fetch-Site": "same-origin",
+        },
+        method: "POST",
+      }),
+      "https://app.maillume.io",
+    ),
+    true,
+  );
+  assert.equal(
+    isStrictSameOriginMutation(
+      mutationRequest({ Origin: "https://attacker.example" }),
+      "https://app.maillume.io",
+    ),
+    false,
+  );
+  assert.equal(
+    isStrictSameOriginMutation(
+      mutationRequest({ Origin: "https://app.maillume.io" }),
+      "https://app.maillume.io/path",
+    ),
+    true,
+    "an invalid configured origin must be ignored without breaking the request origin",
+  );
+  assert.equal(
     isStrictSameOriginMutation(new Request("http://maillume:3000/account/api-keys", {
       headers: {
         Host: "app.maillume.io@attacker.example",

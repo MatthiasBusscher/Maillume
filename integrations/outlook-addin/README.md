@@ -1,10 +1,10 @@
 # Maillume Outlook Add-in
 
-The Outlook add-in uses the production manifest at `public/outlook-manifest.xml` and the task pane at `/integrations/outlook`. It requests `ReadItem`, not read/write mailbox access, and reads the currently open message only after the user presses **Analyze this message**.
+This is retired legacy source and is not included in Maillume releases. The historical manifest is retained at `integrations/outlook-addin/outlook-manifest.xml`, and the former production task-pane route has been removed. The experiment requested `ReadItem`, not read/write mailbox access, and read the currently open message only after the user pressed **Analyze this message**.
 
 ## Test installation
 
-1. Deploy Maillume over HTTPS and download `https://maillume.io/outlook-manifest.xml`.
+1. Check out a historical revision that still contains the task-pane route if you need to audit the complete experiment.
 2. Sideload the manifest in Outlook using the Microsoft 365 add-in management interface.
 3. Create an API key on the Maillume account page and save it in the task pane.
 4. Open a synthetic message and run **Check with Maillume**.

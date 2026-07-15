@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     requestUrl: request.url,
   });
 
-  if (!isStrictSameOriginMutation(request)) {
+  if (!isStrictSameOriginMutation(request, publicOrigin)) {
     return privateResponse("Cross-origin account deletion is not allowed.", 403);
   }
 

@@ -19,28 +19,12 @@ const baseSecurityHeaders = [
   },
 ];
 
-const outlookFrameHeaders = [
-  ...baseSecurityHeaders,
-  {
-    key: "Content-Security-Policy",
-    value: "frame-ancestors https://*.office.com https://*.office365.com https://*.officeapps.live.com https://*.microsoft365.com https://*.outlook.com",
-  },
-];
-
 const nextConfig: NextConfig = {
   output: "standalone",
   async headers() {
     return [
       {
-        source: "/integrations/outlook",
-        headers: outlookFrameHeaders,
-      },
-      {
-        source: "/nl/integrations/outlook",
-        headers: outlookFrameHeaders,
-      },
-      {
-        source: "/((?!integrations/outlook|nl/integrations/outlook).*)",
+        source: "/(.*)",
         headers: [
           ...baseSecurityHeaders,
           { key: "X-Frame-Options", value: "DENY" },

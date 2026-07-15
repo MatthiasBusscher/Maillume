@@ -1,6 +1,6 @@
 # Hosted Service Architecture
 
-Status: active architecture record. Optional email/Google authentication, TOTP MFA, feature-gated passkeys, hashed integration API keys, aggregate quotas, and source-beta Chrome/Gmail/Outlook integrations are implemented. Hosted AI, paid entitlements, and payments are not implemented.
+Status: active architecture record. Optional email/Google authentication, TOTP MFA, feature-gated passkeys, hashed integration API keys, aggregate quotas, and the source-beta Chrome extension are implemented. Gmail and Outlook experiments are retired and remain only as unshipped legacy source. Hosted AI, paid entitlements, and payments are not implemented.
 
 ## Decision Summary
 
@@ -9,7 +9,7 @@ Maillume remains an open-source, privacy-first scanner first and a hosted servic
 - Anonymous heuristic scans stay free and do not require an account.
 - Normal scans are processed for the current assessment only. They are not reused for analytics, model training, or evaluation fixtures.
 - A free account is optional and is currently needed only to create revocable integration API keys. Hosted AI allowances and saved preferences remain future features.
-- A paid hosted plan may sell managed AI capacity, integrations, and convenience. It must have explicit usage limits.
+- A paid hosted plan may sell managed AI capacity, Chrome extension convenience, and support. It must have explicit usage limits.
 - Self-hosting and bring-your-own-key AI remain free under the repository license.
 - Raw email content, screenshots, `.eml` files, OCR text, links, and assessment results are not retained after scoring.
 - Detection improvements use synthetic fixtures and optional non-content feedback. Production emails do not become a dataset.
@@ -139,7 +139,7 @@ The application database is authoritative for entitlements and hard quota enforc
 | --- | --- | --- |
 | Anonymous | EUR 0 | Heuristic scanning without an account |
 | Free account | EUR 0 | Heuristic scanning plus 100 authenticated integration API calls/month during beta |
-| Plus | EUR 9/month | Planning hypothesis for hosted AI, higher API limits, managed integration convenience, and support |
+| Plus | Not set | Pricing follows measured hosted-AI costs, useful allowances, tax, support burden, and beta demand |
 | Self-hosted | EUR 0 from the project | Full source code and bring-your-own-key provider usage |
 
 The Plus price is a validation target, not final public copy. Launch pricing requires measured cost, payment fees, hosting costs, tax handling, support expectations, and user interviews. Team plans remain out of scope.
@@ -196,7 +196,7 @@ The hosted AI action must fail closed if the deployment cannot identify the prov
 
 The repository uses GNU AGPL-3.0-only for the public beta. The license is designed for network applications and requires operators of modified network-hosted versions to offer the corresponding source to their users under its terms.
 
-The official hosted service still competes on trust, convenience, managed provider costs, integrations, reliability, and support rather than withholding the core scanner.
+The official hosted service still competes on trust, convenience, managed provider costs, the Chrome extension, reliability, and support rather than withholding the core scanner.
 
 No dual-license or enterprise license program exists. Adding one later may require contributor permissions, a contributor agreement, and legal review. See `docs/product-positioning.md` for the complete public-beta decision. This documentation is not legal advice.
 
@@ -205,7 +205,8 @@ No dual-license or enterprise license program exists. Adding one later may requi
 - **Go:** public anonymous heuristic launch.
 - **Go:** free self-hosting and bring-your-own-key AI.
 - **Go:** privacy-preserving, non-content feedback design as a separate issue.
-- **Go:** explicit-action Chrome, Gmail, and Outlook source-beta integrations using minimum practical permissions.
+- **Go:** explicit-action Chrome source-beta integration using minimum practical permissions.
+- **Retired:** Gmail and Outlook add-on publication. Their legacy source remains unshipped for historical and security review.
 - **Go:** optional authentication and quota-limited heuristic integration API.
 - **Hold:** maintainer-funded hosted AI.
 - **Hold:** payment implementation.

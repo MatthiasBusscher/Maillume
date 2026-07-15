@@ -35,7 +35,11 @@ function createWorkerContext() {
         sendMessage: async () => {},
       },
       action: { onClicked: events.action },
-      tabs: { onUpdated: events.updated, onRemoved: events.removed },
+      tabs: {
+        onUpdated: events.updated,
+        onRemoved: events.removed,
+        get: async (tabId) => ({ id: tabId, url: "https://mail.google.com/mail/u/0/#inbox/thread" }),
+      },
       sidePanel: { setOptions: async () => {}, open: async () => {} },
       scripting: { executeScript: async () => frameResults },
     },
@@ -63,6 +67,32 @@ async function testCapturePriorityAndMetadata() {
   assert.deepEqual(plain(worker.context.consumeCapture(10)), { status: "success", text: "Explicit selection" });
 
   worker.setFrameResults([
+    { frameId: 0, result: { text: "Next open message", source: "open_message", subject: "Next", sender: "next@example.com", focused: true } },
+  ]);
+  let recaptureResponse;
+  assert.equal(worker.events.message.listener(
+    { type: "capture-active-tab", tabId: 10 },
+    {},
+    (value) => { recaptureResponse = value; },
+  ), true);
+  await flush();
+  assert.equal(recaptureResponse.accepted, true);
+  assert.deepEqual(plain(worker.context.consumeCapture(10, true)), {
+    status: "success",
+    text: "Next open message",
+    source: "open_message",
+    subject: "Next",
+    sender: "next@example.com",
+    captureId: "capture-2",
+  });
+  worker.events.updated.listener(10, { url: "https://mail.google.com/mail/u/0/#inbox/next" });
+  assert.deepEqual(
+    plain(worker.context.consumeCapture(10)),
+    { status: "error", code: "handoff_missing" },
+    "URL-only webmail navigation must clear the previous capture",
+  );
+
+  worker.setFrameResults([
     { frameId: 0, result: { text: "Open Outlook message", source: "open_message", subject: "Payment update", sender: "sender@example.com", focused: true } },
   ]);
   await worker.events.action.listener({ id: 11, url: "https://outlook.office.com/mail/inbox/id/example" });
@@ -72,7 +102,7 @@ async function testCapturePriorityAndMetadata() {
     source: "open_message",
     subject: "Payment update",
     sender: "sender@example.com",
-    captureId: "capture-2",
+    captureId: "capture-3",
   });
 }
 
@@ -207,7 +237,7 @@ function createPanelElement() {
 
 async function testDuplicateConsumerDoesNotEraseCapture() {
   const runtime = event();
-  const ids = ["subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"];
+  const ids = ["capture", "subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"];
   const elements = new Map(ids.map((id) => [id, createPanelElement()]));
   elements.get("endpoint").value = "https://app.maillume.io";
   const responses = [
