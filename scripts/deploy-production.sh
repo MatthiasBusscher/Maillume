@@ -1,12 +1,13 @@
 #!/usr/bin/env sh
 set -eu
 
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 ghcr.io/matthiasbusscher/maillume@sha256:<64-hex-digest>" >&2
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 ghcr.io/matthiasbusscher/maillume@sha256:<64-hex-digest> <git-revision>" >&2
   exit 2
 fi
 
 image="$1"
+expected_revision="$2"
 compose_file="docker-compose.production.yml"
 production_env=".env.production"
 infrastructure_env=".env.infrastructure"
@@ -33,6 +34,18 @@ is_image_digest() (
 
 if ! is_image_digest "$image" "ghcr.io/matthiasbusscher/maillume"; then
   echo "Deployment requires the immutable Maillume GHCR digest." >&2
+  exit 2
+fi
+
+case "$expected_revision" in
+  *[!0-9a-f]*)
+    echo "Deployment requires a lowercase hexadecimal Git revision." >&2
+    exit 2
+    ;;
+esac
+
+if [ "${#expected_revision}" -ne 40 ] && [ "${#expected_revision}" -ne 64 ]; then
+  echo "Deployment requires a complete 40- or 64-character Git revision." >&2
   exit 2
 fi
 
@@ -81,8 +94,8 @@ compose up -d --remove-orphans
 
 attempt=0
 while [ "$attempt" -lt 12 ]; do
-  if compose exec -T maillume \
-    node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"; then
+  if compose exec -T -e EXPECTED_REVISION="$expected_revision" maillume \
+    node -e "fetch('http://127.0.0.1:3000/api/health').then(async r=>{if(!r.ok)process.exit(1);const body=await r.json();if(body.revision!==process.env.EXPECTED_REVISION)process.exit(1)}).catch(()=>process.exit(1))"; then
     printf '%s\n' "$image" > "$state_file"
     docker image prune -f
     echo "Deployment healthy: $image"

@@ -101,7 +101,9 @@ Create a protected GitHub environment named `production`, require reviewer appro
 
 Add repository variables `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_PASSKEYS_ENABLED` before enabling production authentication. Keep the passkey variable `false` until its acceptance matrix passes. These public browser values are intentionally supplied while the image is built. Server secrets remain only in the VPS `.env.production` file.
 
-The remote deploy script pulls the immutable image, waits for `/api/health`, and restores the previous image if health checks fail. GitHub Actions builds images; production never builds source code.
+The remote deploy script pulls the immutable image, waits for `/api/health`, verifies that the running container reports the approved Git revision, and restores the previous image if health or revision checks fail. GitHub Actions builds images; production never builds source code.
+
+`/api/health` returns the non-secret build revision and analyzer version. Compare its `revision` with the commit approved in the production workflow when confirming a release.
 
 ## Verification
 
