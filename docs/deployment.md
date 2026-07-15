@@ -85,6 +85,8 @@ Anonymous scanning remains available when authentication is enabled.
 9. Enable production sign-in only after email confirmation, password reset, Google sign-in, sign-out, session refresh, MFA challenge, and confirmation-gated account deletion pass.
 10. Verify Row Level Security is enabled. The feedback table accepts writes only through the server role and contains no scan-content columns.
 
+Complete the Google application identity checklist in `docs/google-oauth-branding.md`. The custom `auth.maillume.io` hostname is optional and adds recurring Supabase cost; Google brand verification should be completed even if the project remains on its Supabase hostname during private beta.
+
 Never prefix a Supabase server secret or AI provider key with `NEXT_PUBLIC_`.
 
 ## 5. Configure GitHub Deployment
