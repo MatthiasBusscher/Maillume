@@ -155,6 +155,43 @@ function testOpenMessageExtractors() {
   });
 }
 
+function testInactiveInputSelectionFallback() {
+  const { context } = createWorkerContext();
+  const selectedInput = fakeElement({
+    tagName: "TEXTAREA",
+    value: "Before framed selection after",
+    selectionStart: 7,
+    selectionEnd: 23,
+  });
+  context.location = { hostname: "example.test" };
+  context.window = { getSelection: () => ({ toString: () => "" }) };
+  context.document = {
+    activeElement: fakeElement(),
+    hasFocus: () => false,
+    querySelectorAll: (selector) => selector === "input, textarea" ? [selectedInput] : [],
+  };
+
+  assert.deepEqual(plain(context.readSelectionFromFrame()), {
+    text: "framed selection",
+    source: "input",
+    focused: false,
+  });
+
+  context.document.querySelectorAll = (selector) => selector === "input, textarea"
+    ? [selectedInput, fakeElement({
+        tagName: "TEXTAREA",
+        value: "second selection",
+        selectionStart: 0,
+        selectionEnd: 6,
+      })]
+    : [];
+  assert.deepEqual(plain(context.readSelectionFromFrame()), {
+    text: "",
+    source: "window",
+    focused: false,
+  });
+}
+
 function createPanelElement() {
   return {
     value: "",
@@ -215,6 +252,7 @@ async function testDuplicateConsumerDoesNotEraseCapture() {
 (async () => {
   await testCapturePriorityAndMetadata();
   testOpenMessageExtractors();
+  testInactiveInputSelectionFallback();
   await testDuplicateConsumerDoesNotEraseCapture();
   console.log("Browser extension capture, fallback, and handoff race checks passed.");
 })().catch((error) => {

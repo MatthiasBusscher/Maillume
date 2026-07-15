@@ -119,6 +119,21 @@ function readSelectionFromFrame() {
     }
   }
 
+  // Opening a browser action can move focus away from a selected field before
+  // the injected script runs. Recover only an unambiguous selection in this frame.
+  const selectedFields = Array.from(document.querySelectorAll?.("input, textarea") || [])
+    .map((element) => {
+      if (typeof element.value !== "string") return "";
+      const start = element.selectionStart;
+      const end = element.selectionEnd;
+      if (!Number.isInteger(start) || !Number.isInteger(end) || end <= start) return "";
+      return normalizeText(element.value.slice(start, end));
+    })
+    .filter(Boolean);
+  if (selectedFields.length === 1) {
+    return { text: selectedFields[0], source: "input", focused: false };
+  }
+
   const selection = normalizeText(window.getSelection()?.toString());
   if (selection) return { text: selection, source: "window", focused };
 

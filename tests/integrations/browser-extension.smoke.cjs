@@ -55,10 +55,14 @@ async function run() {
 
     const framedInput = messagePage.frameLocator("#message-frame").locator("#message-body");
     await framedInput.fill("Before framed selection after");
-    await framedInput.evaluate((input) => {
+    await messagePage.bringToFront();
+    const inputSelection = await framedInput.evaluate(async (input) => {
       input.focus();
       input.setSelectionRange(7, 23);
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      return { start: input.selectionStart, end: input.selectionEnd };
     });
+    assert.deepEqual(inputSelection, { start: 7, end: 23 }, "the framed selection must exist before invoking the action");
     await browserSession.send("Extensions.triggerAction", { id: extensionId, targetId: messageTarget.targetId });
     const inputCapture = await waitForCapture(worker, tabId);
     assert.deepEqual(inputCapture, { status: "success", text: "framed selection" });
