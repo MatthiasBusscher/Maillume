@@ -4,10 +4,12 @@ import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, LoaderCircle, LockKeyhole, Mail } from "lucide-react";
 
 import type { AccountDictionary } from "@/lib/i18n/account-en";
+import {
+  getEmailAuthFailureMessage,
+  type EmailAuthMode,
+} from "@/lib/auth/email-auth-error";
 import { localizePath, type SiteLocale } from "@/lib/i18n/site-locale";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
-
-type Mode = "sign-in" | "sign-up" | "forgot";
 
 export function EmailAuthForm({
   configured,
@@ -18,7 +20,7 @@ export function EmailAuthForm({
   labels: AccountDictionary["signIn"]["email"];
   locale: SiteLocale;
 }) {
-  const [mode, setMode] = useState<Mode>("sign-in");
+  const [mode, setMode] = useState<EmailAuthMode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -26,7 +28,7 @@ export function EmailAuthForm({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  function selectMode(nextMode: Mode) {
+  function selectMode(nextMode: EmailAuthMode) {
     setMode(nextMode);
     setMessage("");
     setError("");
@@ -48,9 +50,13 @@ export function EmailAuthForm({
       if (mode === "forgot") {
         const callback = new URL("/auth/callback", window.location.origin);
         callback.searchParams.set("next", localizePath("/auth/update-password", locale));
-        await supabase.auth.resetPasswordForEmail(email.trim(), {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
           redirectTo: callback.toString(),
         });
+        if (resetError) {
+          setError(labels.resetFailed);
+          return;
+        }
         setMessage(labels.resetSent);
         return;
       }
@@ -85,7 +91,7 @@ export function EmailAuthForm({
       }
       await continueAfterPrimarySignIn(supabase, locale);
     } catch {
-      setError(mode === "sign-up" ? labels.signUpFailed : labels.invalidCredentials);
+      setError(getEmailAuthFailureMessage(mode, labels));
     } finally {
       setIsLoading(false);
     }

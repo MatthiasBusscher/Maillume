@@ -46,6 +46,8 @@
     "src/lib/security/account-request.test.ts",
     "src/lib/auth/oauth-return.ts",
     "src/lib/auth/oauth-return.test.ts",
+    "src/lib/auth/email-auth-error.test.ts",
+    "src/lib/auth/email-auth-error.ts",
     "src/lib/supabase/config.test.ts",
     "src/lib/supabase/config.ts",
     "src/lib/scan-limits.test.ts",
