@@ -12,7 +12,7 @@
     "test:heuristics": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/analysis/heuristic-analysis.test.js",
     "test:security": "tsc -p tsconfig.heuristics.json && node .analysis-tests/src/lib/auth/oauth-return.test.js && node .analysis-tests/src/lib/security/account-request.test.js && node .analysis-tests/src/lib/security/privacy-review.test.js",
     "test:deployment": "node --test tests/deployment/*.test.mjs",
-    "test:integrations": "node tests/integrations/integrations.test.cjs",
+    "test:integrations": "node tests/integrations/integrations.test.cjs && node integrations/browser-extension/extension.test.cjs && node integrations/gmail-addon/Code.test.cjs",
     "test:extension": "node tests/integrations/browser-extension.smoke.cjs",
     "test:smoke": "playwright test",
     "test:smoke:ui": "playwright test --ui",
