@@ -198,15 +198,32 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.deploy
     runs-on: ubuntu-latest
     environment: production
-    permissions: {}
+    permissions:
+      contents: read
     steps:
+      - name: Check out approved deployment artifacts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Synchronize deployment artifacts
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
+          source: docker-compose.production.yml,scripts/deploy-production.sh
+          target: /opt/maillume
+          overwrite: true
       - name: Deploy immutable image over SSH
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
           script: |
             set -eu
             cd /opt/maillume
+            chmod 750 ./scripts/deploy-production.sh
             ./scripts/deploy-production.sh '${{ needs.image.outputs.image }}' '${{ github.sha }}'
