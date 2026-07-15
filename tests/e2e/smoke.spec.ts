@@ -477,7 +477,7 @@ test("password updates require a recovery callback", async ({ request }) => {
   for (const path of ["/auth/update-password", "/nl/auth/update-password"]) {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status()).toBe(307);
-    expect(new URL(response.headers().location).pathname).toMatch(/\/auth\/sign-in$/);
+    expect(new URL(response.headers().location, response.url()).pathname).toMatch(/\/auth\/sign-in$/);
   }
 });
 

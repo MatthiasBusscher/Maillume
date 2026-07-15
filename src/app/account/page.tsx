@@ -52,7 +52,7 @@ export default async function AccountPage({
   if (!data.user) {
     return (
       <main className="flex min-h-screen flex-col bg-[#eef1eb]">
-        <section className="flex flex-1 items-center justify-center px-5 py-10">
+        <section className="flex flex-1 items-center justify-center px-5 py-5 sm:py-8">
           <div className="w-full max-w-lg border border-[#aeb6ac] bg-white p-7 sm:p-9">
             <div className="flex items-center justify-between gap-4">
               <BrandMark />
