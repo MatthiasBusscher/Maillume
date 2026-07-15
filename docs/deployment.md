@@ -98,10 +98,11 @@ Create a protected GitHub environment named `production`, require reviewer appro
 - `PRODUCTION_HOST`: VPS SSH address.
 - `PRODUCTION_USER`: non-root deployment user.
 - `PRODUCTION_SSH_KEY`: dedicated private deployment key.
+- `PRODUCTION_SSH_FINGERPRINT`: the VPS host-key fingerprint, for example `SHA256:...`. Read it from the VPS console with `sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub -E sha256`; do not trust a fingerprint first observed over the same network connection it is meant to verify.
 
 Add repository variables `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_PASSKEYS_ENABLED` before enabling production authentication. Keep the passkey variable `false` until its acceptance matrix passes. These public browser values are intentionally supplied while the image is built. Server secrets remain only in the VPS `.env.production` file.
 
-The remote deploy script pulls the immutable image, waits for `/api/health`, verifies that the running container reports the approved Git revision, and restores the previous image if health or revision checks fail. GitHub Actions builds images; production never builds source code.
+The protected deploy job checks out the approved commit and synchronizes only `docker-compose.production.yml` and `scripts/deploy-production.sh` before invoking the script. The VPS therefore never depends on a stale manual copy or a Git checkout. The remote deploy script pulls the immutable image, waits for `/api/health`, verifies that the running container reports the approved Git revision, and restores the previous image if health or revision checks fail. GitHub Actions builds images; production never builds source code.
 
 `/api/health` returns the non-secret build revision and analyzer version. Compare its `revision` with the commit approved in the production workflow when confirming a release.
 

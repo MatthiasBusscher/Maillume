@@ -15,6 +15,7 @@
 - [ ] Ports 80/443 are closed and only required SSH access remains.
 - [ ] Cloudflare DDoS, managed WAF, and `/api/` rate limiting for anonymous and authenticated analysis are enabled.
 - [ ] Hostinger backups are current and a restore rehearsal is recorded.
+- [ ] GitHub deployment verifies the VPS SSH host-key fingerprint and synchronizes deployment artifacts from the approved commit.
 - [ ] Production environment approval, immutable deployment, health check, and rollback are tested.
 
 ## Identity and Operations
