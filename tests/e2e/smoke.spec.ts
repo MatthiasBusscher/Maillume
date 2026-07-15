@@ -69,6 +69,11 @@ test("Dutch routes render server-side and persist across navigation", async ({ p
   const apiResponse = await page.request.get("/api/health");
   expect(apiResponse.ok()).toBe(true);
   expect(apiResponse.url()).toContain("/api/health");
+  expect(await apiResponse.json()).toEqual({
+    status: "ok",
+    revision: "development",
+    analysis_version: "analysis-v2.1",
+  });
 });
 
 test("marketing language redirects use the configured public origin", async ({ page, request }) => {
@@ -517,7 +522,11 @@ test("health endpoint exposes no dependency or secret details", async ({ request
 
   expect(response.ok()).toBe(true);
   expect(response.headers()["cache-control"]).toContain("no-store");
-  expect(await response.json()).toEqual({ status: "ok" });
+  expect(await response.json()).toEqual({
+    status: "ok",
+    revision: "development",
+    analysis_version: "analysis-v2.1",
+  });
 });
 
 test("analysis rejects oversized request bodies before processing", async ({ request }) => {
