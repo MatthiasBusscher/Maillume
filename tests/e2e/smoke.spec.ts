@@ -47,6 +47,11 @@ test("language switching updates the scanner", async ({ page }) => {
   await page.goto("/account");
   await expect(page).toHaveURL(/\/account$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  const localeCookies = (await page.context().cookies()).filter(
+    ({ name }) => name === "maillume-locale-v2",
+  );
+  expect(localeCookies).toHaveLength(1);
+  expect(localeCookies[0].value).toBe("en");
   const privacyLink = page.getByRole("link", { name: "Privacy" });
   await expect(privacyLink).toBeVisible();
   const footer = privacyLink.locator("xpath=ancestor::footer");

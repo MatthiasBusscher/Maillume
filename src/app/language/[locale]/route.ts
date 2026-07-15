@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
+  getSiteLocaleCookieDomain,
   isSiteLocale,
   localizePath,
   SITE_LOCALE_COOKIE,
@@ -33,13 +34,11 @@ export async function GET(
     secure: destination.protocol === "https:",
   } as const;
 
-  response.cookies.set(SITE_LOCALE_COOKIE, locale, cookieOptions);
-  if (hostname === "maillume.io" || hostname.endsWith(".maillume.io")) {
-    response.cookies.set(SITE_LOCALE_COOKIE, locale, {
-      ...cookieOptions,
-      domain: ".maillume.io",
-    });
-  }
+  const domain = getSiteLocaleCookieDomain(hostname);
+  response.cookies.set(SITE_LOCALE_COOKIE, locale, {
+    ...cookieOptions,
+    ...(domain ? { domain } : {}),
+  });
   response.headers.set("Cache-Control", "private, no-store");
   return response;
 }

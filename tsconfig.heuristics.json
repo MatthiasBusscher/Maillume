@@ -50,6 +50,8 @@
     "src/lib/supabase/config.ts",
     "src/lib/scan-limits.test.ts",
     "src/lib/scan-limits.ts",
+    "src/lib/i18n/site-locale.test.ts",
+    "src/lib/i18n/site-locale.ts",
     "src/lib/api-keys.ts",
     "src/lib/api-keys.test.ts",
     "src/lib/types.ts"

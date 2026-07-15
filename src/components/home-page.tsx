@@ -22,7 +22,11 @@ import {
   dictionaries,
   type Locale,
 } from "@/lib/i18n/dictionary";
-import { localizePath, SITE_LOCALE_COOKIE } from "@/lib/i18n/site-locale";
+import {
+  getSiteLocaleCookieDomain,
+  localizePath,
+  SITE_LOCALE_COOKIE,
+} from "@/lib/i18n/site-locale";
 import { LICENSE_URL, SOURCE_REPOSITORY_URL } from "@/lib/project-links";
 import { getMarketingHref } from "@/lib/site";
 
@@ -48,11 +52,9 @@ export function ScannerPage({
   function changeLocale(nextLocale: Locale) {
     setLocale(nextLocale);
     const secure = window.location.protocol === "https:" ? "; Secure" : "";
-    const cookie = `${SITE_LOCALE_COOKIE}=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
-    document.cookie = cookie;
-    if (window.location.hostname === "maillume.io" || window.location.hostname.endsWith(".maillume.io")) {
-      document.cookie = `${cookie}; Domain=.maillume.io`;
-    }
+    const domain = getSiteLocaleCookieDomain(window.location.hostname);
+    const domainAttribute = domain ? `; Domain=${domain}` : "";
+    document.cookie = `${SITE_LOCALE_COOKIE}=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax${secure}${domainAttribute}`;
     const pathname = localizePath(window.location.pathname, nextLocale);
     window.history.replaceState(window.history.state, "", `${pathname}${window.location.search}${window.location.hash}`);
   }
