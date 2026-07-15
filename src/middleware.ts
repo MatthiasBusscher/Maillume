@@ -6,6 +6,7 @@ import { getOAuthFailureUrl, hasOAuthErrorReturn } from "@/lib/auth/oauth-return
 import {
   DEFAULT_SITE_LOCALE,
   getPathLocale,
+  getSiteLocaleCookieDomain,
   isSiteLocale,
   localizePath,
   SITE_LOCALE_COOKIE,
@@ -170,13 +171,11 @@ function setLocalePreferenceCookies(
   };
   const hostname = request.headers.get("host")?.split(":")[0] ?? request.nextUrl.hostname;
 
-  response.cookies.set(SITE_LOCALE_COOKIE, locale, options);
-  if (hostname === "maillume.io" || hostname.endsWith(".maillume.io")) {
-    response.cookies.set(SITE_LOCALE_COOKIE, locale, {
-      ...options,
-      domain: ".maillume.io",
-    });
-  }
+  const domain = getSiteLocaleCookieDomain(hostname);
+  response.cookies.set(SITE_LOCALE_COOKIE, locale, {
+    ...options,
+    ...(domain ? { domain } : {}),
+  });
 }
 
 function shouldUseLocalizedPage(request: NextRequest, pathname = request.nextUrl.pathname) {

@@ -1,6 +1,6 @@
 export const SITE_LOCALES = ["en", "nl"] as const;
 export const DEFAULT_SITE_LOCALE: SiteLocale = "en";
-export const SITE_LOCALE_COOKIE = "maillume-locale";
+export const SITE_LOCALE_COOKIE = "maillume-locale-v2";
 export const SITE_LOCALE_HEADER = "x-maillume-locale";
 export const SITE_PATHNAME_HEADER = "x-maillume-pathname";
 
@@ -30,6 +30,13 @@ export function localizePath(pathname: string, locale: SiteLocale): string {
 
 export function getLanguageName(locale: SiteLocale) {
   return locale === "nl" ? "Nederlands" : "English";
+}
+
+export function getSiteLocaleCookieDomain(hostname: string): string | undefined {
+  const normalized = hostname.trim().toLowerCase().replace(/\.$/, "");
+  return normalized === "maillume.io" || normalized.endsWith(".maillume.io")
+    ? ".maillume.io"
+    : undefined;
 }
 
 function normalizePathname(pathname: string) {
