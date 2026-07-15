@@ -83,7 +83,7 @@ async function run() {
     });
     assert.equal(panelApisRestored, true);
     await browserSession.send("Extensions.triggerAction", { id: extensionId, targetId: messageTarget.targetId });
-    const panelOptions = await worker.evaluate(async (id) => chrome.sidePanel.getOptions({ tabId: id }), tabId);
+    const panelOptions = await waitForPanelOptions(worker, tabId);
     assert.equal(panelOptions.enabled, true);
     assert.equal(panelOptions.path, "sidepanel.html");
     await waitForTarget(browserSession, `chrome-extension://${extensionId}/sidepanel.html`);
@@ -126,6 +126,16 @@ async function waitForTarget(browserSession, url) {
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
   throw new Error(`Chrome did not open the expected side-panel target: ${url}`);
+}
+
+async function waitForPanelOptions(worker, tabId) {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    const options = await worker.evaluate(async (id) => chrome.sidePanel.getOptions({ tabId: id }), tabId);
+    if (options.enabled && options.path === "sidepanel.html") return options;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  throw new Error("Chrome did not enable the tab-specific Maillume side panel within five seconds.");
 }
 
 async function startFixtureServer() {
