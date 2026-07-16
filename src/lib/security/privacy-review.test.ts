@@ -180,15 +180,28 @@ function main() {
     /content_path\s*=/,
     "local Supabase startup must not depend on CLI-specific email template path resolution",
   );
+  assert.match(
+    supabaseConfig,
+    /\[auth\.email\.template\.confirmation\][\s\S]*subject = '\{\{ if eq \.Data\.locale "nl" \}\}/,
+    "confirmation email subjects must follow the account locale metadata",
+  );
   for (const templateFile of readdirSync(join(PROJECT_ROOT, "supabase", "templates"))) {
+    const template = readProjectFile(`supabase/templates/${templateFile}`);
     assert.match(
-      readProjectFile(`supabase/templates/${templateFile}`),
+      template,
       /\.Data\.locale/,
       `${templateFile} must select copy from the account locale metadata`,
     );
+    assert.doesNotMatch(
+      template,
+      />\s*\{\{ \.ConfirmationURL \}\}\s*</,
+      `${templateFile} must not display the raw authentication URL`,
+    );
   }
   assert.doesNotMatch(scannerPageContent, /\bredirect\s*\(/);
-  assert.match(accountRequestGuard, /if \(!origin\) return false/);
+  assert.match(accountRequestGuard, /const candidateValue = origin \|\| referer/);
+  assert.match(accountRequestGuard, /if \(!candidateValue\) return false/);
+  assert.match(accountRequestGuard, /\(origin && \(/);
   assert.match(accountRequestGuard, /fetchSite === "same-origin"/);
   assert.match(accountRequestGuard, /totalBytes > maxBytes/);
   assert.match(accountRequestGuard, /RECENT_AUTH_MAX_AGE_MS = 15 \* 60 \* 1000/);
