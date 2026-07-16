@@ -143,11 +143,15 @@ export function EmailAuthForm({
     try {
       const callback = new URL("/auth/callback", window.location.origin);
       callback.searchParams.set("next", localizePath("/account", locale));
-      await supabase.auth.resend({
+      const { error: resendError } = await supabase.auth.resend({
         type: "signup",
         email: email.trim(),
         options: { emailRedirectTo: callback.toString() },
       });
+      if (resendError) {
+        setError(labels.resendFailed);
+        return;
+      }
       setMessage(labels.confirmationResent);
     } catch {
       setError(labels.resendFailed);

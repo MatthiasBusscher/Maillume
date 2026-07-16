@@ -12,7 +12,9 @@ compose_file="docker-compose.production.yml"
 production_env=".env.production"
 infrastructure_env=".env.infrastructure"
 state_file=".previous-production-image"
+revision_state_file=".previous-production-revision"
 previous_image=""
+previous_revision=""
 cloudflared_image=""
 
 is_image_digest() (
@@ -74,6 +76,32 @@ if [ -f "$state_file" ]; then
   fi
 fi
 
+if [ -f "$revision_state_file" ]; then
+  stored_revision="$(cat "$revision_state_file")"
+  case "$stored_revision" in
+    *[!0-9a-f]*) ;;
+    *)
+      if [ "${#stored_revision}" -eq 40 ] || [ "${#stored_revision}" -eq 64 ]; then
+        previous_revision="$stored_revision"
+      fi
+      ;;
+  esac
+fi
+
+wait_for_health() {
+  revision="$1"
+  attempt=0
+  while [ "$attempt" -lt 12 ]; do
+    if compose exec -T -e EXPECTED_REVISION="$revision" maillume \
+      node -e "fetch('http://127.0.0.1:3000/api/health').then(async r=>{if(!r.ok)process.exit(1);const body=await r.json();if(body.status!=='ok')process.exit(1);if(process.env.EXPECTED_REVISION && body.revision!==process.env.EXPECTED_REVISION)process.exit(1)}).catch(()=>process.exit(1))"; then
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    sleep 5
+  done
+  return 1
+}
+
 MAILLUME_IMAGE="$image"
 export MAILLUME_IMAGE
 
@@ -92,18 +120,13 @@ docker pull "$image"
 docker pull "$cloudflared_image"
 compose up -d --remove-orphans
 
-attempt=0
-while [ "$attempt" -lt 12 ]; do
-  if compose exec -T -e EXPECTED_REVISION="$expected_revision" maillume \
-    node -e "fetch('http://127.0.0.1:3000/api/health').then(async r=>{if(!r.ok)process.exit(1);const body=await r.json();if(body.revision!==process.env.EXPECTED_REVISION)process.exit(1)}).catch(()=>process.exit(1))"; then
-    printf '%s\n' "$image" > "$state_file"
-    docker image prune -f
-    echo "Deployment healthy: $image"
-    exit 0
-  fi
-  attempt=$((attempt + 1))
-  sleep 5
-done
+if wait_for_health "$expected_revision"; then
+  printf '%s\n' "$image" > "$state_file"
+  printf '%s\n' "$expected_revision" > "$revision_state_file"
+  docker image prune -f
+  echo "Deployment healthy: $image"
+  exit 0
+fi
 
 echo "Deployment failed health checks." >&2
 if [ -n "$previous_image" ] && [ "$previous_image" != "$image" ]; then
@@ -111,5 +134,10 @@ if [ -n "$previous_image" ] && [ "$previous_image" != "$image" ]; then
   MAILLUME_IMAGE="$previous_image"
   export MAILLUME_IMAGE
   compose up -d --remove-orphans
+  if wait_for_health "$previous_revision"; then
+    echo "Rollback healthy: $previous_image"
+  else
+    echo "Rollback failed health checks; manual recovery is required." >&2
+  fi
 fi
 exit 1

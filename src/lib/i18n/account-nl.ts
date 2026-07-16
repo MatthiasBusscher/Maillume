@@ -105,6 +105,7 @@ export const accountNl = {
       mfaTitle: "Authenticator-app (TOTP)",
       mfaBody: "Na het instellen is bij elke nieuwe aanmelding een zescijferige code nodig. Voeg een reservefactor op een ander apparaat toe, want Supabase verstrekt geen herstelcodes.",
       enableMfa: "Authenticator instellen",
+      addBackupMfa: "Reserve-authenticator toevoegen",
       scanQr: "Scan deze QR-code met je authenticator-app en voer daarna de zescijferige code in.",
       manualSecret: "Geheime code voor handmatige instelling",
       verificationCode: "Zescijferige code",

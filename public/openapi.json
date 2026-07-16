@@ -54,6 +54,16 @@
           "senderEmail": { "type": "string", "maxLength": 320 },
           "locale": { "type": "string", "enum": ["en", "nl"], "default": "en" },
           "body": { "type": "string", "minLength": 1, "maxLength": 20000 },
+          "links": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://",
+              "maxLength": 2048
+            }
+          },
           "linkPairs": {
             "type": "array",
             "maxItems": 20,
@@ -62,8 +72,8 @@
               "additionalProperties": false,
               "required": ["displayedUrl", "destinationUrl"],
               "properties": {
-                "displayedUrl": { "type": "string", "format": "uri", "maxLength": 2048 },
-                "destinationUrl": { "type": "string", "format": "uri", "maxLength": 2048 }
+                "displayedUrl": { "type": "string", "format": "uri", "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://", "maxLength": 2048 },
+                "destinationUrl": { "type": "string", "format": "uri", "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://", "maxLength": 2048 }
               }
             }
           }

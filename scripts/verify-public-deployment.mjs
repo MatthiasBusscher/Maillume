@@ -45,7 +45,12 @@ export async function verifyPublicDeployment({
 
   await Promise.all([
     verifyPage(fetchImpl, new URL("/auth/sign-in", appOrigin), "application sign-in"),
+    verifyPage(fetchImpl, new URL("/app", appOrigin), "scanner workspace"),
     verifyPage(fetchImpl, new URL("/", marketingOrigin), "marketing site"),
+    verifyPage(fetchImpl, new URL("/privacy", marketingOrigin), "privacy page"),
+    verifyPage(fetchImpl, new URL("/terms", marketingOrigin), "terms page"),
+    verifyPage(fetchImpl, new URL("/security", marketingOrigin), "security page"),
+    verifyAnalysis(fetchImpl, new URL("/api/analyze", appOrigin)),
   ]);
 
   return health;
@@ -56,6 +61,30 @@ async function verifyPage(fetchImpl, url, label) {
   if (!response.ok) throw new Error(`Public ${label} returned HTTP ${response.status}.`);
   if (response.headers.get("x-content-type-options")?.toLowerCase() !== "nosniff") {
     throw new Error(`Public ${label} is missing X-Content-Type-Options: nosniff.`);
+  }
+  const csp = response.headers.get("content-security-policy")?.toLowerCase() ?? "";
+  if (!csp.includes("default-src 'self'") || !csp.includes("frame-ancestors 'none'")) {
+    throw new Error(`Public ${label} is missing the production Content-Security-Policy.`);
+  }
+}
+
+async function verifyAnalysis(fetchImpl, url) {
+  const response = await fetchImpl(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      source: "paste",
+      locale: "en",
+      body: "Synthetic release check. No action is required.",
+    }),
+  });
+  if (!response.ok) throw new Error(`Public analysis endpoint returned HTTP ${response.status}.`);
+  if (!response.headers.get("cache-control")?.toLowerCase().includes("no-store")) {
+    throw new Error("Public analysis endpoint is missing Cache-Control: no-store.");
+  }
+  const body = await response.json();
+  if (body.analysis_version !== EXPECTED_ANALYSIS_VERSION || !body.result) {
+    throw new Error("Public analysis endpoint returned an unexpected contract.");
   }
 }
 

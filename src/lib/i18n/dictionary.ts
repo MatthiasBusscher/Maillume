@@ -67,7 +67,7 @@ export const dictionaries = {
         "Analysis is temporarily unavailable. Check the server configuration and try again.",
       screenshotPrompt: "Upload a screenshot of the suspicious email.",
       screenshotHelp:
-        "OCR runs in your browser. The image file is not stored after text is extracted.",
+        "OCR runs in your browser. The image file is not stored after text is extracted. Screenshots cannot reveal where a button or displayed link actually leads, so check links separately.",
       chooseScreenshot: "Choose screenshot",
       emlPrompt: "Upload a .eml file exported from your mail app.",
       emlHelp:
@@ -224,7 +224,7 @@ export const dictionaries = {
         "De analyse is tijdelijk niet beschikbaar. Controleer de serverconfiguratie en probeer het opnieuw.",
       screenshotPrompt: "Upload een screenshot van de verdachte e-mail.",
       screenshotHelp:
-        "OCR draait in uw browser. Het afbeeldingsbestand wordt niet opgeslagen nadat tekst is geëxtraheerd.",
+        "OCR draait in uw browser. Het afbeeldingsbestand wordt niet opgeslagen nadat tekst is geëxtraheerd. Een screenshot toont niet waar een knop of zichtbare link werkelijk naartoe leidt; controleer links daarom apart.",
       chooseScreenshot: "Screenshot kiezen",
       emlPrompt: "Upload een .eml-bestand dat uit uw mailapp is geëxporteerd.",
       emlHelp:

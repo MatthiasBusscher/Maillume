@@ -11,6 +11,7 @@ import { getAnalysisMaxRequestBytes } from "@/lib/analysis/request-limits";
 import { hashApiKey, isApiKeyFormat } from "@/lib/api-keys";
 import { areAccountsEnabled } from "@/lib/accounts/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { readBoundedRequestBody } from "@/lib/security/account-request";
 import {
   ANALYSIS_DISCLAIMERS,
   ANALYSIS_PIPELINE_VERSION,
@@ -53,14 +54,11 @@ export async function POST(request: Request) {
   const admin = createSupabaseAdminClient();
   if (!admin) return jsonError("Hosted API access is not configured.", 503);
 
-  const contentLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(contentLength) && contentLength > getAnalysisMaxRequestBytes()) return jsonError("Request body is too large.", 413);
-
   let payload: unknown;
   try {
-    const raw = await request.text();
-    if (new TextEncoder().encode(raw).byteLength > getAnalysisMaxRequestBytes()) return jsonError("Request body is too large.", 413);
-    payload = JSON.parse(raw) as unknown;
+    const body = await readBoundedRequestBody(request, getAnalysisMaxRequestBytes());
+    if (!body.ok) return jsonError("Request body is too large.", 413);
+    payload = JSON.parse(body.text) as unknown;
   } catch {
     return jsonError("Invalid JSON request body.", 400);
   }
@@ -129,7 +127,7 @@ export async function POST(request: Request) {
     if (error instanceof AnalysisCapacityError) return jsonError(error.message, 429, { "Retry-After": "5" });
     if (error instanceof AnalysisConfigError) return jsonError(error.message, 500);
     if (error instanceof AiProviderRequestError || error instanceof AiResponseValidationError) return jsonError(error.message, 502);
-    throw error;
+    return jsonError("Analysis failed unexpectedly. API quota was restored.", 500);
   }
 }
 

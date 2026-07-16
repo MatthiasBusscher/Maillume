@@ -16,6 +16,7 @@ import { localizePath } from "@/lib/i18n/site-locale";
 import { getAppHref, getMarketingHref } from "@/lib/site";
 import { getSupabaseAdminConfig } from "@/lib/supabase/admin";
 import { arePasskeysEnabled } from "@/lib/supabase/config";
+import { createAccountDeletionToken } from "@/lib/security/account-deletion-token";
 import { hasRecentAuthentication } from "@/lib/security/account-request";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { areAccountsEnabled } from "@/lib/accounts/config";
@@ -45,7 +46,14 @@ export default async function AccountPage({
     ? await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
     : { data: null };
   const hasAal2 = assurance?.currentLevel === "aal2";
-  const deletionConfigured = getSupabaseAdminConfig() !== null;
+  const adminConfig = getSupabaseAdminConfig();
+  const deletionToken = data.user && adminConfig
+    ? createAccountDeletionToken(
+        { userId: data.user.id, lastSignInAt: data.user.last_sign_in_at },
+        adminConfig.secretKey,
+      )
+    : null;
+  const deletionConfigured = deletionToken !== null;
   const deletionError = requestedError
     ? {
         confirmation_required: copy.deletionErrors.confirmationRequired,
@@ -134,6 +142,7 @@ export default async function AccountPage({
               <details className="mt-5 max-w-2xl border border-[#d08b82] bg-[#fff7f5] p-4">
                 <summary className="cursor-pointer font-semibold text-[#8f251b]">{copy.showDeletion}</summary>
                 <form action="/account/delete" method="post" className="mt-4">
+                  <input type="hidden" name="csrf" value={deletionToken ?? ""} />
                   <label className="flex items-start gap-3 text-sm leading-6 text-[#5f3934]">
                     <input type="checkbox" name="confirm" value="delete" required className="mt-1 h-4 w-4 accent-[#b2382b]" />
                     {copy.deletionConfirmation}

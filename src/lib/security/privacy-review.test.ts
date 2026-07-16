@@ -50,7 +50,11 @@ function main() {
   const authRedirectContent = readProjectFile("src/app/auth/callback/redirect.ts");
   const oauthReturnContent = readProjectFile("src/lib/auth/oauth-return.ts");
   const middlewareContent = readProjectFile("src/middleware.ts");
+  const accountPageContent = readProjectFile("src/app/account/page.tsx");
   const accountDeletionContent = readProjectFile("src/app/account/delete/route.ts");
+  const accountDeletionTokenContent = readProjectFile(
+    "src/lib/security/account-deletion-token.ts",
+  );
   const accountLanguageContent = readProjectFile("src/app/account/language/route.ts");
   const accountConfig = readProjectFile("src/lib/accounts/config.ts");
   const signOutRouteContent = readProjectFile("src/app/auth/sign-out/route.ts");
@@ -101,8 +105,13 @@ function main() {
   assert.doesNotMatch(routeContent, /console\./);
   assert.doesNotMatch(routeContent, /node:fs|writeFile|appendFile|createWriteStream/);
   assert.doesNotMatch(routeContent, /supabase|feedback\/storage/);
+  assert.match(routeContent, /readBoundedRequestBody\(request, getAnalysisMaxRequestBytes\(\)\)/);
   assert.match(feedbackRouteContent, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(feedbackRouteContent, /console\./);
+  assert.match(
+    feedbackRouteContent,
+    /readBoundedRequestBody\(request, MAX_FEEDBACK_PAYLOAD_BYTES\)/,
+  );
   assert.match(feedbackMigration, /enable row level security/i);
   assert.match(feedbackMigration, /purge_expired_detection_feedback/);
   assert.match(authCallbackContent, /getSafeOAuthRedirectUrl/);
@@ -122,7 +131,10 @@ function main() {
   assert.doesNotMatch(oauthReturnContent, /searchParams\.get\("error_description"\)/);
   assert.match(accountDeletionContent, /getUser\(\)/);
   assert.match(accountDeletionContent, /admin\.auth\.admin\.deleteUser/);
-  assert.match(accountDeletionContent, /Cross-origin account deletion is not allowed/);
+  assert.match(accountDeletionContent, /verifyAccountDeletionToken/);
+  assert.match(accountPageContent, /type="hidden" name="csrf" value=\{deletionToken/);
+  assert.match(accountDeletionTokenContent, /createHmac\("sha256", secret\)/);
+  assert.match(accountDeletionTokenContent, /timingSafeEqual/);
   assert.match(accountDeletionContent, /ACCOUNT_DELETE_MAX_REQUEST_BYTES/);
   assert.match(accountDeletionContent, /hasRecentAuthentication\(data\.user\.last_sign_in_at\)/);
   assert.match(accountDeletionContent, /private, no-cache, no-store/);
@@ -158,6 +170,7 @@ function main() {
   assert.match(signOutRouteContent, /getPublicAppOrigin/);
   assert.match(signOutRouteContent, /isStrictSameOriginMutation\(request, publicOrigin\)/);
   assert.match(signOutRouteContent, /Cross-origin sign-out is not allowed/);
+  assert.match(signOutRouteContent, /const \{ error: signOutError \} = await supabase\.auth\.signOut/);
   assert.ok(
     signOutRouteContent.indexOf("isStrictSameOriginMutation(request, publicOrigin)") <
       signOutRouteContent.indexOf("auth.signOut"),
@@ -313,6 +326,7 @@ function main() {
   assert.match(hostedApiRoute, /reserve_account_api_quota/);
   assert.match(hostedApiRoute, /finalize_account_api_quota/);
   assert.match(hostedApiRoute, /reservation_id/);
+  assert.match(hostedApiRoute, /readBoundedRequestBody\(request, getAnalysisMaxRequestBytes\(\)\)/);
   assert.doesNotMatch(hostedApiRoute, /consume_api_quota|inspect_api_key_status/);
   assert.match(extensionManifest, /"activeTab"/);
   assert.match(extensionManifest, /"minimum_chrome_version": "116"/);
@@ -331,6 +345,7 @@ function main() {
   assert.match(releaseWorkflow, /image:\s*\$\{\{ steps\.digest\.outputs\.image \}\}/);
   assert.equal((releaseWorkflow.match(/packages: write/g) ?? []).length, 1);
   assert.match(releaseWorkflow, /environment: production/);
+  assert.match(releaseWorkflow, /github\.ref == 'refs\/heads\/main'/);
   assert.match(releaseWorkflow, /repository_digest="\$IMAGE_NAME@\$digest"/);
   assert.match(composeContent, /MAILLUME_IMAGE:\?Set MAILLUME_IMAGE to an immutable GHCR digest/);
   assert.match(composeContent, /CLOUDFLARED_IMAGE:-cloudflare\/cloudflared@sha256:[0-9a-f]{64}/);
@@ -338,16 +353,21 @@ function main() {
   assert.match(deployScript, /--env-file "\$production_env"/);
   assert.match(deployScript, /--env-file "\$infrastructure_env"/);
   assert.match(deployScript, /MAILLUME_IMAGE="\$previous_image"/);
+  assert.match(deployScript, /wait_for_health "\$previous_revision"/);
+  assert.match(deployScript, /Rollback failed health checks; manual recovery is required/);
   assert.match(scanLimits, /MAX_SCREENSHOT_PIXELS = 20_000_000/);
   assert.match(scanLimits, /MAX_SCREENSHOT_DIMENSION = 8_000/);
   assert.match(scanLimits, /hasSupportedScreenshotSignature/);
   assert.match(scanLimits, /isWithinScreenshotDimensionLimit/);
   assert.match(ocrExtractor, /OCR_TIMEOUT_MS = 45_000/);
   assert.match(ocrExtractor, /createWorker\("eng\+nld"/);
+  assert.match(ocrExtractor, /workerPath: "\/ocr\/worker\.min\.js"/);
+  assert.match(ocrExtractor, /corePath: "\/ocr\/core"/);
+  assert.match(ocrExtractor, /langPath: "\/ocr\/lang"/);
   assert.match(ocrExtractor, /worker\.terminate\(\)/);
   assert.match(emlParser, /MAX_EML_MULTIPART_SECTIONS = 64/);
   assert.match(emlParser, /MAX_EML_ATTACHMENT_NAMES = 25/);
-  assert.match(emlParser, /MAX_EML_LINKS = 100/);
+  assert.match(emlParser, /MAX_EML_LINKS = 20/);
   assert.match(licenseContent, /GNU AFFERO GENERAL PUBLIC LICENSE/);
   assert.match(licenseContent, /13\. Remote Network Interaction/);
   assert.equal(packageMetadata.license, "AGPL-3.0-only");

@@ -18,3 +18,9 @@ export function getAppRouteHref(pathname: string): string {
 export function getMarketingHref(): string {
   return process.env.NEXT_PUBLIC_MARKETING_URL?.replace(/\/$/, "") || "/";
 }
+
+export function getMarketingRouteHref(pathname: string): string {
+  const marketingUrl = process.env.NEXT_PUBLIC_MARKETING_URL?.replace(/\/$/, "");
+  if (!marketingUrl) return pathname;
+  return new URL(pathname, `${marketingUrl}/`).toString();
+}

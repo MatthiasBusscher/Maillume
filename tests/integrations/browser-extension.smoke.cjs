@@ -79,27 +79,42 @@ async function run() {
     const windowCapture = await waitForCapture(worker, tabId);
     assert.deepEqual(windowCapture, { status: "success", text: "Window selection text" });
 
-    const panelApisRestored = await worker.evaluate(() => {
-      chrome.sidePanel.setOptions = globalThis.__maillumeOriginalSetOptions;
-      chrome.sidePanel.open = globalThis.__maillumeOriginalOpen;
-      return chrome.sidePanel.setOptions === globalThis.__maillumeOriginalSetOptions
-        && chrome.sidePanel.open === globalThis.__maillumeOriginalOpen;
-    });
-    assert.equal(panelApisRestored, true);
+    // Keep the handoff unconsumed while the panel APIs are patched, then
+    // force a worker restart and let the panel wake the new worker.
     await browserSession.send("Extensions.triggerAction", { id: extensionId, targetId: messageTarget.targetId });
-    const panelOptions = await waitForPanelOptions(worker, tabId);
-    assert.equal(panelOptions.enabled, true);
-    assert.equal(panelOptions.path, "sidepanel.html");
-    await waitForTarget(browserSession, `chrome-extension://${extensionId}/sidepanel.html`);
+    await waitForHandoffDescriptor(worker, tabId);
+
+    const serviceWorkerTarget = await findServiceWorkerTarget(browserSession, extensionId);
+    assert.ok(serviceWorkerTarget, "the extension service worker target must be available for the suspension check");
+    await worker.evaluate(() => { globalThis.__maillumeSmokeSentinel = "before-suspension"; });
+    const closeResult = await browserSession.send("Target.closeTarget", { targetId: serviceWorkerTarget.targetId });
+    assert.equal(closeResult.success, true, "the smoke harness must be able to stop the service worker");
 
     const panelPage = await context.newPage();
+    await panelPage.addInitScript((sourceTabId) => {
+      const originalQuery = chrome.tabs.query.bind(chrome.tabs);
+      chrome.tabs.query = (query) => query?.active && query.currentWindow
+        ? Promise.resolve([{ id: sourceTabId }])
+        : originalQuery(query);
+    }, tabId);
     await panelPage.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+    const restartedWorker = await waitForServiceWorker(context, browserSession, extensionId);
+    assert.ok(restartedWorker, "opening the panel must restart the suspended service worker");
+    assert.equal(await restartedWorker.evaluate(() => globalThis.__maillumeSmokeSentinel || null), null, "the panel must wake a fresh service-worker global");
     assert.equal(await panelPage.locator("h1").textContent(), "Maillume");
     assert.equal(await panelPage.locator("#endpoint").inputValue(), "https://app.maillume.io");
     assert.equal(await panelPage.locator("#analyze").isDisabled(), true);
     assert.equal(await panelPage.locator("#result").isHidden(), true);
     assert.equal(await panelPage.locator("#capture").count(), 1);
     assert.equal(await panelPage.locator("#capture").textContent(), "Use current message");
+    const recoveredBody = await panelPage.locator("#body").inputValue();
+    const recoveryDiagnostics = await panelPage.evaluate(async () => ({
+      body: document.querySelector("#body")?.value,
+      status: document.querySelector("#status")?.textContent,
+      session: await chrome.storage.session.get(null),
+    }));
+    assert.equal(recoveredBody, "Window selection text", `the panel must recover the capture after worker suspension: ${JSON.stringify(recoveryDiagnostics)}`);
+
   } finally {
     if (context) await context.close();
     await new Promise((resolve) => server.close(resolve));
@@ -122,25 +137,38 @@ async function waitForCapture(worker, tabId) {
   throw new Error("The extension action did not produce a capture within five seconds.");
 }
 
-async function waitForTarget(browserSession, url) {
+async function waitForHandoffDescriptor(worker, tabId) {
+  const key = `capture-handoff:${tabId}`;
   const deadline = Date.now() + 5_000;
   while (Date.now() < deadline) {
-    const { targetInfos } = await browserSession.send("Target.getTargets");
-    const target = targetInfos.find((candidate) => candidate.url === url);
-    if (target) return target;
+    const descriptor = await worker.evaluate(async (storageKey) => {
+      const stored = await chrome.storage.session.get(storageKey);
+      return stored[storageKey];
+    }, key);
+    if (descriptor?.status === "success") return descriptor;
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
-  throw new Error(`Chrome did not open the expected side-panel target: ${url}`);
+  throw new Error("The extension did not persist a capture recovery descriptor within five seconds.");
 }
 
-async function waitForPanelOptions(worker, tabId) {
+async function findServiceWorkerTarget(browserSession, extensionId) {
+  const { targetInfos } = await browserSession.send("Target.getTargets");
+  return targetInfos.find(({ type, url }) => type === "service_worker" && url === `chrome-extension://${extensionId}/service-worker.js`);
+}
+
+async function waitForServiceWorker(context, browserSession, extensionId) {
   const deadline = Date.now() + 5_000;
+  let lastTargets = [];
   while (Date.now() < deadline) {
-    const options = await worker.evaluate(async (id) => chrome.sidePanel.getOptions({ tabId: id }), tabId);
-    if (options.enabled && options.path === "sidepanel.html") return options;
+    const worker = context.serviceWorkers().find((candidate) => candidate.url() === `chrome-extension://${extensionId}/service-worker.js`);
+    if (worker) {
+      const { targetInfos } = await browserSession.send("Target.getTargets");
+      lastTargets = targetInfos.filter(({ type, url }) => type === "service_worker" && url === worker.url());
+      if (targetInfos.some(({ type, url }) => type === "service_worker" && url === worker.url())) return worker;
+    }
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
-  throw new Error("Chrome did not enable the tab-specific Maillume side panel within five seconds.");
+  throw new Error(`Chrome did not restart the extension service worker after the panel opened: ${JSON.stringify(lastTargets)}`);
 }
 
 async function startFixtureServer() {

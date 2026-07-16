@@ -13,6 +13,7 @@ let captureRetryCount = 0;
 let capturePending = false;
 let capturedLinks = [];
 let capturedLinkPairs = [];
+const ANALYSIS_PIPELINE_VERSION = "analysis-v2.1";
 
 const dynamicCopy = {
   en: {
@@ -384,7 +385,7 @@ elements.analyze.addEventListener("click", async () => {
     } catch {
       throw new Error(copy.invalidResult);
     }
-    if (!isAnalysisResult(payload?.result)) throw new Error(copy.invalidResult);
+    if (!isAnalysisResponse(payload)) throw new Error(copy.invalidResult);
     renderResult(payload.result);
     setStatus(copy.complete);
   } catch (error) {
@@ -492,13 +493,14 @@ function isAnalysisResult(result) {
     && result.score_factors.every((factor) => factor
       && typeof factor.id === "string"
       && families.includes(factor.family)
-      && Number.isFinite(factor.contribution)
-      && factor.contribution > 0
+      && Number.isInteger(factor.contribution)
+      && factor.contribution >= 1
+      && factor.contribution <= 30
       && typeof factor.label === "string");
   return Boolean(
     result
     && typeof result === "object"
-    && Number.isFinite(result.risk_score)
+    && Number.isInteger(result.risk_score)
     && result.risk_score >= 0
     && result.risk_score <= 100
     && ["low", "medium", "high"].includes(result.risk_level)
@@ -513,12 +515,32 @@ function isAnalysisResult(result) {
   );
 }
 
+function isAnalysisResponse(payload) {
+  const providers = ["heuristic", "openai", "anthropic", "openai-compatible"];
+  const privacy = payload?.privacy;
+  return Boolean(
+    payload
+    && typeof payload === "object"
+    && isAnalysisResult(payload.result)
+    && ["heuristic", "ai"].includes(payload.analysis_mode)
+    && providers.includes(payload.analysis_provider)
+    && payload.analysis_version === ANALYSIS_PIPELINE_VERSION
+    && typeof payload.disclaimer === "string"
+    && privacy
+    && typeof privacy === "object"
+    && privacy.stored === false
+    && privacy.retention === "not_stored"
+    && typeof privacy.message === "string"
+  );
+}
+
 function isStringArray(value) {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
 function isHttpUrl(value) {
   if (typeof value !== "string") return false;
+  if (value.length > 2_048) return false;
   try {
     const url = new URL(value);
     return url.protocol === "http:" || url.protocol === "https:";

@@ -98,7 +98,7 @@ export default async function PlatformPage() {
             <div className="border-t border-[#aeb6ac]">
               {roadmap.map((item, index) => (
                 <div key={item.title} className="grid gap-3 border-b border-[#cbd0c5] py-6 sm:grid-cols-[54px_120px_0.7fr_1fr] sm:items-start sm:gap-5">
-                  <span className="font-mono text-[10px] text-[#778177]">0{index + 1}</span>
+                  <span className="font-mono text-[10px] text-[#5f695f]">0{index + 1}</span>
                   <span className={`w-fit border px-2 py-1 font-mono text-[9px] uppercase ${item.status === "Disabled for public beta" ? "border-[#c78c32] bg-[#fff0cf] text-[#714812]" : "border-[#111711] bg-[#eef1eb] text-[#374238]"}`}>{item.status}</span>
                   <h3 className="font-semibold text-[#111711]">{item.title}</h3>
                   <p className="text-sm leading-6 text-[#59655a]">{item.description}</p>
@@ -132,5 +132,5 @@ function BetaBoundary({ label, value }: { label: string; value: string }) {
 }
 
 function Principle({ description, icon: Icon, title }: { description: string; icon: typeof PlugZap; title: string }) {
-  return <div className="py-7 md:px-6 first:pl-0 last:pr-0"><Icon className="h-5 w-5 text-[#dfff52]" aria-hidden="true" /><h3 className="mt-4 font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-[#d2e6e2]">{description}</p></div>;
+  return <div className="py-7 md:px-6 first:pl-0 last:pr-0"><Icon className="h-5 w-5 text-[#dfff52]" aria-hidden="true" /><h3 className="mt-4 font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-[#eaf5f2]">{description}</p></div>;
 }

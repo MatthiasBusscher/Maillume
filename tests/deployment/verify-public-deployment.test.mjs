@@ -10,6 +10,7 @@ test("waits until the public route serves the approved revision", async (t) => {
   let healthRequests = 0;
   const server = await createServer((request, response) => {
     response.setHeader("X-Content-Type-Options", "nosniff");
+    response.setHeader("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'");
     if (request.url?.startsWith("/api/health")) {
       healthRequests += 1;
       response.setHeader("Cache-Control", "no-store");
@@ -19,6 +20,12 @@ test("waits until the public route serves the approved revision", async (t) => {
         revision: healthRequests === 1 ? "0".repeat(40) : revision,
         analysis_version: "analysis-v2.1",
       }));
+      return;
+    }
+    if (request.url === "/api/analyze") {
+      response.setHeader("Cache-Control", "no-store");
+      response.setHeader("Content-Type", "application/json");
+      response.end(JSON.stringify({ analysis_version: "analysis-v2.1", result: { risk_score: 0 } }));
       return;
     }
     response.end("ok");

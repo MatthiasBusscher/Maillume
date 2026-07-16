@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import path from "node:path";
 
 test.beforeEach(async ({ page }) => {
@@ -141,6 +142,7 @@ test("Dutch marketing preview and app navigation are visibly localized", async (
   await expect(page.getByText("Kandidaat voor openbare beta", { exact: true })).toBeVisible();
 
   await page.goto("/nl/app");
+  await expect(page.getByLabel("Maillume website")).toHaveAttribute("href", "http://127.0.0.1:3100/nl");
   const menu = page.locator('summary[aria-label="Meer opties"]');
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -239,6 +241,37 @@ test("screenshot mode validates unsupported files before OCR", async ({ page }) 
   await expect(page.locator("form [role='alert']")).toContainText(
     "This file type is not supported.",
   );
+});
+
+test("screenshot OCR uses only locally served assets", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1_000, height: 500 });
+  await page.setContent(`
+    <main style="padding:60px;background:white;color:black;font:700 42px Arial,sans-serif">
+      URGENT ACCOUNT LOCKED<br>VERIFY YOUR LOGIN NOW
+    </main>
+  `);
+  const screenshot = await page.screenshot({ type: "png" });
+  const externalOcrRequests: string[] = [];
+  page.on("request", (request) => {
+    if (/jsdelivr|projectnaptha|tessdata/i.test(request.url())) {
+      externalOcrRequests.push(request.url());
+    }
+  });
+
+  await page.goto("/app");
+  await page.getByRole("button", { name: "Screenshot" }).click();
+  await page.locator('input[type="file"][accept^="image/png"]').setInputFiles({
+    buffer: screenshot,
+    mimeType: "image/png",
+    name: "synthetic-warning.png",
+  });
+
+  await expect(page.getByText("Extracted text is ready to analyze.")).toBeVisible({
+    timeout: 90_000,
+  });
+  await expect(page.getByLabel("Email content")).toHaveValue(/URGENT ACCOUNT LOCKED/i);
+  expect(externalOcrRequests).toEqual([]);
 });
 
 test("rate-limited analysis shows a clear localized error", async ({ page }) => {
@@ -674,4 +707,28 @@ test("hosted API publishes its machine-readable contract", async ({ request }) =
   expect(specification.paths["/api/v1/analyze"].post.security).toEqual([{ apiKey: [] }]);
   expect(specification.components.schemas.AnalysisResult.required).toEqual(expect.arrayContaining(["classification", "score_factors"]));
   expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v2.1");
+});
+
+test("primary public pages have no serious accessibility violations", async ({ page }) => {
+  test.setTimeout(120_000);
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    for (const route of ["/", "/app", "/nl/app", "/privacy", "/auth/sign-in"]) {
+      await page.goto(route);
+      const results = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+      const blocking = results.violations
+        .filter(({ impact }) => impact === "critical" || impact === "serious")
+        .map(({ id, impact, nodes }) => ({
+          id,
+          impact,
+          targets: nodes.map((node) => node.target.join(" ")),
+        }));
+      expect(blocking, `${route} at ${viewport.width}px`).toEqual([]);
+    }
+  }
 });

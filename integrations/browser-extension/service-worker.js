@@ -1,5 +1,7 @@
 const CAPTURE_TTL_MS = 60_000;
+const CAPTURE_STORAGE_PREFIX = "capture-handoff:";
 const captureHandoffs = new Map();
+let captureStorageQueue = Promise.resolve();
 
 disableGlobalPanel();
 
@@ -9,8 +11,10 @@ chrome.action.onClicked.addListener(handleToolbarAction);
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "consume-capture") {
-    sendResponse(consumeCapture(message.tabId, message.includeMetadata === true));
-    return false;
+    consumeCapture(message.tabId, message.includeMetadata === true)
+      .then(sendResponse)
+      .catch(() => sendResponse({ status: "error", code: "handoff_missing" }));
+    return true;
   }
   if (message?.type === "capture-active-tab") {
     recaptureTab(message.tabId).then(sendResponse);
@@ -325,26 +329,50 @@ function finishCapture(tabId, captureId, capture) {
 
 function setCapture(tabId, capture) {
   const expiresAt = Date.now() + CAPTURE_TTL_MS;
-  captureHandoffs.set(tabId, { ...capture, expiresAt });
-  setTimeout(() => {
-    const current = captureHandoffs.get(tabId);
-    if (current?.captureId === capture.captureId && current.expiresAt === expiresAt) clearCapture(tabId);
-  }, CAPTURE_TTL_MS);
+  setCaptureWithExpiry(tabId, capture, expiresAt);
 }
 
-function consumeCapture(tabId, includeMetadata = false) {
+function setCaptureWithExpiry(tabId, capture, expiresAt) {
+  const handoff = { ...capture, expiresAt };
+  captureHandoffs.set(tabId, handoff);
+  persistCaptureDescriptor(tabId, handoff);
+  scheduleCaptureExpiry(tabId, handoff);
+}
+
+function scheduleCaptureExpiry(tabId, capture) {
+  const delay = Math.max(0, capture.expiresAt - Date.now());
+  setTimeout(() => {
+    const current = captureHandoffs.get(tabId);
+    if (current?.captureId === capture.captureId && current.expiresAt === capture.expiresAt) clearCapture(tabId);
+  }, delay);
+}
+
+async function consumeCapture(tabId, includeMetadata = false) {
   if (!Number.isInteger(tabId)) return { status: "error", code: "no_active_tab" };
-  const capture = captureHandoffs.get(tabId);
+  let capture = captureHandoffs.get(tabId);
+  let restoredFromSession = false;
+  if (!capture) {
+    capture = await restoreCaptureDescriptor(tabId);
+    restoredFromSession = Boolean(capture);
+  }
   if (!capture) return { status: "error", code: "handoff_missing" };
   if (capture.expiresAt <= Date.now()) {
-    clearCapture(tabId);
+    await clearCapture(tabId);
     return { status: "error", code: "handoff_expired" };
   }
+
+  // A worker restart preserves only this descriptor. Re-read the visible tab
+  // to rebuild the in-memory handoff without putting message content in storage.
+  if (restoredFromSession && ["pending", "success"].includes(capture.status)) {
+    await recoverCapture(tabId, capture);
+    capture = captureHandoffs.get(tabId);
+  }
+  if (!capture) return { status: "error", code: "handoff_missing" };
   if (capture.status === "pending") {
     return includeMetadata ? { status: "pending", captureId: capture.captureId } : { status: "pending" };
   }
 
-  clearCapture(tabId);
+  await clearCapture(tabId);
   if (capture.status === "success") {
     if (capture.source !== "open_message") {
       return includeMetadata
@@ -370,6 +398,58 @@ function consumeCapture(tabId, includeMetadata = false) {
 
 function clearCapture(tabId) {
   captureHandoffs.delete(tabId);
+  return removeCaptureDescriptor(tabId);
+}
+
+function recoverCapture(tabId, descriptor) {
+  setCaptureWithExpiry(tabId, { status: "pending", captureId: descriptor.captureId }, descriptor.expiresAt);
+  return chrome.tabs.get(tabId)
+    .then((tab) => captureMessage(tab, descriptor.captureId))
+    .catch(() => {
+      finishCapture(tabId, descriptor.captureId, { status: "error", code: "capture_failed" });
+    });
+}
+
+function captureStorageKey(tabId) {
+  return `${CAPTURE_STORAGE_PREFIX}${tabId}`;
+}
+
+function persistCaptureDescriptor(tabId, capture) {
+  const descriptor = {
+    captureId: capture.captureId,
+    status: capture.status,
+    expiresAt: capture.expiresAt,
+  };
+  queueCaptureStorage(() => chrome.storage.session.set({ [captureStorageKey(tabId)]: descriptor }));
+}
+
+function removeCaptureDescriptor(tabId) {
+  return queueCaptureStorage(() => chrome.storage.session.remove(captureStorageKey(tabId)));
+}
+
+function queueCaptureStorage(operation) {
+  captureStorageQueue = captureStorageQueue
+    .then(operation, operation)
+    .catch(() => {});
+  return captureStorageQueue;
+}
+
+async function restoreCaptureDescriptor(tabId) {
+  try {
+    const stored = await chrome.storage.session.get(captureStorageKey(tabId));
+    const descriptor = stored?.[captureStorageKey(tabId)];
+    if (!descriptor || typeof descriptor.captureId !== "string" || !["pending", "success", "error"].includes(descriptor.status)) {
+      return null;
+    }
+    if (!Number.isFinite(descriptor.expiresAt) || descriptor.expiresAt <= Date.now()) {
+      await chrome.storage.session.remove(captureStorageKey(tabId));
+      return null;
+    }
+    setCaptureWithExpiry(tabId, descriptor, descriptor.expiresAt);
+    return captureHandoffs.get(tabId);
+  } catch {
+    return null;
+  }
 }
 
 function cleanField(value, maxLength) {

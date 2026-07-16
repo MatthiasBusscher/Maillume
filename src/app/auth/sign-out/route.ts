@@ -21,12 +21,30 @@ export async function POST(request: Request) {
     });
   }
   const supabase = await createServerSupabaseClient();
-  await supabase?.auth.signOut();
+  if (!supabase) {
+    return privateResponse("Sign-out is temporarily unavailable.", 503);
+  }
+
+  const { error: signOutError } = await supabase.auth.signOut({ scope: "local" });
+  if (signOutError) {
+    return privateResponse("Sign-out could not be completed.", 503);
+  }
 
   const response = NextResponse.redirect(
     new URL(areAccountsEnabled() ? "/auth/sign-in" : "/app", publicOrigin),
     303,
   );
+  response.headers.set(
+    "Cache-Control",
+    "private, no-cache, no-store, must-revalidate, max-age=0",
+  );
+  response.headers.set("Expires", "0");
+  response.headers.set("Pragma", "no-cache");
+  return response;
+}
+
+function privateResponse(message: string, status: number) {
+  const response = new NextResponse(message, { status });
   response.headers.set(
     "Cache-Control",
     "private, no-cache, no-store, must-revalidate, max-age=0",

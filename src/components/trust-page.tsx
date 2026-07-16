@@ -12,7 +12,7 @@ export function TrustPage({ children, description, eyebrow, title, updatedDate, 
           <p className="font-mono text-[10px] uppercase text-[#087b72]">{eyebrow}</p>
           <h1 className="mt-4 text-4xl font-semibold text-[#111711] sm:text-5xl">{title}</h1>
           <p className="mt-5 max-w-3xl text-base leading-7 text-[#59655a]">{description}</p>
-          <p className="mt-5 font-mono text-[10px] uppercase text-[#778177]">{updatedLabel}: {updatedDate}</p>
+          <p className="mt-5 font-mono text-[10px] uppercase text-[#5f695f]">{updatedLabel}: {updatedDate}</p>
         </div>
       </header>
       <article className="mx-auto max-w-5xl px-5 py-14 sm:px-6 sm:py-16">

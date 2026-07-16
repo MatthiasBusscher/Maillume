@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_ANALYSIS_MAX_REQUEST_BYTES,
   EML_ACCEPT,
+  getScreenshotDimensions,
   getSerializedRequestSize,
   hasSupportedScreenshotSignature,
   isSupportedEmlFile,
@@ -45,6 +46,43 @@ function main() {
     ),
     true,
   );
+  const pngHeader = new Uint8Array(24);
+  pngHeader.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  new DataView(pngHeader.buffer).setUint32(16, 1200, false);
+  new DataView(pngHeader.buffer).setUint32(20, 800, false);
+  assert.deepEqual(getScreenshotDimensions(pngHeader, { type: "image/png" }), {
+    width: 1200,
+    height: 800,
+  });
+  const gifHeader = new Uint8Array(10);
+  gifHeader.set(new TextEncoder().encode("GIF89a"));
+  new DataView(gifHeader.buffer).setUint16(6, 640, true);
+  new DataView(gifHeader.buffer).setUint16(8, 480, true);
+  assert.deepEqual(getScreenshotDimensions(gifHeader, { type: "image/gif" }), {
+    width: 640,
+    height: 480,
+  });
+  const jpegHeader = new Uint8Array([
+    0xff, 0xd8,
+    0xff, 0xc0, 0x00, 0x11, 0x08, 0x03, 0x20, 0x04, 0xb0,
+    0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x00, 0x03, 0x11, 0x00,
+  ]);
+  assert.deepEqual(getScreenshotDimensions(jpegHeader, { type: "image/jpeg" }), {
+    width: 1200,
+    height: 800,
+  });
+  const webpHeader = new Uint8Array(30);
+  webpHeader.set(new TextEncoder().encode("RIFF"));
+  webpHeader.set(new TextEncoder().encode("WEBP"), 8);
+  webpHeader.set(new TextEncoder().encode("VP8X"), 12);
+  new DataView(webpHeader.buffer).setUint32(16, 10, true);
+  webpHeader.set([0xaf, 0x04, 0x00], 24);
+  webpHeader.set([0x1f, 0x03, 0x00], 27);
+  assert.deepEqual(getScreenshotDimensions(webpHeader, { type: "image/webp" }), {
+    width: 1200,
+    height: 800,
+  });
+  assert.equal(getScreenshotDimensions(new Uint8Array(8), { type: "image/png" }), null);
   assert.equal(
     hasSupportedScreenshotSignature(new Uint8Array([0xff, 0xd8, 0xff, 0xdb]), { type: "image/jpeg" }),
     true,

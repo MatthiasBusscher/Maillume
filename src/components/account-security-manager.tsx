@@ -172,6 +172,9 @@ export function AccountSecurityManager({ canManage, labels, passkeysEnabled }: {
                   </button>
                 </div>
               ))}
+              {totpFactors.length < 10 ? (
+                <button type="button" onClick={startTotpEnrollment} disabled={isLoading} className="mt-3 inline-flex h-10 items-center gap-2 border border-[#111711] bg-white px-4 text-sm font-semibold text-[#111711] hover:bg-[#eef1eb] disabled:text-[#778177]"><ShieldPlus className="h-4 w-4 text-[#087b72]" aria-hidden="true" /> {labels.addBackupMfa}</button>
+              ) : null}
             </div>
           ) : enrollment ? (
             <form className="mt-5" onSubmit={verifyTotp}>

@@ -14,6 +14,7 @@ import {
   MAX_FEEDBACK_PAYLOAD_BYTES,
   validateFeedbackSubmission,
 } from "@/lib/feedback/validation";
+import { readBoundedRequestBody } from "@/lib/security/account-request";
 
 export const runtime = "nodejs";
 
@@ -50,22 +51,15 @@ export async function POST(request: Request) {
     throw error;
   }
 
-  const contentLength = Number(request.headers.get("content-length"));
-
-  if (Number.isFinite(contentLength) && contentLength > MAX_FEEDBACK_PAYLOAD_BYTES) {
-    return jsonError("Feedback payload is too large.", 413);
-  }
-
-  const rawPayload = await request.text();
-
-  if (new TextEncoder().encode(rawPayload).byteLength > MAX_FEEDBACK_PAYLOAD_BYTES) {
+  const body = await readBoundedRequestBody(request, MAX_FEEDBACK_PAYLOAD_BYTES);
+  if (!body.ok) {
     return jsonError("Feedback payload is too large.", 413);
   }
 
   let payload: unknown;
 
   try {
-    payload = JSON.parse(rawPayload);
+    payload = JSON.parse(body.text);
   } catch {
     return jsonError("Invalid JSON request body.", 400);
   }

@@ -53,6 +53,37 @@ export function hasSupportedScreenshotSignature(
   return false;
 }
 
+export function getScreenshotDimensions(
+  bytes: Uint8Array,
+  file: Pick<FileLike, "type">,
+): { width: number; height: number } | null {
+  const type = file.type.trim().toLowerCase();
+
+  if (type === "image/png" && bytes.length >= 24) {
+    return {
+      width: readUint32BigEndian(bytes, 16),
+      height: readUint32BigEndian(bytes, 20),
+    };
+  }
+
+  if (type === "image/gif" && bytes.length >= 10) {
+    return {
+      width: readUint16LittleEndian(bytes, 6),
+      height: readUint16LittleEndian(bytes, 8),
+    };
+  }
+
+  if (type === "image/jpeg") {
+    return getJpegDimensions(bytes);
+  }
+
+  if (type === "image/webp") {
+    return getWebpDimensions(bytes);
+  }
+
+  return null;
+}
+
 export function isWithinScreenshotDimensionLimit(width: number, height: number): boolean {
   return (
     Number.isInteger(width) &&
@@ -93,4 +124,114 @@ function matchesText(bytes: Uint8Array, expected: string, offset = 0): boolean {
     Array.from(expected, (character) => character.charCodeAt(0)),
     offset,
   );
+}
+
+function getJpegDimensions(bytes: Uint8Array): { width: number; height: number } | null {
+  const startOfFrameMarkers = new Set([
+    0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7,
+    0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf,
+  ]);
+  let offset = 2;
+
+  while (offset + 3 < bytes.length) {
+    if (bytes[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+
+    while (offset < bytes.length && bytes[offset] === 0xff) {
+      offset += 1;
+    }
+
+    const marker = bytes[offset];
+    offset += 1;
+
+    if (marker === 0xd8 || marker === 0xd9 || (marker >= 0xd0 && marker <= 0xd7)) {
+      continue;
+    }
+
+    if (offset + 1 >= bytes.length) {
+      return null;
+    }
+
+    const segmentLength = readUint16BigEndian(bytes, offset);
+    if (segmentLength < 2 || offset + segmentLength > bytes.length) {
+      return null;
+    }
+
+    if (startOfFrameMarkers.has(marker) && segmentLength >= 7) {
+      return {
+        width: readUint16BigEndian(bytes, offset + 5),
+        height: readUint16BigEndian(bytes, offset + 3),
+      };
+    }
+
+    offset += segmentLength;
+  }
+
+  return null;
+}
+
+function getWebpDimensions(bytes: Uint8Array): { width: number; height: number } | null {
+  let offset = 12;
+
+  while (offset + 8 <= bytes.length) {
+    const chunkType = String.fromCharCode(...bytes.slice(offset, offset + 4));
+    const chunkLength = readUint32LittleEndian(bytes, offset + 4);
+    const dataOffset = offset + 8;
+
+    if (chunkLength > bytes.length - dataOffset) {
+      return null;
+    }
+
+    if (chunkType === "VP8X" && chunkLength >= 10) {
+      return {
+        width: 1 + readUint24LittleEndian(bytes, dataOffset + 4),
+        height: 1 + readUint24LittleEndian(bytes, dataOffset + 7),
+      };
+    }
+
+    if (chunkType === "VP8L" && chunkLength >= 5 && bytes[dataOffset] === 0x2f) {
+      const bits = readUint32LittleEndian(bytes, dataOffset + 1);
+      return {
+        width: 1 + (bits & 0x3fff),
+        height: 1 + ((bits >>> 14) & 0x3fff),
+      };
+    }
+
+    if (
+      chunkType === "VP8 " &&
+      chunkLength >= 10 &&
+      matchesBytes(bytes, [0x9d, 0x01, 0x2a], dataOffset + 3)
+    ) {
+      return {
+        width: readUint16LittleEndian(bytes, dataOffset + 6) & 0x3fff,
+        height: readUint16LittleEndian(bytes, dataOffset + 8) & 0x3fff,
+      };
+    }
+
+    offset = dataOffset + chunkLength + (chunkLength % 2);
+  }
+
+  return null;
+}
+
+function readUint16BigEndian(bytes: Uint8Array, offset: number): number {
+  return (bytes[offset] << 8) | bytes[offset + 1];
+}
+
+function readUint16LittleEndian(bytes: Uint8Array, offset: number): number {
+  return bytes[offset] | (bytes[offset + 1] << 8);
+}
+
+function readUint24LittleEndian(bytes: Uint8Array, offset: number): number {
+  return bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16);
+}
+
+function readUint32BigEndian(bytes: Uint8Array, offset: number): number {
+  return new DataView(bytes.buffer, bytes.byteOffset + offset, 4).getUint32(0, false);
+}
+
+function readUint32LittleEndian(bytes: Uint8Array, offset: number): number {
+  return new DataView(bytes.buffer, bytes.byteOffset + offset, 4).getUint32(0, true);
 }

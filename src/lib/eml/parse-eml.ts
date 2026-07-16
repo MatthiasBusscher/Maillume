@@ -4,12 +4,52 @@ const HEADER_BODY_SEPARATOR = /\r?\n\r?\n/;
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 const HREF_PATTERN = /\bhref\s*=\s*["']([^"']+)["']/gi;
 const HTML_LINK_PAIR_PATTERN = /<a\b[^>]*href\s*=\s*["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+const DISPLAYED_DOMAIN_PATTERN = /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}(?:\/[^\s<>"']*)?/i;
+const ENCODED_WORD_PATTERN = /=\?([^?\s]+)\?([BQ])\?([^?]*)\?=/gi;
+const MIME_PARAMETER_PATTERN = /(?:^|;)\s*([^=;\s]+)\s*=\s*(?:"((?:\\.|[^"])*)"|([^;]*))/g;
+
 export const MAX_EML_HEADER_CHARACTERS = 64 * 1024;
 export const MAX_EML_MULTIPART_SECTIONS = 64;
 export const MAX_EML_PART_BODY_CHARACTERS = 64 * 1024;
+export const MAX_EML_MIME_DEPTH = 10;
 export const MAX_EML_ATTACHMENT_NAMES = 25;
-export const MAX_EML_LINKS = 100;
+export const MAX_EML_LINKS = 20;
 export const MAX_EML_LINK_LENGTH = 2_048;
+
+const WINDOWS_1252_CODE_POINTS = [
+  0x20ac,
+  0xfffd,
+  0x201a,
+  0x192,
+  0x201e,
+  0x2026,
+  0x2020,
+  0x2021,
+  0x2c6,
+  0x2030,
+  0x160,
+  0x2039,
+  0x152,
+  0xfffd,
+  0x17d,
+  0xfffd,
+  0xfffd,
+  0x2018,
+  0x2019,
+  0x201c,
+  0x201d,
+  0x2022,
+  0x2013,
+  0x2014,
+  0x2dc,
+  0x2122,
+  0x161,
+  0x203a,
+  0x153,
+  0xfffd,
+  0x17e,
+  0x178,
+];
 
 export type ParsedEml = {
   subject?: string;
@@ -20,72 +60,121 @@ export type ParsedEml = {
   attachmentNames: string[];
 };
 
+type MimePart = {
+  headers: Map<string, string>;
+  body: string;
+};
+
+type ParseState = {
+  textParts: string[];
+  htmlParts: string[];
+  rawLinks: string[];
+  linkPairs: EmailLinkPair[];
+  attachmentNames: string[];
+  sectionsProcessed: number;
+};
+
 export function parseEml(raw: string): ParsedEml {
-  const [rawHeaders, ...bodyParts] = raw.split(HEADER_BODY_SEPARATOR);
-  const bodySource = bodyParts.join("\n\n");
-  const headers = parseHeaders(rawHeaders.slice(0, MAX_EML_HEADER_CHARACTERS));
-  const subject = decodeHeader(headers.get("subject"));
-  const from = decodeHeader(headers.get("from"));
-  const senderEmail = extractEmail(from);
-  const contentType = headers.get("content-type") ?? "";
-  const boundary = getHeaderParameter(contentType, "boundary");
-  const sections = boundary ? splitMultipartSections(bodySource, boundary) : [bodySource];
-  const textParts: string[] = [];
-  const htmlParts: string[] = [];
-  const rawLinks: string[] = [];
-  const linkPairs: EmailLinkPair[] = [];
-  const attachmentNames: string[] = [];
+  const root = splitMimePart(raw);
+  const subject = decodeHeader(root.headers.get("subject"));
+  const from = decodeHeader(root.headers.get("from"));
+  const state: ParseState = {
+    textParts: [],
+    htmlParts: [],
+    rawLinks: [],
+    linkPairs: [],
+    attachmentNames: [],
+    sectionsProcessed: 0,
+  };
 
-  for (const section of sections.slice(0, MAX_EML_MULTIPART_SECTIONS)) {
-    const sectionHeaders = boundary ? getSectionHeaders(section) : headers;
-    const sectionBody = boundary ? getSectionBody(section) : section;
-    const sectionContentType = sectionHeaders.get("content-type") ?? "text/plain";
-    const disposition = sectionHeaders.get("content-disposition") ?? "";
-    const transferEncoding = sectionHeaders.get("content-transfer-encoding") ?? "";
-    const filename =
-      getHeaderParameter(disposition, "filename") ?? getHeaderParameter(sectionContentType, "name");
+  parseMimePart(root, 0, state, true);
 
-    if (/attachment/i.test(disposition) || filename) {
-      if (attachmentNames.length < MAX_EML_ATTACHMENT_NAMES) {
-        attachmentNames.push(decodeHeader(filename) ?? "Unnamed attachment");
-      }
-      continue;
-    }
-
-    const decodedBody = decodeTransferBody(
-      sectionBody.slice(0, MAX_EML_PART_BODY_CHARACTERS),
-      transferEncoding,
-    );
-    appendWithinLimit(rawLinks, extractLinks(decodedBody), MAX_EML_LINKS);
-
-    if (/text\/html/i.test(sectionContentType)) {
-      appendWithinLimit(linkPairs, extractDisplayedLinkPairs(decodedBody), MAX_EML_LINKS);
-      htmlParts.push(htmlToText(decodedBody));
-    } else if (/text\/plain/i.test(sectionContentType) || sections.length === 1) {
-      textParts.push(decodedBody.trim());
-    }
-  }
-
-  const body = [textParts.join("\n\n"), htmlParts.join("\n\n"), attachmentSummary(attachmentNames)]
+  const body = [
+    state.textParts.join("\n\n"),
+    state.htmlParts.join("\n\n"),
+    attachmentSummary(state.attachmentNames),
+  ]
     .filter(Boolean)
     .join("\n\n")
     .trim()
     .slice(0, MAX_SCAN_BODY_LENGTH);
-  const links = Array.from(new Set([...rawLinks, ...extractLinks(body)])).slice(0, MAX_EML_LINKS);
+  const links = Array.from(new Set([...state.rawLinks, ...extractLinks(body)])).slice(
+    0,
+    MAX_EML_LINKS,
+  );
 
   return {
     subject,
-    senderEmail,
+    senderEmail: extractEmail(from),
     body,
     links,
-    linkPairs: deduplicateLinkPairs(linkPairs).slice(0, MAX_EML_LINKS),
-    attachmentNames,
+    linkPairs: deduplicateLinkPairs(state.linkPairs).slice(0, MAX_EML_LINKS),
+    attachmentNames: state.attachmentNames,
   };
+}
+
+function parseMimePart(part: MimePart, depth: number, state: ParseState, isRootPart: boolean): void {
+  const contentType = part.headers.get("content-type") ?? "text/plain";
+  const disposition = part.headers.get("content-disposition") ?? "";
+  const rawFilename =
+    getHeaderParameter(disposition, "filename") ?? getHeaderParameter(contentType, "name");
+  const isAttachment = /(?:^|;)\s*attachment\b/i.test(disposition) || rawFilename !== undefined;
+
+  if (isAttachment) {
+    if (state.attachmentNames.length < MAX_EML_ATTACHMENT_NAMES) {
+      const filename = rawFilename === undefined ? undefined : decodeHeader(rawFilename);
+      state.attachmentNames.push(filename?.trim() || "Unnamed attachment");
+    }
+    return;
+  }
+
+  const mediaType = contentType.split(";", 1)[0].trim().toLowerCase();
+
+  if (mediaType.startsWith("multipart/")) {
+    if (depth >= MAX_EML_MIME_DEPTH) {
+      return;
+    }
+
+    const boundary = getHeaderParameter(contentType, "boundary");
+    if (!boundary) {
+      return;
+    }
+
+    for (const section of splitMultipartSections(part.body, boundary)) {
+      if (state.sectionsProcessed >= MAX_EML_MULTIPART_SECTIONS) {
+        break;
+      }
+
+      state.sectionsProcessed += 1;
+      parseMimePart(splitMimePart(section), depth + 1, state, false);
+    }
+    return;
+  }
+
+  const transferEncoding = part.headers.get("content-transfer-encoding") ?? "";
+  const charset = getHeaderParameter(contentType, "charset") ?? "utf-8";
+  const decodedBody = decodeTransferBody(
+    part.body.slice(0, MAX_EML_PART_BODY_CHARACTERS),
+    transferEncoding,
+    charset,
+  );
+
+  appendWithinLimit(state.rawLinks, extractLinks(decodedBody), MAX_EML_LINKS);
+
+  if (mediaType === "text/html") {
+    appendWithinLimit(state.linkPairs, extractDisplayedLinkPairs(decodedBody), MAX_EML_LINKS);
+    state.htmlParts.push(htmlToText(decodedBody));
+  } else if (mediaType === "text/plain" || isRootPart) {
+    state.textParts.push(decodedBody);
+  }
 }
 
 function extractDisplayedLinkPairs(html: string): EmailLinkPair[] {
   return Array.from(html.matchAll(HTML_LINK_PAIR_PATTERN)).flatMap((match) => {
-    const displayedUrl = htmlToText(match[2]).match(LINK_PATTERN)?.[0];
+    const displayedText = htmlToText(match[2]);
+    const fullUrl = displayedText.match(LINK_PATTERN)?.[0];
+    const bareDomain = displayedText.match(DISPLAYED_DOMAIN_PATTERN)?.[0];
+    const displayedUrl = fullUrl ?? (bareDomain ? `https://${bareDomain}` : undefined);
     if (!displayedUrl) return [];
     const normalizedDisplayedUrl = displayedUrl.replace(/[.,!?;:]+$/, "");
     const normalizedDestinationUrl = match[1].replace(/[.,!?;:]+$/, "");
@@ -107,24 +196,28 @@ function deduplicateLinkPairs(pairs: EmailLinkPair[]): EmailLinkPair[] {
   );
 }
 
-function getSectionHeaders(section: string): Map<string, string> {
-  const [sectionHeadersRaw] = section.split(HEADER_BODY_SEPARATOR);
+function splitMimePart(source: string): MimePart {
+  const separator = HEADER_BODY_SEPARATOR.exec(source);
 
-  return parseHeaders(sectionHeadersRaw.slice(0, MAX_EML_HEADER_CHARACTERS));
-}
+  if (!separator || separator.index === undefined) {
+    return {
+      headers: parseHeaders(source.slice(0, MAX_EML_HEADER_CHARACTERS)),
+      body: "",
+    };
+  }
 
-function getSectionBody(section: string): string {
-  const [, ...sectionBodyParts] = section.split(HEADER_BODY_SEPARATOR);
-
-  return sectionBodyParts.length > 0 ? sectionBodyParts.join("\n\n") : section;
+  return {
+    headers: parseHeaders(source.slice(0, separator.index).slice(0, MAX_EML_HEADER_CHARACTERS)),
+    body: source.slice(separator.index + separator[0].length),
+  };
 }
 
 function extractLinks(content: string): string[] {
   const visibleLinks = Array.from(content.matchAll(LINK_PATTERN), (match) =>
     match[0].replace(/[.,!?;:]+$/, ""),
   ).filter((link) => link.length <= MAX_EML_LINK_LENGTH);
-  const hrefLinks = Array.from(content.matchAll(HREF_PATTERN), (match) => match[1]).filter((link) =>
-    /^https?:\/\//i.test(link) && link.length <= MAX_EML_LINK_LENGTH,
+  const hrefLinks = Array.from(content.matchAll(HREF_PATTERN), (match) => match[1]).filter(
+    (link) => /^https?:\/\//i.test(link) && link.length <= MAX_EML_LINK_LENGTH,
   );
 
   return [...visibleLinks, ...hrefLinks];
@@ -154,50 +247,207 @@ function parseHeaders(rawHeaders: string): Map<string, string> {
 }
 
 function splitMultipartSections(body: string, boundary: string): string[] {
-  return body
-    .split(`--${boundary}`)
-    .map((part) => part.trim())
-    .filter((part) => part && part !== "--");
+  const boundaryPattern = new RegExp(`^--${escapeRegExp(boundary)}(--)?[ \\t]*$`);
+  const sections: string[] = [];
+  const currentLines: string[] = [];
+  let started = false;
+
+  for (const line of body.split(/\r?\n/)) {
+    const boundaryMatch = boundaryPattern.exec(line);
+
+    if (boundaryMatch) {
+      if (started) {
+        const section = currentLines.join("\n").trim();
+        if (section) {
+          sections.push(section);
+        }
+        currentLines.length = 0;
+      }
+
+      if (boundaryMatch[1] === "--" || sections.length >= MAX_EML_MULTIPART_SECTIONS) {
+        break;
+      }
+
+      started = true;
+      continue;
+    }
+
+    if (started) {
+      currentLines.push(line);
+    }
+  }
+
+  if (started && sections.length < MAX_EML_MULTIPART_SECTIONS) {
+    const section = currentLines.join("\n").trim();
+    if (section) {
+      sections.push(section);
+    }
+  }
+
+  return sections;
 }
 
 function getHeaderParameter(header: string, parameterName: string): string | undefined {
-  const match = header.match(new RegExp(`${parameterName}\\*?=(?:"([^"]+)"|([^;]+))`, "i"));
-  const value = match?.[1] ?? match?.[2];
+  const normalizedParameterName = parameterName.toLowerCase();
+  let plainValue: string | undefined;
+  let extendedValue: string | undefined;
 
-  if (!value) {
-    return undefined;
+  for (const match of header.matchAll(MIME_PARAMETER_PATTERN)) {
+    const name = match[1].toLowerCase();
+    const value = (match[2] ?? match[3] ?? "")
+      .replace(/\\(["\\])/g, "$1")
+      .trim();
+
+    if (name === `${normalizedParameterName}*`) {
+      extendedValue = decodeExtendedParameter(value);
+    } else if (name === normalizedParameterName) {
+      plainValue = value;
+    }
   }
 
-  return value.replace(/^utf-8''/i, "").trim();
+  return extendedValue ?? plainValue;
 }
 
-function decodeTransferBody(body: string, encoding: string): string {
+function decodeExtendedParameter(value: string): string {
+  const match = value.match(/^([^']*)'[^']*'(.*)$/);
+  if (!match) {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+
+  return decodeBytes(decodePercentEncodedBytes(match[2]), match[1] || "utf-8");
+}
+
+function decodePercentEncodedBytes(value: string): Uint8Array {
+  const bytes: number[] = [];
+
+  for (let index = 0; index < value.length; index += 1) {
+    if (value[index] === "%" && /^[0-9a-f]{2}$/i.test(value.slice(index + 1, index + 3))) {
+      bytes.push(Number.parseInt(value.slice(index + 1, index + 3), 16));
+      index += 2;
+      continue;
+    }
+
+    const codePoint = value.codePointAt(index) ?? 0;
+    if (codePoint <= 0xff) {
+      bytes.push(codePoint);
+    } else {
+      bytes.push(...new TextEncoder().encode(String.fromCodePoint(codePoint)));
+    }
+    if (codePoint > 0xffff) {
+      index += 1;
+    }
+  }
+
+  return Uint8Array.from(bytes);
+}
+
+function decodeTransferBody(body: string, encoding: string, charset: string): string {
   if (/base64/i.test(encoding)) {
-    return decodeBase64(body);
+    const bytes = decodeBase64Bytes(body);
+    return bytes ? decodeBytes(bytes, charset).trim() : body.trim();
   }
 
   if (/quoted-printable/i.test(encoding)) {
-    return decodeQuotedPrintable(body);
+    return decodeBytes(decodeQuotedPrintableBytes(body), charset).trim();
   }
 
-  return body.trim();
+  return decodeBytes(stringToBytes(body), charset).trim();
 }
 
-function decodeBase64(value: string): string {
+function stringToBytes(value: string): Uint8Array {
+  const bytes: number[] = [];
+  for (const character of value) {
+    const codePoint = character.codePointAt(0) ?? 0;
+    if (codePoint <= 0xff) bytes.push(codePoint);
+    else bytes.push(...new TextEncoder().encode(character));
+  }
+  return Uint8Array.from(bytes);
+}
+
+function decodeBase64Bytes(value: string): Uint8Array | undefined {
+  const compact = value.replace(/\s/g, "");
+
+  if (!compact || !/^[a-z\d+/]*={0,2}$/i.test(compact) || compact.length % 4 === 1) {
+    return undefined;
+  }
+
   try {
-    return atob(value.replace(/\s/g, ""));
+    const binary = atob(compact);
+    return Uint8Array.from(binary, (character) => character.charCodeAt(0));
   } catch {
-    return value;
+    return undefined;
   }
 }
 
-function decodeQuotedPrintable(value: string): string {
-  return value
-    .replace(/=\r?\n/g, "")
-    .replace(/=([0-9A-F]{2})/gi, (_, hex: string) =>
-      String.fromCharCode(Number.parseInt(hex, 16)),
-    )
-    .trim();
+function decodeQuotedPrintableBytes(value: string): Uint8Array {
+  const bytes: number[] = [];
+
+  for (let index = 0; index < value.length; index += 1) {
+    if (value[index] === "=") {
+      if (value[index + 1] === "\n") {
+        index += 1;
+        continue;
+      }
+      if (value[index + 1] === "\r" && value[index + 2] === "\n") {
+        index += 2;
+        continue;
+      }
+
+      const hex = value.slice(index + 1, index + 3);
+      if (/^[0-9a-f]{2}$/i.test(hex)) {
+        bytes.push(Number.parseInt(hex, 16));
+        index += 2;
+        continue;
+      }
+    }
+
+    const codePoint = value.codePointAt(index) ?? 0;
+    if (codePoint <= 0xff) {
+      bytes.push(codePoint);
+    } else {
+      bytes.push(...new TextEncoder().encode(String.fromCodePoint(codePoint)));
+    }
+    if (codePoint > 0xffff) {
+      index += 1;
+    }
+  }
+
+  return Uint8Array.from(bytes);
+}
+
+function decodeBytes(bytes: Uint8Array, charset: string): string {
+  const normalizedCharset = charset.trim().replace(/^["']|["']$/g, "").toLowerCase();
+
+  if (/^(?:windows-1252|cp1252|ms-ansi)$/.test(normalizedCharset)) {
+    return decodeSingleByte(bytes, WINDOWS_1252_CODE_POINTS);
+  }
+
+  if (/^(?:iso-8859-1|iso_ir_100|latin1|latin-1|l1)$/.test(normalizedCharset)) {
+    return decodeSingleByte(bytes);
+  }
+
+  if (/^(?:us-ascii|ascii)$/.test(normalizedCharset)) {
+    return Array.from(bytes, (byte) => (byte < 0x80 ? String.fromCharCode(byte) : "\ufffd")).join("");
+  }
+
+  try {
+    return new TextDecoder(normalizedCharset || "utf-8").decode(bytes);
+  } catch {
+    return new TextDecoder("utf-8").decode(bytes);
+  }
+}
+
+function decodeSingleByte(bytes: Uint8Array, extensionCodePoints?: number[]): string {
+  return Array.from(bytes, (byte) => {
+    if (extensionCodePoints && byte >= 0x80 && byte <= 0x9f) {
+      return String.fromCodePoint(extensionCodePoints[byte - 0x80]);
+    }
+    return String.fromCodePoint(byte);
+  }).join("");
 }
 
 function decodeHeader(value: string | undefined): string | undefined {
@@ -205,13 +455,16 @@ function decodeHeader(value: string | undefined): string | undefined {
     return undefined;
   }
 
-  return value.replace(/=\?([^?]+)\?([BQ])\?([^?]+)\?=/gi, (_, _charset, encoding, text) => {
-    if (encoding.toUpperCase() === "B") {
-      return decodeBase64(text);
-    }
-
-    return decodeQuotedPrintable(text.replace(/_/g, " "));
-  });
+  const normalizedValue = value.replace(/(=\?[^?\s]+\?[BQ]\?[^?]*\?=)[ \t]+(?==\?)/gi, "$1");
+  return normalizedValue.replace(
+    ENCODED_WORD_PATTERN,
+    (match, charset: string, encoding: string, encodedText: string) => {
+      const bytes = encoding.toUpperCase() === "B"
+        ? decodeBase64Bytes(encodedText)
+        : decodeQuotedPrintableBytes(encodedText.replace(/_/g, " "));
+      return bytes ? decodeBytes(bytes, charset) : match;
+    },
+  );
 }
 
 function extractEmail(from: string | undefined): string | undefined {
@@ -258,4 +511,8 @@ function appendWithinLimit<T>(target: T[], values: T[], limit: number): void {
   if (remaining > 0) {
     target.push(...values.slice(0, remaining));
   }
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

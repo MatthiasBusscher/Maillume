@@ -19,7 +19,27 @@ function plain(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function createWorkerContext() {
+function createSessionStorage() {
+  const values = new Map();
+  return {
+    async get(keys) {
+      if (keys === null || keys === undefined) return Object.fromEntries(values);
+      const requested = Array.isArray(keys) ? keys : [keys];
+      return Object.fromEntries(requested.filter((key) => values.has(key)).map((key) => [key, values.get(key)]));
+    },
+    async set(entries) {
+      Object.entries(entries).forEach(([key, value]) => values.set(key, value));
+    },
+    async remove(keys) {
+      (Array.isArray(keys) ? keys : [keys]).forEach((key) => values.delete(key));
+    },
+    snapshot() {
+      return Object.fromEntries(values);
+    },
+  };
+}
+
+function createWorkerContext(sessionStorage = createSessionStorage()) {
   const events = {
     installed: event(), startup: event(), message: event(), action: event(), updated: event(), removed: event(),
   };
@@ -42,6 +62,7 @@ function createWorkerContext() {
       },
       sidePanel: { setOptions: async () => {}, open: async () => {} },
       scripting: { executeScript: async () => frameResults },
+      storage: { session: sessionStorage },
     },
     console,
     Date,
@@ -64,7 +85,7 @@ async function testCapturePriorityAndMetadata() {
     { frameId: 2, result: { text: "Explicit selection", source: "window", focused: false } },
   ]);
   await worker.events.action.listener({ id: 10, url: "https://mail.google.com/mail/u/0/#inbox/thread" });
-  assert.deepEqual(plain(worker.context.consumeCapture(10)), { status: "success", text: "Explicit selection" });
+  assert.deepEqual(plain(await worker.context.consumeCapture(10)), { status: "success", text: "Explicit selection" });
 
   worker.setFrameResults([
     { frameId: 0, result: { text: "Next open message", source: "open_message", subject: "Next", sender: "next@example.com", focused: true } },
@@ -77,7 +98,7 @@ async function testCapturePriorityAndMetadata() {
   ), true);
   await flush();
   assert.equal(recaptureResponse.accepted, true);
-  assert.deepEqual(plain(worker.context.consumeCapture(10, true)), {
+  assert.deepEqual(plain(await worker.context.consumeCapture(10, true)), {
     status: "success",
     text: "Next open message",
     source: "open_message",
@@ -87,7 +108,7 @@ async function testCapturePriorityAndMetadata() {
   });
   worker.events.updated.listener(10, { url: "https://mail.google.com/mail/u/0/#inbox/next" });
   assert.deepEqual(
-    plain(worker.context.consumeCapture(10)),
+    plain(await worker.context.consumeCapture(10)),
     { status: "error", code: "handoff_missing" },
     "URL-only webmail navigation must clear the previous capture",
   );
@@ -96,7 +117,7 @@ async function testCapturePriorityAndMetadata() {
     { frameId: 0, result: { text: "Open Outlook message", source: "open_message", subject: "Payment update", sender: "sender@example.com", focused: true } },
   ]);
   await worker.events.action.listener({ id: 11, url: "https://outlook.office.com/mail/inbox/id/example" });
-  assert.deepEqual(plain(worker.context.consumeCapture(11, true)), {
+  assert.deepEqual(plain(await worker.context.consumeCapture(11, true)), {
     status: "success",
     text: "Open Outlook message",
     source: "open_message",
@@ -104,6 +125,34 @@ async function testCapturePriorityAndMetadata() {
     sender: "sender@example.com",
     captureId: "capture-3",
   });
+}
+
+async function testCaptureRecoversAfterWorkerRestart() {
+  const sessionStorage = createSessionStorage();
+  const firstWorker = createWorkerContext(sessionStorage);
+  firstWorker.setFrameResults([
+    { frameId: 0, result: { text: "Message survives worker restart", source: "open_message", subject: "Restart test", sender: "sender@example.com", focused: true } },
+  ]);
+  await firstWorker.events.action.listener({ id: 12, url: "https://mail.google.com/mail/u/0/#inbox/thread" });
+  await flush();
+
+  const descriptor = sessionStorage.snapshot()["capture-handoff:12"];
+  assert.deepEqual(Object.keys(descriptor).sort(), ["captureId", "expiresAt", "status"]);
+  assert.equal("text" in descriptor, false, "session recovery state must not contain message content");
+
+  const restartedWorker = createWorkerContext(sessionStorage);
+  restartedWorker.setFrameResults([
+    { frameId: 0, result: { text: "Message survives worker restart", source: "open_message", subject: "Restart test", sender: "sender@example.com", focused: true } },
+  ]);
+  assert.deepEqual(plain(await restartedWorker.context.consumeCapture(12, true)), {
+    status: "success",
+    text: "Message survives worker restart",
+    source: "open_message",
+    subject: "Restart test",
+    sender: "sender@example.com",
+    captureId: "capture-1",
+  });
+  assert.deepEqual(sessionStorage.snapshot(), {}, "consuming a recovered handoff must clear its session descriptor");
 }
 
 function fakeElement(options = {}) {
@@ -273,6 +322,28 @@ async function testPanelSendsCapturedLinkMetadata() {
     { status: "error", code: "handoff_missing" },
   ];
   let requestPayload;
+  const validResponse = {
+    result: {
+      classification: "uncertain",
+      risk_level: "low",
+      risk_score: 0,
+      score_factors: [],
+      suspicious_signals: [],
+      detected_links: [],
+      recommended_action: "Review the message.",
+      short_explanation: "No strong signal.",
+    },
+    analysis_mode: "heuristic",
+    analysis_provider: "heuristic",
+    analysis_version: "analysis-v2.1",
+    disclaimer: "This is an automated risk assessment.",
+    privacy: {
+      stored: false,
+      retention: "not_stored",
+      message: "Scan content is not stored.",
+    },
+  };
+  let responsePayload = validResponse;
   const context = {
     chrome: {
       i18n: { getUILanguage: () => "en-US" },
@@ -297,18 +368,7 @@ async function testPanelSendsCapturedLinkMetadata() {
       return {
         ok: true,
         status: 200,
-        json: async () => ({
-          result: {
-            classification: "uncertain",
-            risk_level: "low",
-            risk_score: 0,
-            score_factors: [],
-            suspicious_signals: [],
-            detected_links: [],
-            recommended_action: "Review the message.",
-            short_explanation: "No strong signal.",
-          },
-        }),
+        json: async () => responsePayload,
       };
     },
     setTimeout,
@@ -333,6 +393,21 @@ async function testPanelSendsCapturedLinkMetadata() {
     }],
   });
 
+  assert.equal(context.isAnalysisResponse(validResponse), true);
+  for (const invalidResponse of [
+    { ...validResponse, analysis_version: "analysis-v2.0" },
+    { ...validResponse, privacy: { ...validResponse.privacy, stored: true } },
+    { ...validResponse, privacy: { ...validResponse.privacy, retention: "temporary" } },
+    { ...validResponse, analysis_provider: "unknown" },
+  ]) {
+    assert.equal(context.isAnalysisResponse(invalidResponse), false);
+  }
+
+  responsePayload = { ...validResponse, analysis_version: "analysis-v2.0" };
+  await elements.get("analyze").dispatch("click");
+  assert.equal(elements.get("result").hidden, true, "the panel must reject an invalid API envelope");
+  assert.equal(elements.get("status").textContent, "The deployment returned an invalid analysis response.");
+
   runtime.listener({ type: "capture-ready", tabId: 22, captureId: "capture-7" });
   await flush();
   assert.equal(elements.get("body").value, "Captured once", "a duplicate consumer must not erase a successful capture");
@@ -340,6 +415,7 @@ async function testPanelSendsCapturedLinkMetadata() {
 
 (async () => {
   await testCapturePriorityAndMetadata();
+  await testCaptureRecoversAfterWorkerRestart();
   testOpenMessageExtractors();
   testInactiveInputSelectionFallback();
   await testPanelSendsCapturedLinkMetadata();

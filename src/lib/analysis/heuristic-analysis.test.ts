@@ -140,6 +140,24 @@ const redirectRegression = analyzeEmailHeuristic({
 });
 assert.ok(!redirectRegression.score_factors.some((factor) => factor.id === "link_mismatch"));
 
+const bareDomainMismatch = analyzeEmailHeuristic({
+  senderEmail: "security@paypal.example",
+  body: '<a href="https://credential-capture.example/login">paypal.com/security</a>',
+});
+assert.ok(
+  bareDomainMismatch.score_factors.some((factor) => factor.id === "link_mismatch"),
+  "Bare displayed domains must be compared with their link destination",
+);
+
+const mfaNegationBypass = analyzeEmailHeuristic({
+  senderEmail: "security@account-notice.example",
+  body: "Never approve an MFA login you did not request. Approve the MFA login request immediately to prevent suspension.",
+});
+assert.ok(
+  mfaNegationBypass.score_factors.some((factor) => factor.id === "mfa_or_oauth_request"),
+  "A warning sentence must not suppress an actionable MFA request elsewhere",
+);
+
 const changedPaymentDetails = analyzeEmailHeuristic({
   senderEmail: "director@company-finance.example",
   body: "This is the CEO. Use our new bank account for the urgent supplier transfer today.",

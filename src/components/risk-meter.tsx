@@ -39,7 +39,7 @@ export function RiskMeter({ score, level, labels }: RiskMeterProps) {
     >
       <div className="grid gap-5 sm:grid-cols-[130px_minmax(0,1fr)] sm:items-end">
         <div>
-          <p className="font-mono text-[10px] uppercase text-[#69737d]">{labels.riskScore}</p>
+          <p className="font-mono text-[10px] uppercase text-[#59646f]">{labels.riskScore}</p>
           <p className="mt-1 font-mono text-6xl font-semibold leading-none text-[#111711]">
             {score}
           </p>
@@ -63,7 +63,7 @@ export function RiskMeter({ score, level, labels }: RiskMeterProps) {
               aria-hidden="true"
             />
           </div>
-          <div className="mt-3 flex justify-between font-mono text-[10px] uppercase text-[#69737d]">
+          <div className="mt-3 flex justify-between font-mono text-[10px] uppercase text-[#59646f]">
             <span>{labels.levels.low}</span>
             <span>{labels.levels.medium}</span>
             <span>{labels.levels.high}</span>

@@ -28,6 +28,7 @@ import type { Dictionary, Locale } from "@/lib/i18n/dictionary";
 import { extractTextFromImage } from "@/lib/ocr/extract-text";
 import {
   EML_ACCEPT,
+  getScreenshotDimensions,
   getSerializedRequestSize,
   hasSupportedScreenshotSignature,
   isSupportedEmlFile,
@@ -244,7 +245,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setFileStatus(dictionary.form.parsing);
 
     try {
-      const rawEml = await file.text();
+      const rawEml = bytesToBinaryString(new Uint8Array(await file.arrayBuffer()));
       const parsed = parseEml(rawEml);
 
       if (!parsed.body) {
@@ -474,6 +475,15 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   );
 }
 
+function bytesToBinaryString(bytes: Uint8Array): string {
+  const chunkSize = 8_192;
+  let result = "";
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    result += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+  }
+  return result;
+}
+
 function getAnalysisErrorMessage(status: number, dictionary: Dictionary): string {
   if (status === 413) {
     return dictionary.form.requestTooLarge;
@@ -589,9 +599,14 @@ function UploadPanel({
 }
 
 async function isSafeScreenshotForOcr(file: File): Promise<boolean> {
-  const signature = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+  const bytes = new Uint8Array(await file.arrayBuffer());
 
-  if (!hasSupportedScreenshotSignature(signature, file)) {
+  if (!hasSupportedScreenshotSignature(bytes, file)) {
+    return false;
+  }
+
+  const dimensions = getScreenshotDimensions(bytes, file);
+  if (!dimensions || !isWithinScreenshotDimensionLimit(dimensions.width, dimensions.height)) {
     return false;
   }
 
@@ -631,7 +646,7 @@ function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
       <div className="border-b border-[#d5d9de] py-8">
         <div className="flex items-end justify-between gap-5">
           <div>
-            <p className="font-mono text-[10px] uppercase text-[#69737d]">
+            <p className="font-mono text-[10px] uppercase text-[#59646f]">
               {dictionary.empty.status}
             </p>
             <p className="mt-2 font-mono text-6xl font-semibold text-[#aeb6bf]">--</p>
@@ -656,7 +671,7 @@ function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
         {dictionary.empty.privacyBody}
       </div>
 
-      <div className="mt-auto border-t border-[#d5d9de] pt-4 text-xs leading-5 text-[#69737d]">
+      <div className="mt-auto border-t border-[#d5d9de] pt-4 text-xs leading-5 text-[#59646f]">
         {dictionary.result.disclaimer}
       </div>
     </div>
@@ -802,7 +817,7 @@ function AnalysisResult({
         />
       ) : null}
 
-      <p className="border-t border-[#d5d9de] pt-4 text-xs leading-5 text-[#69737d]">
+      <p className="border-t border-[#d5d9de] pt-4 text-xs leading-5 text-[#59646f]">
         {dictionary.result.disclaimer}
       </p>
     </div>
