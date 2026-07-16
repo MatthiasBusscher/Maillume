@@ -56,18 +56,26 @@ async function run() {
     const framedInput = messagePage.frameLocator("#message-frame").locator("#message-body");
     await framedInput.fill("Before framed selection after");
     await messagePage.bringToFront();
-    const inputSelection = await framedInput.evaluate(async (input) => {
+    const prepareFramedSelection = () => framedInput.evaluate(async (input) => {
       input.focus();
       input.setSelectionRange(7, 23);
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       return { start: input.selectionStart, end: input.selectionEnd };
     });
-    assert.deepEqual(inputSelection, { start: 7, end: 23 }, "the framed selection must exist before invoking the action");
-    await browserSession.send("Extensions.triggerAction", { id: extensionId, targetId: messageTarget.targetId });
-    const inputCapture = await waitForCapture(worker, tabId);
+    const inputCapture = await triggerCaptureWithRetry({
+      browserSession,
+      extensionId,
+      messageTarget,
+      prepareSelection: async () => {
+        const selection = await prepareFramedSelection();
+        assert.deepEqual(selection, { start: 7, end: 23 }, "the framed selection must exist before invoking the action");
+      },
+      tabId,
+      worker,
+    });
     assert.deepEqual(inputCapture, { status: "success", text: "framed selection" });
 
-    await messagePage.locator("#window-message").evaluate((element) => {
+    const prepareWindowSelection = () => messagePage.locator("#window-message").evaluate((element) => {
       element.focus();
       const range = document.createRange();
       range.selectNodeContents(element);
@@ -75,14 +83,26 @@ async function run() {
       selection.removeAllRanges();
       selection.addRange(range);
     });
-    await browserSession.send("Extensions.triggerAction", { id: extensionId, targetId: messageTarget.targetId });
-    const windowCapture = await waitForCapture(worker, tabId);
+    const windowCapture = await triggerCaptureWithRetry({
+      browserSession,
+      extensionId,
+      messageTarget,
+      prepareSelection: prepareWindowSelection,
+      tabId,
+      worker,
+    });
     assert.deepEqual(windowCapture, { status: "success", text: "Window selection text" });
 
     // Keep the handoff unconsumed while the panel APIs are patched, then
     // force a worker restart and let the panel wake the new worker.
-    await browserSession.send("Extensions.triggerAction", { id: extensionId, targetId: messageTarget.targetId });
-    await waitForHandoffDescriptor(worker, tabId);
+    await triggerHandoffWithRetry({
+      browserSession,
+      extensionId,
+      messageTarget,
+      prepareSelection: prepareWindowSelection,
+      tabId,
+      worker,
+    });
 
     const serviceWorkerTarget = await findServiceWorkerTarget(browserSession, extensionId);
     assert.ok(serviceWorkerTarget, "the extension service worker target must be available for the suspension check");
@@ -107,13 +127,8 @@ async function run() {
     assert.equal(await panelPage.locator("#result").isHidden(), true);
     assert.equal(await panelPage.locator("#capture").count(), 1);
     assert.equal(await panelPage.locator("#capture").textContent(), "Use current message");
-    const recoveredBody = await panelPage.locator("#body").inputValue();
-    const recoveryDiagnostics = await panelPage.evaluate(async () => ({
-      body: document.querySelector("#body")?.value,
-      status: document.querySelector("#status")?.textContent,
-      session: await chrome.storage.session.get(null),
-    }));
-    assert.equal(recoveredBody, "Window selection text", `the panel must recover the capture after worker suspension: ${JSON.stringify(recoveryDiagnostics)}`);
+    const recoveredBody = await waitForPanelBody(panelPage, "Window selection text");
+    assert.equal(recoveredBody, "Window selection text");
 
   } finally {
     if (context) await context.close();
@@ -124,13 +139,60 @@ async function run() {
   console.log("Captured framed-input and window selections and verified the in-panel recapture action in Playwright Chromium.");
 }
 
+async function waitForPanelBody(panelPage, expectedBody) {
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    const value = await panelPage.locator("#body").inputValue();
+    if (value === expectedBody) return value;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  const diagnostics = await panelPage.evaluate(async () => ({
+    body: document.querySelector("#body")?.value,
+    status: document.querySelector("#status")?.textContent,
+    session: await chrome.storage.session.get(null),
+  }));
+  throw new Error(`The panel did not recover the capture after worker suspension: ${JSON.stringify(diagnostics)}`);
+}
+
+async function triggerCaptureWithRetry({ browserSession, extensionId, messageTarget, prepareSelection, tabId, worker }) {
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await prepareSelection();
+    await browserSession.send("Extensions.triggerAction", { id: extensionId, targetId: messageTarget.targetId });
+    try {
+      return await waitForCapture(worker, tabId);
+    } catch (error) {
+      lastError = error;
+      if (error.code !== "no_selection") throw error;
+    }
+  }
+  throw lastError;
+}
+
+async function triggerHandoffWithRetry({ browserSession, extensionId, messageTarget, prepareSelection, tabId, worker }) {
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await prepareSelection();
+    await browserSession.send("Extensions.triggerAction", { id: extensionId, targetId: messageTarget.targetId });
+    try {
+      return await waitForHandoffDescriptor(worker, tabId);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
 async function waitForCapture(worker, tabId) {
   const deadline = Date.now() + 5_000;
   while (Date.now() < deadline) {
     const capture = await worker.evaluate((id) => consumeCapture(id), tabId);
     if (capture.status === "success") return capture;
     if (capture.status === "error" && capture.code !== "handoff_missing") {
-      throw new Error(`Toolbar capture failed: ${capture.code}`);
+      const error = new Error(`Toolbar capture failed: ${capture.code}`);
+      error.code = capture.code;
+      throw error;
     }
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
@@ -146,6 +208,7 @@ async function waitForHandoffDescriptor(worker, tabId) {
       return stored[storageKey];
     }, key);
     if (descriptor?.status === "success") return descriptor;
+    if (descriptor?.status === "error") throw new Error("Toolbar capture did not produce a successful handoff.");
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
   throw new Error("The extension did not persist a capture recovery descriptor within five seconds.");

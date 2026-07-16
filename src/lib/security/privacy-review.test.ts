@@ -336,11 +336,16 @@ function main() {
   assert.doesNotMatch(extensionPanel, /storage\.local\.set\(\{ apiKey \}\)/);
   assertPinnedActions(ciWorkflow, ".github/workflows/ci.yml");
   assertPinnedActions(releaseWorkflow, ".github/workflows/release.yml");
+  assert.doesNotMatch(ciWorkflow, /push:\s*\n\s*branches:/);
   assert.match(ciWorkflow, /fetch-depth: 0/);
   assert.match(ciWorkflow, /gitleaks\/gitleaks-action@[0-9a-f]{40}/);
   assert.equal((ciWorkflow.match(/pull-requests: read/g) ?? []).length, 1);
   assert.match(releaseWorkflow, /fetch-depth: 0/);
   assert.match(releaseWorkflow, /needs: \[verify, secrets\]/);
+  assert.match(releaseWorkflow, /name: Resolve verified image/);
+  assert.match(releaseWorkflow, /IMAGE_TAG: ghcr\.io\/matthiasbusscher\/maillume:sha-\$\{\{ github\.sha \}\}/);
+  assert.match(releaseWorkflow, /needs: resolve/);
+  assert.match(releaseWorkflow, /needs\.resolve\.outputs\.image/);
   assert.match(releaseWorkflow, /npm run test:extension/);
   assert.match(releaseWorkflow, /image:\s*\$\{\{ steps\.digest\.outputs\.image \}\}/);
   assert.equal((releaseWorkflow.match(/packages: write/g) ?? []).length, 1);
