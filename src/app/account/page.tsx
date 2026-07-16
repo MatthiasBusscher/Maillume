@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { LogOut, ScanSearch, ShieldCheck, UserRound } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
@@ -17,6 +18,7 @@ import { getSupabaseAdminConfig } from "@/lib/supabase/admin";
 import { arePasskeysEnabled } from "@/lib/supabase/config";
 import { hasRecentAuthentication } from "@/lib/security/account-request";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +33,9 @@ export default async function AccountPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const locale = await getRequestSiteLocale();
+  if (!areAccountsEnabled()) {
+    redirect(localizePath("/app", locale));
+  }
   const dictionary = locale === "nl" ? accountNl : accountEn;
   const copy = dictionary.account;
   const requestedError = (await searchParams).error;

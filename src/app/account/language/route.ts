@@ -14,10 +14,14 @@ import {
   readBoundedRequestBody,
 } from "@/lib/security/account-request";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 
 const ACCOUNT_LANGUAGE_MAX_REQUEST_BYTES = 128;
 
 export async function POST(request: Request) {
+  if (!areAccountsEnabled()) {
+    return privateResponse("Not found.", 404);
+  }
   const publicOrigin = getPublicAppOrigin({
     configuredAppUrl: process.env.NEXT_PUBLIC_APP_URL,
     forwardedHost: request.headers.get("x-forwarded-host"),

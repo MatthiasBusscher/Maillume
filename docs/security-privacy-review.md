@@ -16,16 +16,21 @@ This review covers the launch data flow for pasted text, screenshot OCR, `.eml` 
 
 ## Upload Handling
 
-- Screenshot files are limited to PNG, JPEG, WebP, or GIF MIME types.
+- Screenshot files are limited to PNG, JPEG, WebP, or GIF MIME types and matching file signatures.
 - Screenshot files are limited to 5 MB.
+- Screenshot decoding is limited to 20 million pixels and an 8,000-pixel edge. OCR runs one job at a time per scanner and terminates its worker after completion, failure, or a 45-second timeout.
 - `.eml` files are accepted by `.eml` extension or `message/rfc822` MIME type.
-- `.eml` files are limited to 2 MB.
+- `.eml` files are limited to 2 MB; parsing caps multipart sections, extracted links, attachment metadata, and normalized output before analysis.
 - Empty files are rejected.
 - Upload limit constants live in `src/lib/scan-limits.ts` and are covered by `npm run test:analysis`.
 
 ## Temporary File Handling
 
 The app does not write uploads to disk. Browser `File` objects are read in memory for OCR or parsing, and the file input value is cleared after selection. The server receives normalized text only and does not write raw scan content, prompts, provider responses, or assessment results to a database.
+
+## Proxy And Rate-Limit Boundary
+
+In production, application-level rate limits use only Cloudflare's `CF-Connecting-IP` header. The Hostinger origin is reachable only through Cloudflare Tunnel, so a request without that header is placed in one conservative shared `anonymous` bucket instead of trusting a client-controlled forwarding header. Development and test environments may use `X-Forwarded-For` to support local proxy tests.
 
 ## Logging
 
@@ -46,8 +51,9 @@ OpenAI-compatible endpoints require HTTPS in production and must match an exact 
 - `Referrer-Policy: no-referrer`
 - `Permissions-Policy` disabling camera, microphone, geolocation, and payment APIs
 - `Cross-Origin-Opener-Policy: same-origin`
+- A production CSP that blocks plugins, frames, third-party connections, and media while allowing the local OCR Web Worker and WebAssembly runtime
 
-CSP should be added only after testing OCR workers and any future hosted assets, because a too-strict CSP can break browser-side OCR.
+The CSP must be reviewed whenever hosted assets, providers, or browser-side processing dependencies change. Development adds `unsafe-eval` only because Next.js development bundles require it; the production image does not include it.
 
 ## AI Provider Payload Strategy
 

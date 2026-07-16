@@ -58,8 +58,8 @@ export const trustPrivacyCopy = {
         paragraph: "Anyone can run a separate Maillume deployment. Those operators choose their own infrastructure, analytics, authentication, AI providers, and retention settings. Their privacy practices may differ from the official service.",
       },
       contact: {
-        title: "Contact and launch status",
-        intro: "This is a public-beta technical notice. The final production notice must add the operator's legal identity, privacy contact, jurisdiction, and verified processor retention terms before launch.",
+        title: "Contact and your rights",
+        intro: "Contact Maillume to ask a privacy question, exercise applicable privacy rights, or request clarification about this public beta.",
         linkPrefix: "Security issues should be reported through the process on the",
         linkText: "security page",
         linkSuffix: "never through a public issue containing private email data.",
@@ -123,8 +123,8 @@ export const trustPrivacyCopy = {
         paragraph: "Iedereen kan een afzonderlijke Maillume-omgeving beheren. Deze beheerders kiezen hun eigen infrastructuur, analytics, authenticatie, AI-aanbieders en bewaartermijnen. Hun privacypraktijken kunnen afwijken van de officiële dienst.",
       },
       contact: {
-        title: "Contact en lanceringstatus",
-        intro: "Dit is een technische verklaring voor de publieke beta. Voor een productielancering moet de definitieve verklaring worden aangevuld met de juridische identiteit van de beheerder, een privacycontact, rechtsgebied en geverifieerde bewaartermijnen van verwerkers.",
+        title: "Contact en uw rechten",
+        intro: "Neem contact op met Maillume voor een privacyvraag, om toepasselijke privacyrechten uit te oefenen of om verduidelijking te vragen over deze publieke beta.",
         linkPrefix: "Meld beveiligingsproblemen via de procedure op de",
         linkText: "beveiligingspagina",
         linkSuffix: "nooit via een openbaar issue met privégegevens uit e-mail.",

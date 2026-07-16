@@ -57,6 +57,15 @@ ANALYSIS_REQUEST_LIMIT=20
 ANALYSIS_REQUEST_WINDOW_SECONDS=60
 ANALYSIS_MAX_REQUEST_BYTES=32768
 FEEDBACK_STORAGE=disabled
+ACCOUNTS_ENABLED=false
+MAILLUME_OPERATOR_LEGAL_NAME=<registered business name>
+MAILLUME_OPERATOR_REGISTERED_ADDRESS=<registered address>
+MAILLUME_OPERATOR_KVK=<Dutch Chamber of Commerce number>
+MAILLUME_OPERATOR_VAT_ID=<VAT ID>
+MAILLUME_OPERATOR_JURISDICTION=The Netherlands
+MAILLUME_SUPPORT_EMAIL=support@maillume.io
+MAILLUME_PRIVACY_EMAIL=privacy@maillume.io
+MAILLUME_SECURITY_EMAIL=security@maillume.io
 ```
 
 Configure infrastructure-only values separately so the application container never receives the Tunnel token:
@@ -68,11 +77,17 @@ MAILLUME_IMAGE=ghcr.io/matthiasbusscher/maillume:sha-<full-commit>
 
 Do not configure AI provider keys on the official public service. Build-time `NEXT_PUBLIC_` values are embedded in the image; the release workflow builds the official image with canonical defaults. Self-hosters needing different public values should build their own image.
 
+`ACCOUNTS_ENABLED` is server-only and defaults to `false`. Keep it `false` for the public anonymous beta. Set it to the exact value `true` only in a separately reviewed production deployment after the complete account acceptance matrix in [authentication.md](authentication.md) and issue #79 passes.
+
+The public privacy, terms, and security pages require the `MAILLUME_OPERATOR_*` values at runtime. Create `support@maillume.io` in Google Workspace and make `privacy@maillume.io` and `security@maillume.io` aliases before setting the corresponding environment values. These are VPS runtime values, never GitHub build variables.
+
 Make `scripts/deploy-production.sh` executable. Authenticate Docker to GHCR using a read-only package token if the package is private.
 
 ## 4. Configure Supabase Authentication
 
 Anonymous scanning remains available when authentication is enabled.
+
+For the public anonymous beta, keep Supabase email signups and the Google provider disabled. `ACCOUNTS_ENABLED=false` blocks Maillume routes, but disabling the providers in Supabase prevents someone from initiating an Auth flow directly with the public browser configuration. Re-enable providers only after issue #79's full account acceptance matrix passes.
 
 1. Create a production Supabase project in an EU region and apply every migration in `supabase/migrations`, including the account-level API quota and expiring key lifecycle migration. Follow the verification and rollback notes in `docs/api-key-lifecycle.md`.
 2. Enable email/password sign-in, require email confirmation, configure branded SMTP/templates, and keep secure password changes enabled.

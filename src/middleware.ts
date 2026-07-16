@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 import { getOAuthFailureUrl, hasOAuthErrorReturn } from "@/lib/auth/oauth-return";
 import {
   DEFAULT_SITE_LOCALE,
@@ -25,6 +26,11 @@ export async function middleware(request: NextRequest) {
 
   if (isAppHostname && originalPathname === "/") {
     if (hasOAuthErrorReturn(request.nextUrl)) {
+      if (!areAccountsEnabled()) {
+        targetUrl.pathname = "/app";
+        targetUrl.search = "";
+        return NextResponse.redirect(targetUrl, 307);
+      }
       return NextResponse.redirect(getOAuthFailureUrl(targetUrl.origin), 307);
     }
     if (request.nextUrl.searchParams.has("code")) {
@@ -120,6 +126,10 @@ export async function middleware(request: NextRequest) {
     return nextResponse;
   };
   let response = createResponse();
+
+  if (!areAccountsEnabled()) {
+    return response;
+  }
 
   const config = getPublicSupabaseConfig();
 

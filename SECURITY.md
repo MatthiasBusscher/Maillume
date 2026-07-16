@@ -6,7 +6,9 @@ The current launch review checklist lives in `docs/security-privacy-review.md`.
 
 ## Reporting a Vulnerability
 
-Use GitHub private vulnerability reporting when it is available for the repository. If private reporting is not available yet, open a minimal public issue asking for a private disclosure channel without including exploit details, private email content, API keys, or sensitive logs.
+Use GitHub private vulnerability reporting when it is available for the repository. Otherwise email [security@maillume.io](mailto:security@maillume.io). Do not open a public issue asking for a private channel and do not include exploit details, private email content, API keys, or sensitive logs in any public message.
+
+Maillume aims to acknowledge a valid report within five business days and provide a status update within 30 days. Test only the official Maillume service with synthetic data and do not access, modify, or retain another person's data. Good-faith research that follows these limits will not be treated as an authorization to bypass safeguards or access data.
 
 Please include:
 
@@ -29,4 +31,4 @@ Do not post or commit:
 
 ## Supported Versions
 
-Maillume is pre-v1. Security fixes should target the main development branch until a release process exists.
+Security fixes target the latest `main` version and the current public-beta release. Self-hosted operators should apply updates promptly.

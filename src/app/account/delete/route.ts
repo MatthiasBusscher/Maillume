@@ -11,8 +11,12 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requiresMfaChallenge } from "@/lib/auth/mfa";
 import { getPublicAppOrigin } from "@/app/auth/callback/origin";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 
 export async function POST(request: Request) {
+  if (!areAccountsEnabled()) {
+    return privateResponse("Not found.", 404);
+  }
   const publicOrigin = getPublicAppOrigin({
     configuredAppUrl: process.env.NEXT_PUBLIC_APP_URL,
     forwardedHost: request.headers.get("x-forwarded-host"),

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getPublicAppOrigin } from "@/app/auth/callback/origin";
 import { isStrictSameOriginMutation } from "@/lib/security/account-request";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 
 export async function POST(request: Request) {
   const publicOrigin = getPublicAppOrigin({
@@ -22,7 +23,10 @@ export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
   await supabase?.auth.signOut();
 
-  const response = NextResponse.redirect(new URL("/auth/sign-in", publicOrigin), 303);
+  const response = NextResponse.redirect(
+    new URL(areAccountsEnabled() ? "/auth/sign-in" : "/app", publicOrigin),
+    303,
+  );
   response.headers.set(
     "Cache-Control",
     "private, no-cache, no-store, must-revalidate, max-age=0",

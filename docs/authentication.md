@@ -2,6 +2,8 @@
 
 Status: implementation complete; production acceptance pending.
 
+The hosted public beta runs with `ACCOUNTS_ENABLED=false`. This hides account entry points, skips Supabase session access in the scanner, and rejects account/API-key operations before they can read request data or contact Supabase. Enable it only after the production acceptance requirements below are complete.
+
 ## Supported Sign-In Methods
 
 - Email and password with confirmation email and password recovery.

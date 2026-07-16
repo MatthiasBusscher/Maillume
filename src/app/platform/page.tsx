@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowRight, Blocks, Braces, Check, Github, MailCheck, PlugZap, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, Github, MailCheck, PlugZap, ShieldCheck } from "lucide-react";
 
 import { PageIntro } from "@/components/page-intro";
 import { SiteFooter } from "@/components/site-footer";
@@ -9,11 +9,11 @@ import { platformNl } from "@/lib/i18n/marketing-pages";
 import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 
-export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: "Platform", description: locale === "nl" ? "Volg de productieacceptatie van de Maillume-API en de Chrome-browserextensie." : "Track production acceptance for the Maillume API and Chrome browser extension." }; }
+export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: "Platform", description: locale === "nl" ? "Bekijk wat beschikbaar is in de openbare Maillume-webbeta en wat later volgt." : "See what is available in the Maillume public web beta and what follows later." }; }
 
 const roadmap = [
-  { status: "Acceptance pending", title: "Hosted API access", description: "The authenticated key and quota flow is implemented in source; production acceptance is still in progress." },
-  { status: "Source beta", title: "Chrome extension", description: "A Manifest V3 side panel that captures selected text or the visibly open message in supported webmail clients." },
+  { status: "Disabled for public beta", title: "Accounts and hosted API", description: "Authentication, API keys, quotas, and managed AI remain disabled until their separate production acceptance matrix passes." },
+  { status: "After web beta", title: "Chrome extension", description: "Chrome capture improvements are being validated with early web-beta feedback before any Chrome Web Store submission or availability claim." },
 ];
 
 export default async function PlatformPage() {
@@ -23,11 +23,11 @@ export default async function PlatformPage() {
       <SiteHeader />
       <PageIntro
         eyebrow="Maillume Platform"
-        title="Check suspicious email where you already read it."
-        description="Maillume brings the same explainable risk report to Chrome. The extension is available as a source beta while production and Chrome Web Store checks are completed."
+        title="The web scanner comes first."
+        description="The public beta is intentionally narrow: anonymous, heuristic email checks with no scan history, no hosted AI, and no account requirement."
         actions={
           <>
-            <a href="#today" className="inline-flex h-12 items-center gap-2 bg-[#dfff52] px-5 text-sm font-bold text-[#111711] hover:bg-white">See what is implemented <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+            <a href="#today" className="inline-flex h-12 items-center gap-2 bg-[#dfff52] px-5 text-sm font-bold text-[#111711] hover:bg-white">See the beta boundary <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
             <a href={SOURCE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center gap-2 border border-white/35 px-5 text-sm font-semibold text-white hover:border-white hover:bg-white/10"><Github className="h-4 w-4" aria-hidden="true" /> Follow development</a>
           </>
         }
@@ -36,54 +36,34 @@ export default async function PlatformPage() {
       <section className="border-b border-[#cbd0c5] bg-white py-20 sm:py-24" id="today">
         <div className="mx-auto grid max-w-[1440px] gap-12 px-5 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
           <div>
-            <p className="font-mono text-[10px] uppercase text-[#087b72]">One analysis contract</p>
-            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">The same result, wherever the check starts.</h2>
+            <p className="font-mono text-[10px] uppercase text-[#087b72]">Current public beta</p>
+            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">A focused check before you act.</h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
-              The Chrome extension sends the message only after the user asks. A revocable account key protects the request, and the API returns the same score, signals, explanation, and next step as the web scanner.
+              Paste an email, use a screenshot, or open an exported .eml file. Maillume applies the same explainable, versioned risk index to each input and returns a practical next step.
             </p>
             <p className="mt-4 border-l-4 border-[#c78c32] bg-[#fff0cf] px-4 py-3 text-sm leading-6 text-[#714812]">
-              Production account, key, revocation, and quota acceptance is still in progress. Do not rely on the official cloud API until that launch gate closes.
+              Accounts, API keys, Google sign-in, and maintainer-hosted AI are deliberately unavailable in this beta. The web scanner is the only public Maillume service today.
             </p>
             <ul className="mt-7 space-y-3">
-              <PlatformCheck>Strict request size and field validation</PlatformCheck>
-              <PlatformCheck>Structured response shared by heuristic and AI modes</PlatformCheck>
-              <PlatformCheck>No-store response headers</PlatformCheck>
+              <PlatformCheck>Anonymous paste, screenshot, and .eml checks</PlatformCheck>
+              <PlatformCheck>Heuristic analysis with no maintainer-owned provider key</PlatformCheck>
+              <PlatformCheck>No scan history or retained source files</PlatformCheck>
               <PlatformCheck>Automated-assessment disclaimer in every result</PlatformCheck>
             </ul>
-            <a href="/openapi.json" className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">OpenAPI specification <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
           </div>
 
           <div className="overflow-hidden border border-[#111711] bg-[#111711] text-white">
             <div className="flex h-11 items-center justify-between border-b border-white/20 px-4">
-              <span className="font-mono text-[10px] uppercase text-[#dfff52]">POST /api/v1/analyze</span>
-              <span className="font-mono text-[9px] text-[#849083]">authenticated beta</span>
+              <span className="font-mono text-[10px] uppercase text-[#dfff52]">Public beta boundary</span>
+              <span className="font-mono text-[9px] text-[#849083]">web only</span>
             </div>
-            <pre className="overflow-x-auto p-5 text-xs leading-6 text-[#d8e0d6]"><code>{`Authorization: Bearer mlm_...
-
-{
-  "source": "paste",
-  "subject": "Action required",
-  "senderEmail": "notice@example.test",
-  "body": "Review this synthetic message..."
-}
-
-// response
-{
-  "result": {
-    "classification": "likely_phishing",
-    "risk_level": "high",
-    "risk_score": 85,
-    "score_factors": [
-      { "id": "link_mismatch", "family": "destination", "contribution": 30, "label": "Displays one domain but links to another." },
-      { "id": "changed_payment_details", "family": "intent", "contribution": 30, "label": "Changes trusted payment or bank details." },
-      { "id": "brand_lookalike_sender", "family": "identity", "contribution": 25, "label": "The sender appears to imitate a known brand domain." }
-    ],
-    "suspicious_signals": ["..."],
-    "recommended_action": "..."
-  },
-  "analysis_version": "analysis-v2.1",
-  "privacy": { "stored": false }
-}`}</code></pre>
+            <dl className="divide-y divide-white/15 p-5 text-sm">
+              <BetaBoundary label="Scanner" value="Available anonymously" />
+              <BetaBoundary label="Analysis" value="Heuristic only" />
+              <BetaBoundary label="Retention" value="No scan history" />
+              <BetaBoundary label="Accounts and API" value="Disabled" />
+              <BetaBoundary label="Chrome extension" value="Not available" />
+            </dl>
           </div>
         </div>
       </section>
@@ -92,18 +72,18 @@ export default async function PlatformPage() {
         <div className="mx-auto max-w-[1440px] px-5 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr]">
             <div>
-              <p className="font-mono text-[10px] uppercase text-[#dfff52]">Nothing happens in the background</p>
-              <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">The user chooses the message and starts the check.</h2>
+              <p className="font-mono text-[10px] uppercase text-[#dfff52]">A deliberate privacy boundary</p>
+              <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">Nothing scans a mailbox in the background.</h2>
             </div>
             <p className="max-w-3xl text-xl leading-8 text-[#d2e6e2]">
-              Maillume does not crawl a mailbox or silently score incoming mail. The extension limits its access, makes the destination clear, and waits for an explicit Analyze action.
+              Maillume does not crawl a mailbox, silently score incoming email, or use a maintainer-owned AI key in the hosted beta. You choose the message, start the check, and receive a non-binding risk indicator.
             </p>
           </div>
 
           <div className="mt-14 grid border-y border-white/35 md:grid-cols-3 md:divide-x md:divide-white/25">
             <Principle icon={MailCheck} title="User initiated" description="No background mailbox harvesting or silent scanning." />
-            <Principle icon={ShieldCheck} title="Explicit boundary" description="Users know whether analysis is local, official cloud, or self-hosted." />
-            <Principle icon={Braces} title="Portable contract" description="The extension consumes the same structured result shape as the web scanner." />
+            <Principle icon={ShieldCheck} title="Explicit boundary" description="The public service accepts only the current web request and stores no scan history." />
+            <Principle icon={PlugZap} title="Future integrations" description="Browser integration waits for web-beta validation and Chrome Web Store review." />
           </div>
         </div>
       </section>
@@ -112,14 +92,14 @@ export default async function PlatformPage() {
         <div className="mx-auto max-w-[1440px] px-5 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr]">
             <div>
-              <p className="font-mono text-[10px] uppercase text-[#087b72]">Available to test from source</p>
-              <h2 className="mt-4 text-3xl font-semibold text-[#111711]">Bring Maillume closer to the inbox with Chrome.</h2>
+              <p className="font-mono text-[10px] uppercase text-[#087b72]">What follows the web beta</p>
+              <h2 className="mt-4 text-3xl font-semibold text-[#111711]">Expand only after the core service proves itself.</h2>
             </div>
             <div className="border-t border-[#aeb6ac]">
               {roadmap.map((item, index) => (
                 <div key={item.title} className="grid gap-3 border-b border-[#cbd0c5] py-6 sm:grid-cols-[54px_120px_0.7fr_1fr] sm:items-start sm:gap-5">
                   <span className="font-mono text-[10px] text-[#778177]">0{index + 1}</span>
-                  <span className={`w-fit border px-2 py-1 font-mono text-[9px] uppercase ${item.status === "Acceptance pending" ? "border-[#c78c32] bg-[#fff0cf] text-[#714812]" : "border-[#111711] bg-[#eef1eb] text-[#374238]"}`}>{item.status}</span>
+                  <span className={`w-fit border px-2 py-1 font-mono text-[9px] uppercase ${item.status === "Disabled for public beta" ? "border-[#c78c32] bg-[#fff0cf] text-[#714812]" : "border-[#111711] bg-[#eef1eb] text-[#374238]"}`}>{item.status}</span>
                   <h3 className="font-semibold text-[#111711]">{item.title}</h3>
                   <p className="text-sm leading-6 text-[#59655a]">{item.description}</p>
                 </div>
@@ -132,10 +112,10 @@ export default async function PlatformPage() {
       <section className="bg-[#dfff52]">
         <div className="mx-auto flex max-w-[1440px] flex-col gap-7 px-5 py-14 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div>
-            <p className="font-mono text-[10px] uppercase text-[#59655a]">Help shape the extension</p>
-            <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-[#111711]">Review the permissions, test the Chrome source beta, and help us earn a place in the inbox.</h2>
+            <p className="font-mono text-[10px] uppercase text-[#59655a]">Follow the public beta</p>
+            <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-[#111711]">Early feedback should improve the web scanner before Maillume asks for more access.</h2>
           </div>
-          <a href={SOURCE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="inline-flex h-12 flex-none items-center justify-center gap-2 bg-[#111711] px-5 text-sm font-semibold text-white hover:bg-[#087b72]"><Blocks className="h-4 w-4" aria-hidden="true" /> View the roadmap</a>
+          <a href={SOURCE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="inline-flex h-12 flex-none items-center justify-center gap-2 bg-[#111711] px-5 text-sm font-semibold text-white hover:bg-[#087b72]"><Github className="h-4 w-4" aria-hidden="true" /> View the roadmap</a>
         </div>
       </section>
       <SiteFooter />
@@ -145,6 +125,10 @@ export default async function PlatformPage() {
 
 function PlatformCheck({ children }: { children: React.ReactNode }) {
   return <li className="flex gap-3 text-sm leading-6 text-[#4f5b50]"><Check className="mt-1 h-4 w-4 flex-none text-[#087b72]" aria-hidden="true" />{children}</li>;
+}
+
+function BetaBoundary({ label, value }: { label: string; value: string }) {
+  return <div className="grid grid-cols-[1fr_auto] gap-4 py-3 first:pt-0 last:pb-0"><dt className="text-[#b8c4b6]">{label}</dt><dd className="font-mono text-xs text-[#dfff52]">{value}</dd></div>;
 }
 
 function Principle({ description, icon: Icon, title }: { description: string; icon: typeof PlugZap; title: string }) {

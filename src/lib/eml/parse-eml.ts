@@ -1,9 +1,15 @@
-import type { EmailLinkPair } from "../types";
+import { MAX_SCAN_BODY_LENGTH, type EmailLinkPair } from "../types";
 
 const HEADER_BODY_SEPARATOR = /\r?\n\r?\n/;
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 const HREF_PATTERN = /\bhref\s*=\s*["']([^"']+)["']/gi;
 const HTML_LINK_PAIR_PATTERN = /<a\b[^>]*href\s*=\s*["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+export const MAX_EML_HEADER_CHARACTERS = 64 * 1024;
+export const MAX_EML_MULTIPART_SECTIONS = 64;
+export const MAX_EML_PART_BODY_CHARACTERS = 64 * 1024;
+export const MAX_EML_ATTACHMENT_NAMES = 25;
+export const MAX_EML_LINKS = 100;
+export const MAX_EML_LINK_LENGTH = 2_048;
 
 export type ParsedEml = {
   subject?: string;
@@ -17,7 +23,7 @@ export type ParsedEml = {
 export function parseEml(raw: string): ParsedEml {
   const [rawHeaders, ...bodyParts] = raw.split(HEADER_BODY_SEPARATOR);
   const bodySource = bodyParts.join("\n\n");
-  const headers = parseHeaders(rawHeaders);
+  const headers = parseHeaders(rawHeaders.slice(0, MAX_EML_HEADER_CHARACTERS));
   const subject = decodeHeader(headers.get("subject"));
   const from = decodeHeader(headers.get("from"));
   const senderEmail = extractEmail(from);
@@ -30,7 +36,7 @@ export function parseEml(raw: string): ParsedEml {
   const linkPairs: EmailLinkPair[] = [];
   const attachmentNames: string[] = [];
 
-  for (const section of sections) {
+  for (const section of sections.slice(0, MAX_EML_MULTIPART_SECTIONS)) {
     const sectionHeaders = boundary ? getSectionHeaders(section) : headers;
     const sectionBody = boundary ? getSectionBody(section) : section;
     const sectionContentType = sectionHeaders.get("content-type") ?? "text/plain";
@@ -40,15 +46,20 @@ export function parseEml(raw: string): ParsedEml {
       getHeaderParameter(disposition, "filename") ?? getHeaderParameter(sectionContentType, "name");
 
     if (/attachment/i.test(disposition) || filename) {
-      attachmentNames.push(decodeHeader(filename) ?? "Unnamed attachment");
+      if (attachmentNames.length < MAX_EML_ATTACHMENT_NAMES) {
+        attachmentNames.push(decodeHeader(filename) ?? "Unnamed attachment");
+      }
       continue;
     }
 
-    const decodedBody = decodeTransferBody(sectionBody, transferEncoding);
-    rawLinks.push(...extractLinks(decodedBody));
+    const decodedBody = decodeTransferBody(
+      sectionBody.slice(0, MAX_EML_PART_BODY_CHARACTERS),
+      transferEncoding,
+    );
+    appendWithinLimit(rawLinks, extractLinks(decodedBody), MAX_EML_LINKS);
 
     if (/text\/html/i.test(sectionContentType)) {
-      linkPairs.push(...extractDisplayedLinkPairs(decodedBody));
+      appendWithinLimit(linkPairs, extractDisplayedLinkPairs(decodedBody), MAX_EML_LINKS);
       htmlParts.push(htmlToText(decodedBody));
     } else if (/text\/plain/i.test(sectionContentType) || sections.length === 1) {
       textParts.push(decodedBody.trim());
@@ -58,15 +69,16 @@ export function parseEml(raw: string): ParsedEml {
   const body = [textParts.join("\n\n"), htmlParts.join("\n\n"), attachmentSummary(attachmentNames)]
     .filter(Boolean)
     .join("\n\n")
-    .trim();
-  const links = Array.from(new Set([...rawLinks, ...extractLinks(body)]));
+    .trim()
+    .slice(0, MAX_SCAN_BODY_LENGTH);
+  const links = Array.from(new Set([...rawLinks, ...extractLinks(body)])).slice(0, MAX_EML_LINKS);
 
   return {
     subject,
     senderEmail,
     body,
     links,
-    linkPairs: deduplicateLinkPairs(linkPairs),
+    linkPairs: deduplicateLinkPairs(linkPairs).slice(0, MAX_EML_LINKS),
     attachmentNames,
   };
 }
@@ -75,10 +87,17 @@ function extractDisplayedLinkPairs(html: string): EmailLinkPair[] {
   return Array.from(html.matchAll(HTML_LINK_PAIR_PATTERN)).flatMap((match) => {
     const displayedUrl = htmlToText(match[2]).match(LINK_PATTERN)?.[0];
     if (!displayedUrl) return [];
-    return [{
-      displayedUrl: displayedUrl.replace(/[.,!?;:]+$/, ""),
-      destinationUrl: match[1].replace(/[.,!?;:]+$/, ""),
-    }];
+    const normalizedDisplayedUrl = displayedUrl.replace(/[.,!?;:]+$/, "");
+    const normalizedDestinationUrl = match[1].replace(/[.,!?;:]+$/, "");
+
+    if (
+      normalizedDisplayedUrl.length > MAX_EML_LINK_LENGTH ||
+      normalizedDestinationUrl.length > MAX_EML_LINK_LENGTH
+    ) {
+      return [];
+    }
+
+    return [{ displayedUrl: normalizedDisplayedUrl, destinationUrl: normalizedDestinationUrl }];
   });
 }
 
@@ -91,7 +110,7 @@ function deduplicateLinkPairs(pairs: EmailLinkPair[]): EmailLinkPair[] {
 function getSectionHeaders(section: string): Map<string, string> {
   const [sectionHeadersRaw] = section.split(HEADER_BODY_SEPARATOR);
 
-  return parseHeaders(sectionHeadersRaw);
+  return parseHeaders(sectionHeadersRaw.slice(0, MAX_EML_HEADER_CHARACTERS));
 }
 
 function getSectionBody(section: string): string {
@@ -103,9 +122,9 @@ function getSectionBody(section: string): string {
 function extractLinks(content: string): string[] {
   const visibleLinks = Array.from(content.matchAll(LINK_PATTERN), (match) =>
     match[0].replace(/[.,!?;:]+$/, ""),
-  );
+  ).filter((link) => link.length <= MAX_EML_LINK_LENGTH);
   const hrefLinks = Array.from(content.matchAll(HREF_PATTERN), (match) => match[1]).filter((link) =>
-    /^https?:\/\//i.test(link),
+    /^https?:\/\//i.test(link) && link.length <= MAX_EML_LINK_LENGTH,
   );
 
   return [...visibleLinks, ...hrefLinks];
@@ -231,4 +250,12 @@ function attachmentSummary(attachmentNames: string[]): string {
   }
 
   return `Attachment metadata:\n${attachmentNames.map((name) => `- ${name}`).join("\n")}`;
+}
+
+function appendWithinLimit<T>(target: T[], values: T[], limit: number): void {
+  const remaining = limit - target.length;
+
+  if (remaining > 0) {
+    target.push(...values.slice(0, remaining));
+  }
 }

@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import { getTrustedClientIdentifier } from "../security/client-identifier";
 
 export const FEEDBACK_RATE_LIMIT_MAX_REQUESTS = 5;
 export const FEEDBACK_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1_000;
@@ -11,6 +12,7 @@ type FeedbackRateLimitBucket = {
 export type FeedbackRateLimitStore = Map<string, FeedbackRateLimitBucket>;
 
 type FeedbackRateLimitOptions = {
+  env?: Pick<NodeJS.ProcessEnv, "NODE_ENV">;
   now?: () => number;
   salt?: string;
   store?: FeedbackRateLimitStore;
@@ -38,7 +40,7 @@ export function enforceFeedbackRateLimit(
   const now = options.now?.() ?? Date.now();
   const store = options.store ?? getGlobalStore();
   const salt = options.salt ?? getProcessSalt();
-  const key = hashEphemeralClientId(getClientIdentifier(request.headers), salt);
+  const key = hashEphemeralClientId(getTrustedClientIdentifier(request.headers, options.env), salt);
   const bucket = store.get(key);
 
   if (!bucket || bucket.resetAt <= now) {
@@ -68,15 +70,4 @@ function getProcessSalt(): string {
 
 function hashEphemeralClientId(clientId: string, salt: string): string {
   return createHash("sha256").update(salt).update(clientId).digest("base64url");
-}
-
-function getClientIdentifier(headers: Headers): string {
-  const forwardedFor = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-
-  return (
-    forwardedFor ??
-    headers.get("cf-connecting-ip")?.trim() ??
-    headers.get("x-real-ip")?.trim() ??
-    "anonymous"
-  );
 }

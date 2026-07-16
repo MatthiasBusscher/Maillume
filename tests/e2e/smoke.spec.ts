@@ -45,15 +45,17 @@ test("language switching updates the scanner", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "The safety workflow stays free." })).toBeVisible();
 
   await page.goto("/account");
-  await expect(page).toHaveURL(/\/account$/);
+  await expect(page).toHaveURL(/\/app$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   const localeCookies = (await page.context().cookies()).filter(
     ({ name }) => name === "maillume-locale-v2",
   );
   expect(localeCookies).toHaveLength(1);
   expect(localeCookies[0].value).toBe("en");
-  const privacyLink = page.getByRole("link", { name: "Privacy" });
+  await page.goto("/privacy");
+  const privacyLink = page.getByRole("link", { name: "Privacy", exact: true });
   await expect(privacyLink).toBeVisible();
+  await privacyLink.scrollIntoViewIfNeeded();
   const footer = privacyLink.locator("xpath=ancestor::footer");
   const footerBox = await footer.boundingBox();
   const viewportHeight = await page.evaluate(() => window.innerHeight);
@@ -136,20 +138,18 @@ test("Dutch marketing preview and app navigation are visibly localized", async (
   await expect(page.getByText("Checks risk patterns and returns structured JSON.", { exact: true })).toHaveCount(0);
 
   await page.goto("/nl/pricing");
-  await expect(page.getByText("Releasekandidaat", { exact: true })).toBeVisible();
+  await expect(page.getByText("Kandidaat voor openbare beta", { exact: true })).toBeVisible();
 
   await page.goto("/nl/app");
-  const signIn = page.getByRole("link", { name: "Inloggen", exact: true });
   const menu = page.locator('summary[aria-label="Meer opties"]');
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(signIn).toBeVisible();
+  await expect(page.getByRole("link", { name: "Inloggen", exact: true })).toHaveCount(0);
   await expect(menu).toBeVisible();
-  expect((await signIn.boundingBox())!.width).toBe(40);
 
   for (const width of [640, 768, 900, 1280]) {
     await page.setViewportSize({ width, height: 800 });
-    await expect(signIn).toBeVisible();
+    await expect(page.getByRole("link", { name: "Inloggen", exact: true })).toHaveCount(0);
     await expect(menu).toBeVisible();
     expect((await page.locator("header").boundingBox())!.height).toBe(64);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width + 1);
@@ -382,40 +382,37 @@ test("marketing routes accurately distinguish available and source-beta features
 
   await page.goto("/pricing");
   await expect(page.getByRole("heading", { name: "The safety workflow stays free." })).toBeVisible();
-  await expect(page.getByText("Release candidate", { exact: true })).toBeVisible();
+  await expect(page.getByText("Public-beta candidate", { exact: true })).toBeVisible();
   await expect(page.getByText("Planned, not for sale")).toBeVisible();
 
   await page.goto("/self-hosted");
   await expect(page.getByRole("heading", { name: /Your infrastructure/ })).toBeVisible();
 
   await page.goto("/platform");
-  await expect(page.getByText("Implemented in source").first()).toBeVisible();
-  await expect(page.getByText("Acceptance pending", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("Source beta", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The web scanner comes first." })).toBeVisible();
+  await expect(page.getByText("Disabled for public beta", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("After web beta", { exact: true }).first()).toBeVisible();
 });
 
-test("Google sign-in degrades safely when Supabase auth is not configured", async ({ page }) => {
-  await page.goto("/auth/sign-in");
+test("public beta hides accounts and rejects account APIs before request processing", async ({ page, request }) => {
+  for (const path of ["/auth/sign-in", "/auth/mfa", "/auth/update-password", "/account", "/nl/auth/sign-in", "/nl/account"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/(?:nl\/)?app$/);
+  }
 
-  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeDisabled();
-  await expect(page.getByText("The scanner still works without an account.")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Open scanner" })).toHaveAttribute("href", "/app");
-});
+  await page.goto("/app");
+  await expect(page.getByRole("link", { name: "Sign in" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Account" })).toHaveCount(0);
 
-test("email entry keeps the sign-in card compact", async ({ page }) => {
-  await page.goto("/auth/sign-in");
-  await page.getByRole("button", { name: "Create account", exact: true }).first().click();
-
-  const googleButton = page.getByRole("button", { name: "Continue with Google" });
-  await expect(googleButton).toBeVisible();
-  await page.getByLabel("Email address").fill("person@example.com");
-  await expect(googleButton).toBeHidden();
-  const otherMethods = page.getByRole("button", { name: "Other sign-in methods" });
-  await expect(otherMethods).toHaveAttribute("aria-expanded", "false");
-  await otherMethods.click();
-  await expect(googleButton).toBeVisible();
-  await page.getByLabel("Email address").fill("");
-  await expect(googleButton).toBeVisible();
+  for (const response of [
+    await request.get("/account/api-keys"),
+    await request.post("/account/delete", { data: "x".repeat(8_192), headers: { "Content-Type": "text/plain" } }),
+    await request.post("/account/language", { data: "x".repeat(8_192), headers: { "Content-Type": "text/plain" } }),
+    await request.post("/api/v1/analyze", { data: "x".repeat(8_192), headers: { "Content-Type": "text/plain" } }),
+  ]) {
+    expect(response.status()).toBe(404);
+    expect(response.headers()["cache-control"]).toContain("no-store");
+  }
 });
 
 test("trust pages are publicly accessible", async ({ page }) => {
@@ -427,6 +424,13 @@ test("trust pages are publicly accessible", async ({ page }) => {
     await page.goto(path);
     await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
   }
+  await page.goto("/privacy");
+  await expect(page.getByRole("link", { name: "privacy@maillume.io" })).toHaveAttribute("href", "mailto:privacy@maillume.io");
+  await expect(page.getByText("Example B.V.")).toBeVisible();
+  await page.goto("/security");
+  await expect(page.getByRole("link", { name: "security@maillume.io" })).toHaveAttribute("href", "mailto:security@maillume.io");
+  await page.goto("/terms");
+  await expect(page.getByRole("link", { name: "support@maillume.io" })).toHaveAttribute("href", "mailto:support@maillume.io");
 });
 
 test("the app subdomain root resolves to the scanner workspace", async ({ request }) => {
@@ -452,7 +456,7 @@ test("an OAuth code returned to the app root is recovered by the callback route"
   expect(callbackLocation.searchParams.get("code")).toBe("synthetic-code");
 });
 
-test("OAuth provider errors are sanitized and cannot fall through to the scanner", async ({ page, request }) => {
+test("anonymous beta discards OAuth callback values and returns to the scanner", async ({ page, request }) => {
   const rawQuery = "error=access_denied&error_description=sensitive-provider-detail&state=synthetic-state";
   const rootResponse = await request.get(`/?${rawQuery}`, {
     headers: { Host: "app.maillume.io" },
@@ -461,23 +465,25 @@ test("OAuth provider errors are sanitized and cannot fall through to the scanner
 
   expect(rootResponse.status()).toBe(307);
   const rootLocation = new URL(rootResponse.headers().location);
-  expect(rootLocation.pathname).toBe("/auth/sign-in");
-  expect(rootLocation.searchParams.get("error")).toBe("oauth_provider_failed");
-  expect(rootLocation.searchParams.has("error_description")).toBe(false);
-  expect(rootLocation.searchParams.has("state")).toBe(false);
+  expect(rootLocation.pathname).toBe("/app");
+  expect(rootLocation.search).toBe("");
 
   const callbackResponse = await request.get(`/auth/callback?${rawQuery}`, {
     maxRedirects: 0,
   });
   expect(callbackResponse.status()).toBe(307);
   const callbackLocation = new URL(callbackResponse.headers().location);
-  expect(callbackLocation.pathname).toBe("/auth/sign-in");
-  expect(callbackLocation.searchParams.toString()).toBe("error=oauth_provider_failed");
+  expect(callbackLocation.pathname).toBe("/app");
+  expect(callbackLocation.search).toBe("");
+
+  const callbackCodeResponse = await request.get("/auth/callback?code=synthetic-code", {
+    maxRedirects: 0,
+  });
+  expect(callbackCodeResponse.status()).toBe(307);
+  expect(new URL(callbackCodeResponse.headers().location, callbackCodeResponse.url()).pathname).toBe("/app");
 
   await page.goto("/auth/sign-in?error=oauth_provider_failed");
-  await expect(page.locator("p[role='alert']")).toContainText(
-    "Google did not complete sign-in, so no Maillume session was created.",
-  );
+  await expect(page).toHaveURL(/\/app$/);
   await expect(page.getByText("sensitive-provider-detail")).toHaveCount(0);
 });
 
@@ -487,7 +493,7 @@ test("account deletion rejects cross-origin requests", async ({ request }) => {
     headers: { Origin: "https://attacker.example" },
   });
 
-  expect(response.status()).toBe(403);
+  expect(response.status()).toBe(404);
   expect(response.headers()["cache-control"]).toContain("no-store");
 });
 
@@ -500,24 +506,24 @@ test("sign-out rejects cross-origin requests", async ({ request }) => {
   expect(response.headers()["cache-control"]).toContain("no-store");
 });
 
-test("password updates require a recovery callback", async ({ request }) => {
+test("password updates stay unavailable while accounts are disabled", async ({ request }) => {
   for (const path of ["/auth/update-password", "/nl/auth/update-password"]) {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status()).toBe(307);
-    expect(new URL(response.headers().location, response.url()).pathname).toMatch(/\/auth\/sign-in$/);
+    expect(new URL(response.headers().location, response.url()).pathname).toMatch(/\/(?:nl\/)?app$/);
   }
 });
 
-test("account mutations reject missing origins and oversized bodies", async ({ request }) => {
+test("account mutations remain unavailable regardless of origin or body size", async ({ request }) => {
   const missingDeletionOrigin = await request.post("/account/delete", {
     form: { confirm: "delete" },
   });
-  expect(missingDeletionOrigin.status()).toBe(403);
+  expect(missingDeletionOrigin.status()).toBe(404);
 
   const missingApiKeyOrigin = await request.post("/account/api-keys", {
     data: { lifetimeDays: 30, name: "Browser" },
   });
-  expect(missingApiKeyOrigin.status()).toBe(403);
+  expect(missingApiKeyOrigin.status()).toBe(404);
 
   const oversizedDeletion = await request.post("/account/delete", {
     data: `confirm=delete&padding=${"x".repeat(1_024)}`,
@@ -526,7 +532,7 @@ test("account mutations reject missing origins and oversized bodies", async ({ r
       Origin: "http://127.0.0.1:3100",
     },
   });
-  expect(oversizedDeletion.status()).toBe(413);
+  expect(oversizedDeletion.status()).toBe(404);
 
   const oversizedApiKeyMutation = await request.post("/account/api-keys", {
     data: JSON.stringify({ lifetimeDays: 30, name: "x".repeat(4_096) }),
@@ -535,7 +541,7 @@ test("account mutations reject missing origins and oversized bodies", async ({ r
       Origin: "http://127.0.0.1:3100",
     },
   });
-  expect(oversizedApiKeyMutation.status()).toBe(413);
+  expect(oversizedApiKeyMutation.status()).toBe(404);
 });
 
 test("health endpoint exposes no dependency or secret details", async ({ request }) => {
@@ -623,13 +629,24 @@ test("primary pages fit mobile and desktop viewports without horizontal overflow
   }
 });
 
-test("hosted API requires a valid API key before reading scan content", async ({ request }) => {
+test("hosted API stays unavailable during the anonymous public beta", async ({ request }) => {
   const response = await request.post("/api/v1/analyze", {
     data: { source: "paste", body: "Synthetic message" },
   });
 
-  expect(response.status()).toBe(401);
+  expect(response.status()).toBe(404);
   expect(response.headers()["cache-control"]).toContain("no-store");
+});
+
+test("security headers include the production CSP", async ({ request }) => {
+  const response = await request.get("/");
+  const csp = response.headers()["content-security-policy"];
+
+  expect(csp).toContain("default-src 'self'");
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("frame-ancestors 'none'");
+  expect(csp).toContain("worker-src 'self' blob:");
+  expect(csp).toContain("connect-src 'self'");
 });
 
 test("hosted API publishes its machine-readable contract", async ({ request }) => {

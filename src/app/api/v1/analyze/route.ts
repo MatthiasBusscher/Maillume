@@ -9,6 +9,7 @@ import { enforceAiRateLimit, enforceRequestRateLimit, RateLimitError } from "@/l
 import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
 import { getAnalysisMaxRequestBytes } from "@/lib/analysis/request-limits";
 import { hashApiKey, isApiKeyFormat } from "@/lib/api-keys";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   ANALYSIS_DISCLAIMERS,
@@ -35,6 +36,7 @@ type AdminClient = NonNullable<ReturnType<typeof createSupabaseAdminClient>>;
 class QuotaFinalizationError extends Error {}
 
 export async function POST(request: Request) {
+  if (!areAccountsEnabled()) return jsonError("Not found.", 404);
   const token = getBearerToken(request);
   if (!token || !isApiKeyFormat(token)) return jsonError("A valid Maillume API key is required.", 401);
 

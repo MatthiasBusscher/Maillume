@@ -5,11 +5,13 @@ import { BrandMark } from "@/components/brand-mark";
 import { getAppHref, LICENSE_URL, SOURCE_REPOSITORY_URL } from "@/lib/site";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizePath } from "@/lib/i18n/site-locale";
+import { getOperatorProfile } from "@/lib/operator";
 
 export async function SiteFooter() {
   const locale = await getRequestSiteLocale();
   const nl = locale === "nl";
   const page = (path: string) => localizePath(path, locale);
+  const operator = getOperatorProfile();
   return (
     <footer className="border-t border-black bg-[#111711] text-white">
       <div className="mx-auto grid max-w-[1440px] gap-10 px-5 py-12 sm:px-6 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(120px,0.6fr))] lg:px-8">
@@ -46,6 +48,7 @@ export async function SiteFooter() {
             { href: page("/privacy"), label: "Privacy" },
             { href: page("/terms"), label: nl ? "Voorwaarden" : "Terms" },
             { href: page("/security"), label: nl ? "Beveiliging" : "Security" },
+            { href: `mailto:${operator.supportEmail}`, label: nl ? "Ondersteuning" : "Support", external: true },
           ]}
         />
       </div>

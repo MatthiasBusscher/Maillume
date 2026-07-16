@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { LockKeyhole } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
@@ -8,7 +9,9 @@ import { getAppHref, getMarketingHref } from "@/lib/site";
 import { accountEn } from "@/lib/i18n/account-en";
 import { accountNl } from "@/lib/i18n/account-nl";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
+import { localizePath } from "@/lib/i18n/site-locale";
 import { arePasskeysEnabled, getPublicSupabaseConfig } from "@/lib/supabase/config";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 
 export async function generateMetadata(): Promise<Metadata> {
   const dictionary = (await getRequestSiteLocale()) === "nl" ? accountNl : accountEn;
@@ -21,6 +24,9 @@ export default async function SignInPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const locale = await getRequestSiteLocale();
+  if (!areAccountsEnabled()) {
+    redirect(localizePath("/app", locale));
+  }
   const dictionary = locale === "nl" ? accountNl : accountEn;
   const copy = dictionary.signIn;
   const configured = getPublicSupabaseConfig() !== null;

@@ -5,6 +5,7 @@ import { BrandMark } from "@/components/brand-mark";
 import { getAppHref, getAppRouteHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
 import { getRequestPathname, getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizePath } from "@/lib/i18n/site-locale";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 
 export async function SiteHeader() {
   const [locale, pathname] = await Promise.all([getRequestSiteLocale(), getRequestPathname()]);
@@ -20,6 +21,7 @@ export async function SiteHeader() {
   const appHref = localizeHref(getAppHref(), locale);
   const signInHref = localizeHref(getAppRouteHref("/auth/sign-in"), locale);
   const navigation = copy.navigation.map(([href, label]) => ({ href: localizePath(href, locale), label }));
+  const accountsEnabled = areAccountsEnabled();
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#cbd0c5] bg-[#f7f8f4]/95 backdrop-blur">
@@ -47,13 +49,15 @@ export async function SiteHeader() {
 
         <div className="hidden items-center gap-2 md:flex">
           <SiteLanguageLinks locale={locale} pathname={pathname} />
-          <Link
-            href={signInHref}
-            className="inline-flex h-10 items-center gap-2 border border-[#aeb6ac] px-4 text-sm font-semibold text-[#2b342c] transition hover:border-[#111711] hover:bg-white"
-          >
-            <LogIn className="h-4 w-4" aria-hidden="true" />
-            {copy.signIn}
-          </Link>
+          {accountsEnabled ? (
+            <Link
+              href={signInHref}
+              className="inline-flex h-10 items-center gap-2 border border-[#aeb6ac] px-4 text-sm font-semibold text-[#2b342c] transition hover:border-[#111711] hover:bg-white"
+            >
+              <LogIn className="h-4 w-4" aria-hidden="true" />
+              {copy.signIn}
+            </Link>
+          ) : null}
           <a
             href={appHref}
             className="inline-flex h-10 items-center gap-2 bg-[#111711] px-4 text-sm font-semibold text-white transition hover:bg-[#087b72]"
@@ -93,15 +97,17 @@ export async function SiteHeader() {
             </nav>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <div className="col-span-2"><SiteLanguageLinks locale={locale} pathname={pathname} /></div>
-              <Link
-                href={signInHref}
-                className="inline-flex h-10 items-center justify-center border border-[#aeb6ac] bg-white px-3 text-sm font-semibold"
-              >
-                {copy.signIn}
-              </Link>
+              {accountsEnabled ? (
+                <Link
+                  href={signInHref}
+                  className="inline-flex h-10 items-center justify-center border border-[#aeb6ac] bg-white px-3 text-sm font-semibold"
+                >
+                  {copy.signIn}
+                </Link>
+              ) : null}
               <a
                 href={appHref}
-                className="inline-flex h-10 items-center justify-center bg-[#111711] px-3 text-sm font-semibold text-white"
+                className={`inline-flex h-10 items-center justify-center bg-[#111711] px-3 text-sm font-semibold text-white ${accountsEnabled ? "" : "col-span-2"}`}
               >
                 {copy.openScanner}
               </a>

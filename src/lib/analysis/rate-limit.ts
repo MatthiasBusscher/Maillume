@@ -1,4 +1,5 @@
 import type { AnalysisConfig } from "./config";
+import { getTrustedClientIdentifier } from "../security/client-identifier";
 
 export type AiRateLimitBucket = {
   count: number;
@@ -8,6 +9,7 @@ export type AiRateLimitBucket = {
 export type AiRateLimitStore = Map<string, AiRateLimitBucket>;
 
 type AiRateLimitOptions = {
+  env?: Pick<NodeJS.ProcessEnv, "NODE_ENV">;
   now?: () => number;
   store?: AiRateLimitStore;
 };
@@ -37,7 +39,7 @@ export function enforceAiRateLimit(
 
   const now = options.now?.() ?? Date.now();
   const store = options.store ?? getGlobalRateLimitStore();
-  const clientId = getClientIdentifier(request.headers);
+  const clientId = getTrustedClientIdentifier(request.headers, options.env);
   const key = `${config.provider}:${clientId}`;
   const bucket = store.get(key);
 
@@ -65,7 +67,7 @@ export function enforceRequestRateLimit(
 ): void {
   const now = options.now?.() ?? Date.now();
   const store = options.store ?? getGlobalRateLimitStore();
-  const key = `request:${getClientIdentifier(request.headers)}`;
+  const key = `request:${getTrustedClientIdentifier(request.headers, options.env)}`;
   const bucket = store.get(key);
 
   if (!bucket || bucket.resetAt <= now) {
@@ -84,22 +86,4 @@ function getGlobalRateLimitStore(): AiRateLimitStore {
   globalThis.__maillumeAnalysisRateLimitStore ??= new Map<string, AiRateLimitBucket>();
 
   return globalThis.__maillumeAnalysisRateLimitStore;
-}
-
-function getClientIdentifier(headers: Headers): string {
-  const cloudflareClient = headers.get("cf-connecting-ip")?.trim();
-  const forwardedFor = getFirstHeaderValue(headers.get("x-forwarded-for"));
-
-  return (
-    cloudflareClient ??
-    forwardedFor ??
-    headers.get("x-real-ip")?.trim() ??
-    "anonymous"
-  );
-}
-
-function getFirstHeaderValue(value: string | null): string | undefined {
-  const firstValue = value?.split(",")[0]?.trim();
-
-  return firstValue ? firstValue : undefined;
 }
