@@ -33,21 +33,21 @@ Paste an email, add a screenshot, or open an exported `.eml` file. Maillume show
 - **No scan history:** email content and completed assessments are not written to a scan database.
 - **Useful without an account:** anonymous heuristic scanning is the permanent free core.
 - **Self-hostable:** run the complete scanner in Docker and optionally connect your own AI provider.
-- **Bilingual from the start:** the web interface and Chrome extension source beta support English and Dutch.
+- **Bilingual from the start:** the web interface supports English and Dutch.
 - **Built in the open:** AGPL-3.0 source, public issues, security guidance, and a documented result contract.
 
 ## Project Status
 
-Maillume is a release candidate preparing for private beta. The scanner works today; production acceptance and Chrome Web Store publication remain explicit launch gates.
+Maillume is a public-beta candidate. The anonymous scanner works today; account features and Chrome Web Store publication remain separate production gates.
 
 | Capability | Status |
 | --- | --- |
-| Anonymous English and Dutch web scanner | Release candidate |
+| Anonymous English and Dutch web scanner | Public-beta candidate |
 | Paste, screenshot OCR, and `.eml` input | Available |
 | Local heuristic assessment | Available |
 | Self-hosted AI with an operator-owned key | Available from source |
-| Email/Google accounts, TOTP 2FA, and hosted API keys | Implemented; production acceptance in progress |
-| Chrome extension | Source beta; Chrome Web Store publication pending |
+| Email/Google accounts, TOTP 2FA, and hosted API keys | Implemented; disabled until production acceptance |
+| Chrome extension | In validation; not advertised or distributed during web beta |
 | Maintainer-hosted AI and payments | Not implemented |
 
 Follow [production acceptance](https://github.com/MatthiasBusscher/Maillume/issues/38), [integration publication](https://github.com/MatthiasBusscher/Maillume/issues/39), and the [private-beta rehearsal](https://github.com/MatthiasBusscher/Maillume/issues/40) on GitHub.

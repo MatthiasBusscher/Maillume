@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { BrandMark } from "@/components/brand-mark";
 import { getSafeOAuthRedirectUrl } from "@/app/auth/callback/redirect";
@@ -8,6 +9,7 @@ import { accountEn } from "@/lib/i18n/account-en";
 import { accountNl } from "@/lib/i18n/account-nl";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizePath } from "@/lib/i18n/site-locale";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 
 export const metadata: Metadata = {
   title: "Two-factor verification",
@@ -20,6 +22,9 @@ export default async function MfaPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const locale = await getRequestSiteLocale();
+  if (!areAccountsEnabled()) {
+    redirect(localizePath("/app", locale));
+  }
   const labels = (locale === "nl" ? accountNl : accountEn).signIn.mfa;
   const nextPath = getSafeNextPath((await searchParams).next, localizePath("/account", locale));
 

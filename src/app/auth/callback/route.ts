@@ -18,6 +18,7 @@ import {
 } from "@/lib/i18n/site-locale";
 import { getPublicAppOrigin } from "./origin";
 import { getSafeOAuthRedirectUrl } from "./redirect";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 
 const DEFAULT_REDIRECT_PATH = "/account";
 
@@ -34,6 +35,10 @@ export async function GET(request: Request) {
   });
   const redirectUrl = getSafeOAuthRedirectUrl(requestedNext, publicOrigin);
   const fallbackLocale = getCallbackLocale(requestUrl, redirectUrl);
+
+  if (!areAccountsEnabled()) {
+    return privateRedirect(new URL(localizePath("/app", fallbackLocale), publicOrigin), false, fallbackLocale);
+  }
 
   if (hasOAuthErrorReturn(requestUrl)) {
     return privateRedirect(getOAuthFailureUrl(publicOrigin));

@@ -51,6 +51,8 @@ function main() {
   const oauthReturnContent = readProjectFile("src/lib/auth/oauth-return.ts");
   const middlewareContent = readProjectFile("src/middleware.ts");
   const accountDeletionContent = readProjectFile("src/app/account/delete/route.ts");
+  const accountLanguageContent = readProjectFile("src/app/account/language/route.ts");
+  const accountConfig = readProjectFile("src/lib/accounts/config.ts");
   const signOutRouteContent = readProjectFile("src/app/auth/sign-out/route.ts");
   const supabaseConfig = readProjectFile("supabase/config.toml");
   const accountRequestGuard = readProjectFile("src/lib/security/account-request.ts");
@@ -83,6 +85,11 @@ function main() {
   );
   const hostedApiRoute = readProjectFile("src/app/api/v1/analyze/route.ts");
   const accountApiKeysRoute = readProjectFile("src/app/account/api-keys/route.ts");
+  const operatorConfig = readProjectFile("src/lib/operator.ts");
+  const clientIdentifier = readProjectFile("src/lib/security/client-identifier.ts");
+  const scanLimits = readProjectFile("src/lib/scan-limits.ts");
+  const ocrExtractor = readProjectFile("src/lib/ocr/extract-text.ts");
+  const emlParser = readProjectFile("src/lib/eml/parse-eml.ts");
   const extensionManifest = readProjectFile("integrations/browser-extension/manifest.json");
   const extensionPanel = readProjectFile("integrations/browser-extension/sidepanel.js");
   const ciWorkflow = readProjectFile(".github/workflows/ci.yml");
@@ -102,6 +109,12 @@ function main() {
   assert.match(authRedirectContent, /UNSAFE_REDIRECT_CHARACTERS/);
   assert.match(authRedirectContent, /destination\.origin === fallbackUrl\.origin/);
   assert.match(authCallbackContent, /private, no-cache, no-store/);
+  assert.match(authCallbackContent, /if \(!areAccountsEnabled\(\)\)/);
+  assert.ok(
+    authCallbackContent.indexOf("if (!areAccountsEnabled())") <
+      authCallbackContent.indexOf("exchangeCodeForSession"),
+    "the anonymous beta must reject OAuth callbacks before exchanging a session code",
+  );
   assert.match(authCallbackContent, /hasOAuthErrorReturn\(requestUrl\)/);
   assert.match(middlewareContent, /hasOAuthErrorReturn\(request\.nextUrl\)/);
   assert.match(oauthReturnContent, /OAUTH_PROVIDER_FAILURE_CODE = "oauth_provider_failed"/);
@@ -112,6 +125,30 @@ function main() {
   assert.match(accountDeletionContent, /ACCOUNT_DELETE_MAX_REQUEST_BYTES/);
   assert.match(accountDeletionContent, /hasRecentAuthentication\(data\.user\.last_sign_in_at\)/);
   assert.match(accountDeletionContent, /private, no-cache, no-store/);
+  assert.match(accountDeletionContent, /if \(!areAccountsEnabled\(\)\)/);
+  assert.ok(
+    accountDeletionContent.indexOf("if (!areAccountsEnabled())") <
+      accountDeletionContent.indexOf("const rawBody = await readBoundedRequestBody"),
+    "the anonymous beta must reject deletion before reading its request body",
+  );
+  assert.match(accountLanguageContent, /if \(!areAccountsEnabled\(\)\)/);
+  assert.ok(
+    accountLanguageContent.indexOf("if (!areAccountsEnabled())") <
+      accountLanguageContent.indexOf("const body = await readBoundedRequestBody"),
+    "the anonymous beta must reject language changes before reading their request body",
+  );
+  assert.match(accountConfig, /env\.ACCOUNTS_ENABLED === "true"/);
+  assert.match(accountApiKeysRoute, /if \(!areAccountsEnabled\(\)\) return disabledResponse\(\);/g);
+  assert.ok(
+    hostedApiRoute.indexOf("if (!areAccountsEnabled())") < hostedApiRoute.indexOf("getBearerToken"),
+    "the anonymous beta must reject hosted API calls before reading credentials or request content",
+  );
+  assert.match(middlewareContent, /if \(!areAccountsEnabled\(\)\) \{\s*return response;/);
+  assert.match(operatorConfig, /getPublicBetaOperatorProfile/);
+  assert.match(operatorConfig, /Public-beta operator configuration is incomplete/);
+  assert.match(clientIdentifier, /cf-connecting-ip/);
+  assert.match(clientIdentifier, /environment\.NODE_ENV === "production"/);
+  assert.doesNotMatch(clientIdentifier, /x-forwarded-for[\s\S]*cf-connecting-ip/);
   assert.ok(
     accountDeletionContent.indexOf("getUser()") <
       accountDeletionContent.indexOf("admin.auth.admin.deleteUser"),
@@ -175,6 +212,11 @@ function main() {
   assert.match(nextConfigContent, /X-Frame-Options/);
   assert.match(nextConfigContent, /source: "\/\(\.\*\)"/);
   assert.match(nextConfigContent, /frame-ancestors 'none'/);
+  assert.match(nextConfigContent, /default-src 'self'/);
+  assert.match(nextConfigContent, /object-src 'none'/);
+  assert.match(nextConfigContent, /connect-src 'self'/);
+  assert.match(nextConfigContent, /worker-src 'self' blob:/);
+  assert.match(nextConfigContent, /upgrade-insecure-requests/);
   assert.doesNotMatch(nextConfigContent, /office\.com|outlook\.com/);
   assert.match(nextConfigContent, /Referrer-Policy/);
   assert.match(nextConfigContent, /Permissions-Policy/);
@@ -278,6 +320,16 @@ function main() {
   assert.match(deployScript, /--env-file "\$production_env"/);
   assert.match(deployScript, /--env-file "\$infrastructure_env"/);
   assert.match(deployScript, /MAILLUME_IMAGE="\$previous_image"/);
+  assert.match(scanLimits, /MAX_SCREENSHOT_PIXELS = 20_000_000/);
+  assert.match(scanLimits, /MAX_SCREENSHOT_DIMENSION = 8_000/);
+  assert.match(scanLimits, /hasSupportedScreenshotSignature/);
+  assert.match(scanLimits, /isWithinScreenshotDimensionLimit/);
+  assert.match(ocrExtractor, /OCR_TIMEOUT_MS = 45_000/);
+  assert.match(ocrExtractor, /createWorker\("eng\+nld"/);
+  assert.match(ocrExtractor, /worker\.terminate\(\)/);
+  assert.match(emlParser, /MAX_EML_MULTIPART_SECTIONS = 64/);
+  assert.match(emlParser, /MAX_EML_ATTACHMENT_NAMES = 25/);
+  assert.match(emlParser, /MAX_EML_LINKS = 100/);
   assert.match(licenseContent, /GNU AFFERO GENERAL PUBLIC LICENSE/);
   assert.match(licenseContent, /13\. Remote Network Interaction/);
   assert.equal(packageMetadata.license, "AGPL-3.0-only");

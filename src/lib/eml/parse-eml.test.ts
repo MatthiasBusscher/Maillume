@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 
 import { analyzeEmailHeuristic, collectHeuristicEvidence } from "../analysis/heuristic-analysis";
-import { parseEml } from "./parse-eml";
+import { MAX_SCAN_BODY_LENGTH } from "../types";
+import {
+  MAX_EML_ATTACHMENT_NAMES,
+  MAX_EML_LINKS,
+  MAX_EML_MULTIPART_SECTIONS,
+  parseEml,
+} from "./parse-eml";
 
 function main() {
   const parsed = parseEml(`From: Security Team <security@example.test>
@@ -75,6 +81,26 @@ Content-Type: text/html; charset=UTF-8
     linkPairs: parityEml.linkPairs,
   }).evidence.includes("short_url"));
   assert.ok(emlResult.score_factors.some((factor) => factor.id === "link_mismatch"));
+
+  const oversizedBody = parseEml(`Content-Type: text/plain
+
+${"x".repeat(MAX_SCAN_BODY_LENGTH + 1_000)}`);
+  assert.equal(oversizedBody.body.length, MAX_SCAN_BODY_LENGTH);
+
+  const attachmentParts = Array.from(
+    { length: MAX_EML_MULTIPART_SECTIONS + 5 },
+    (_, index) => `--cap\nContent-Type: text/plain\nContent-Disposition: attachment; filename=file-${index}.txt\n\nignored`,
+  ).join("\n");
+  const boundedMultipart = parseEml(`Content-Type: multipart/mixed; boundary=cap
+
+${attachmentParts}
+--cap--`);
+  assert.equal(boundedMultipart.attachmentNames.length, MAX_EML_ATTACHMENT_NAMES);
+
+  const manyLinks = parseEml(`Content-Type: text/plain
+
+${Array.from({ length: MAX_EML_LINKS + 10 }, (_, index) => `https://example-${index}.test/path`).join(" ")}`);
+  assert.equal(manyLinks.links.length, MAX_EML_LINKS);
 
   console.log("Checked .eml parsing regressions.");
 }

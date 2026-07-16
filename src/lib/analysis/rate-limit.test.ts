@@ -122,6 +122,17 @@ function main() {
     "x-forwarded-for should use the first client IP",
   );
 
+  const productionStore = new Map() satisfies AiRateLimitStore;
+  enforceAiRateLimit(forwardedRequest, AI_CONFIG, {
+    env: { NODE_ENV: "production" },
+    now: () => 0,
+    store: productionStore,
+  });
+  assert.ok(
+    productionStore.has("openai:anonymous"),
+    "production must not trust a client-supplied forwarding header",
+  );
+
   console.log("Checked AI analysis rate limiting.");
 }
 

@@ -20,6 +20,7 @@ import {
   isStrictSameOriginMutation,
   readBoundedRequestBody,
 } from "@/lib/security/account-request";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 
 const PRIVATE_HEADERS = { "Cache-Control": "private, no-cache, no-store, max-age=0" };
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -36,6 +37,7 @@ type RpcKeyRow = {
 };
 
 export async function GET() {
+  if (!areAccountsEnabled()) return disabledResponse();
   const context = await getAccountContext();
   if (!context) return errorResponse("Authentication required.", 401);
   if (!(await hasAal2Session(context.client))) return errorResponse("Two-factor verification required.", 403);
@@ -89,6 +91,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!areAccountsEnabled()) return disabledResponse();
   if (!isStrictSameOriginMutation(request)) {
     return errorResponse("Cross-origin API key creation is not allowed.", 403);
   }
@@ -129,6 +132,7 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  if (!areAccountsEnabled()) return disabledResponse();
   if (!isStrictSameOriginMutation(request)) {
     return errorResponse("Cross-origin API key rotation is not allowed.", 403);
   }
@@ -167,6 +171,7 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (!areAccountsEnabled()) return disabledResponse();
   if (!isStrictSameOriginMutation(request)) {
     return errorResponse("Cross-origin API key revocation is not allowed.", 403);
   }
@@ -257,6 +262,13 @@ function operationError(status: string, operation: "creation" | "rotation") {
 
 function errorResponse(error: string, status: number, headers: HeadersInit = {}) {
   return NextResponse.json({ error }, { status, headers: { ...PRIVATE_HEADERS, ...headers } });
+}
+
+function disabledResponse() {
+  return new NextResponse("Not found.", {
+    status: 404,
+    headers: { "Cache-Control": "no-store" },
+  });
 }
 
 function invalidBodyResponse(reason: "invalid" | "too_large") {

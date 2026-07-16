@@ -18,7 +18,7 @@ const plans = [
     price: "EUR 0",
     cadence: "forever",
     description: "A quick second opinion for everyday suspicious email.",
-    status: "Release candidate",
+    status: "Public-beta candidate",
     accent: true,
     features: [
       "No account required",
@@ -73,7 +73,7 @@ export default async function PricingPage() {
       <PageIntro
         eyebrow="Pricing"
         title="The safety workflow stays free."
-        description="The hosted release candidate charges nothing for core heuristic checks. A small integration API allowance follows production acceptance; future paid plans may fund managed AI and higher limits without removing the free scanner."
+        description="The hosted public-beta candidate charges nothing for core heuristic checks. Account, API, and managed AI features remain disabled until their separate production acceptance gates pass."
       />
 
       <section className="border-b border-[#cbd0c5] py-16 sm:py-20">

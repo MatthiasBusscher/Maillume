@@ -11,6 +11,7 @@ import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizePath } from "@/lib/i18n/site-locale";
 import { PASSWORD_RECOVERY_COOKIE, PASSWORD_RECOVERY_COOKIE_VALUE } from "@/lib/auth/recovery";
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
+import { areAccountsEnabled } from "@/lib/accounts/config";
 
 export const metadata: Metadata = {
   title: "Update password",
@@ -19,6 +20,9 @@ export const metadata: Metadata = {
 
 export default async function UpdatePasswordPage() {
   const locale = await getRequestSiteLocale();
+  if (!areAccountsEnabled()) {
+    redirect(localizePath("/app", locale));
+  }
   const labels = (locale === "nl" ? accountNl : accountEn).signIn.email;
   const cookieStore = await cookies();
   if (cookieStore.get(PASSWORD_RECOVERY_COOKIE)?.value !== PASSWORD_RECOVERY_COOKIE_VALUE) {

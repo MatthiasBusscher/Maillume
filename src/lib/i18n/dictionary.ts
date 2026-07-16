@@ -82,7 +82,7 @@ export const dictionaries = {
       extractionFailed: "Could not extract text from this file.",
       noTextFound: "No readable email text was found.",
       selectedFile: "Selected file",
-      fileLimits: "Limits: screenshots up to 5 MB, .eml files up to 2 MB.",
+      fileLimits: "Limits: screenshots up to 5 MB and 20 megapixels, .eml files up to 2 MB.",
     },
     empty: {
       status: "Waiting for input",
@@ -239,7 +239,7 @@ export const dictionaries = {
       extractionFailed: "Kon geen tekst uit dit bestand halen.",
       noTextFound: "Er is geen leesbare e-mailtekst gevonden.",
       selectedFile: "Geselecteerd bestand",
-      fileLimits: "Limieten: screenshots tot 5 MB, .eml-bestanden tot 2 MB.",
+      fileLimits: "Limieten: screenshots tot 5 MB en 20 megapixels, .eml-bestanden tot 2 MB.",
     },
     empty: {
       status: "Wachten op invoer",

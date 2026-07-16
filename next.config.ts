@@ -19,6 +19,30 @@ const baseSecurityHeaders = [
   },
 ];
 
+const scriptSources = ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", "blob:"];
+
+if (process.env.NODE_ENV !== "production") {
+  scriptSources.push("'unsafe-eval'");
+}
+
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  `script-src ${scriptSources.join(" ")}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "worker-src 'self' blob:",
+  "child-src 'self' blob:",
+  "manifest-src 'self'",
+  "media-src 'none'",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const nextConfig: NextConfig = {
   output: "standalone",
   async headers() {
@@ -28,7 +52,7 @@ const nextConfig: NextConfig = {
         headers: [
           ...baseSecurityHeaders,
           { key: "X-Frame-Options", value: "DENY" },
-          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
         ],
       },
     ];

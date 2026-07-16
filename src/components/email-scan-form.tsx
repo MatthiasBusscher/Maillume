@@ -29,8 +29,10 @@ import { extractTextFromImage } from "@/lib/ocr/extract-text";
 import {
   EML_ACCEPT,
   getSerializedRequestSize,
+  hasSupportedScreenshotSignature,
   isSupportedEmlFile,
   isSupportedScreenshotFile,
+  isWithinScreenshotDimensionLimit,
   isWithinFileSizeLimit,
   MAX_EML_SIZE_BYTES,
   MAX_SCREENSHOT_SIZE_BYTES,
@@ -159,6 +161,10 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
       return;
     }
 
+    if (isExtracting) {
+      return;
+    }
+
     setActiveMode("screenshot");
     setResult(null);
     setError("");
@@ -172,6 +178,11 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
 
     if (!isWithinFileSizeLimit(file, MAX_SCREENSHOT_SIZE_BYTES)) {
       setError(dictionary.form.fileTooLarge);
+      return;
+    }
+
+    if (!(await isSafeScreenshotForOcr(file))) {
+      setError(dictionary.form.unsupportedFile);
       return;
     }
 
@@ -206,6 +217,10 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     event.target.value = "";
 
     if (!file) {
+      return;
+    }
+
+    if (isExtracting) {
       return;
     }
 
@@ -326,6 +341,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
             onChange={handleScreenshotChange}
             title={dictionary.form.screenshotPrompt}
             dictionary={dictionary}
+            disabled={isExtracting}
           />
         ) : null}
 
@@ -340,6 +356,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
             onChange={handleEmlChange}
             title={dictionary.form.emlPrompt}
             dictionary={dictionary}
+            disabled={isExtracting}
           />
         ) : null}
 
@@ -519,6 +536,7 @@ function UploadPanel({
   accept,
   description,
   dictionary,
+  disabled,
   fileName,
   fileStatus,
   icon,
@@ -529,6 +547,7 @@ function UploadPanel({
   accept: string;
   description: string;
   dictionary: Dictionary;
+  disabled: boolean;
   fileName: string;
   fileStatus: string;
   icon: ReactNode;
@@ -549,9 +568,13 @@ function UploadPanel({
             {dictionary.form.fileLimits}
           </p>
         </div>
-        <label className="inline-flex h-10 cursor-pointer items-center justify-center border border-[#111711] bg-white px-3 text-sm font-semibold text-[#111711] transition hover:bg-[#111711] hover:text-white">
+        <label className={`inline-flex h-10 items-center justify-center border border-[#111711] px-3 text-sm font-semibold transition ${
+          disabled
+            ? "cursor-not-allowed border-[#cbd1d6] bg-[#e9edef] text-[#77818b]"
+            : "cursor-pointer bg-white text-[#111711] hover:bg-[#111711] hover:text-white"
+        }`}>
           {label}
-          <input className="sr-only" type="file" accept={accept} onChange={onChange} />
+          <input className="sr-only" type="file" accept={accept} onChange={onChange} disabled={disabled} />
         </label>
       </div>
 
@@ -563,6 +586,26 @@ function UploadPanel({
       ) : null}
     </div>
   );
+}
+
+async function isSafeScreenshotForOcr(file: File): Promise<boolean> {
+  const signature = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+
+  if (!hasSupportedScreenshotSignature(signature, file)) {
+    return false;
+  }
+
+  try {
+    const bitmap = await createImageBitmap(file);
+
+    try {
+      return isWithinScreenshotDimensionLimit(bitmap.width, bitmap.height);
+    } finally {
+      bitmap.close();
+    }
+  } catch {
+    return false;
+  }
 }
 
 function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
