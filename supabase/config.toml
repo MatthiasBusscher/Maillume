@@ -247,63 +247,63 @@ otp_expiry = 3600
 # Authentication (confirmation) emails.
 [auth.email.template.confirmation]
 subject = '{{ if eq .Data.locale "nl" }}Bevestig je Maillume-e-mailadres{{ else }}Confirm your Maillume email address{{ end }}'
-content_path = "./supabase/templates/confirmation.html"
+content_path = "./templates/confirmation.html"
 
 [auth.email.template.invite]
 subject = '{{ if eq .Data.locale "nl" }}Je bent uitgenodigd voor Maillume{{ else }}You have been invited to Maillume{{ end }}'
-content_path = "./supabase/templates/invite.html"
+content_path = "./templates/invite.html"
 
 [auth.email.template.magic_link]
 subject = '{{ if eq .Data.locale "nl" }}Je Maillume-aanmeldlink{{ else }}Your Maillume sign-in link{{ end }}'
-content_path = "./supabase/templates/magic_link.html"
+content_path = "./templates/magic_link.html"
 
 [auth.email.template.email_change]
 subject = '{{ if eq .Data.locale "nl" }}Bevestig je nieuwe Maillume-e-mailadres{{ else }}Confirm your new Maillume email address{{ end }}'
-content_path = "./supabase/templates/email_change.html"
+content_path = "./templates/email_change.html"
 
 [auth.email.template.recovery]
 subject = '{{ if eq .Data.locale "nl" }}Stel je Maillume-wachtwoord opnieuw in{{ else }}Reset your Maillume password{{ end }}'
-content_path = "./supabase/templates/recovery.html"
+content_path = "./templates/recovery.html"
 
 [auth.email.template.reauthentication]
 subject = '{{ if eq .Data.locale "nl" }}Bevestig dat jij het bent{{ else }}Confirm it is you{{ end }}'
-content_path = "./supabase/templates/reauthentication.html"
+content_path = "./templates/reauthentication.html"
 
 # Security notification emails.
 [auth.email.notification.password_changed]
 enabled = true
 subject = '{{ if eq .Data.locale "nl" }}Je Maillume-wachtwoord is gewijzigd{{ else }}Your Maillume password was changed{{ end }}'
-content_path = "./supabase/templates/password_changed.html"
+content_path = "./templates/password_changed.html"
 
 [auth.email.notification.email_changed]
 enabled = true
 subject = '{{ if eq .Data.locale "nl" }}Je Maillume-e-mailadres is gewijzigd{{ else }}Your Maillume email address was changed{{ end }}'
-content_path = "./supabase/templates/email_changed.html"
+content_path = "./templates/email_changed.html"
 
 [auth.email.notification.phone_changed]
 enabled = true
 subject = '{{ if eq .Data.locale "nl" }}Je Maillume-telefoonnummer is gewijzigd{{ else }}Your Maillume phone number was changed{{ end }}'
-content_path = "./supabase/templates/phone_changed.html"
+content_path = "./templates/phone_changed.html"
 
 [auth.email.notification.identity_linked]
 enabled = true
 subject = '{{ if eq .Data.locale "nl" }}Er is een nieuwe aanmeldmethode aan je Maillume-account gekoppeld{{ else }}A new sign-in method was linked to your Maillume account{{ end }}'
-content_path = "./supabase/templates/identity_linked.html"
+content_path = "./templates/identity_linked.html"
 
 [auth.email.notification.identity_unlinked]
 enabled = true
 subject = '{{ if eq .Data.locale "nl" }}Er is een aanmeldmethode van je Maillume-account verwijderd{{ else }}A sign-in method was removed from your Maillume account{{ end }}'
-content_path = "./supabase/templates/identity_unlinked.html"
+content_path = "./templates/identity_unlinked.html"
 
 [auth.email.notification.mfa_factor_enrolled]
 enabled = true
 subject = '{{ if eq .Data.locale "nl" }}Er is een nieuwe MFA-methode aan je Maillume-account toegevoegd{{ else }}A new MFA method was added to your Maillume account{{ end }}'
-content_path = "./supabase/templates/mfa_enrolled.html"
+content_path = "./templates/mfa_enrolled.html"
 
 [auth.email.notification.mfa_factor_unenrolled]
 enabled = true
 subject = '{{ if eq .Data.locale "nl" }}Er is een MFA-methode van je Maillume-account verwijderd{{ else }}An MFA method was removed from your Maillume account{{ end }}'
-content_path = "./supabase/templates/mfa_unenrolled.html"
+content_path = "./templates/mfa_unenrolled.html"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
