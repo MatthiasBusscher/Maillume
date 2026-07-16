@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
 
   if (
     (hostname === "maillume.io" || hostname === "www.maillume.io")
-    && /^\/(?:auth|account)(?:\/|$)/.test(originalPathname)
+    && /^\/(?:auth|account)(?:\/|$)/.test(stripSiteLocale(originalPathname))
   ) {
     targetUrl.protocol = "https:";
     targetUrl.hostname = "app.maillume.io";

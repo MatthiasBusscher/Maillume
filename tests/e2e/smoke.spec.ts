@@ -581,6 +581,23 @@ test("canonical domain redirects preserve path and query", async ({ request }) =
   }
 });
 
+test("marketing account routes redirect to the canonical app host", async ({ request }) => {
+  for (const path of [
+    "/account?source=redirect-test",
+    "/nl/account?source=redirect-test",
+    "/auth/sign-in?source=redirect-test",
+    "/nl/auth/sign-in?source=redirect-test",
+  ]) {
+    const response = await request.get(path, {
+      headers: { Host: "maillume.io" },
+      maxRedirects: 0,
+    });
+
+    expect(response.status()).toBe(307);
+    expect(response.headers().location).toBe(`https://app.maillume.io${path}`);
+  }
+});
+
 test("the sourced Odido incident resource states Maillume's limits", async ({ page }) => {
   await page.goto("/resources/odido-phishing-incident");
 
