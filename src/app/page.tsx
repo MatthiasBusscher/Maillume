@@ -126,7 +126,7 @@ export default async function MarketingHomePage() {
           <div className="mt-16 border-t border-[#aeb6ac]">
             {capabilityRows.map((item, index) => (
               <div key={item.title} className="grid gap-5 border-b border-[#cbd0c5] py-8 md:grid-cols-[80px_0.55fr_1fr] md:items-start md:gap-8">
-                <span className="font-mono text-xs text-[#778177]">0{index + 1}</span>
+                <span className="font-mono text-xs text-[#5f695f]">0{index + 1}</span>
                 <div>
                   <item.icon className="h-5 w-5 text-[#087b72]" aria-hidden="true" />
                   <p className="mt-3 font-mono text-[10px] uppercase text-[#687268]">{item.label}</p>
@@ -146,7 +146,7 @@ export default async function MarketingHomePage() {
             <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">
               Your file stays local. The assessment text does not become history.
             </h2>
-            <p className="mt-5 max-w-xl text-base leading-7 text-[#d2e6e2]">
+            <p className="mt-5 max-w-xl text-base leading-7 text-[#eaf5f2]">
               Screenshot OCR and .eml parsing happen in your browser. Only the normalized text needed for the current check is sent to the selected Maillume deployment, and it is not added to a scan database.
             </p>
           </div>
@@ -244,7 +244,7 @@ function FlowRow({ detail, last = false, number, title }: { detail: string; last
     <div className={`grid gap-2 py-6 sm:grid-cols-[52px_0.7fr_1.3fr] sm:items-center ${last ? "" : "border-b border-white/25"}`}>
       <span className="font-mono text-[10px] text-[#dfff52]">{number}</span>
       <h3 className="font-semibold text-white">{title}</h3>
-      <p className="text-sm leading-6 text-[#d2e6e2]">{detail}</p>
+      <p className="text-sm leading-6 text-[#eaf5f2]">{detail}</p>
     </div>
   );
 }

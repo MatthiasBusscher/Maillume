@@ -8,6 +8,7 @@ import { AiProviderRequestError } from "@/lib/analysis/providers";
 import { AnalysisCapacityError, withAnalysisCapacity } from "@/lib/analysis/concurrency";
 import { enforceAiRateLimit, enforceRequestRateLimit, RateLimitError } from "@/lib/analysis/rate-limit";
 import { getAnalysisMaxRequestBytes } from "@/lib/analysis/request-limits";
+import { readBoundedRequestBody } from "@/lib/security/account-request";
 import {
   ANALYSIS_DISCLAIMERS,
   ANALYSIS_PIPELINE_VERSION,
@@ -23,10 +24,6 @@ const DEFAULT_REQUEST_LIMIT = 20;
 const DEFAULT_REQUEST_WINDOW_SECONDS = 60;
 
 export async function POST(request: Request) {
-  if (requestBodyIsTooLarge(request)) {
-    return jsonError("Request body is too large.", 413);
-  }
-
   try {
     enforceRequestRateLimit(request, {
       maxRequests: readPositiveInteger("ANALYSIS_REQUEST_LIMIT", DEFAULT_REQUEST_LIMIT, 1_000),
@@ -49,11 +46,12 @@ export async function POST(request: Request) {
   let payload: unknown;
 
   try {
-    payload = await readJsonBody(request);
-  } catch (error) {
-    if (error instanceof RequestBodyTooLargeError) {
+    const body = await readBoundedRequestBody(request, getAnalysisMaxRequestBytes());
+    if (!body.ok) {
       return jsonError("Request body is too large.", 413);
     }
+    payload = JSON.parse(body.text) as unknown;
+  } catch {
     return jsonError("Invalid JSON request body.", 400);
   }
 
@@ -100,7 +98,7 @@ export async function POST(request: Request) {
       return jsonError(error.message, 502);
     }
 
-    throw error;
+    return jsonError("Analysis failed unexpectedly.", 500);
   }
 
   return NextResponse.json<AnalyzeResponse>(
@@ -122,25 +120,6 @@ export async function POST(request: Request) {
       headers: NO_STORE_HEADERS,
     },
   );
-}
-
-function requestBodyIsTooLarge(request: Request): boolean {
-  const contentLength = Number(request.headers.get("content-length"));
-  return Number.isFinite(contentLength) && contentLength > getMaxRequestBytes();
-}
-
-function getMaxRequestBytes(): number {
-  return getAnalysisMaxRequestBytes();
-}
-
-class RequestBodyTooLargeError extends Error {}
-
-async function readJsonBody(request: Request): Promise<unknown> {
-  const rawBody = await request.text();
-  if (new TextEncoder().encode(rawBody).byteLength > getMaxRequestBytes()) {
-    throw new RequestBodyTooLargeError();
-  }
-  return JSON.parse(rawBody) as unknown;
 }
 
 function readPositiveInteger(name: string, fallback: number, maximum: number): number {

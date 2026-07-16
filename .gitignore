@@ -8,6 +8,7 @@ build
 coverage
 playwright-report
 test-results
+public/ocr/
 .vercel
 .env
 .env.local

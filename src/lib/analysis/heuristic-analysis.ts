@@ -7,6 +7,14 @@ import {
 
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 const HTML_LINK_PATTERN = /<a\b[^>]*href\s*=\s*["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+const DISPLAYED_DOMAIN_PATTERN = /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}(?:\/[^\s<>"']*)?/i;
+const MFA_REQUEST_PATTERNS = [
+  /approve (?:the )?(?:mfa|login|sign-in)(?: login)? (?:request|prompt)/i,
+  /accept (this )?(app|oauth) (request|permission)/i,
+  /keur (de )?(inlog|mfa).*(goed|verzoek)/i,
+  /accepteer.*(app|oauth).*(toegang|verzoek)/i,
+];
+const MFA_NEGATION_PATTERN = /(?:never|do not|nooit|niet).{0,24}(?:approve|goedkeur|keur).{0,18}(?:mfa|login|inlog)/i;
 const SHORT_LINK_DOMAINS = new Set(["bit.ly", "tinyurl.com", "t.co", "rebrand.ly", "is.gd", "ow.ly"]);
 const RISKY_TLDS = new Set(["zip", "mov", "click", "top", "xyz", "ru"]);
 const HOSTED_SENDER_DOMAINS = new Set(["firebaseapp.com", "web.app", "pages.dev", "netlify.app", "vercel.app"]);
@@ -122,7 +130,7 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   },
   {
     id: "mfa_or_oauth_request",
-    patterns: [/approve (the )?(mfa|login|sign-in) (request|prompt)/i, /accept (this )?(app|oauth) (request|permission)/i, /keur (de )?(inlog|mfa).*(goed|verzoek)/i, /accepteer.*(app|oauth).*(toegang|verzoek)/i],
+    patterns: MFA_REQUEST_PATTERNS,
   },
   {
     id: "qr_lure",
@@ -149,11 +157,10 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput) {
   const evidence = new Set<EvidenceId>();
 
   for (const group of PATTERN_GROUPS) {
-    if (group.patterns.some((pattern) => pattern.test(messageContent))) evidence.add(group.id);
-  }
-
-  if (/(?:never|do not|nooit|niet).{0,24}(?:approve|goedkeur|keur).{0,18}(?:mfa|login|inlog)/i.test(messageContent)) {
-    evidence.delete("mfa_or_oauth_request");
+    const matches = group.id === "mfa_or_oauth_request"
+      ? hasActionableMfaRequest(messageContent)
+      : group.patterns.some((pattern) => pattern.test(messageContent));
+    if (matches) evidence.add(group.id);
   }
   if (/(?:you subscribed|opted in|subscription preferences|aangemeld voor|abonnementsvoorkeuren)/i.test(messageContent)) {
     evidence.delete("prize_promotion");
@@ -193,10 +200,22 @@ function mergeHttpLinks(...groups: string[][]): string[] {
 
 export function extractHtmlLinkPairs(content: string): EmailLinkPair[] {
   return Array.from(content.matchAll(HTML_LINK_PATTERN)).flatMap((match) => {
-    const displayedUrl = stripHtml(match[2]).match(LINK_PATTERN)?.[0];
+    const displayedText = stripHtml(match[2]);
+    const fullUrl = displayedText.match(LINK_PATTERN)?.[0];
+    const bareDomain = displayedText.match(DISPLAYED_DOMAIN_PATTERN)?.[0];
+    const displayedUrl = fullUrl ?? (bareDomain ? `https://${bareDomain}` : undefined);
     if (!displayedUrl) return [];
     return [{ displayedUrl: cleanLink(displayedUrl), destinationUrl: cleanLink(match[1]) }];
   });
+}
+
+function hasActionableMfaRequest(content: string): boolean {
+  return content
+    .split(/(?:[.!?]+\s+|\n+)/)
+    .some((segment) =>
+      MFA_REQUEST_PATTERNS.some((pattern) => pattern.test(segment))
+      && !MFA_NEGATION_PATTERN.test(segment),
+    );
 }
 
 function addSenderEvidence(sender: string, links: string[], evidence: Set<EvidenceId>) {

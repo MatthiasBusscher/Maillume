@@ -5,6 +5,7 @@ import { MAX_SCAN_BODY_LENGTH } from "../types";
 import {
   MAX_EML_ATTACHMENT_NAMES,
   MAX_EML_LINKS,
+  MAX_EML_MIME_DEPTH,
   MAX_EML_MULTIPART_SECTIONS,
   parseEml,
 } from "./parse-eml";
@@ -81,6 +82,103 @@ Content-Type: text/html; charset=UTF-8
     linkPairs: parityEml.linkPairs,
   }).evidence.includes("short_url"));
   assert.ok(emlResult.score_factors.some((factor) => factor.id === "link_mismatch"));
+
+  const nestedMultipart = parseEml(`From: Nested notices <alerts@example.test>
+Subject: =?UTF-8?B?VVRGLTggc3ViamVjdCDigqw=?=
+Content-Type: multipart/mixed; boundary="outer"
+
+--outer
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: base64
+
+VVRGLTggYmFzZTY0OiBjYWbDqSDigqw=
+--outer
+Content-Type: multipart/alternative; boundary=inner
+
+--inner
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+UTF-8 quoted-printable: caf=C3=A9 =E2=82=AC
+--inner
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: base64
+
+PGEgaHJlZj0iaHR0cHM6Ly9uZXN0ZWQtZGVzdGluYXRpb24uZXhhbXBsZS50ZXN0L2xvZ2luIj5odHRwczovL25lc3RlZC1kaXNwbGF5LmV4YW1wbGUudGVzdC9zZWN1cml0eTwvYT4=
+--inner--
+--outer
+Content-Type: application/pdf; name*=utf-8''rapport-%E2%82%AC-final.pdf
+Content-Disposition: attachment; filename="=?UTF-8?B?cmFwcG9ydC3igqwtZmluYWwucGRm?="
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQ=
+--outer--`);
+  assert.equal(nestedMultipart.subject, "UTF-8 subject €");
+  assert.equal(nestedMultipart.senderEmail, "alerts@example.test");
+  assert.match(nestedMultipart.body, /UTF-8 base64: café €/);
+  assert.match(nestedMultipart.body, /UTF-8 quoted-printable: café €/);
+  assert.match(nestedMultipart.body, /https:\/\/nested-display\.example\.test\/security/);
+  assert.deepEqual(nestedMultipart.attachmentNames, ["rapport-€-final.pdf"]);
+  assert.deepEqual(nestedMultipart.linkPairs, [{
+    displayedUrl: "https://nested-display.example.test/security",
+    destinationUrl: "https://nested-destination.example.test/login",
+  }]);
+  assert.ok(nestedMultipart.links.includes("https://nested-display.example.test/security"));
+  assert.ok(nestedMultipart.links.includes("https://nested-destination.example.test/login"));
+
+  const windows1252 = parseEml(`Subject: =?windows-1252?Q?Alerte:_caf=E9_et_=80?=
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: quoted-printable
+
+Windows-1252: caf=E9 and euro =80`);
+  assert.equal(windows1252.subject, "Alerte: café et €");
+  assert.equal(windows1252.body, "Windows-1252: café and euro €");
+
+  const rawWindows1252 = parseEml(`Content-Type: text/plain; charset=windows-1252
+
+Raw Windows-1252: caf${String.fromCharCode(0xe9)} and euro ${String.fromCharCode(0x80)}`);
+  assert.equal(rawWindows1252.body, "Raw Windows-1252: café and euro €");
+
+  const bareDisplayedDomain = parseEml(`Content-Type: text/html; charset=UTF-8
+
+<a href="https://credential-capture.example/login">paypal.com/security</a>`);
+  assert.deepEqual(bareDisplayedDomain.linkPairs, [{
+    displayedUrl: "https://paypal.com/security",
+    destinationUrl: "https://credential-capture.example/login",
+  }]);
+
+  const iso88591 = parseEml(`Subject: =?ISO-8859-1?Q?R=E9sum=E9?=
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+ISO-8859-1: caf=E9`);
+  assert.equal(iso88591.subject, "Résumé");
+  assert.equal(iso88591.body, "ISO-8859-1: café");
+
+  const malformed = parseEml(`Content-Type: multipart/mixed; boundary=broken
+
+--broken
+Content-Type: text/plain
+Content-Transfer-Encoding: base64
+
+not valid base64 !!!`);
+  assert.doesNotThrow(() => parseEml("not a valid message"));
+  assert.equal(malformed.body, "not valid base64 !!!");
+
+  function nestedDepth(depth: number, level = 0): string {
+    if (level === depth) {
+      return "Content-Type: text/plain\n\ncontent beyond depth limit";
+    }
+
+    const boundary = `level-${level}`;
+    return `Content-Type: multipart/mixed; boundary=${boundary}\n\n--${boundary}\n${nestedDepth(
+      depth,
+      level + 1,
+    )}\n--${boundary}--`;
+  }
+
+  const depthLimited = parseEml(nestedDepth(MAX_EML_MIME_DEPTH + 2));
+  assert.doesNotMatch(depthLimited.body, /content beyond depth limit/);
 
   const oversizedBody = parseEml(`Content-Type: text/plain
 

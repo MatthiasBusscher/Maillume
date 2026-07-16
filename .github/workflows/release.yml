@@ -185,7 +185,7 @@ jobs:
 
   deploy:
     needs: image
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     permissions:

@@ -103,6 +103,7 @@ export const accountEn = {
       mfaTitle: "Authenticator app (TOTP)",
       mfaBody: "After setup, every new sign-in requires a six-digit code. Add a backup factor on a separate device because Supabase does not issue recovery codes.",
       enableMfa: "Set up authenticator",
+      addBackupMfa: "Add backup authenticator",
       scanQr: "Scan this QR code with your authenticator app, then enter the six-digit code.",
       manualSecret: "Manual setup secret",
       verificationCode: "Six-digit code",

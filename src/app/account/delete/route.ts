@@ -4,14 +4,14 @@ import {
   ACCOUNT_DELETE_MAX_REQUEST_BYTES,
   hasRecentAuthentication,
   hasRequestContentType,
-  isStrictSameOriginMutation,
   readBoundedRequestBody,
 } from "@/lib/security/account-request";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseAdminClient, getSupabaseAdminConfig } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requiresMfaChallenge } from "@/lib/auth/mfa";
 import { getPublicAppOrigin } from "@/app/auth/callback/origin";
 import { areAccountsEnabled } from "@/lib/accounts/config";
+import { verifyAccountDeletionToken } from "@/lib/security/account-deletion-token";
 
 export async function POST(request: Request) {
   if (!areAccountsEnabled()) {
@@ -24,10 +24,6 @@ export async function POST(request: Request) {
     host: request.headers.get("host"),
     requestUrl: request.url,
   });
-
-  if (!isStrictSameOriginMutation(request, publicOrigin)) {
-    return privateResponse("Cross-origin account deletion is not allowed.", 403);
-  }
 
   if (!hasRequestContentType(request, "application/x-www-form-urlencoded")) {
     return privateResponse("Invalid account deletion request.", 415);
@@ -45,7 +41,6 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createServerSupabaseClient();
-  const admin = createSupabaseAdminClient();
 
   if (!supabase) {
     return privateRedirect(new URL("/auth/sign-in", publicOrigin));
@@ -55,6 +50,19 @@ export async function POST(request: Request) {
 
   if (userError || !data.user) {
     return privateRedirect(new URL("/auth/sign-in", publicOrigin));
+  }
+
+  const adminConfig = getSupabaseAdminConfig();
+  if (!adminConfig) {
+    return privateRedirect(new URL("/account?error=deletion_unavailable", publicOrigin));
+  }
+
+  if (!verifyAccountDeletionToken(
+    formData.get("csrf"),
+    { userId: data.user.id, lastSignInAt: data.user.last_sign_in_at },
+    adminConfig.secretKey,
+  )) {
+    return privateResponse("Invalid account deletion request.", 403);
   }
 
   if (await requiresMfaChallenge(supabase)) {
@@ -67,9 +75,8 @@ export async function POST(request: Request) {
     return privateRedirect(new URL("/account?error=recent_auth_required", publicOrigin));
   }
 
-  if (!admin) {
-    return privateRedirect(new URL("/account?error=deletion_unavailable", publicOrigin));
-  }
+  const admin = createSupabaseAdminClient();
+  if (!admin) return privateRedirect(new URL("/account?error=deletion_unavailable", publicOrigin));
 
   const { error: deletionError } = await admin.auth.admin.deleteUser(data.user.id);
 

@@ -2,7 +2,12 @@ const OCR_TIMEOUT_MS = 45_000;
 
 export async function extractTextFromImage(file: File): Promise<string> {
   const { createWorker } = await import("tesseract.js");
-  const workerPromise = createWorker("eng+nld", undefined, { logger: () => undefined });
+  const workerPromise = createWorker("eng+nld", undefined, {
+    corePath: "/ocr/core",
+    langPath: "/ocr/lang",
+    workerPath: "/ocr/worker.min.js",
+    logger: () => undefined,
+  });
   let worker: Awaited<typeof workerPromise> | undefined;
 
   try {
