@@ -46,8 +46,8 @@
               </table>
 
               <p style="margin:24px 0 0;font:400 13px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#59655a;line-height:20px;">
-                {{ if eq .Data.locale "nl" }}Werkt de knop niet? Kopieer en plak deze link in je browser:{{ else }}Button not working? Copy and paste this link into your browser:{{ end }}<br>
-                <a href="{{ .ConfirmationURL }}" style="color:#087b72;word-break:break-all;">{{ .ConfirmationURL }}</a>
+                {{ if eq .Data.locale "nl" }}Werkt de knop niet? Open de uitnodigingslink hieronder.{{ else }}Button not working? Open the invitation link below.{{ end }}<br>
+                <a href="{{ .ConfirmationURL }}" style="color:#087b72;">{{ if eq .Data.locale "nl" }}Uitnodigingslink openen{{ else }}Open invitation link{{ end }}</a>
               </p>
               <p style="margin:24px 0 0;font:400 13px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#59655a;line-height:20px;border-top:1px solid #cbd0c5;padding-top:18px;">{{ if eq .Data.locale "nl" }}Als je deze uitnodiging niet verwachtte, kun je deze e-mail negeren en wordt er geen account aangemaakt.{{ else }}If you weren't expecting this invitation, you can ignore this email and no account will be created.{{ end }}</p>
             </td>

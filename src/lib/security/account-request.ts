@@ -11,10 +11,12 @@ export function isStrictSameOriginMutation(
   configuredPublicOrigin?: string,
 ): boolean {
   const origin = request.headers.get("origin");
-  if (!origin) return false;
+  const referer = request.headers.get("referer");
+  const candidateValue = origin || referer;
+  if (!candidateValue) return false;
 
   try {
-    const candidate = new URL(origin);
+    const candidate = new URL(candidateValue);
     const requestUrl = new URL(request.url);
     const fetchSite = request.headers.get("sec-fetch-site");
     const acceptedOrigins = new Set([requestUrl.origin]);
@@ -44,9 +46,11 @@ export function isStrictSameOriginMutation(
     if (
       candidate.username
       || candidate.password
-      || candidate.pathname !== "/"
-      || candidate.search
-      || candidate.hash
+      || (origin && (
+        candidate.pathname !== "/"
+        || candidate.search
+        || candidate.hash
+      ))
       || !acceptedOrigins.has(candidate.origin)
     ) {
       return false;

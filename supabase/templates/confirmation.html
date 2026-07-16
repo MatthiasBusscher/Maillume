@@ -46,8 +46,8 @@
               </table>
 
               <p style="margin:24px 0 0;font:400 13px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#59655a;line-height:20px;">
-                {{ if eq .Data.locale "nl" }}Werkt de knop niet? Kopieer en plak deze link in je browser:{{ else }}Button not working? Copy and paste this link into your browser:{{ end }}<br>
-                <a href="{{ .ConfirmationURL }}" style="color:#087b72;word-break:break-all;">{{ .ConfirmationURL }}</a>
+                {{ if eq .Data.locale "nl" }}Werkt de knop niet? Open de bevestigingslink hieronder.{{ else }}Button not working? Open the confirmation link below.{{ end }}<br>
+                <a href="{{ .ConfirmationURL }}" style="color:#087b72;">{{ if eq .Data.locale "nl" }}Bevestigingslink openen{{ else }}Open confirmation link{{ end }}</a>
               </p>
               <p style="margin:24px 0 0;font:400 13px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#59655a;line-height:20px;border-top:1px solid #cbd0c5;padding-top:18px;">{{ if eq .Data.locale "nl" }}Deze link verloopt over 60 minuten. Als je geen Maillume-account hebt aangemaakt, kun je deze e-mail negeren.{{ else }}This link expires in 60 minutes. If you didn't create a Maillume account, you can safely ignore this email.{{ end }}</p>
             </td>

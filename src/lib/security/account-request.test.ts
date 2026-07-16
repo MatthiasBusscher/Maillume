@@ -23,6 +23,14 @@ async function main() {
   );
   assert.equal(
     isStrictSameOriginMutation(mutationRequest({
+      Referer: "https://app.maillume.io/account",
+      "Sec-Fetch-Site": "same-origin",
+    })),
+    true,
+    "same-origin referrers may replace an omitted Origin header",
+  );
+  assert.equal(
+    isStrictSameOriginMutation(mutationRequest({
       Origin: "https://app.maillume.io",
       "Sec-Fetch-Site": "same-origin",
     })),
@@ -71,6 +79,15 @@ async function main() {
     false,
   );
   assert.equal(
+    isStrictSameOriginMutation(mutationRequest({
+      Origin: "https://attacker.example",
+      Referer: "https://app.maillume.io/account",
+      "Sec-Fetch-Site": "cross-site",
+    })),
+    false,
+    "a same-origin referrer must not override a conflicting Origin header",
+  );
+  assert.equal(
     isStrictSameOriginMutation(
       mutationRequest({ Origin: "https://app.maillume.io" }),
       "https://app.maillume.io/path",
@@ -93,6 +110,8 @@ async function main() {
   const invalidHeaders: HeadersInit[] = [
     { Origin: "https://attacker.example" },
     { Origin: "https://maillume.io" },
+    { Referer: "https://attacker.example/account" },
+    { Referer: "https://maillume.io/account", "Sec-Fetch-Site": "same-site" },
     { Origin: "https://app.maillume.io/path" },
     { Origin: "null" },
     { Origin: "https://app.maillume.io", "Sec-Fetch-Site": "cross-site" },
