@@ -30,7 +30,7 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
 
   const data = payload as Record<string, unknown>;
   const unsupportedFields = Object.keys(data).filter(
-    (field) => !["source", "subject", "senderEmail", "body", "locale", "linkPairs"].includes(field),
+    (field) => !["source", "subject", "senderEmail", "body", "locale", "links", "linkPairs"].includes(field),
   );
   if (unsupportedFields.length > 0) {
     return { ok: false, error: "Request contains unsupported fields." };
@@ -40,6 +40,7 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
   const senderEmail = normalizeOptionalString(data.senderEmail);
   const body = normalizeRequiredString(data.body);
   const locale = data.locale;
+  const links = normalizeLinks(data.links);
   const linkPairs = normalizeLinkPairs(data.linkPairs);
   const fieldErrors: Partial<Record<keyof NormalizedScanInput, string>> = {};
 
@@ -69,6 +70,10 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
     fieldErrors.linkPairs = "Displayed link metadata is invalid.";
   }
 
+  if (data.links !== undefined && !links) {
+    fieldErrors.links = "Link metadata is invalid.";
+  }
+
   if (Object.keys(fieldErrors).length > 0) {
     return {
       ok: false,
@@ -85,9 +90,25 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
       subject,
       senderEmail,
       body,
+      links: links ?? undefined,
       linkPairs: linkPairs ?? undefined,
     },
   };
+}
+
+function normalizeLinks(value: unknown): string[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > 20) return null;
+
+  const links: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string") return null;
+    const link = normalizeHttpUrl(item);
+    if (!link) return null;
+    links.push(link);
+  }
+
+  return Array.from(new Set(links));
 }
 
 function normalizeLinkPairs(value: unknown): EmailLinkPair[] | null {

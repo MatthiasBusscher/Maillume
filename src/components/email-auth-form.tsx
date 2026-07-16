@@ -8,6 +8,9 @@ import {
   getEmailAuthFailureMessage,
   type EmailAuthMode,
 } from "@/lib/auth/email-auth-error";
+import { resolveAuthenticatedLocale } from "@/lib/auth/authenticated-locale";
+import { getAccountLocaleMetadata } from "@/lib/i18n/account-locale";
+import { persistBrowserSiteLocale } from "@/lib/i18n/browser-locale";
 import { localizePath, type SiteLocale } from "@/lib/i18n/site-locale";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
@@ -76,7 +79,10 @@ export function EmailAuthForm({
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: { emailRedirectTo: callback.toString() },
+          options: {
+            data: getAccountLocaleMetadata(locale),
+            emailRedirectTo: callback.toString(),
+          },
         });
         if (signUpError) {
           setError(labels.signUpFailed);
@@ -88,6 +94,24 @@ export function EmailAuthForm({
         }
         setCanResendConfirmation(true);
         setMessage(labels.confirmEmail);
+        return;
+      }
+
+      if (mode === "magic-link") {
+        const callback = new URL("/auth/callback", window.location.origin);
+        callback.searchParams.set("next", localizePath("/account", locale));
+        const { error: magicLinkError } = await supabase.auth.signInWithOtp({
+          email: email.trim(),
+          options: {
+            data: getAccountLocaleMetadata(locale),
+            emailRedirectTo: callback.toString(),
+          },
+        });
+        if (magicLinkError) {
+          setError(labels.magicLinkFailed);
+          return;
+        }
+        setMessage(labels.magicLinkSent);
         return;
       }
 
@@ -136,7 +160,7 @@ export function EmailAuthForm({
     <div>
       {mode !== "forgot" ? (
         <div className="grid grid-cols-2 border border-[#aeb6ac] bg-white p-1" role="group" aria-label={labels.signInTab}>
-          <ModeButton active={mode === "sign-in"} label={labels.signInTab} onClick={() => selectMode("sign-in")} />
+          <ModeButton active={mode === "sign-in" || mode === "magic-link"} label={labels.signInTab} onClick={() => selectMode("sign-in")} />
           <ModeButton active={mode === "sign-up"} label={labels.signUpTab} onClick={() => selectMode("sign-up")} />
         </div>
       ) : null}
@@ -158,7 +182,7 @@ export function EmailAuthForm({
           </span>
         </label>
 
-        {mode !== "forgot" ? (
+        {mode === "sign-in" || mode === "sign-up" ? (
           <label className="grid gap-2 text-sm font-semibold text-[#374238]">
             {labels.passwordLabel}
             <span className="relative">
@@ -191,17 +215,36 @@ export function EmailAuthForm({
           className="inline-flex h-11 items-center justify-center gap-2 bg-[#111711] px-4 text-sm font-semibold text-white hover:bg-[#087b72] disabled:cursor-not-allowed disabled:bg-[#aeb6ac]"
         >
           {isLoading ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-          {isLoading ? labels.working : mode === "forgot" ? labels.sendReset : mode === "sign-up" ? labels.signUp : labels.signIn}
+          {isLoading
+            ? labels.working
+            : mode === "forgot"
+              ? labels.sendReset
+              : mode === "sign-up"
+                ? labels.signUp
+                : mode === "magic-link"
+                  ? labels.sendMagicLink
+                  : labels.signIn}
         </button>
       </form>
 
-      <button
-        type="button"
-        onClick={() => selectMode(mode === "forgot" ? "sign-in" : "forgot")}
-        className="mt-4 text-xs font-semibold text-[#087b72] hover:text-[#111711]"
-      >
-        {mode === "forgot" ? labels.backToSignIn : labels.forgot}
-      </button>
+      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
+        {mode !== "forgot" ? (
+          <button
+            type="button"
+            onClick={() => selectMode(mode === "magic-link" ? "sign-in" : "magic-link")}
+            className="text-xs font-semibold text-[#087b72] hover:text-[#111711]"
+          >
+            {mode === "magic-link" ? labels.usePassword : labels.useMagicLink}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => selectMode(mode === "forgot" ? "sign-in" : "forgot")}
+          className="text-xs font-semibold text-[#087b72] hover:text-[#111711]"
+        >
+          {mode === "forgot" ? labels.backToSignIn : labels.forgot}
+        </button>
+      </div>
 
       {message ? <p className="mt-4 border-l-4 border-[#087b72] bg-[#eaf6f5] px-4 py-3 text-sm leading-6 text-[#204e51]" role="status">{message}</p> : null}
       {canResendConfirmation ? (
@@ -223,10 +266,12 @@ async function continueAfterPrimarySignIn(
   supabase: NonNullable<ReturnType<typeof createBrowserSupabaseClient>>,
   locale: SiteLocale,
 ) {
+  const accountLocale = await resolveAuthenticatedLocale(supabase.auth, locale);
+  persistBrowserSiteLocale(accountLocale);
   const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  const accountPath = localizePath("/account", locale);
+  const accountPath = localizePath("/account", accountLocale);
   if (data?.currentLevel === "aal1" && data.nextLevel === "aal2") {
-    const challengePath = localizePath("/auth/mfa", locale);
+    const challengePath = localizePath("/auth/mfa", accountLocale);
     window.location.assign(`${challengePath}?next=${encodeURIComponent(accountPath)}`);
     return;
   }

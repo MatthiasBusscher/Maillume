@@ -164,7 +164,7 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput) {
   if (hasObfuscatedSpamWords(messageContent)) evidence.add("obfuscation");
   if (input.body.trim().length < 80) evidence.add("little_context");
 
-  const links = extractHttpLinks(messageContent);
+  const links = mergeHttpLinks(input.links ?? [], extractHttpLinks(messageContent));
   if (links.length > 0) evidence.add("external_link");
   if (links.some(isShortUrl)) evidence.add("short_url");
   if (links.some(hasRiskyTld)) evidence.add("risky_link_domain");
@@ -183,6 +183,12 @@ export function extractHttpLinks(content: string): string[] {
       Array.from(content.matchAll(LINK_PATTERN), (match) => cleanLink(match[0])).filter(isValidHttpUrl),
     ),
   );
+}
+
+function mergeHttpLinks(...groups: string[][]): string[] {
+  return Array.from(
+    new Set(groups.flat().map(cleanLink).filter(isValidHttpUrl)),
+  ).sort();
 }
 
 export function extractHtmlLinkPairs(content: string): EmailLinkPair[] {

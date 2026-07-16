@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { analyzeEmailHeuristic } from "../analysis/heuristic-analysis";
+import { analyzeEmailHeuristic, collectHeuristicEvidence } from "../analysis/heuristic-analysis";
 import { parseEml } from "./parse-eml";
 
 function main() {
@@ -34,9 +34,47 @@ Content-Type: text/html; charset=UTF-8
     subject: hiddenLink.subject,
     senderEmail: hiddenLink.senderEmail,
     body: hiddenLink.body,
+    links: hiddenLink.links,
     linkPairs: hiddenLink.linkPairs,
   });
   assert.ok(hiddenLinkResult.score_factors.some((factor) => factor.id === "link_mismatch"));
+
+  const parityEml = parseEml(`From: Synthetic alerts <alerts@notice.example>
+Subject: Synthetic account review
+Content-Type: text/html; charset=UTF-8
+
+<p>Verify your password immediately before midnight.</p>
+<a href="https://bit.ly/synthetic-review">https://portal.example.test/security</a>`);
+  assert.equal(
+    parityEml.body,
+    "Verify your password immediately before midnight.\nhttps://portal.example.test/security",
+  );
+  const emlResult = analyzeEmailHeuristic({
+    subject: parityEml.subject,
+    senderEmail: parityEml.senderEmail,
+    body: parityEml.body,
+    links: parityEml.links,
+    linkPairs: parityEml.linkPairs,
+  });
+  const chromeCurrentMessageResult = analyzeEmailHeuristic({
+    subject: "Synthetic account review",
+    senderEmail: "alerts@notice.example",
+    body: "Verify your password immediately before midnight.\nhttps://portal.example.test/security",
+    links: ["https://bit.ly/synthetic-review"],
+    linkPairs: [{
+      displayedUrl: "https://portal.example.test/security",
+      destinationUrl: "https://bit.ly/synthetic-review",
+    }],
+  });
+  assert.deepEqual(emlResult, chromeCurrentMessageResult);
+  assert.ok(collectHeuristicEvidence({
+    subject: parityEml.subject,
+    senderEmail: parityEml.senderEmail,
+    body: parityEml.body,
+    links: parityEml.links,
+    linkPairs: parityEml.linkPairs,
+  }).evidence.includes("short_url"));
+  assert.ok(emlResult.score_factors.some((factor) => factor.id === "link_mismatch"));
 
   console.log("Checked .eml parsing regressions.");
 }

@@ -26,7 +26,7 @@ function main() {
   assert.notEqual(first.secretHash, second.secretHash);
   assert.equal(isApiKeyFormat(first.plaintext), true);
   assert.equal(isApiKeyFormat("mlm_short"), false);
-  assert.equal(normalizeApiKeyName("  Outlook  "), "Outlook");
+  assert.equal(normalizeApiKeyName("  Chrome  "), "Chrome");
   assert.equal(normalizeApiKeyName(""), null);
   assert.equal(normalizeApiKeyName("x".repeat(51)), null);
   assert.equal(DEFAULT_MONTHLY_API_QUOTA, 100);

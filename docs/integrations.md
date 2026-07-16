@@ -34,10 +34,4 @@ Stored API metadata is limited to key owner, name, prefix, hash, quota, creation
 - Optional host access is requested only for the deployment chosen by the user.
 - The endpoint is stored locally; the API key lives only in Chrome session storage. Captured text crosses to the tab-specific panel through a one-time in-memory handoff and message content and results are never written to extension storage.
 
-## Retired Gmail And Outlook Experiments
-
-The Gmail add-on and Outlook add-in are retired and are not part of the release or marketplace publication scope. Their source remains in `integrations/gmail-addon` and `integrations/outlook-addin` for historical review, reproducible security tests, and possible reference by contributors. Their former production task-pane route and public manifest have been removed, and these artifacts are not shipped as supported Maillume integrations.
-
-The retained Gmail source used temporary current-message access and the retained Outlook source used `ReadItem`; neither requested background mailbox access. These statements document the legacy implementation and do not imply availability, maintenance, or marketplace submission.
-
 Chrome Web Store publication requires final icons, operator identity, privacy-policy URLs, test accounts, validation, and review. Those release operations must be completed before claiming store availability.

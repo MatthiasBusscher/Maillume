@@ -31,6 +31,19 @@ const linkPairs = validateAnalyzeRequest({
 assert.equal(linkPairs.ok, true);
 if (linkPairs.ok) assert.equal(linkPairs.input.linkPairs?.length, 1);
 
+const links = validateAnalyzeRequest({
+  body: "Synthetic message",
+  links: ["https://service-review.invalid/account"],
+});
+assert.equal(links.ok, true);
+if (links.ok) assert.deepEqual(links.input.links, ["https://service-review.invalid/account"]);
+
+const malformedLinks = validateAnalyzeRequest({
+  body: "Synthetic message",
+  links: ["javascript:alert(1)"],
+});
+assert.equal(malformedLinks.ok, false);
+
 const malformedLinkPairs = validateAnalyzeRequest({
   body: "Synthetic message",
   linkPairs: [{ displayedUrl: "javascript:alert(1)", destinationUrl: "https://example.test" }],

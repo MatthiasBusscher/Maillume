@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { KeyRound, LoaderCircle } from "lucide-react";
 
+import { resolveAuthenticatedLocale } from "@/lib/auth/authenticated-locale";
 import type { AccountDictionary } from "@/lib/i18n/account-en";
+import { persistBrowserSiteLocale } from "@/lib/i18n/browser-locale";
 import { localizePath, type SiteLocale } from "@/lib/i18n/site-locale";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
@@ -35,10 +37,12 @@ export function PasskeySignInButton({
       return;
     }
 
+    const accountLocale = await resolveAuthenticatedLocale(supabase.auth, locale);
+    persistBrowserSiteLocale(accountLocale);
     const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    const accountPath = localizePath("/account", locale);
+    const accountPath = localizePath("/account", accountLocale);
     if (data?.currentLevel === "aal1" && data.nextLevel === "aal2") {
-      window.location.assign(`${localizePath("/auth/mfa", locale)}?next=${encodeURIComponent(accountPath)}`);
+      window.location.assign(`${localizePath("/auth/mfa", accountLocale)}?next=${encodeURIComponent(accountPath)}`);
       return;
     }
     window.location.assign(accountPath);

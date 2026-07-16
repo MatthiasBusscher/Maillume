@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { resolveAuthenticatedLocale } from "@/lib/auth/authenticated-locale";
 import { getOAuthFailureUrl, hasOAuthErrorReturn } from "@/lib/auth/oauth-return";
 import {
   PASSWORD_RECOVERY_COOKIE,
@@ -7,6 +8,14 @@ import {
   PASSWORD_RECOVERY_MAX_AGE_SECONDS,
 } from "@/lib/auth/recovery";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  DEFAULT_SITE_LOCALE,
+  getPathLocale,
+  getSiteLocaleCookieDomain,
+  isSiteLocale,
+  localizePath,
+  SITE_LOCALE_COOKIE,
+} from "@/lib/i18n/site-locale";
 import { getPublicAppOrigin } from "./origin";
 import { getSafeOAuthRedirectUrl } from "./redirect";
 
@@ -24,6 +33,7 @@ export async function GET(request: Request) {
     requestUrl: request.url,
   });
   const redirectUrl = getSafeOAuthRedirectUrl(requestedNext, publicOrigin);
+  const fallbackLocale = getCallbackLocale(requestUrl, redirectUrl);
 
   if (hasOAuthErrorReturn(requestUrl)) {
     return privateRedirect(getOAuthFailureUrl(publicOrigin));
@@ -37,16 +47,22 @@ export async function GET(request: Request) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
 
         if (!error) {
+          const locale = await resolveAuthenticatedLocale(supabase.auth, fallbackLocale);
+          const localizedRedirectUrl = localizeRedirectUrl(redirectUrl, locale);
           const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
           if (assurance?.currentLevel === "aal1" && assurance.nextLevel === "aal2") {
             const mfaUrl = new URL("/auth/mfa", publicOrigin);
             mfaUrl.searchParams.set(
               "next",
-              `${redirectUrl.pathname}${redirectUrl.search}${redirectUrl.hash}`,
+              `${localizedRedirectUrl.pathname}${localizedRedirectUrl.search}${localizedRedirectUrl.hash}`,
             );
-            return privateRedirect(mfaUrl, false);
+            return privateRedirect(mfaUrl, false, locale);
           }
-          return privateRedirect(redirectUrl, isPasswordRecoveryDestination(redirectUrl));
+          return privateRedirect(
+            localizedRedirectUrl,
+            isPasswordRecoveryDestination(localizedRedirectUrl),
+            locale,
+          );
         }
       }
     } catch {
@@ -59,8 +75,19 @@ export async function GET(request: Request) {
   return privateRedirect(signInUrl);
 }
 
-function privateRedirect(url: URL, passwordRecovery = false) {
+function privateRedirect(url: URL, passwordRecovery = false, locale?: "en" | "nl") {
   const response = NextResponse.redirect(url);
+  if (locale) {
+    const domain = getSiteLocaleCookieDomain(url.hostname);
+    response.cookies.set(SITE_LOCALE_COOKIE, locale, {
+      httpOnly: false,
+      maxAge: 60 * 60 * 24 * 365,
+      path: "/",
+      sameSite: "lax",
+      secure: url.protocol === "https:",
+      ...(domain ? { domain } : {}),
+    });
+  }
   if (passwordRecovery) {
     response.cookies.set(PASSWORD_RECOVERY_COOKIE, PASSWORD_RECOVERY_COOKIE_VALUE, {
       httpOnly: true,
@@ -77,6 +104,18 @@ function privateRedirect(url: URL, passwordRecovery = false) {
   response.headers.set("Expires", "0");
   response.headers.set("Pragma", "no-cache");
   return response;
+}
+
+function getCallbackLocale(requestUrl: URL, redirectUrl: URL) {
+  const requestedLocale = requestUrl.searchParams.get("locale");
+  if (isSiteLocale(requestedLocale)) return requestedLocale;
+  return getPathLocale(redirectUrl.pathname) ?? DEFAULT_SITE_LOCALE;
+}
+
+function localizeRedirectUrl(redirectUrl: URL, locale: "en" | "nl") {
+  const localizedUrl = new URL(redirectUrl);
+  localizedUrl.pathname = localizePath(localizedUrl.pathname, locale);
+  return localizedUrl;
 }
 
 function isPasswordRecoveryDestination(url: URL) {

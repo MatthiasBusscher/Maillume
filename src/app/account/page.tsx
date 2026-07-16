@@ -3,6 +3,7 @@ import Link from "next/link";
 import { LogOut, ScanSearch, ShieldCheck, UserRound } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
+import { AccountLanguageLinks } from "@/components/account-language-links";
 import { ApiKeyManager } from "@/components/api-key-manager";
 import { AccountSecurityManager, MfaSessionGate } from "@/components/account-security-manager";
 import { SiteFooter } from "@/components/site-footer";
@@ -77,7 +78,7 @@ export default async function AccountPage({
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-6">
           <a href={getMarketingHref()}><BrandMark /></a>
           <div className="flex items-center gap-2">
-            <SiteLanguageLinks locale={locale} pathname="/account" />
+            <AccountLanguageLinks locale={locale} />
             <form action="/auth/sign-out" method="post">
               <button type="submit" className="inline-flex h-10 items-center gap-2 border border-[#aeb6ac] px-3 text-sm font-semibold text-[#374238] hover:border-[#111711]"><LogOut className="h-4 w-4" aria-hidden="true" /> <span className="hidden sm:inline">{copy.signOut}</span></button>
             </form>

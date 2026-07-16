@@ -44,6 +44,12 @@ Before enabling public email/password registration:
 - verify allowed redirect URLs contain production origins only;
 - test account deletion and factor cleanup with email, Google, and passkey users.
 
+### Template Language And Deployment
+
+Maillume passes `data: { locale: "en" | "nl" }` when a user signs up or requests a magic link. The branded templates in `supabase/templates/` use that account metadata to render English or Dutch. The account language control persists the same preference in Supabase user metadata; it is restored after password, Google, and passkey sign-in. Existing accounts are backfilled with their current site locale at the next successful sign-in.
+
+`supabase/templates/` is Maillume's reviewed source for the branded email HTML. Local Supabase deliberately uses its default email content so database CI does not depend on CLI-specific template-path resolution. For the managed production project, copy the subjects and HTML from those files into Supabase Dashboard → Authentication → Email Templates, then send confirmation, recovery, and magic-link tests to English and Dutch test accounts. A self-hosted deployment must load the same files through its own mailer configuration. Keep Resend click tracking disabled so it does not rewrite Supabase confirmation links.
+
 ## Google Sign-In Identity
 
 Google security notifications can currently mention the Supabase project hostname because it owns the OAuth callback. That message is expected and is not evidence of a breach. Complete the free Google branding work before public beta. Replacing the project hostname with `auth.maillume.io` is a separate paid Supabase custom-domain decision.

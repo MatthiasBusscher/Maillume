@@ -135,7 +135,7 @@ export function ScannerPage({
             <div className="border-r border-[#aeb6ac] p-3">
               <Database className="h-4 w-4 text-[#087b72]" aria-hidden="true" />
               <p className="mt-3 font-mono text-[10px] uppercase text-[#69737d]">{dictionary.app.privacyStatus}</p>
-              <p className="mt-1 text-sm font-semibold text-[#111711]">0</p>
+              <p className="mt-1 text-sm font-semibold text-[#111711]">{dictionary.app.privacyValue}</p>
             </div>
             <div className="p-3">
               <ScanSearch className="h-4 w-4 text-[#ff705f]" aria-hidden="true" />

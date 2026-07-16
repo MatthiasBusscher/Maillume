@@ -1,6 +1,6 @@
 # Hosted Service Architecture
 
-Status: active architecture record. Optional email/Google authentication, TOTP MFA, feature-gated passkeys, hashed integration API keys, aggregate quotas, and the source-beta Chrome extension are implemented. Gmail and Outlook experiments are retired and remain only as unshipped legacy source. Hosted AI, paid entitlements, and payments are not implemented.
+Status: active architecture record. Optional email/Google authentication, TOTP MFA, feature-gated passkeys, hashed integration API keys, aggregate quotas, and the source-beta Chrome extension are implemented. Hosted AI, paid entitlements, and payments are not implemented.
 
 ## Decision Summary
 
@@ -206,7 +206,6 @@ No dual-license or enterprise license program exists. Adding one later may requi
 - **Go:** free self-hosting and bring-your-own-key AI.
 - **Go:** privacy-preserving, non-content feedback design as a separate issue.
 - **Go:** explicit-action Chrome source-beta integration using minimum practical permissions.
-- **Retired:** Gmail and Outlook add-on publication. Their legacy source remains unshipped for historical and security review.
 - **Go:** optional authentication and quota-limited heuristic integration API.
 - **Hold:** maintainer-funded hosted AI.
 - **Hold:** payment implementation.

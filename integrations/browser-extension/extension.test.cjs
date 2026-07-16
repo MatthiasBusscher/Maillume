@@ -113,11 +113,13 @@ function fakeElement(options = {}) {
     textContent: "",
     attributes: {},
     query: {},
+    queries: {},
     getClientRects: () => [{}],
     getBoundingClientRect: () => ({ top: 100, bottom: 400, left: 10, right: 700 }),
     contains: () => false,
     closest: () => null,
     querySelector(selector) { return this.query[selector] || null; },
+    querySelectorAll(selector) { return this.queries[selector] || []; },
     getAttribute(name) { return this.attributes[name] || null; },
     ...options,
   });
@@ -130,7 +132,15 @@ function testOpenMessageExtractors() {
   const sender = fakeElement({ attributes: { email: "sender@gmail.test" } });
   const subject = fakeElement({ innerText: "Suspicious invoice" });
   const container = fakeElement({ query: { ".gD[email]": sender } });
-  const body = fakeElement({ innerText: "Please review this Gmail message.", closest: () => container });
+  const hiddenLink = fakeElement({
+    innerText: "https://portal.example.test/security",
+    attributes: { href: "https://bit.ly/synthetic-review" },
+  });
+  const body = fakeElement({
+    innerText: "Please review this Gmail message.",
+    closest: () => container,
+    queries: { "a[href]": [hiddenLink] },
+  });
   context.Element = FakeElement;
   context.getComputedStyle = () => ({ display: "block", visibility: "visible", opacity: "1" });
   context.innerWidth = 1000;
@@ -150,6 +160,11 @@ function testOpenMessageExtractors() {
     subject: "Suspicious invoice",
     sender: "sender@gmail.test",
     viewportScore: 206850,
+    links: ["https://bit.ly/synthetic-review"],
+    linkPairs: [{
+      displayedUrl: "https://portal.example.test/security",
+      destinationUrl: "https://bit.ly/synthetic-review",
+    }],
   });
 
   const outlookSender = fakeElement({ attributes: { title: "alerts@outlook.test" } });
@@ -223,6 +238,7 @@ function testInactiveInputSelectionFallback() {
 }
 
 function createPanelElement() {
+  const listeners = new Map();
   return {
     value: "",
     disabled: false,
@@ -230,28 +246,40 @@ function createPanelElement() {
     textContent: "",
     dataset: {},
     style: {},
-    addEventListener() {},
+    addEventListener(type, listener) { listeners.set(type, listener); },
+    async dispatch(type) { return listeners.get(type)?.(); },
     replaceChildren() {},
   };
 }
 
-async function testDuplicateConsumerDoesNotEraseCapture() {
+async function testPanelSendsCapturedLinkMetadata() {
   const runtime = event();
   const ids = ["capture", "subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"];
   const elements = new Map(ids.map((id) => [id, createPanelElement()]));
-  elements.get("endpoint").value = "https://app.maillume.io";
   const responses = [
-    { status: "pending", captureId: "capture-7" },
-    { status: "success", text: "Captured once", source: "selection", captureId: "capture-7" },
+    {
+      status: "success",
+      text: "Captured once",
+      source: "open_message",
+      subject: "Synthetic account review",
+      sender: "alerts@notice.example",
+      links: ["https://bit.ly/synthetic-review"],
+      linkPairs: [{
+        displayedUrl: "https://portal.example.test/security",
+        destinationUrl: "https://bit.ly/synthetic-review",
+      }],
+      captureId: "capture-7",
+    },
     { status: "error", code: "handoff_missing" },
   ];
+  let requestPayload;
   const context = {
     chrome: {
       i18n: { getUILanguage: () => "en-US" },
       runtime: { onMessage: runtime, sendMessage: async () => responses.shift() },
       storage: {
-        local: { get: async () => ({}), set: async () => {}, remove: async () => {} },
-        session: { get: async () => ({}), set: async () => {}, remove: async () => {} },
+        local: { get: async () => ({ endpoint: "https://app.maillume.io" }), set: async () => {}, remove: async () => {} },
+        session: { get: async () => ({ apiKey: `mlm_${"a".repeat(43)}` }), set: async () => {}, remove: async () => {} },
       },
       permissions: { request: async () => true, remove: async () => true },
       tabs: { query: async () => [{ id: 22 }] },
@@ -264,7 +292,25 @@ async function testDuplicateConsumerDoesNotEraseCapture() {
     },
     clearTimeout,
     console,
-    fetch,
+    fetch: async (_url, options) => {
+      requestPayload = JSON.parse(options.body);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          result: {
+            classification: "uncertain",
+            risk_level: "low",
+            risk_score: 0,
+            score_factors: [],
+            suspicious_signals: [],
+            detected_links: [],
+            recommended_action: "Review the message.",
+            short_explanation: "No strong signal.",
+          },
+        }),
+      };
+    },
     setTimeout,
     URL,
   };
@@ -273,6 +319,19 @@ async function testDuplicateConsumerDoesNotEraseCapture() {
   await new Promise((resolve) => setTimeout(resolve, 100));
   await flush();
   assert.equal(elements.get("body").value, "Captured once");
+  await elements.get("analyze").dispatch("click");
+  assert.deepEqual(requestPayload, {
+    source: "paste",
+    subject: "Synthetic account review",
+    senderEmail: "alerts@notice.example",
+    body: "Captured once",
+    locale: "en",
+    links: ["https://bit.ly/synthetic-review"],
+    linkPairs: [{
+      displayedUrl: "https://portal.example.test/security",
+      destinationUrl: "https://bit.ly/synthetic-review",
+    }],
+  });
 
   runtime.listener({ type: "capture-ready", tabId: 22, captureId: "capture-7" });
   await flush();
@@ -283,7 +342,7 @@ async function testDuplicateConsumerDoesNotEraseCapture() {
   await testCapturePriorityAndMetadata();
   testOpenMessageExtractors();
   testInactiveInputSelectionFallback();
-  await testDuplicateConsumerDoesNotEraseCapture();
+  await testPanelSendsCapturedLinkMetadata();
   console.log("Browser extension capture, fallback, and handoff race checks passed.");
 })().catch((error) => {
   console.error(error);

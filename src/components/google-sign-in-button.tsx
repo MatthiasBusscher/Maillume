@@ -5,8 +5,17 @@ import { LoaderCircle } from "lucide-react";
 
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AccountDictionary } from "@/lib/i18n/account-en";
+import type { SiteLocale } from "@/lib/i18n/site-locale";
 
-export function GoogleSignInButton({ configured, labels }: { configured: boolean; labels: AccountDictionary["signIn"]["google"] }) {
+export function GoogleSignInButton({
+  configured,
+  labels,
+  locale,
+}: {
+  configured: boolean;
+  labels: AccountDictionary["signIn"]["google"];
+  locale: SiteLocale;
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -22,6 +31,7 @@ export function GoogleSignInButton({ configured, labels }: { configured: boolean
     setError("");
 
     const redirectTo = new URL("/auth/callback", window.location.origin);
+    redirectTo.searchParams.set("locale", locale);
 
     const { error: signInError } = await supabase.auth.signInWithOAuth({
       provider: "google",

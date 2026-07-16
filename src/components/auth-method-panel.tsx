@@ -60,7 +60,7 @@ export function AuthMethodPanel({
             <span className="h-px flex-1 bg-[#cbd0c5]" />
           </div>
           <div>
-            <GoogleSignInButton configured={configured} labels={copy.google} />
+            <GoogleSignInButton configured={configured} labels={copy.google} locale={locale} />
             <PasskeySignInButton enabled={configured && passkeysEnabled} labels={copy.passkey} locale={locale} />
           </div>
         </>

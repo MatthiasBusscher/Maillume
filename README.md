@@ -48,7 +48,6 @@ Maillume is a release candidate preparing for private beta. The scanner works to
 | Self-hosted AI with an operator-owned key | Available from source |
 | Email/Google accounts, TOTP 2FA, and hosted API keys | Implemented; production acceptance in progress |
 | Chrome extension | Source beta; Chrome Web Store publication pending |
-| Gmail and Outlook add-ons | Retired experiments; legacy source retained but not shipped |
 | Maintainer-hosted AI and payments | Not implemented |
 
 Follow [production acceptance](https://github.com/MatthiasBusscher/Maillume/issues/38), [integration publication](https://github.com/MatthiasBusscher/Maillume/issues/39), and the [private-beta rehearsal](https://github.com/MatthiasBusscher/Maillume/issues/40) on GitHub.
@@ -89,7 +88,7 @@ Build the Chrome Web Store candidate and checksum with:
 npm run package:integrations
 ```
 
-Only the Chrome artifact is produced by the release packaging command. The Gmail and Outlook experiments remain in the repository as unshipped legacy source so their historical permission and privacy controls stay reviewable. Chrome Web Store acceptance is tracked in the [publication packet](docs/integration-publication.md).
+The release packaging command produces the Chrome artifact. Chrome Web Store acceptance is tracked in the [publication packet](docs/integration-publication.md).
 
 ## How It Works
 

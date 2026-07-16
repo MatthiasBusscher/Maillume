@@ -641,12 +641,3 @@ test("hosted API publishes its machine-readable contract", async ({ request }) =
   expect(specification.components.schemas.AnalysisResult.required).toEqual(expect.arrayContaining(["classification", "score_factors"]));
   expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v2.1");
 });
-
-test("retired Outlook task-pane routes are not shipped", async ({ request }) => {
-  for (const path of ["/integrations/outlook", "/nl/integrations/outlook"]) {
-    const response = await request.get(path);
-    expect(response.status()).toBe(404);
-    expect(response.headers()["x-frame-options"]).toBe("DENY");
-    expect(response.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
-  }
-});

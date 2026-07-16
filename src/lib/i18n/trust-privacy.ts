@@ -43,7 +43,6 @@ export const trustPrivacyCopy = {
         paragraphs: [
           "The Chrome extension captures text you explicitly select or, when supported and unambiguous, the visibly open webmail message after you start the action. It sends those fields to the Maillume deployment displayed in the extension for that assessment.",
           "The extension does not perform background mailbox scanning and does not persist message content or results. Its endpoint preference is stored locally and its API key is kept in browser session storage.",
-          "Earlier Gmail and Outlook add-on experiments are retired and are not shipped as part of the Maillume service. Their source remains in the repository for historical and security review.",
         ],
       },
       providers: {
@@ -109,7 +108,6 @@ export const trustPrivacyCopy = {
         paragraphs: [
           "De Chrome-extensie legt tekst vast die u uitdrukkelijk selecteert of, wanneer dit wordt ondersteund en ondubbelzinnig is, het zichtbaar geopende webmailbericht nadat u de actie start. De extensie stuurt die velden voor de beoordeling naar de Maillume-omgeving die in de extensie wordt getoond.",
           "De extensie scant postvakken niet op de achtergrond en bewaart geen berichtinhoud of resultaten. De voorkeur voor het endpoint wordt lokaal opgeslagen en de API-sleutel blijft in de sessieopslag van de browser.",
-          "Eerdere experimenten met Gmail- en Outlook-add-ons zijn beëindigd en worden niet als onderdeel van de Maillume-dienst uitgebracht. De broncode blijft in de repository staan voor historische en beveiligingscontrole.",
         ],
       },
       providers: {

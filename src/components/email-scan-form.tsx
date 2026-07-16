@@ -61,6 +61,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   const [subject, setSubject] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
   const [body, setBody] = useState("");
+  const [links, setLinks] = useState<string[]>([]);
   const [linkPairs, setLinkPairs] = useState<EmailLinkPair[]>([]);
   const [result, setResult] = useState<EmailAnalysisResult | null>(null);
   const [analysisVersion, setAnalysisVersion] = useState("");
@@ -70,8 +71,8 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   const [fileName, setFileName] = useState("");
   const [fileStatus, setFileStatus] = useState("");
   const requestPayload = useMemo(
-    () => ({ source: activeMode, subject, senderEmail, body, locale, linkPairs }),
-    [activeMode, body, linkPairs, locale, senderEmail, subject],
+    () => ({ source: activeMode, subject, senderEmail, body, locale, links, linkPairs }),
+    [activeMode, body, linkPairs, links, locale, senderEmail, subject],
   );
   const requestSize = getSerializedRequestSize(requestPayload);
   const bodyIsTooLong = body.length > MAX_SCAN_BODY_LENGTH;
@@ -129,6 +130,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setSubject("Action required: mailbox access expiring");
     setSenderEmail("security-alert@microsoft-support-login.click");
     setBody(sampleEmail);
+    setLinks([]);
     setLinkPairs([]);
     setResult(null);
     setError("");
@@ -141,6 +143,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setSubject("");
     setSenderEmail("");
     setBody("");
+    setLinks([]);
     setLinkPairs([]);
     setResult(null);
     setError("");
@@ -187,6 +190,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
       setSubject(file.name.replace(/\.[^.]+$/, ""));
       setSenderEmail("");
       setBody(extractedText);
+      setLinks([]);
       setLinkPairs([]);
       setFileStatus(dictionary.form.extractedTextReady);
     } catch {
@@ -237,6 +241,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
       setSubject(parsed.subject ?? file.name.replace(/\.eml$/i, ""));
       setSenderEmail(parsed.senderEmail ?? "");
       setBody(parsed.body);
+      setLinks(parsed.links);
       setLinkPairs(parsed.linkPairs);
       setFileStatus(dictionary.form.parsedEmlReady);
     } catch {
@@ -371,7 +376,11 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
           </span>
           <textarea
             value={body}
-            onChange={(event) => setBody(event.target.value)}
+            onChange={(event) => {
+              setBody(event.target.value);
+              setLinks([]);
+              setLinkPairs([]);
+            }}
             placeholder={dictionary.form.bodyPlaceholder}
             rows={13}
             required
