@@ -15,6 +15,7 @@ permissions: {}
 
 jobs:
   verify:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -67,6 +68,7 @@ jobs:
           if-no-files-found: error
   secrets:
     name: Full-history secret scan
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -84,6 +86,7 @@ jobs:
 
   image:
     needs: [verify, secrets]
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -183,8 +186,41 @@ jobs:
           repository_digest="$IMAGE_NAME@$digest"
           echo "image=$repository_digest" >> "$GITHUB_OUTPUT"
 
+  resolve:
+    name: Resolve verified image
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      image: ${{ steps.digest.outputs.image }}
+    steps:
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Resolve the already verified SHA image
+        id: digest
+        env:
+          IMAGE_NAME: ghcr.io/matthiasbusscher/maillume
+          IMAGE_TAG: ghcr.io/matthiasbusscher/maillume:sha-${{ github.sha }}
+        run: |
+          set -euo pipefail
+          digest_json="$(docker buildx imagetools inspect "$IMAGE_TAG" --format '{{json .Manifest.Digest}}')"
+          digest="${digest_json#\"}"
+          digest="${digest%\"}"
+          if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Could not resolve the verified main-branch image." >&2
+            exit 1
+          fi
+          echo "image=$IMAGE_NAME@$digest" >> "$GITHUB_OUTPUT"
+
   deploy:
-    needs: image
+    needs: resolve
     if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
@@ -216,7 +252,7 @@ jobs:
             set -eu
             cd /opt/maillume
             chmod 750 ./scripts/deploy-production.sh
-            ./scripts/deploy-production.sh '${{ needs.image.outputs.image }}' '${{ github.sha }}'
+            ./scripts/deploy-production.sh '${{ needs.resolve.outputs.image }}' '${{ github.sha }}'
       - name: Verify public deployment revision
         env:
           EXPECTED_REVISION: ${{ github.sha }}
