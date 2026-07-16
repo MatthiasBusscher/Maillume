@@ -37,7 +37,6 @@ jobs:
 
       - name: Start local database
         run: supabase start --ignore-health-check -x edge-runtime,gotrue,imgproxy,kong,logflare,mailpit,postgres-meta,postgrest,realtime,storage-api,studio,supavisor,vector
-        working-directory: supabase
 
       - name: Database lifecycle tests
         run: |
@@ -85,7 +84,6 @@ jobs:
       - name: Stop local database
         if: always()
         run: supabase stop --no-backup
-        working-directory: supabase
 
   secrets:
     name: Full-history secret scan

@@ -48,7 +48,7 @@ Before enabling public email/password registration:
 
 Maillume passes `data: { locale: "en" | "nl" }` when a user signs up or requests a magic link. The branded templates in `supabase/templates/` use that account metadata to render English or Dutch. The account language control persists the same preference in Supabase user metadata; it is restored after password, Google, and passkey sign-in. Existing accounts are backfilled with their current site locale at the next successful sign-in.
 
-`supabase/config.toml` and the template files configure local development and self-hosted Supabase only. For the managed production project, copy the subjects and HTML from those files into Supabase Dashboard → Authentication → Email Templates, then send confirmation, recovery, and magic-link tests to English and Dutch test accounts. Keep Resend click tracking disabled so it does not rewrite Supabase confirmation links.
+`supabase/templates/` is Maillume's reviewed source for the branded email HTML. Local Supabase deliberately uses its default email content so database CI does not depend on CLI-specific template-path resolution. For the managed production project, copy the subjects and HTML from those files into Supabase Dashboard → Authentication → Email Templates, then send confirmation, recovery, and magic-link tests to English and Dutch test accounts. A self-hosted deployment must load the same files through its own mailer configuration. Keep Resend click tracking disabled so it does not rewrite Supabase confirmation links.
 
 ## Google Sign-In Identity
 

@@ -137,6 +137,11 @@ function main() {
     assert.match(supabaseConfig, new RegExp(`\\[auth\\.email\\.notification\\.${notificationType}\\]`));
   }
   assert.doesNotMatch(supabaseConfig, /auth\.email\.notification\.mfa_(?:enrolled|unenrolled)/);
+  assert.doesNotMatch(
+    supabaseConfig,
+    /content_path\s*=/,
+    "local Supabase startup must not depend on CLI-specific email template path resolution",
+  );
   for (const templateFile of readdirSync(join(PROJECT_ROOT, "supabase", "templates"))) {
     assert.match(
       readProjectFile(`supabase/templates/${templateFile}`),
