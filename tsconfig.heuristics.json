@@ -46,6 +46,8 @@
     "src/lib/operator.ts",
     "src/lib/operator.test.ts",
     "src/lib/security/privacy-review.test.ts",
+    "src/lib/security/csp.ts",
+    "src/lib/security/csp.test.ts",
     "src/lib/security/client-identifier.ts",
     "src/lib/security/client-identifier.test.ts",
     "src/lib/security/account-request.ts",
