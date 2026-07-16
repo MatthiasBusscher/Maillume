@@ -60,12 +60,11 @@ export function parseEml(raw: string): ParsedEml {
     .join("\n\n")
     .trim();
   const links = Array.from(new Set([...rawLinks, ...extractLinks(body)]));
-  const bodyWithMetadata = [body, linkSummary(links)].filter(Boolean).join("\n\n").trim();
 
   return {
     subject,
     senderEmail,
-    body: bodyWithMetadata,
+    body,
     links,
     linkPairs: deduplicateLinkPairs(linkPairs),
     attachmentNames,
@@ -232,12 +231,4 @@ function attachmentSummary(attachmentNames: string[]): string {
   }
 
   return `Attachment metadata:\n${attachmentNames.map((name) => `- ${name}`).join("\n")}`;
-}
-
-function linkSummary(links: string[]): string {
-  if (links.length === 0) {
-    return "";
-  }
-
-  return `Detected links:\n${links.map((link) => `- ${link}`).join("\n")}`;
 }

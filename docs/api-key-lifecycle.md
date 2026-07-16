@@ -1,6 +1,6 @@
 # Hosted API Key Lifecycle
 
-Maillume hosted integration keys are revocable credentials for the browser, Gmail, and Outlook integrations. They never authorize mailbox-wide access and their metadata never contains email content or analysis results.
+Maillume hosted integration keys are revocable credentials for the Chrome browser extension. They never authorize mailbox-wide access and their metadata never contains email content or analysis results.
 
 ## Production contract
 

@@ -51,6 +51,8 @@ function main() {
   const oauthReturnContent = readProjectFile("src/lib/auth/oauth-return.ts");
   const middlewareContent = readProjectFile("src/middleware.ts");
   const accountDeletionContent = readProjectFile("src/app/account/delete/route.ts");
+  const signOutRouteContent = readProjectFile("src/app/auth/sign-out/route.ts");
+  const supabaseConfig = readProjectFile("supabase/config.toml");
   const accountRequestGuard = readProjectFile("src/lib/security/account-request.ts");
   const scannerPageContent = readProjectFile("src/app/app/page.tsx");
   const feedbackMigration = readProjectFile(
@@ -83,10 +85,6 @@ function main() {
   const accountApiKeysRoute = readProjectFile("src/app/account/api-keys/route.ts");
   const extensionManifest = readProjectFile("integrations/browser-extension/manifest.json");
   const extensionPanel = readProjectFile("integrations/browser-extension/sidepanel.js");
-  const gmailManifest = readProjectFile("integrations/gmail-addon/appsscript.json");
-  const gmailCode = readProjectFile("integrations/gmail-addon/Code.gs");
-  const outlookManifest = readProjectFile("integrations/outlook-addin/outlook-manifest.xml");
-  const outlookComponent = readProjectFile("integrations/outlook-addin/outlook-integration.tsx");
   const ciWorkflow = readProjectFile(".github/workflows/ci.yml");
   const releaseWorkflow = readProjectFile(".github/workflows/release.yml");
   const deployScript = readProjectFile("scripts/deploy-production.sh");
@@ -119,6 +117,33 @@ function main() {
       accountDeletionContent.indexOf("admin.auth.admin.deleteUser"),
     "account deletion must verify the signed-in user before using the admin API",
   );
+  assert.match(signOutRouteContent, /getPublicAppOrigin/);
+  assert.match(signOutRouteContent, /isStrictSameOriginMutation\(request, publicOrigin\)/);
+  assert.match(signOutRouteContent, /Cross-origin sign-out is not allowed/);
+  assert.ok(
+    signOutRouteContent.indexOf("isStrictSameOriginMutation(request, publicOrigin)") <
+      signOutRouteContent.indexOf("auth.signOut"),
+    "sign-out must reject a cross-origin request before clearing the session",
+  );
+  for (const notificationType of [
+    "password_changed",
+    "email_changed",
+    "phone_changed",
+    "mfa_factor_enrolled",
+    "mfa_factor_unenrolled",
+    "identity_linked",
+    "identity_unlinked",
+  ]) {
+    assert.match(supabaseConfig, new RegExp(`\\[auth\\.email\\.notification\\.${notificationType}\\]`));
+  }
+  assert.doesNotMatch(supabaseConfig, /auth\.email\.notification\.mfa_(?:enrolled|unenrolled)/);
+  for (const templateFile of readdirSync(join(PROJECT_ROOT, "supabase", "templates"))) {
+    assert.match(
+      readProjectFile(`supabase/templates/${templateFile}`),
+      /\.Data\.locale/,
+      `${templateFile} must select copy from the account locale metadata`,
+    );
+  }
   assert.doesNotMatch(scannerPageContent, /\bredirect\s*\(/);
   assert.match(accountRequestGuard, /if \(!origin\) return false/);
   assert.match(accountRequestGuard, /fetchSite === "same-origin"/);
@@ -230,35 +255,6 @@ function main() {
   assert.doesNotMatch(extensionPanel, /storage\.local\.set\([^)]*(?:body|result)[\s\S]*?\)/);
   assert.match(extensionPanel, /storage\.session\.set\(\{ apiKey \}\)/);
   assert.doesNotMatch(extensionPanel, /storage\.local\.set\(\{ apiKey \}\)/);
-  assert.deepEqual(
-    (JSON.parse(gmailManifest) as { oauthScopes: string[] }).oauthScopes,
-    [
-      "https://www.googleapis.com/auth/gmail.addons.execute",
-      "https://www.googleapis.com/auth/gmail.addons.current.message.action",
-      "https://www.googleapis.com/auth/script.external_request",
-      "https://www.googleapis.com/auth/script.locale",
-    ],
-  );
-  assert.match(gmailCode, /PropertiesService\.getUserProperties\(\)/);
-  assert.doesNotMatch(gmailCode, /CacheService/);
-  assert.doesNotMatch(
-    gmailCode,
-    /setPropert(?:y|ies)\([^\n]*(?:body|subject|sender|message|result)/i,
-  );
-  assert.match(gmailCode, /if \(status === 401\)[\s\S]*?clearStoredApiKey\(\)/);
-  const forbiddenHandler = gmailCode.match(/if \(status === 403\) \{([\s\S]*?)\n  \}/)?.[1] ?? "";
-  assert.doesNotMatch(forbiddenHandler, /clearStoredApiKey\(\)/);
-  assert.ok(
-    gmailCode.indexOf("Analyze this message") < gmailCode.indexOf("message.getPlainBody()"),
-    "Gmail UI must require an explicit analysis action before message reading",
-  );
-  assert.match(outlookManifest, /<Permissions>ReadItem<\/Permissions>/);
-  assert.doesNotMatch(outlookManifest, /ReadWriteMailbox/);
-  assert.match(outlookManifest, /<Version>1\.0\.0\.0<\/Version>/);
-  assert.doesNotMatch(outlookManifest, /SupportsPinning/);
-  assert.doesNotMatch(outlookComponent, /localStorage\.setItem\([^)]*(?:body|result|subject|sender)[\s\S]*?\)/);
-  assert.match(outlookComponent, /window\.sessionStorage\.setItem\("maillume-outlook-api-key"/);
-  assert.doesNotMatch(outlookComponent, /window\.localStorage/);
   assertPinnedActions(ciWorkflow, ".github/workflows/ci.yml");
   assertPinnedActions(releaseWorkflow, ".github/workflows/release.yml");
   assert.match(ciWorkflow, /fetch-depth: 0/);

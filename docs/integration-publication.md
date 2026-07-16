@@ -1,6 +1,6 @@
 # Chrome Extension Publication Packet
 
-This document is the submission source of truth for the Chrome Web Store. The Gmail Workspace add-on and Outlook add-in are retired experiments and must not be submitted, advertised, or included in the supported release scope. Do not submit the Chrome extension until the production URLs, operator identity, privacy contact, and API-key flow are live.
+This document is the submission source of truth for the Chrome Web Store. Do not submit the Chrome extension until the production URLs, operator identity, privacy contact, and API-key flow are live.
 
 ## Shared Listing Copy
 
@@ -35,39 +35,6 @@ Before submission:
 - Capture 1280x800 screenshots using synthetic messages and invented identities.
 - Complete Chrome Web Store data-use declarations from the production privacy notice.
 - Test unpacked installation, permission grant/denial, key revocation, quota exhaustion, and update packaging.
-
-## Retired Google Workspace Experiment
-
-Legacy source: `integrations/gmail-addon`. A maintainer can run `npm run package:gmail` for historical verification, but the release workflow never builds or uploads it.
-
-This experiment is not shipped, supported, or submitted to Google Workspace Marketplace. The source and checks remain so its historical access boundary can be audited:
-
-OAuth scope justifications:
-
-- `gmail.addons.execute`: runs the add-on cards and button actions.
-- `gmail.addons.current.message.action`: grants temporary access to the open message only after the user presses the add-on's Analyze action.
-- `script.external_request`: sends the user-initiated assessment to the fixed Maillume endpoint.
-- `script.locale`: reads Gmail's locale so the add-on can choose its English or Dutch interface.
-
-The contextual trigger builds a ready card without reading the message. `getPlainBody()` is called only from the Analyze button handler. The manifest allowlists only `https://app.maillume.io/`.
-The add-on follows Gmail's English or Dutch locale, requests analysis in that language, never redisplays a saved key, and provides replace and removal actions. The key stays in user-scoped Apps Script properties until removal, replacement, or a `401` response; a generic `403` is treated as a possibly temporary policy denial and does not erase the key. Message content and results are never saved there. A self-hosted operator must publish a separate add-on build because Google requires outbound destinations to be declared in the add-on manifest.
-
-No production Apps Script deployment, OAuth consent verification, marketplace listing, or reviewer submission is planned.
-
-## Retired Microsoft Outlook Experiment
-
-Legacy manifest: `integrations/outlook-addin/outlook-manifest.xml`. The release workflow never builds or uploads it, and its former production task-pane route has been removed.
-
-This experiment is not shipped, supported, or submitted to Microsoft AppSource. The manifest and checks remain so its historical permission boundary can be audited:
-
-Permission justification:
-
-- `ReadItem`: reads subject, sender, and body of the currently open message after the user presses Analyze.
-
-The add-in does not request `ReadWriteMailbox`, Graph mailbox scopes, event-based activation, or send-time activation. Message text and results are not stored in task-pane local storage.
-The manifest includes Dutch labels and opens the Dutch task pane for `nl-NL`. The task pane permits framing only by Microsoft Office hosts; the rest of Maillume remains non-frameable.
-
-No AppSource validation, client support matrix, listing, or reviewer submission is planned.
 
 ## Release Evidence
 

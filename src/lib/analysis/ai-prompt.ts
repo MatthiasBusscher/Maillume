@@ -20,6 +20,7 @@ export function buildAiAnalysisUserPrompt(input: EmailAnalysisInput): string {
       subject: input.subject ?? null,
       senderEmail: input.senderEmail ?? null,
       body: input.body,
+      links: input.links ?? [],
       linkPairs: input.linkPairs ?? [],
     }),
   ].join("\n");

@@ -288,4 +288,4 @@ The route must not write raw scan content, OCR text, `.eml` data, prompts, or re
 
 ## Future-Ready Boundaries
 
-The design leaves room for forwarded email ingestion, account preferences, team accounts, and paid hosted plans. Email/Google authentication, TOTP MFA, feature-gated passkeys, hashed API keys, atomic quotas, and the explicit-action Chrome extension are implemented. The retired Gmail and Outlook experiments remain as unshipped legacy source for historical and security review. Hosted AI, billing, scan history, and teams remain unimplemented. See `docs/hosted-service.md` for the approved launch gates.
+The design leaves room for forwarded email ingestion, account preferences, team accounts, and paid hosted plans. Email/Google authentication, TOTP MFA, feature-gated passkeys, hashed API keys, atomic quotas, and the explicit-action Chrome extension are implemented. Hosted AI, billing, scan history, and teams remain unimplemented. See `docs/hosted-service.md` for the approved launch gates.

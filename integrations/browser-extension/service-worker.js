@@ -89,6 +89,8 @@ async function captureMessage(tab, captureId) {
     const result = captures[0]?.result;
     const text = result?.text.trim().slice(0, 20_000) || "";
     const captureError = frameResults.find(({ result: frameResult }) => frameResult?.errorCode)?.result.errorCode;
+    const links = cleanLinks(result?.links);
+    const linkPairs = cleanLinkPairs(result?.linkPairs);
 
     finishCapture(tabId, captureId, text
       ? {
@@ -97,6 +99,8 @@ async function captureMessage(tab, captureId) {
           source: result.source,
           subject: cleanField(result.subject, 300),
           sender: cleanField(result.sender, 320),
+          ...(links.length > 0 ? { links } : {}),
+          ...(linkPairs.length > 0 ? { linkPairs } : {}),
         }
       : { status: "error", code: captureError || "no_selection" });
   } catch {
@@ -122,12 +126,19 @@ async function recaptureTab(tabId) {
 }
 
 function readSelectionFromFrame() {
+  const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
+  const MAX_LINKS = 20;
+  const MAX_LINK_LENGTH = 2_048;
   const normalizeText = (value) => String(value || "")
     .replace(/\u00a0/g, " ")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n[ \t]+/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+  const cleanHttpUrl = (value) => {
+    const link = String(value || "").trim().replace(/[.,!?;:]+$/, "");
+    return link.length <= MAX_LINK_LENGTH && /^https?:\/\/[^\s]+$/i.test(link) ? link : "";
+  };
 
   let activeElement = document.activeElement;
   while (activeElement?.shadowRoot?.activeElement) {
@@ -231,6 +242,34 @@ function readSelectionFromFrame() {
     }
     return "";
   };
+  const getLinkMetadata = (root) => {
+    const links = [];
+    const linkPairs = [];
+    const seenLinks = new Set();
+    const seenPairs = new Set();
+
+    for (const anchor of root?.querySelectorAll?.("a[href]") || []) {
+      const destinationUrl = cleanHttpUrl(anchor.getAttribute("href"));
+      if (!destinationUrl) continue;
+      if (!seenLinks.has(destinationUrl) && links.length < MAX_LINKS) {
+        seenLinks.add(destinationUrl);
+        links.push(destinationUrl);
+      }
+
+      const displayedUrl = cleanHttpUrl(elementText(anchor).match(LINK_PATTERN)?.[0]);
+      if (!displayedUrl) continue;
+      const pairKey = `${displayedUrl}\n${destinationUrl}`;
+      if (!seenPairs.has(pairKey) && linkPairs.length < MAX_LINKS) {
+        seenPairs.add(pairKey);
+        linkPairs.push({ displayedUrl, destinationUrl });
+      }
+    }
+
+    return {
+      ...(links.length > 0 ? { links } : {}),
+      ...(linkPairs.length > 0 ? { linkPairs } : {}),
+    };
+  };
 
   if (isGmail) {
     const candidates = collectCandidates([".a3s.aiL", ".a3s", "[data-message-id] [role='document']"]);
@@ -246,6 +285,7 @@ function readSelectionFromFrame() {
       sender: firstEmail(container, [".gD[email]", "[email]", "a[href^='mailto:']"])
         || firstEmail(document, [".gD[email]", "[email]", "a[href^='mailto:']"]),
       viewportScore: candidate.viewportScore,
+      ...getLinkMetadata(candidate.element),
     };
   }
 
@@ -269,6 +309,7 @@ function readSelectionFromFrame() {
       || firstText(document, ["[data-testid='message-subject']", "[data-testid='MessageSubject']", "[role='main'] h1", "[role='main'] h2"]),
     sender: firstEmail(container, ["[data-testid='message-sender'] [title*='@']", "[data-testid='PersonaPrimaryText']", "a[href^='mailto:']", "[title*='@']"]),
     viewportScore: candidate.viewportScore,
+    ...getLinkMetadata(candidate.element),
   };
 }
 
@@ -317,6 +358,8 @@ function consumeCapture(tabId, includeMetadata = false) {
       subject: capture.subject,
       sender: capture.sender,
     };
+    if (capture.links?.length > 0) response.links = capture.links;
+    if (capture.linkPairs?.length > 0) response.linkPairs = capture.linkPairs;
     if (includeMetadata) response.captureId = capture.captureId;
     return response;
   }
@@ -331,6 +374,30 @@ function clearCapture(tabId) {
 
 function cleanField(value, maxLength) {
   return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, maxLength) : "";
+}
+
+function cleanLinks(value) {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(value
+    .filter((link) => typeof link === "string")
+    .map((link) => link.trim().replace(/[.,!?;:]+$/, ""))
+    .filter((link) => link.length <= 2_048 && /^https?:\/\/[^\s]+$/i.test(link)))).slice(0, 20);
+}
+
+function cleanLinkPairs(value) {
+  if (!Array.isArray(value)) return [];
+  const pairs = [];
+  const seen = new Set();
+  for (const pair of value) {
+    const [displayedUrl] = cleanLinks([pair?.displayedUrl]);
+    const [destinationUrl] = cleanLinks([pair?.destinationUrl]);
+    if (!displayedUrl || !destinationUrl) continue;
+    const key = `${displayedUrl}\n${destinationUrl}`;
+    if (seen.has(key) || pairs.length >= 20) continue;
+    seen.add(key);
+    pairs.push({ displayedUrl, destinationUrl });
+  }
+  return pairs;
 }
 
 function notifyPanel(type, tabId, captureId) {

@@ -26,7 +26,7 @@
 - [ ] TOTP enrollment, AAL2 challenge, factor removal, new-session behavior, and account deletion pass in production.
 - [ ] Passkeys remain disabled or the documented real-device beta matrix and rollback have passed.
 - [ ] API-key creation, one-time display, revocation, quota exhaustion, and account-deletion cascade pass against production Supabase.
-- [ ] Chrome extension passes Chrome Web Store validation using synthetic messages and the published privacy disclosure; retired Gmail and Outlook artifacts are excluded from release packages and listings.
+- [ ] Chrome extension passes Chrome Web Store validation using synthetic messages and the published privacy disclosure.
 - [ ] Uptime and VPS alerts reach the operator without including scan content.
 - [ ] DDoS, credential rotation, rollback, and compromised-host runbooks are rehearsed.
 - [ ] A small invited beta completes successfully before broad anonymous traffic is announced.

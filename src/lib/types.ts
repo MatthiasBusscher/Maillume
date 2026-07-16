@@ -31,6 +31,7 @@ export type EmailAnalysisInput = {
   senderEmail?: string;
   body: string;
   locale?: AnalysisLocale;
+  links?: string[];
   linkPairs?: EmailLinkPair[];
 };
 

@@ -11,6 +11,8 @@ let lastAppliedCaptureId = "";
 let captureRetryTimer;
 let captureRetryCount = 0;
 let capturePending = false;
+let capturedLinks = [];
+let capturedLinkPairs = [];
 
 const dynamicCopy = {
   en: {
@@ -191,6 +193,8 @@ async function consumeCapture(tabId) {
     elements.body.value = capture.text.slice(0, 20_000);
     if (typeof capture.subject === "string") elements.subject.value = capture.subject.slice(0, 300);
     if (typeof capture.sender === "string") elements.sender.value = capture.sender.slice(0, 320);
+    capturedLinks = Array.isArray(capture.links) ? capture.links : [];
+    capturedLinkPairs = Array.isArray(capture.linkPairs) ? capture.linkPairs : [];
     lastAppliedCaptureId = capture.captureId || latestCaptureId;
     updateAnalyzeState();
     setStatus(capture.source === "open_message" ? copy.openMessageCaptured : copy.captured);
@@ -356,7 +360,15 @@ elements.analyze.addEventListener("click", async () => {
       response = await fetch(`${endpoint}/api/v1/analyze`, {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ source: "paste", subject: elements.subject.value.trim(), senderEmail: elements.sender.value.trim(), body, locale: getLocale() }),
+        body: JSON.stringify({
+          source: "paste",
+          subject: elements.subject.value.trim(),
+          senderEmail: elements.sender.value.trim(),
+          body,
+          locale: getLocale(),
+          links: capturedLinks,
+          linkPairs: capturedLinkPairs,
+        }),
       });
     } catch {
       throw new Error(copy.unreachable);
@@ -383,7 +395,14 @@ elements.analyze.addEventListener("click", async () => {
 });
 
 for (const id of ["body", "endpoint", "apiKey"]) {
-  elements[id].addEventListener("input", () => { updateDestination(); updateAnalyzeState(); });
+  elements[id].addEventListener("input", () => {
+    if (id === "body") {
+      capturedLinks = [];
+      capturedLinkPairs = [];
+    }
+    updateDestination();
+    updateAnalyzeState();
+  });
 }
 
 function normalizeEndpoint(value) {
@@ -517,6 +536,8 @@ function clearMessageData() {
   elements.subject.value = "";
   elements.sender.value = "";
   elements.body.value = "";
+  capturedLinks = [];
+  capturedLinkPairs = [];
   clearResult();
   updateAnalyzeState();
 }
