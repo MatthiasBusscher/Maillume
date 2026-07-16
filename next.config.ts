@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { getCspConnectSources } from "./src/lib/security/csp";
+
 const baseSecurityHeaders = [
   {
     key: "X-Content-Type-Options",
@@ -20,6 +22,7 @@ const baseSecurityHeaders = [
 ];
 
 const scriptSources = ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", "blob:"];
+const connectSources = getCspConnectSources(process.env.NEXT_PUBLIC_SUPABASE_URL);
 
 if (process.env.NODE_ENV !== "production") {
   scriptSources.push("'unsafe-eval'");
@@ -35,7 +38,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  `connect-src ${connectSources.join(" ")}`,
   "worker-src 'self' blob:",
   "child-src 'self' blob:",
   "manifest-src 'self'",

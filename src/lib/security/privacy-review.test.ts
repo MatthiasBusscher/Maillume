@@ -65,6 +65,7 @@ function main() {
     license?: string;
   };
   const nextConfigContent = readProjectFile("next.config.ts");
+  const cspConfig = readProjectFile("src/lib/security/csp.ts");
   const dockerfileContent = readProjectFile("Dockerfile");
   const composeContent = readProjectFile("docker-compose.production.yml");
   const deploymentContent = readProjectFile("docs/deployment.md");
@@ -214,7 +215,11 @@ function main() {
   assert.match(nextConfigContent, /frame-ancestors 'none'/);
   assert.match(nextConfigContent, /default-src 'self'/);
   assert.match(nextConfigContent, /object-src 'none'/);
-  assert.match(nextConfigContent, /connect-src 'self'/);
+  assert.match(nextConfigContent, /getCspConnectSources\(process\.env\.NEXT_PUBLIC_SUPABASE_URL\)/);
+  assert.match(nextConfigContent, /connect-src \$\{connectSources\.join\(" "\)\}/);
+  assert.match(cspConfig, /url\.origin/);
+  assert.match(cspConfig, /url\.protocol === "https:" \? "wss:" : "ws:"/);
+  assert.doesNotMatch(cspConfig, /supabase\.co|connect-src \*/);
   assert.match(nextConfigContent, /worker-src 'self' blob:/);
   assert.match(nextConfigContent, /upgrade-insecure-requests/);
   assert.doesNotMatch(nextConfigContent, /office\.com|outlook\.com/);
