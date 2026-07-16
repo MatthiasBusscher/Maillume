@@ -33,8 +33,9 @@ export default async function PrivacyPage() {
         <p>{sections.contact.intro}</p>
         <p>
           {locale === "nl" ? "Deze publieke beta wordt beheerd door " : "This public beta is operated by "}
-          <strong>{operator.legalName}</strong>{locale === "nl" ? ", gevestigd op " : ", registered at "}
-          {operator.address}. {locale === "nl" ? "KvK " : "Dutch Chamber of Commerce "}{operator.kvkNumber}; {locale === "nl" ? "btw-id " : "VAT ID "}{operator.vatId}.
+          <strong>{operator.legalName}</strong>
+          {operator.address ? <>{locale === "nl" ? ", gevestigd op " : ", registered at "}{operator.address}</> : null}.{" "}
+          {locale === "nl" ? "KvK " : "Dutch Chamber of Commerce "}{operator.kvkNumber}; {locale === "nl" ? "btw-id " : "VAT ID "}{operator.vatId}.
         </p>
         <p>
           {locale === "nl" ? "Privacycontact: " : "Privacy contact: "}

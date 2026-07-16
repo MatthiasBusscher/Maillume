@@ -25,7 +25,7 @@ export default async function TermsPage() {
       <TrustSection title={sections.openSource.title}><p>{sections.openSource.paragraph}</p></TrustSection>
       <TrustSection title={sections.completion.title}><p>{sections.completion.paragraph}</p></TrustSection>
       <TrustSection title={locale === "nl" ? "Contact" : "Contact"}>
-        <p><strong>{operator.legalName}</strong><br />{operator.address}<br />{locale === "nl" ? "KvK " : "Dutch Chamber of Commerce "}{operator.kvkNumber}<br />{locale === "nl" ? "Btw-id " : "VAT ID "}{operator.vatId}</p>
+        <p><strong>{operator.legalName}</strong>{operator.address ? <><br />{operator.address}</> : null}<br />{locale === "nl" ? "KvK " : "Dutch Chamber of Commerce "}{operator.kvkNumber}<br />{locale === "nl" ? "Btw-id " : "VAT ID "}{operator.vatId}</p>
         <p>{locale === "nl" ? "Vragen over de beta: " : "Questions about the beta: "}<a className="font-semibold text-[#087b72] underline" href={`mailto:${operator.supportEmail}`}>{operator.supportEmail}</a>.</p>
       </TrustSection>
     </TrustPage>
