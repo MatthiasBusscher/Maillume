@@ -32,5 +32,22 @@ assert.deepEqual(
     vatId: "NL123456789B01",
   },
 );
+assert.deepEqual(
+  getPublicBetaOperatorProfile({
+    MAILLUME_OPERATOR_LEGAL_NAME: "Example B.V.",
+    MAILLUME_OPERATOR_KVK: "12345678",
+    MAILLUME_OPERATOR_VAT_ID: "NL123456789B01",
+  }),
+  {
+    address: "",
+    jurisdiction: "The Netherlands",
+    kvkNumber: "12345678",
+    legalName: "Example B.V.",
+    privacyEmail: "privacy@maillume.io",
+    securityEmail: "security@maillume.io",
+    supportEmail: "support@maillume.io",
+    vatId: "NL123456789B01",
+  },
+);
 
 console.log("Checked public-beta operator configuration.");

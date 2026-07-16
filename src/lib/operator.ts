@@ -49,7 +49,7 @@ export function getPublicBetaOperatorProfile(
 }
 
 function isConfigured(profile: OperatorProfile) {
-  return [profile.legalName, profile.address, profile.kvkNumber, profile.vatId]
+  return [profile.legalName, profile.kvkNumber, profile.vatId]
     .every((value) => value.length >= 2)
     && [profile.supportEmail, profile.privacyEmail, profile.securityEmail].every(isSafeMaillumeAddress);
 }
