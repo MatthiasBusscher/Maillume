@@ -1,0 +1,78 @@
+name: Audit production runtime
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type AUDIT to send one synthetic scan and inspect the production runtime
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  audit:
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'AUDIT'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Check out reviewed audit script
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Send one synthetic zero-retention probe
+        env:
+          AUDIT_MARKER: maillume-runtime-audit-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          node --input-type=module <<'NODE'
+          const marker = process.env.AUDIT_MARKER;
+          const response = await fetch("https://app.maillume.io/api/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              source: "paste",
+              locale: "en",
+              body: `${marker}. Synthetic runtime audit. No action is required.`,
+            }),
+          });
+          if (!response.ok) {
+            throw new Error(`Synthetic production probe returned HTTP ${response.status}.`);
+          }
+          if (!response.headers.get("cache-control")?.toLowerCase().includes("no-store")) {
+            throw new Error("Synthetic production probe is missing Cache-Control: no-store.");
+          }
+          const payload = await response.json();
+          if (payload.analysis_version !== "analysis-v2.1" || !payload.result) {
+            throw new Error("Synthetic production probe returned an unexpected contract.");
+          }
+          process.stdout.write("Synthetic zero-retention probe completed.\n");
+          NODE
+          printf 'AUDIT_MARKER=%s\n' "$AUDIT_MARKER" >> "$GITHUB_ENV"
+      - name: Synchronize the runtime audit
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
+          source: scripts/audit-production-runtime.sh
+          target: /opt/maillume
+          overwrite: true
+      - name: Audit container isolation, resources, and zero-retention logs
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        env:
+          AUDIT_MARKER: ${{ env.AUDIT_MARKER }}
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
+          envs: AUDIT_MARKER
+          script: |
+            set -eu
+            cd /opt/maillume
+            chmod 750 ./scripts/audit-production-runtime.sh
+            ./scripts/audit-production-runtime.sh "$AUDIT_MARKER"
