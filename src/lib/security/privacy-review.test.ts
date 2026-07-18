@@ -55,6 +55,9 @@ function main() {
   const accountDeletionTokenContent = readProjectFile(
     "src/lib/security/account-deletion-token.ts",
   );
+  const accountMutationTokenContent = readProjectFile(
+    "src/lib/security/account-mutation-token.ts",
+  );
   const accountLanguageContent = readProjectFile("src/app/account/language/route.ts");
   const accountConfig = readProjectFile("src/lib/accounts/config.ts");
   const signOutRouteContent = readProjectFile("src/app/auth/sign-out/route.ts");
@@ -133,8 +136,13 @@ function main() {
   assert.match(accountDeletionContent, /admin\.auth\.admin\.deleteUser/);
   assert.match(accountDeletionContent, /verifyAccountDeletionToken/);
   assert.match(accountPageContent, /type="hidden" name="csrf" value=\{deletionToken/);
-  assert.match(accountDeletionTokenContent, /createHmac\("sha256", secret\)/);
-  assert.match(accountDeletionTokenContent, /timingSafeEqual/);
+  assert.match(accountDeletionTokenContent, /createAccountMutationToken\("delete"/);
+  assert.match(accountMutationTokenContent, /createHmac\("sha256", secret\)/);
+  assert.match(accountMutationTokenContent, /timingSafeEqual/);
+  assert.match(accountMutationTokenContent, /\$\{action\}/);
+  assert.match(accountPageContent, /mutationToken=\{languageToken/);
+  assert.match(accountPageContent, /name="csrf" value=\{signOutToken/);
+  assert.match(accountLanguageContent, /isAuthorizedAccountMutation\(\{\s*action: "language"/);
   assert.match(accountDeletionContent, /ACCOUNT_DELETE_MAX_REQUEST_BYTES/);
   assert.match(accountDeletionContent, /hasRecentAuthentication\(data\.user\.last_sign_in_at\)/);
   assert.match(accountDeletionContent, /private, no-cache, no-store/);
@@ -170,6 +178,7 @@ function main() {
   assert.match(signOutRouteContent, /getPublicAppOrigin/);
   assert.match(signOutRouteContent, /isStrictSameOriginMutation\(request, publicOrigin\)/);
   assert.match(signOutRouteContent, /Cross-origin sign-out is not allowed/);
+  assert.match(signOutRouteContent, /isAuthorizedAccountMutation\(\{\s*action: "sign-out"/);
   assert.match(signOutRouteContent, /const \{ error: signOutError \} = await supabase\.auth\.signOut/);
   assert.ok(
     signOutRouteContent.indexOf("isStrictSameOriginMutation(request, publicOrigin)") <

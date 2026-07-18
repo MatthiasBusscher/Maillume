@@ -1,6 +1,7 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-
-const TOKEN_PURPOSE = "maillume-account-deletion-v1";
+import {
+  createAccountMutationToken,
+  verifyAccountMutationToken,
+} from "./account-mutation-token";
 
 type AccountDeletionTokenInput = {
   lastSignInAt?: string;
@@ -11,9 +12,7 @@ export function createAccountDeletionToken(
   input: AccountDeletionTokenInput,
   secret: string,
 ): string {
-  return createHmac("sha256", secret)
-    .update(getTokenPayload(input))
-    .digest("base64url");
+  return createAccountMutationToken("delete", input, secret);
 }
 
 export function verifyAccountDeletionToken(
@@ -21,16 +20,5 @@ export function verifyAccountDeletionToken(
   input: AccountDeletionTokenInput,
   secret: string,
 ): boolean {
-  if (!token || !secret) return false;
-
-  const expected = createAccountDeletionToken(input, secret);
-  const candidateBytes = Buffer.from(token);
-  const expectedBytes = Buffer.from(expected);
-
-  return candidateBytes.length === expectedBytes.length
-    && timingSafeEqual(candidateBytes, expectedBytes);
-}
-
-function getTokenPayload({ lastSignInAt, userId }: AccountDeletionTokenInput): string {
-  return `${TOKEN_PURPOSE}\n${userId}\n${lastSignInAt ?? ""}`;
+  return verifyAccountMutationToken("delete", token, input, secret);
 }

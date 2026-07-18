@@ -532,6 +532,7 @@ test("account deletion rejects cross-origin requests", async ({ request }) => {
 
 test("sign-out rejects cross-origin requests", async ({ request }) => {
   const response = await request.post("/auth/sign-out", {
+    form: { csrf: "invalid" },
     headers: { Origin: "https://attacker.example" },
   });
 

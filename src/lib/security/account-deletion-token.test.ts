@@ -12,7 +12,7 @@ const input = {
 const secret = "server-only-test-secret";
 const token = createAccountDeletionToken(input, secret);
 
-assert.match(token, /^[A-Za-z0-9_-]{43}$/);
+assert.match(token, /^[a-z0-9]{6,10}\.[A-Za-z0-9_-]{43}$/);
 assert.equal(verifyAccountDeletionToken(token, input, secret), true);
 assert.equal(verifyAccountDeletionToken(null, input, secret), false);
 assert.equal(verifyAccountDeletionToken("invalid", input, secret), false);
