@@ -1,10 +1,17 @@
 import type { SiteLocale } from "@/lib/i18n/site-locale";
 
-export function AccountLanguageLinks({ locale }: { locale: SiteLocale }) {
+export function AccountLanguageLinks({
+  locale,
+  mutationToken,
+}: {
+  locale: SiteLocale;
+  mutationToken?: string;
+}) {
   const languageLabel = locale === "nl" ? "Taal" : "Language";
 
   return (
     <form action="/account/language" method="post" className="inline-flex border border-[#aeb6ac] bg-white p-1" aria-label={languageLabel}>
+      {mutationToken ? <input type="hidden" name="csrf" value={mutationToken} /> : null}
       {(["en", "nl"] as const).map((option) => (
         <button
           key={option}

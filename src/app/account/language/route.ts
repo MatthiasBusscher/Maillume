@@ -14,7 +14,12 @@ import {
   readBoundedRequestBody,
 } from "@/lib/security/account-request";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getSupabaseAdminConfig } from "@/lib/supabase/admin";
 import { areAccountsEnabled } from "@/lib/accounts/config";
+import {
+  isAuthorizedAccountMutation,
+  isAccountMutationTokenCandidate,
+} from "@/lib/security/account-mutation-token";
 
 const ACCOUNT_LANGUAGE_MAX_REQUEST_BYTES = 128;
 
@@ -30,10 +35,6 @@ export async function POST(request: Request) {
     requestUrl: request.url,
   });
 
-  if (!isStrictSameOriginMutation(request, publicOrigin)) {
-    return privateResponse("Cross-origin language changes are not allowed.", 403);
-  }
-
   if (!hasRequestContentType(request, "application/x-www-form-urlencoded")) {
     return privateResponse("Invalid language change request.", 415);
   }
@@ -43,9 +44,14 @@ export async function POST(request: Request) {
     return privateResponse("Language change request body is too large.", 413);
   }
 
-  const locale = new URLSearchParams(body.text).get("locale");
+  const formData = new URLSearchParams(body.text);
+  const locale = formData.get("locale");
   if (!isSiteLocale(locale)) {
     return privateResponse("Unsupported language.", 400);
+  }
+  const originIsValid = isStrictSameOriginMutation(request, publicOrigin);
+  if (!originIsValid && !isAccountMutationTokenCandidate(formData.get("csrf"))) {
+    return privateResponse("Cross-origin language changes are not allowed.", 403);
   }
 
   const supabase = await createServerSupabaseClient({ strictCookieWrites: true });
@@ -56,6 +62,17 @@ export async function POST(request: Request) {
   const { data, error: userError } = await supabase.auth.getUser();
   if (userError || !data.user) {
     return privateRedirect(new URL("/auth/sign-in", publicOrigin));
+  }
+
+  const adminConfig = getSupabaseAdminConfig();
+  if (!isAuthorizedAccountMutation({
+    action: "language",
+    input: { userId: data.user.id, lastSignInAt: data.user.last_sign_in_at },
+    sameOrigin: originIsValid,
+    secret: adminConfig?.secretKey,
+    token: formData.get("csrf"),
+  })) {
+    return privateResponse("Cross-origin language changes are not allowed.", 403);
   }
 
   const { error: updateError } = await supabase.auth.updateUser({

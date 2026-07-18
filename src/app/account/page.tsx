@@ -17,6 +17,7 @@ import { getAppHref, getMarketingHref } from "@/lib/site";
 import { getSupabaseAdminConfig } from "@/lib/supabase/admin";
 import { arePasskeysEnabled } from "@/lib/supabase/config";
 import { createAccountDeletionToken } from "@/lib/security/account-deletion-token";
+import { createAccountMutationToken } from "@/lib/security/account-mutation-token";
 import { hasRecentAuthentication } from "@/lib/security/account-request";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { areAccountsEnabled } from "@/lib/accounts/config";
@@ -49,6 +50,20 @@ export default async function AccountPage({
   const adminConfig = getSupabaseAdminConfig();
   const deletionToken = data.user && adminConfig
     ? createAccountDeletionToken(
+        { userId: data.user.id, lastSignInAt: data.user.last_sign_in_at },
+        adminConfig.secretKey,
+      )
+    : null;
+  const languageToken = data.user && adminConfig
+    ? createAccountMutationToken(
+        "language",
+        { userId: data.user.id, lastSignInAt: data.user.last_sign_in_at },
+        adminConfig.secretKey,
+      )
+    : null;
+  const signOutToken = data.user && adminConfig
+    ? createAccountMutationToken(
+        "sign-out",
         { userId: data.user.id, lastSignInAt: data.user.last_sign_in_at },
         adminConfig.secretKey,
       )
@@ -91,8 +106,9 @@ export default async function AccountPage({
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-6">
           <a href={getMarketingHref()}><BrandMark /></a>
           <div className="flex items-center gap-2">
-            <AccountLanguageLinks locale={locale} />
+            <AccountLanguageLinks locale={locale} mutationToken={languageToken ?? undefined} />
             <form action="/auth/sign-out" method="post">
+              {signOutToken ? <input type="hidden" name="csrf" value={signOutToken} /> : null}
               <button type="submit" className="inline-flex h-10 items-center gap-2 border border-[#aeb6ac] px-3 text-sm font-semibold text-[#374238] hover:border-[#111711]"><LogOut className="h-4 w-4" aria-hidden="true" /> <span className="hidden sm:inline">{copy.signOut}</span></button>
             </form>
           </div>

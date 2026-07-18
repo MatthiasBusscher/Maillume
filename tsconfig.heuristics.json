@@ -52,6 +52,8 @@
     "src/lib/security/client-identifier.test.ts",
     "src/lib/security/account-request.ts",
     "src/lib/security/account-request.test.ts",
+    "src/lib/security/account-mutation-token.ts",
+    "src/lib/security/account-mutation-token.test.ts",
     "src/lib/security/account-deletion-token.ts",
     "src/lib/security/account-deletion-token.test.ts",
     "src/lib/auth/oauth-return.ts",
