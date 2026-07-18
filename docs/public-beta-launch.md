@@ -70,8 +70,10 @@ In the production Supabase Dashboard:
 
 1. Enable Cloudflare automatic DDoS protection and the Free Managed WAF rules.
 2. Use the free rate-limit rule for `app.maillume.io/api/*`: begin with 10
-   requests per 10 seconds per visitor and a Managed Challenge. The app also
-   enforces 20 requests per 60 seconds before analysis.
+   requests per 10 seconds per visitor and the **Block** action with an HTTP
+   `429` response. A Managed Challenge may complement this for suspected bots,
+   but it does not prove the release gate that expensive work receives a `429`.
+   The app also enforces 20 requests per 60 seconds before analysis.
 3. Confirm there is no public A or AAAA record for the VPS address. The
    public hostnames must point to the Cloudflare Tunnel.
 4. Confirm `www.maillume.io` redirects with 301 to `maillume.io`, and every
@@ -79,9 +81,10 @@ In the production Supabase Dashboard:
 5. From an external network, prove that a direct request to the VPS IP cannot
    serve the Maillume application. Do not open ports 80 or 443 to make this
    easier.
-6. Send a short burst of synthetic `/api/analyze` requests. Confirm Cloudflare
-   returns `429` or a challenge before OCR or analysis, and that a normal scan
-   works again after the window expires.
+6. Send a short burst of synthetic invalid `/api/analyze` requests. Confirm
+   Cloudflare returns `429` before the request reaches application analysis,
+   and that a normal scan works again after the window expires. Keep only
+   sanitized status/header evidence; follow `production-security-evidence.md`.
 
 The application only trusts `CF-Connecting-IP` in production. A request that
 does not come through Cloudflare falls into a shared conservative limiter

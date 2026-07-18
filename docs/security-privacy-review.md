@@ -23,6 +23,7 @@ This review covers the launch data flow for pasted text, screenshot OCR, `.eml` 
 - `.eml` files are limited to 2 MB; parsing caps multipart sections, extracted links, attachment metadata, and normalized output before analysis.
 - Empty files are rejected.
 - Upload limit constants live in `src/lib/scan-limits.ts` and are covered by `npm run test:analysis`.
+- The maintained-parser decision, supported MIME scope, replacement criteria, owner, and review deadline are recorded in [ADR 0001](adr/0001-eml-parser.md).
 
 ## Temporary File Handling
 

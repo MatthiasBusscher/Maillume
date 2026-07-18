@@ -52,6 +52,7 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Screenshot mode extracts visible text with client-side OCR, then discards the uploaded image.
    - `.eml` mode parses headers, sender, subject, text/html bodies, detected links, and attachment metadata in the browser, then discards the uploaded file.
    - Upload type and size limits are centralized in `src/lib/scan-limits.ts`.
+   - [ADR 0001](adr/0001-eml-parser.md) records the temporary bounded-parser decision and its required review date.
    - Processing should happen in memory or temporary runtime storage only.
 
 5. Data Layer

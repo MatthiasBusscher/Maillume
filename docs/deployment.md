@@ -25,7 +25,7 @@ Visitor
 3. Add public hostnames for `maillume.io`, `www.maillume.io`, and `app.maillume.io`, each targeting `http://maillume:3000`.
 4. Create redirect rules for `www.maillume.io` and `maillume.nl`, preserving path and query string. Use HTTP 301.
 5. Enable automatic DDoS protection and the Free Managed Ruleset.
-6. Use the free rate-limiting rule for paths beginning `/api/`, covering both `/api/analyze` and `/api/v1/analyze`. Start at 10 requests per 10 seconds per visitor, with a managed challenge, and tune it from observed non-content traffic.
+6. Use the free rate-limiting rule for paths beginning `/api/`, covering both `/api/analyze` and `/api/v1/analyze`. Start at 10 requests per 10 seconds per visitor with the **Block** action and an HTTP `429` response, then tune it from observed non-content traffic. A Managed Challenge can complement this for suspected bots, but it is not evidence that expensive analysis is rejected with `429`.
 7. Do not add an A or AAAA record containing the VPS address.
 
 Store the Tunnel token only in `/opt/maillume/.env.infrastructure`; the application container must never receive it. Turnstile is deliberately deferred until measured abuse shows it is necessary.
@@ -119,6 +119,12 @@ Add repository variables `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLI
 
 The protected deploy job checks out the approved commit and synchronizes only `docker-compose.production.yml` and `scripts/deploy-production.sh` before invoking the script. The VPS therefore never depends on a stale manual copy or a Git checkout. The remote deploy script pulls the immutable image, waits for `/api/health`, verifies that the running container reports the approved Git revision, and restores the previous image if health or revision checks fail. GitHub then verifies the same revision and analyzer version through Cloudflare, together with the public marketing and sign-in routes. GitHub Actions builds images; production never builds source code.
 
+The image job uploads a CycloneDX SBOM for every main-branch build. Once the
+repository is public, it also publishes a GitHub build provenance attestation
+for the exact GHCR image digest. Save the SBOM artifact URL, image digest,
+attestation URL, scan result, and deployment run URL as the release evidence;
+the workflow configuration alone is not evidence for a deployed release.
+
 `/api/health` returns the non-secret build revision and analyzer version. Compare its `revision` with the commit approved in the production workflow when confirming a release.
 
 ## Verification
@@ -132,7 +138,7 @@ Use synthetic data only.
 5. Confirm production reports `analysis_mode: heuristic` and has no provider key.
 6. Confirm screenshot and `.eml` source files remain browser-side.
 7. Test email/password confirmation and recovery, Google authentication, TOTP enrollment/challenge, and account deletion with dedicated test accounts.
-8. Rehearse deployment rollback and VPS restart recovery before the public announcement.
+8. Rehearse deployment rollback and VPS restart recovery before the public announcement. Follow `docs/production-security-evidence.md` for the sanitized proof required by the release gate.
 
 ## Future Migration
 

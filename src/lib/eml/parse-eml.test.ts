@@ -4,9 +4,11 @@ import { analyzeEmailHeuristic, collectHeuristicEvidence } from "../analysis/heu
 import { MAX_SCAN_BODY_LENGTH } from "../types";
 import {
   MAX_EML_ATTACHMENT_NAMES,
+  MAX_EML_HEADER_CHARACTERS,
   MAX_EML_LINKS,
   MAX_EML_MIME_DEPTH,
   MAX_EML_MULTIPART_SECTIONS,
+  MAX_EML_PART_BODY_CHARACTERS,
   parseEml,
 } from "./parse-eml";
 
@@ -184,6 +186,16 @@ not valid base64 !!!`);
 
 ${"x".repeat(MAX_SCAN_BODY_LENGTH + 1_000)}`);
   assert.equal(oversizedBody.body.length, MAX_SCAN_BODY_LENGTH);
+
+  const headerPastLimit = parseEml(`${"X-Fill: x\n".repeat(MAX_EML_HEADER_CHARACTERS)}Subject: outside header cap
+
+body`);
+  assert.equal(headerPastLimit.subject, undefined);
+
+  const linkPastPartLimit = parseEml(`Content-Type: text/plain
+
+${"x".repeat(MAX_EML_PART_BODY_CHARACTERS)} https://outside-part-limit.example.test/`);
+  assert.equal(linkPastPartLimit.links.includes("https://outside-part-limit.example.test/"), false);
 
   const attachmentParts = Array.from(
     { length: MAX_EML_MULTIPART_SECTIONS + 5 },

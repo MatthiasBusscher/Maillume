@@ -6,8 +6,10 @@
 - [ ] Benign, spam, and phishing fixtures pass in English and Dutch using synthetic or authorized data.
 - [ ] Privacy, terms, security, responsible disclosure, and provider disclosures identify the real operator and contact details.
 - [ ] No email text, screenshot, `.eml`, OCR output, link, prompt, or result appears in storage, logs, monitoring, or feedback.
+- [ ] The `.eml` parser decision in `docs/adr/0001-eml-parser.md` remains within its review deadline, or a reviewed replacement/renewal is recorded.
 - [ ] The automated-assessment disclaimer remains visible.
 - [ ] The launch sign-off links to the production security evidence in issue #47.
+- [ ] The release record follows `docs/production-security-evidence.md`, including rate-limit, zero-retention, origin, scan, SBOM/provenance, and rollback evidence.
 
 ## Infrastructure
 
@@ -29,6 +31,7 @@
 - [ ] API-key creation, one-time display, revocation, quota exhaustion, and account-deletion cascade pass against production Supabase.
 - [ ] Uptime and VPS alerts reach the operator without including scan content.
 - [ ] DDoS, credential rotation, rollback, and compromised-host runbooks are rehearsed.
+- [ ] The private credential register is reviewed using `docs/credential-management.md`; no credentials appear in repository files, issues, or release evidence.
 - [ ] A small invited beta completes successfully before broad anonymous traffic is announced.
 
 ## After The Web Beta

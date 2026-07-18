@@ -53,12 +53,25 @@ CLOUDFLARED_IMAGE=cloudflare/cloudflared@sha256:5e49861633763e8933475477c20bae60
 cd /opt/maillume
 previous="$(cat .previous-production-image)"
 MAILLUME_IMAGE="$previous" docker compose \
+  --env-file .env.production \
   --env-file .env.infrastructure \
   -f docker-compose.production.yml \
   up -d --remove-orphans
 ```
 
 Verify health, scanner, and authentication afterward. Do not delete the failing image until the cause is understood.
+
+## Release Supply-Chain Evidence
+
+Every main-branch image build produces a CycloneDX SBOM artifact named
+`maillume-image-sbom`. Retain the artifact URL and the immutable GHCR image digest
+with the release record. The workflow scans the image before publishing it.
+
+Once the repository is public, the same workflow also publishes a GitHub build
+provenance attestation for the exact GHCR digest. Before a public release, verify
+the attestation against that digest and record its URL with the deployment
+evidence. Do not treat a workflow definition as proof that a specific release
+has an SBOM, a clean scan, or a valid attestation.
 
 ## Compromised VPS
 
