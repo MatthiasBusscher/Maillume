@@ -44,21 +44,23 @@ export async function POST(request: Request) {
   }
 
   const { data, error: userError } = await supabase.auth.getUser();
+  if (userError || !data.user) {
+    return originIsValid
+      ? privateRedirect(new URL("/auth/sign-in", publicOrigin))
+      : privateResponse("Cross-origin sign-out is not allowed.", 403);
+  }
+
   const adminConfig = getSupabaseAdminConfig();
-  const mutationIsAuthorized = Boolean(data.user && isAuthorizedAccountMutation({
+  const mutationIsAuthorized = isAuthorizedAccountMutation({
     action: "sign-out",
     input: { userId: data.user.id, lastSignInAt: data.user.last_sign_in_at },
     sameOrigin: originIsValid,
     secret: adminConfig?.secretKey,
     token: formData.get("csrf"),
-  }));
+  });
 
   if (!mutationIsAuthorized) {
     return privateResponse("Cross-origin sign-out is not allowed.", 403);
-  }
-
-  if (userError || !data.user) {
-    return privateRedirect(new URL("/auth/sign-in", publicOrigin));
   }
 
   const { error: signOutError } = await supabase.auth.signOut({ scope: "local" });

@@ -61,7 +61,9 @@ export async function POST(request: Request) {
 
   const { data, error: userError } = await supabase.auth.getUser();
   if (userError || !data.user) {
-    return privateRedirect(new URL("/auth/sign-in", publicOrigin));
+    return originIsValid
+      ? privateRedirect(new URL("/auth/sign-in", publicOrigin))
+      : privateResponse("Cross-origin language changes are not allowed.", 403);
   }
 
   const adminConfig = getSupabaseAdminConfig();
