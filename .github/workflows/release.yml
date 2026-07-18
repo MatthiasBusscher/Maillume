@@ -92,6 +92,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      attestations: write
+      id-token: write
     outputs:
       image: ${{ steps.digest.outputs.image }}
     steps:
@@ -154,8 +156,24 @@ jobs:
         with:
           image-ref: ${{ steps.meta.outputs.tags }}
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
+          ignore-unfixed: false
           exit-code: "1"
+
+      - name: Generate CycloneDX image SBOM
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: cyclonedx
+          output: maillume-image.cdx.json
+          exit-code: "0"
+
+      - name: Upload CycloneDX image SBOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: maillume-image-sbom
+          path: maillume-image.cdx.json
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Log in to GHCR after scan
         uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
@@ -185,6 +203,17 @@ jobs:
           fi
           repository_digest="$IMAGE_NAME@$digest"
           echo "image=$repository_digest" >> "$GITHUB_OUTPUT"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      # GitHub's public artifact attestations become part of the release evidence
+      # once the repository is public. Keep private pre-launch builds deployable.
+      - name: Attest published image provenance
+        if: github.event.repository.visibility == 'public'
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-name: ghcr.io/matthiasbusscher/maillume
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: true
 
   resolve:
     name: Resolve verified image

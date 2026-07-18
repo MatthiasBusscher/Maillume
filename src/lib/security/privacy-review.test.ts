@@ -76,6 +76,10 @@ function main() {
   const dockerfileContent = readProjectFile("Dockerfile");
   const composeContent = readProjectFile("docker-compose.production.yml");
   const deploymentContent = readProjectFile("docs/deployment.md");
+  const operationsContent = readProjectFile("docs/operations.md");
+  const productionEvidenceContent = readProjectFile("docs/production-security-evidence.md");
+  const credentialManagementContent = readProjectFile("docs/credential-management.md");
+  const publicBetaLaunchContent = readProjectFile("docs/public-beta-launch.md");
   const apiAccessMigration = readProjectFile(
     "supabase/migrations/20260711120000_create_api_access.sql",
   );
@@ -358,6 +362,35 @@ function main() {
   assert.match(releaseWorkflow, /npm run test:extension/);
   assert.match(releaseWorkflow, /image:\s*\$\{\{ steps\.digest\.outputs\.image \}\}/);
   assert.equal((releaseWorkflow.match(/packages: write/g) ?? []).length, 1);
+  assert.equal((releaseWorkflow.match(/attestations: write/g) ?? []).length, 1);
+  assert.equal((releaseWorkflow.match(/id-token: write/g) ?? []).length, 1);
+  assert.match(releaseWorkflow, /ignore-unfixed: false/);
+  assert.match(releaseWorkflow, /format: cyclonedx/);
+  assert.match(releaseWorkflow, /name: maillume-image-sbom/);
+  assert.match(
+    releaseWorkflow,
+    /actions\/attest-build-provenance@[0-9a-f]{40}/,
+  );
+  assert.match(releaseWorkflow, /subject-name: ghcr\.io\/matthiasbusscher\/maillume/);
+  assert.match(releaseWorkflow, /subject-digest: \$\{\{ steps\.digest\.outputs\.digest \}\}/);
+  assert.match(releaseWorkflow, /github\.event\.repository\.visibility == 'public'/);
+  assert.match(
+    operationsContent,
+    /MAILLUME_IMAGE="\$previous" docker compose[\s\S]*--env-file \.env\.production[\s\S]*--env-file \.env\.infrastructure/,
+    "manual rollback must load both production and infrastructure configuration",
+  );
+  assert.match(operationsContent, /maillume-image-sbom/);
+  assert.match(operationsContent, /build\s+provenance attestation/);
+  assert.match(deploymentContent, /\*\*Block\*\* action and an HTTP `429` response/);
+  assert.match(productionEvidenceContent, /maillume-retention-check-20260718/);
+  assert.match(productionEvidenceContent, /CF-Connecting-IP/);
+  assert.match(productionEvidenceContent, /maillume-image-sbom/);
+  assert.match(productionEvidenceContent, /time-bounded risk\s+acceptance/);
+  assert.match(credentialManagementContent, /private password manager/);
+  assert.match(credentialManagementContent, /CLOUDFLARE_TUNNEL_TOKEN/);
+  assert.match(credentialManagementContent, /Supabase server secret/);
+  assert.match(publicBetaLaunchContent, /\*\*Block\*\* action with an HTTP\s+`429` response/);
+  assert.doesNotMatch(publicBetaLaunchContent, /and a Managed Challenge/);
   assert.match(releaseWorkflow, /environment: production/);
   assert.match(releaseWorkflow, /github\.ref == 'refs\/heads\/main'/);
   assert.match(releaseWorkflow, /repository_digest="\$IMAGE_NAME@\$digest"/);
