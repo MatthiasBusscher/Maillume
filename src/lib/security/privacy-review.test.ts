@@ -266,6 +266,7 @@ function main() {
   assert.match(nextConfigContent, /Referrer-Policy/);
   assert.match(nextConfigContent, /Permissions-Policy/);
   assert.match(nextConfigContent, /output: "standalone"/);
+  assert.match(nextConfigContent, /poweredByHeader: false/);
   assert.match(dockerfileContent, /USER nextjs/);
   assert.match(dockerfileContent, /rm -rf \/usr\/local\/lib\/node_modules\/npm/);
   assert.match(dockerfileContent, /# syntax=docker\/dockerfile:1\.7@sha256:[0-9a-f]{64}/);
