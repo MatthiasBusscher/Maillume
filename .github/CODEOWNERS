@@ -1,0 +1,6 @@
+# Maillume is founder-maintained during public beta. Requiring this owner for
+# every path ensures that outside contributions cannot merge without review.
+* @MatthiasBusscher
+
+# Protect the ownership policy itself explicitly.
+/.github/CODEOWNERS @MatthiasBusscher

@@ -30,6 +30,8 @@ AI-related changes must preserve cost controls. Keep provider keys server-only, 
 
 ## Branches
 
+Open an issue for product behavior, public interfaces, detection changes, data handling, major dependencies, or work that will take more than a small pull request. Fork the repository or create a feature branch; never work directly on `main`.
+
 Use short, descriptive branch names:
 
 ```text
@@ -55,10 +57,17 @@ npm run build
 
 Good pull requests should:
 
+- Link the issue they address with `Closes #123` when the work is complete.
 - Stay focused on one issue or workflow.
 - Include screenshots for UI changes when useful, using synthetic data only.
 - Explain privacy implications if the change touches scan content, uploads, OCR, `.eml` parsing, logging, or AI prompts.
 - Avoid certainty claims. Maillume provides risk assessments, not guarantees.
+- Pass the required `checks` and `Full-history secret scan` jobs.
+- Resolve review conversations and receive Code Owner approval before merge.
+
+Maintainers squash-merge accepted pull requests. Fork pull requests do not receive production secrets and cannot publish images or deploy. Authentication, authorization, database migrations, scoring, privacy boundaries, GitHub workflows, and deployment changes receive additional security review.
+
+Read [GOVERNANCE.md](GOVERNANCE.md), [SUPPORT.md](SUPPORT.md), and [docs/github-repository-settings.md](docs/github-repository-settings.md) for decision-making and repository protections.
 
 ## Contributor License
 
