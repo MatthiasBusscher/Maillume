@@ -47,19 +47,25 @@ CLOUDFLARED_IMAGE=cloudflare/cloudflared@sha256:5e49861633763e8933475477c20bae60
 
 ## Failed Deployment and Rollback
 
-`scripts/deploy-production.sh` automatically returns to `.previous-production-image` when the new container fails health checks. For manual rollback:
+`scripts/deploy-production.sh` keeps separate immutable current and previous
+known-good release slots. A failed deployment returns to the current slot before
+the failed candidate can replace it. For a later manual rollback:
 
 ```bash
 cd /opt/maillume
-previous="$(cat .previous-production-image)"
-MAILLUME_IMAGE="$previous" docker compose \
-  --env-file .env.production \
-  --env-file .env.infrastructure \
-  -f docker-compose.production.yml \
-  up -d --remove-orphans
+./scripts/rollback-production.sh
 ```
 
-Verify health, scanner, and authentication afterward. Do not delete the failing image until the cause is understood.
+The rollback command uses the same health and revision checks as a deployment
+and swaps the release slots, so running it again returns to the release that was
+active before the rollback. Verify health, scanner, and authentication afterward.
+Do not delete either known-good image until the incident is resolved.
+
+The protected **Rehearse production rollback** workflow requires the literal
+confirmation `REHEARSE`. It switches to the previous known-good image, verifies
+it, restores the starting release, and verifies the public revision. Run it after
+deploying a release that initialized both state slots. Production secrets remain
+limited to the protected `production` environment.
 
 ## Release Supply-Chain Evidence
 
