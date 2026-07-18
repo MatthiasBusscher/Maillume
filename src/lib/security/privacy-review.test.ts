@@ -107,7 +107,12 @@ function main() {
   const extensionPanel = readProjectFile("integrations/browser-extension/sidepanel.js");
   const ciWorkflow = readProjectFile(".github/workflows/ci.yml");
   const releaseWorkflow = readProjectFile(".github/workflows/release.yml");
+  const rollbackWorkflow = readProjectFile(".github/workflows/rollback-rehearsal.yml");
   const deployScript = readProjectFile("scripts/deploy-production.sh");
+  const rollbackScript = readProjectFile("scripts/rollback-production.sh");
+  const rollbackRehearsalScript = readProjectFile(
+    "scripts/rehearse-production-rollback.sh",
+  );
 
   assert.match(routeContent, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(routeContent, /console\./);
@@ -351,6 +356,7 @@ function main() {
   assert.doesNotMatch(extensionPanel, /storage\.local\.set\(\{ apiKey \}\)/);
   assertPinnedActions(ciWorkflow, ".github/workflows/ci.yml");
   assertPinnedActions(releaseWorkflow, ".github/workflows/release.yml");
+  assertPinnedActions(rollbackWorkflow, ".github/workflows/rollback-rehearsal.yml");
   assert.doesNotMatch(ciWorkflow, /push:\s*\n\s*branches:/);
   assert.match(ciWorkflow, /fetch-depth: 0/);
   assert.match(ciWorkflow, /gitleaks\/gitleaks-action@[0-9a-f]{40}/);
@@ -376,11 +382,8 @@ function main() {
   assert.match(releaseWorkflow, /subject-name: ghcr\.io\/matthiasbusscher\/maillume/);
   assert.match(releaseWorkflow, /subject-digest: \$\{\{ steps\.digest\.outputs\.digest \}\}/);
   assert.match(releaseWorkflow, /github\.event\.repository\.visibility == 'public'/);
-  assert.match(
-    operationsContent,
-    /MAILLUME_IMAGE="\$previous" docker compose[\s\S]*--env-file \.env\.production[\s\S]*--env-file \.env\.infrastructure/,
-    "manual rollback must load both production and infrastructure configuration",
-  );
+  assert.match(operationsContent, /\.\/scripts\/rollback-production\.sh/);
+  assert.match(operationsContent, /Rehearse production rollback/);
   assert.match(operationsContent, /maillume-image-sbom/);
   assert.match(operationsContent, /build\s+provenance attestation/);
   assert.match(deploymentContent, /\*\*Block\*\* action and an HTTP `429` response/);
@@ -406,9 +409,16 @@ function main() {
   assert.doesNotMatch(composeContent, /cloudflare\/cloudflared:(?:latest|[\w.-]+)(?!@sha256)/);
   assert.match(deployScript, /--env-file "\$production_env"/);
   assert.match(deployScript, /--env-file "\$infrastructure_env"/);
-  assert.match(deployScript, /MAILLUME_IMAGE="\$previous_image"/);
-  assert.match(deployScript, /wait_for_health "\$previous_revision"/);
+  assert.match(deployScript, /current_image_state_file="\.current-production-image"/);
+  assert.match(deployScript, /previous_image_state_file="\.previous-production-image"/);
+  assert.match(deployScript, /MAILLUME_IMAGE="\$current_image"/);
+  assert.match(deployScript, /wait_for_health "\$current_revision"/);
   assert.match(deployScript, /Rollback failed health checks; manual recovery is required/);
+  assert.match(rollbackScript, /exec \.\/scripts\/deploy-production\.sh/);
+  assert.match(rollbackRehearsalScript, /\.\/scripts\/rollback-production\.sh/);
+  assert.match(rollbackWorkflow, /inputs\.confirm == 'REHEARSE'/);
+  assert.match(rollbackWorkflow, /environment: production/);
+  assert.match(rollbackWorkflow, /EXPECTED_REVISION: \$\{\{ github\.sha \}\}/);
   assert.match(scanLimits, /MAX_SCREENSHOT_PIXELS = 20_000_000/);
   assert.match(scanLimits, /MAX_SCREENSHOT_DIMENSION = 8_000/);
   assert.match(scanLimits, /hasSupportedScreenshotSignature/);

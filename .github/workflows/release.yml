@@ -267,7 +267,7 @@ jobs:
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
-          source: docker-compose.production.yml,scripts/deploy-production.sh
+          source: docker-compose.production.yml,scripts/deploy-production.sh,scripts/rollback-production.sh,scripts/rehearse-production-rollback.sh
           target: /opt/maillume
           overwrite: true
       - name: Deploy immutable image over SSH
@@ -280,7 +280,10 @@ jobs:
           script: |
             set -eu
             cd /opt/maillume
-            chmod 750 ./scripts/deploy-production.sh
+            chmod 750 \
+              ./scripts/deploy-production.sh \
+              ./scripts/rollback-production.sh \
+              ./scripts/rehearse-production-rollback.sh
             ./scripts/deploy-production.sh '${{ needs.resolve.outputs.image }}' '${{ github.sha }}'
       - name: Verify public deployment revision
         env:

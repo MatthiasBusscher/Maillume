@@ -1,0 +1,54 @@
+name: Rehearse production rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type REHEARSE to switch to the previous release and restore the current release
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  rehearse:
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'REHEARSE'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Check out reviewed recovery scripts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Synchronize rollback artifacts
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
+          source: docker-compose.production.yml,scripts/deploy-production.sh,scripts/rollback-production.sh,scripts/rehearse-production-rollback.sh
+          target: /opt/maillume
+          overwrite: true
+      - name: Switch to the previous release and restore the starting release
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
+          script: |
+            set -eu
+            cd /opt/maillume
+            chmod 750 \
+              ./scripts/deploy-production.sh \
+              ./scripts/rollback-production.sh \
+              ./scripts/rehearse-production-rollback.sh
+            ./scripts/rehearse-production-rollback.sh
+      - name: Verify the starting release is restored publicly
+        env:
+          EXPECTED_REVISION: ${{ github.sha }}
+        run: node scripts/verify-public-deployment.mjs
