@@ -2,6 +2,12 @@
 
 Describe the change and why it is needed.
 
+Closes #
+
+## Risk
+
+Describe user-facing, security, privacy, detection, database, or deployment risk. Write `None` only when none of these areas changes.
+
 ## Privacy Check
 
 - [ ] This change does not commit real private email content, raw `.eml` files, private inbox screenshots, API keys, or sensitive logs.
@@ -15,5 +21,9 @@ Describe the change and why it is needed.
 - [ ] `npm run lint`
 - [ ] `npm run test:analysis`
 - [ ] `npm run test:security`
+- [ ] `npm run test:integrations`
+- [ ] `npm run test:extension`
 - [ ] `npm run test:smoke`
 - [ ] `npm run build`
+
+Explain any check that is not applicable or could not be run.

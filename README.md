@@ -176,6 +176,9 @@ Useful guides: [architecture](docs/architecture.md), [authentication](docs/authe
 ## Community and Security
 
 - Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+- Read [GOVERNANCE.md](GOVERNANCE.md) for project decisions and maintainer responsibilities.
+- Follow the [Code of Conduct](CODE_OF_CONDUCT.md) in all project spaces.
+- Use [SUPPORT.md](SUPPORT.md) to choose a safe support channel.
 - Use [GitHub Issues](https://github.com/MatthiasBusscher/Maillume/issues) for reproducible bugs and product proposals.
 - Keep all examples synthetic and free of private inbox data.
 - Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
