@@ -19,7 +19,7 @@ Content-Type: application/json
 }
 ```
 
-The response uses the same `AnalyzeResponse` envelope as the scanner and includes `X-RateLimit-Limit` and `X-RateLimit-Remaining`. During private beta, an account receives 100 calls per UTC calendar month shared across at most five active keys. This allowance is for the hosted heuristic integration API; it is not an AI allowance and it does not mean 100 keys. A `429` response indicates monthly quota, per-client abuse limit, or temporary analysis capacity.
+The response uses the same `AnalyzeResponse` envelope as the scanner and includes `X-RateLimit-Limit` and `X-RateLimit-Remaining`. During public beta, an account receives 100 calls per UTC calendar month shared across at most five active keys. This allowance is for the hosted heuristic integration API; it is not an AI allowance and it does not mean 100 keys. A `429` response indicates monthly quota, per-client abuse limit, or temporary analysis capacity.
 
 The machine-readable contract is published at `/openapi.json`.
 

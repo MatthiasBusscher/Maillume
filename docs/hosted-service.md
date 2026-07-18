@@ -14,7 +14,7 @@ Maillume remains an open-source, privacy-first scanner first and a hosted servic
 - Raw email content, screenshots, `.eml` files, OCR text, links, and assessment results are not retained after scoring.
 - Detection improvements use synthetic fixtures and optional non-content feedback. Production emails do not become a dataset.
 - Moneybird is the preferred first billing and invoicing system for the Dutch operator. Stripe is deferred unless international payment coverage, marketplace requirements, or measured conversion needs justify the extra provider and reconciliation complexity.
-- A hosted account may have at most five active API keys. The private-beta quota is 100 heuristic integration requests per account per UTC month, shared by those keys. Creating or managing integration keys requires authenticator-app 2FA and an AAL2 session.
+- A hosted account may have at most five active API keys. The public-beta quota is 100 heuristic integration requests per account per UTC month, shared by those keys. Creating or managing integration keys requires authenticator-app 2FA and an AAL2 session.
 - Organization administration, colleague invitations, role-based access, and audit logs are a later team-account project. A broad application-wide admin role is not part of the beta.
 
 ## Product Boundaries

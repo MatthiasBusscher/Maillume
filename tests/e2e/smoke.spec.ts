@@ -131,15 +131,15 @@ test("Dutch marketing preview and app navigation are visibly localized", async (
     await expect(preview.getByText(text, { exact: true })).toHaveCount(0);
   }
   await expect(page.getByText("Verwerkt bestanden en haalt leesbare tekst op.", { exact: true })).toBeVisible();
-  await expect(page.getByText("Controleert risicopatronen en geeft gestructureerde JSON terug.", { exact: true })).toBeVisible();
-  await expect(page.getByText("Er wordt geen e-mailinhoud of resultaat in een scangeschiedenis opgeslagen.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Weegt risicosignalen en geeft een uitlegbare beoordeling terug.", { exact: true })).toBeVisible();
+  await expect(page.getByText("E-mailinhoud en resultaten worden niet in de applicatieopslag bewaard.", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Ontdek self-hosting" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Lees de incidentnotities" })).toBeVisible();
   await expect(page.getByText("Parses files and extracts readable text.", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Checks risk patterns and returns structured JSON.", { exact: true })).toHaveCount(0);
 
   await page.goto("/nl/pricing");
-  await expect(page.getByText("Kandidaat voor openbare beta", { exact: true })).toBeVisible();
+  await expect(page.getByText("Beschikbaar in de publieke bèta", { exact: true })).toBeVisible();
 
   await page.goto("/nl/app");
   await expect(page.getByLabel("Maillume website")).toHaveAttribute("href", "http://127.0.0.1:3100/nl");
@@ -415,7 +415,7 @@ test("marketing routes accurately distinguish available and source-beta features
 
   await page.goto("/pricing");
   await expect(page.getByRole("heading", { name: "The safety workflow stays free." })).toBeVisible();
-  await expect(page.getByText("Public-beta candidate", { exact: true })).toBeVisible();
+  await expect(page.getByText("Available in public beta", { exact: true })).toBeVisible();
   await expect(page.getByText("Planned, not for sale")).toBeVisible();
 
   await page.goto("/self-hosted");
@@ -423,8 +423,9 @@ test("marketing routes accurately distinguish available and source-beta features
 
   await page.goto("/platform");
   await expect(page.getByRole("heading", { name: "The web scanner comes first." })).toBeVisible();
-  await expect(page.getByText("Disabled for public beta", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("After web beta", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Optional", { exact: true })).toBeVisible();
+  await expect(page.getByText("Source beta", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Later", { exact: true })).toBeVisible();
 });
 
 test("public beta hides accounts and rejects account APIs before request processing", async ({ page, request }) => {

@@ -11,6 +11,9 @@ export function translateMarketingTree(node: ReactNode, dictionary: MarketingDic
   for (const key of ["title", "description", "detail", "eyebrow", "label", "text", "question"]) {
     if (typeof props[key] === "string") props[key] = translateText(props[key] as string, dictionary);
   }
+  if ("actions" in props) {
+    props.actions = translateMarketingTree(props.actions as ReactNode, dictionary);
+  }
   if ("children" in props) {
     props.children = Children.map(props.children, (child) => translateMarketingTree(child, dictionary));
   }

@@ -1,4 +1,4 @@
-# Private Beta Launch Checklist
+# Public Web Beta Launch Checklist
 
 ## Product and Privacy
 
@@ -7,6 +7,7 @@
 - [ ] Privacy, terms, security, responsible disclosure, and provider disclosures identify the real operator and contact details.
 - [ ] No email text, screenshot, `.eml`, OCR output, link, prompt, or result appears in storage, logs, monitoring, or feedback.
 - [ ] The automated-assessment disclaimer remains visible.
+- [ ] The launch sign-off links to the production security evidence in issue #47.
 
 ## Infrastructure
 
@@ -26,7 +27,10 @@
 - [ ] TOTP enrollment, AAL2 challenge, factor removal, new-session behavior, and account deletion pass in production.
 - [ ] Passkeys remain disabled or the documented real-device beta matrix and rollback have passed.
 - [ ] API-key creation, one-time display, revocation, quota exhaustion, and account-deletion cascade pass against production Supabase.
-- [ ] Chrome extension passes Chrome Web Store validation using synthetic messages and the published privacy disclosure.
 - [ ] Uptime and VPS alerts reach the operator without including scan content.
 - [ ] DDoS, credential rotation, rollback, and compromised-host runbooks are rehearsed.
 - [ ] A small invited beta completes successfully before broad anonymous traffic is announced.
+
+## After The Web Beta
+
+- [ ] Chrome extension passes Chrome Web Store validation using synthetic messages and the published privacy disclosure (#39).

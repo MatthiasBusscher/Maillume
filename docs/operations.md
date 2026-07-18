@@ -72,4 +72,4 @@ Verify health, scanner, and authentication afterward. Do not delete the failing 
 
 ## Recovery Expectations
 
-The application stores no scan history on the VPS. Recovery requires the Compose file, deployment script, environment secrets, and an existing GHCR image. Supabase is recovered independently through its managed controls. Target an initial four-hour recovery objective for private beta and document the measured rehearsal result.
+The application stores no scan history on the VPS. Recovery requires the Compose file, deployment script, environment secrets, and an existing GHCR image. Supabase is recovered independently through its managed controls. Target an initial four-hour recovery objective for public beta and document the measured rehearsal result.

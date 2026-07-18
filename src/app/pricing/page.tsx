@@ -17,15 +17,15 @@ const plans = [
     name: "Cloud Free",
     price: "EUR 0",
     cadence: "forever",
-    description: "A quick second opinion for everyday suspicious email.",
-    status: "Public-beta candidate",
+    description: "An explainable risk assessment for everyday suspicious email.",
+    status: "Available in public beta",
     accent: true,
     features: [
       "No account required",
       "Heuristic email risk assessment",
       "Paste, screenshot, and .eml inputs",
       "English and Dutch interface",
-      "Account API keys after production acceptance",
+      "Optional account and quota-limited API keys",
       "No scan history",
     ],
     cta: "Check an email",
@@ -34,7 +34,7 @@ const plans = [
   {
     name: "Plus",
     price: "To be decided",
-    cadence: "after private beta",
+    cadence: "not for sale",
     description: "Managed convenience for people who want Maillume closer to their inbox.",
     status: "Planned, not for sale",
     features: [
@@ -73,7 +73,7 @@ export default async function PricingPage() {
       <PageIntro
         eyebrow="Pricing"
         title="The safety workflow stays free."
-        description="The hosted public-beta candidate charges nothing for core heuristic checks. Account, API, and managed AI features remain disabled until their separate production acceptance gates pass."
+        description="Core heuristic checks are free and need no account. Optional accounts and quota-limited API keys are available; managed AI and paid plans are not for sale."
       />
 
       <section className="border-b border-[#cbd0c5] py-16 sm:py-20">
@@ -132,7 +132,7 @@ export default async function PricingPage() {
           </div>
           <div className="border-t border-[#aeb6ac]">
             <PricingQuestion question="Will free scans require an account?">
-              No. Anonymous heuristic scanning is a permanent product boundary. An optional email or Google account may later unlock preferences or paid conveniences, but it is not required for the core check.
+              No. Anonymous heuristic scanning remains the free core. An optional email or Google account lets you protect and manage integration API keys, but it is never required to check an email.
             </PricingQuestion>
             <PricingQuestion question="Do paid plans make results more certain?">
               No. Every mode remains an automated risk assessment and never a guarantee. Paid value must come from managed capacity, integrations, and support rather than inflated certainty claims.

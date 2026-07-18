@@ -1,8 +1,8 @@
 # Authentication And Account Security
 
-Status: implementation complete; production acceptance pending.
+Status: accounts are enabled in production; password-recovery acceptance remains open in issue #79.
 
-The hosted public beta runs with `ACCOUNTS_ENABLED=false`. This hides account entry points, skips Supabase session access in the scanner, and rejects account/API-key operations before they can read request data or contact Supabase. Enable it only after the production acceptance requirements below are complete.
+The hosted public beta offers optional accounts for authentication, TOTP, and revocable integration API keys. Anonymous scanning remains the primary path and does not require a session. Setting `ACCOUNTS_ENABLED=false` still provides an emergency anonymous-only mode that hides account entry points and rejects account/API-key operations before they contact Supabase.
 
 ## Supported Sign-In Methods
 

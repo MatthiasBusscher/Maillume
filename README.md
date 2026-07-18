@@ -2,9 +2,9 @@
 
 # Maillume
 
-**An open-source second opinion for suspicious email.**
+**Shine a light on suspicious email.**
 
-Understand the warning signs in an email before you click, reply, share information, or pay.
+Maillume combines *mail* with *illuminate*: it makes suspicious signals easier to see before you click, reply, share information, or pay.
 
 [Try Maillume](https://app.maillume.io) · [Website](https://maillume.io) · [Documentation](docs/architecture.md) · [Roadmap](docs/roadmap.md) · [Contributing](CONTRIBUTING.md)
 
@@ -19,7 +19,7 @@ Understand the warning signs in an email before you click, reply, share informat
 
 ## About Maillume
 
-Suspicious email is hard to judge when it looks just convincing enough. Maillume makes that decision easier by turning sender clues, pressure tactics, links, and message patterns into a plain-language risk report.
+Suspicious email is hard to judge when it looks just convincing enough. Maillume brings sender clues, pressure tactics, links, and message patterns into one plain-language risk report.
 
 Paste an email, add a screenshot, or open an exported `.eml` file. Maillume shows what it noticed, how strongly the signals affect the score, and what to do next. The final decision always stays with the user.
 
@@ -38,19 +38,19 @@ Paste an email, add a screenshot, or open an exported `.eml` file. Maillume show
 
 ## Project Status
 
-Maillume is a public-beta candidate. The anonymous scanner works today; account features and Chrome Web Store publication remain separate production gates.
+Maillume is preparing for public beta. Anonymous scanning and optional account/API-key features are running in production; Chrome Web Store publication remains a separate post-web-beta gate.
 
 | Capability | Status |
 | --- | --- |
-| Anonymous English and Dutch web scanner | Public-beta candidate |
+| Anonymous English and Dutch web scanner | Available |
 | Paste, screenshot OCR, and `.eml` input | Available |
 | Local heuristic assessment | Available |
 | Self-hosted AI with an operator-owned key | Available from source |
-| Email/Google accounts, TOTP 2FA, and hosted API keys | Implemented; disabled until production acceptance |
+| Email/Google accounts, TOTP 2FA, and hosted API keys | Available; account optional |
 | Chrome extension | In validation; not advertised or distributed during web beta |
 | Maintainer-hosted AI and payments | Not implemented |
 
-Follow [production acceptance](https://github.com/MatthiasBusscher/Maillume/issues/38), [integration publication](https://github.com/MatthiasBusscher/Maillume/issues/39), and the [private-beta rehearsal](https://github.com/MatthiasBusscher/Maillume/issues/40) on GitHub.
+Follow the [web-beta release checklist](https://github.com/MatthiasBusscher/Maillume/issues/40), [security verification](https://github.com/MatthiasBusscher/Maillume/issues/47), and [Chrome publication](https://github.com/MatthiasBusscher/Maillume/issues/39) on GitHub.
 
 ## Quick Start
 
