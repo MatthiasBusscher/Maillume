@@ -6,6 +6,7 @@
 - [ ] Benign, spam, and phishing fixtures pass in English and Dutch using synthetic or authorized data.
 - [ ] Privacy, terms, security, responsible disclosure, and provider disclosures identify the real operator and contact details.
 - [ ] No email text, screenshot, `.eml`, OCR output, link, prompt, or result appears in storage, logs, monitoring, or feedback.
+- [ ] The `.eml` parser decision in `docs/adr/0001-eml-parser.md` remains within its review deadline, or a reviewed replacement/renewal is recorded.
 - [ ] The automated-assessment disclaimer remains visible.
 - [ ] The launch sign-off links to the production security evidence in issue #47.
 - [ ] The release record follows `docs/production-security-evidence.md`, including rate-limit, zero-retention, origin, scan, SBOM/provenance, and rollback evidence.

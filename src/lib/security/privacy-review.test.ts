@@ -80,6 +80,7 @@ function main() {
   const productionEvidenceContent = readProjectFile("docs/production-security-evidence.md");
   const credentialManagementContent = readProjectFile("docs/credential-management.md");
   const publicBetaLaunchContent = readProjectFile("docs/public-beta-launch.md");
+  const emlParserAdrContent = readProjectFile("docs/adr/0001-eml-parser.md");
   const apiAccessMigration = readProjectFile(
     "supabase/migrations/20260711120000_create_api_access.sql",
   );
@@ -391,6 +392,11 @@ function main() {
   assert.match(credentialManagementContent, /Supabase server secret/);
   assert.match(publicBetaLaunchContent, /\*\*Block\*\* action with an HTTP\s+`429` response/);
   assert.doesNotMatch(publicBetaLaunchContent, /and a Managed Challenge/);
+  assert.match(emlParserAdrContent, /Status: Accepted \(temporary\)/);
+  assert.match(emlParserAdrContent, /Review deadline: 2026-10-18/);
+  assert.match(emlParserAdrContent, /postal-mime/);
+  assert.match(emlParserAdrContent, /raw file entirely in browser memory/);
+  assert.match(emlParserAdrContent, /Matthias Busscher/);
   assert.match(releaseWorkflow, /environment: production/);
   assert.match(releaseWorkflow, /github\.ref == 'refs\/heads\/main'/);
   assert.match(releaseWorkflow, /repository_digest="\$IMAGE_NAME@\$digest"/);
