@@ -24,24 +24,24 @@ import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 const capabilityRows = [
   {
     icon: FileSearch,
-    label: "Flexible input",
-    title: "Bring the email you actually received.",
+    label: "Three input options",
+    title: "Check the message in front of you.",
     description:
-      "Paste the message, extract text from a screenshot, or parse an exported .eml file. The file itself stays in your browser.",
+      "Paste the text, read a screenshot, or open an exported .eml file. Screenshot and .eml source files stay in your browser.",
   },
   {
     icon: Eye,
-    label: "Explainable output",
-    title: "See the signals, not just a scary label.",
+    label: "Explainable assessment",
+    title: "See the evidence behind the score.",
     description:
-      "Maillume shows a risk score, suspicious patterns, detected links, and a practical next action so you can make the final call.",
+      "Maillume shows the signals it found, how they affected the risk score, which links were detected, and what to do next.",
   },
   {
     icon: Database,
     label: "No scan history",
-    title: "The assessment ends when the request does.",
+    title: "Processed for this check, not kept as history.",
     description:
-      "Maillume does not write email text, sender details, screenshots, .eml files, links, or completed scan results to scan history.",
+      "Email text, sender details, links, screenshots, .eml files, and completed results are not written to application storage.",
   },
 ];
 
@@ -64,13 +64,13 @@ export default async function MarketingHomePage() {
           <div className="max-w-[680px] lg:max-w-[520px] lg:self-center">
             <div className="flex items-center gap-3 font-mono text-[11px] uppercase text-[#dfff52]">
               <span className="h-px w-8 bg-[#dfff52]" aria-hidden="true" />
-              A second look before you act
+              Shine a light on suspicious email
             </div>
             <h1 className="mt-5 text-5xl font-semibold leading-[0.96] text-white sm:text-6xl lg:text-7xl">
               Maillume
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-7 text-[#d9e0d7] sm:text-xl sm:leading-8">
-              Paste the email, screenshot, or .eml file. Maillume points out the warning signs and gives you a practical next step before you click, reply, share information, or pay.
+              Maillume combines mail with illuminate. Paste an email, add a screenshot, or open an .eml file to see the warning signs, risk score, and a safer next step before you click, reply, share details, or pay.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -103,8 +103,8 @@ export default async function MarketingHomePage() {
 
       <section className="border-b border-[#cbd0c5] bg-[#dfff52]">
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 divide-y divide-[#111711]/25 px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6 lg:px-8">
-          <StatusItem icon={LockKeyhole} label="Source files stay in your browser" />
-          <StatusItem icon={ShieldQuestion} label="Reasons you can inspect" />
+          <StatusItem icon={LockKeyhole} label="Uploaded files stay in your browser" />
+          <StatusItem icon={ShieldQuestion} label="Signals you can inspect" />
           <StatusItem icon={Braces} label="AGPL-3.0 open source" />
         </div>
       </section>
@@ -113,13 +113,13 @@ export default async function MarketingHomePage() {
         <div className="mx-auto max-w-[1440px] px-5 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-20">
             <div>
-              <p className="font-mono text-[11px] uppercase text-[#087b72]">A clearer second opinion</p>
+              <p className="font-mono text-[11px] uppercase text-[#087b72]">A clearer risk assessment</p>
               <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">
                 Suspicious emails rarely look suspicious everywhere.
               </h2>
             </div>
             <p className="max-w-3xl text-xl leading-8 text-[#4f5b50] sm:text-2xl sm:leading-9">
-              Maillume gathers the small clues in one place, explains them in plain language, and helps you choose a safer next step. You stay in control of the decision.
+              Maillume brings the small clues together, explains them in plain language, and helps you choose a safer next step. The score supports your decision; it never guarantees that a message is safe or malicious.
             </p>
           </div>
 
@@ -144,17 +144,17 @@ export default async function MarketingHomePage() {
           <div>
             <p className="font-mono text-[11px] uppercase text-[#dfff52]">What leaves the browser</p>
             <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">
-              Your file stays local. The assessment text does not become history.
+              Your file stays local. The analysis text is processed once.
             </h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-[#eaf5f2]">
-              Screenshot OCR and .eml parsing happen in your browser. Only the normalized text needed for the current check is sent to the selected Maillume deployment, and it is not added to a scan database.
+              Screenshot OCR and .eml parsing happen in your browser. Only the normalized text needed for this assessment is sent to the selected Maillume deployment, and it is discarded when the request ends.
             </p>
           </div>
 
           <div className="border-y border-white/35">
             <FlowRow number="01" title="Your browser" detail="Parses files and extracts readable text." />
-            <FlowRow number="02" title="Maillume analysis" detail="Checks risk patterns and returns structured JSON." />
-            <FlowRow number="03" title="Request ends" detail="No email content or result is written to scan history." last />
+            <FlowRow number="02" title="Maillume analysis" detail="Weighs risk signals and returns an explainable assessment." />
+            <FlowRow number="03" title="Request ends" detail="Email content and results are not written to application storage." last />
           </div>
         </div>
       </section>
@@ -167,7 +167,7 @@ export default async function MarketingHomePage() {
               <p className="mt-5 font-mono text-[10px] uppercase text-[#687268]">Hosted by us</p>
               <h2 className="mt-3 text-3xl font-semibold text-[#111711]">Check an email without setting anything up.</h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
-                The hosted scanner uses transparent heuristic checks by default. You do not need an account, and Maillume does not create a history of what you scan.
+                The hosted scanner uses transparent heuristic checks. Anonymous scans need no account; an optional account lets you manage API keys without creating scan history.
               </p>
               <a href={appHref} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">
                 Open Maillume <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -196,7 +196,7 @@ export default async function MarketingHomePage() {
           </div>
           <div>
             <p className="max-w-3xl text-base leading-7 text-[#59655a]">
-              The reported Odido attack combined credential phishing, impersonation of internal IT, and fraudulent login approval. See what that sequence teaches us without claiming any single tool can guarantee prevention.
+              NOS reported that the Odido attack combined credential phishing, impersonation of internal IT, and fraudulent login approval. The case shows why email checks are only one layer of a safer verification process.
             </p>
             <Link href="/resources/odido-phishing-incident" className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">
               Read the incident notes <ArrowRight className="h-4 w-4" aria-hidden="true" />

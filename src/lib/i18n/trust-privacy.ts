@@ -73,7 +73,7 @@ export const trustPrivacyCopy = {
     },
     eyebrow: "Vertrouwenscentrum",
     title: "Privacyverklaring",
-    description: "Maillume is ontworpen om telkens één e-mail te beoordelen zonder scangeschiedenis aan te maken of het bericht of resultaat in de applicatieopslag te bewaren. Deze verklaring beschrijft de gegevensstroom van de officiële publieke beta; beheerders van zelfgehoste omgevingen zijn verantwoordelijk voor hun eigen verklaringen.",
+    description: "Maillume is ontworpen om telkens één e-mail te beoordelen zonder scangeschiedenis aan te maken of het bericht of resultaat in de applicatieopslag te bewaren. Deze verklaring beschrijft de gegevensstroom van de officiële publieke bèta; beheerders van zelfgehoste omgevingen zijn verantwoordelijk voor hun eigen verklaringen.",
     updatedLabel: "Laatst bijgewerkt",
     updatedDate: "10 juli 2026",
     sections: {
@@ -91,22 +91,22 @@ export const trustPrivacyCopy = {
       feedback: {
         title: "Optionele feedback",
         paragraphs: [
-          "Als feedback is ingeschakeld en u deze vrijwillig verstuurt, ontvangt Maillume alleen het gekozen nauwkeurigheidslabel, de verwachte classificatie, algemene signaalcategorieën, taal, invoermethode, analyseversie en scorecategorie.",
+          "Als feedback is ingeschakeld en je deze vrijwillig verstuurt, ontvangt Maillume alleen het gekozen nauwkeurigheidslabel, de verwachte classificatie, algemene signaalcategorieën, taal, invoermethode, analyseversie en scorecategorie.",
           "Feedback bevat geen e-mailtekst, afzender, onderwerp, links, bijlagen, screenshots of .eml-bestanden. Gedetailleerde feedbackrecords zijn ingesteld om na maximaal 90 dagen te verlopen.",
         ],
       },
       accounts: {
         title: "Optionele accounts",
         paragraphs: [
-          "Inloggen met Google is optioneel en wordt, indien ingeschakeld, via Supabase aangeboden. Het account kan uw e-mailadres, weergavenaam, provider-ID, sessiecookies en algemene authenticatiemetadata bevatten.",
+          "Inloggen met Google is optioneel en verloopt via Supabase. Je account kan je e-mailadres, weergavenaam, provider-ID, sessiecookies en algemene authenticatiemetadata bevatten.",
           "Inloggen maakt geen scangeschiedenis aan. Authenticatiecookies houden de ingelogde sessie in stand. Wanneer productie-authenticatie is ingeschakeld, biedt de accountpagina verwijdering van de Supabase-identiteit na bevestiging.",
-          "Wanneer u een integratie-API-sleutel maakt, bewaart Maillume de eigenaar, naam, korte prefix, SHA-256-hash, quota, tijdstippen, UTC-factuurmaand en het totale aantal aanvragen. De leesbare sleutel wordt één keer getoond. API-gebruiksrecords bevatten geen berichtinhoud, resultaten, links, IP-adressen of bericht-ID's.",
+          "Wanneer je een integratie-API-sleutel maakt, bewaart Maillume de eigenaar, naam, korte prefix, SHA-256-hash, quota, tijdstippen, UTC-gebruiksmaand en het totale aantal aanvragen. De leesbare sleutel wordt één keer getoond. API-gebruiksrecords bevatten geen berichtinhoud, resultaten, links, IP-adressen of bericht-ID's.",
         ],
       },
       integrations: {
         title: "Chrome-browserextensie",
         paragraphs: [
-          "De Chrome-extensie legt tekst vast die u uitdrukkelijk selecteert of, wanneer dit wordt ondersteund en ondubbelzinnig is, het zichtbaar geopende webmailbericht nadat u de actie start. De extensie stuurt die velden voor de beoordeling naar de Maillume-omgeving die in de extensie wordt getoond.",
+          "De Chrome-extensie legt tekst vast die je uitdrukkelijk selecteert of, wanneer dit wordt ondersteund en ondubbelzinnig is, het zichtbaar geopende webmailbericht nadat je de actie start. De extensie stuurt die velden voor de beoordeling naar de Maillume-omgeving die in de extensie wordt getoond.",
           "De extensie scant postvakken niet op de achtergrond en bewaart geen berichtinhoud of resultaten. De voorkeur voor het endpoint wordt lokaal opgeslagen en de API-sleutel blijft in de sessieopslag van de browser.",
         ],
       },
@@ -123,7 +123,7 @@ export const trustPrivacyCopy = {
         paragraph: "Iedereen kan een afzonderlijke Maillume-omgeving beheren. Deze beheerders kiezen hun eigen infrastructuur, analytics, authenticatie, AI-aanbieders en bewaartermijnen. Hun privacypraktijken kunnen afwijken van de officiële dienst.",
       },
       contact: {
-        title: "Contact en uw rechten",
+        title: "Contact en je rechten",
         intro: "Neem contact op met Maillume voor een privacyvraag, om toepasselijke privacyrechten uit te oefenen of om verduidelijking te vragen over deze publieke beta.",
         linkPrefix: "Meld beveiligingsproblemen via de procedure op de",
         linkText: "beveiligingspagina",

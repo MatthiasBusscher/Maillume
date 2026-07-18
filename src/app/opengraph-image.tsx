@@ -69,7 +69,7 @@ export default function OpenGraphImage() {
             maxWidth: 750,
           }}
         >
-          Paste text, inspect a screenshot, or parse an .eml file without creating scan history.
+          See the warning signals, risk score, and a safer next step without creating scan history.
         </div>
       </div>
 

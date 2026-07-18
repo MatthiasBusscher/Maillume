@@ -1,17 +1,17 @@
 # Maillume GitHub Issue Roadmap
 
-Implementation status: the scanner core and Chrome extension are implemented in source. Production auth/API acceptance, Chrome Web Store publication, security evidence, and private-beta release work remain open. GitHub issues are the source of truth.
+Implementation status: the scanner, optional accounts, TOTP, account-scoped API, and Chrome extension are implemented in source. Public-beta security evidence, recovery-email acceptance, editorial review, trademark decision, and repository release controls remain open. GitHub milestones and issues are the source of truth.
 
 ## Release And Post-Launch Order
 
-1. Issue #27: Visual Identity and Scanner Workspace Redesign. Complete.
-2. Issue #29: Hosted Service Architecture and Plan Boundaries. Decide privacy, cost, quota, pricing, license, and launch gates before implementation.
-3. Issue #31: Privacy-Safe Detection Feedback and Synthetic Dataset Pipeline. Add optional label feedback and synthetic calibration without retaining scanned messages.
-4. Issue #34: Brand, License, and Public Beta Positioning. Complete the beta identity and hosted-by-us-or-you model before going public.
-5. Issue #35: Public Beta Deployment and Trust Pages. Deploy the heuristic beta, verify trust controls, then make the repository public.
-6. Issue #30: Mail Client Integration Feasibility Spike. Complete: Chrome was selected as the sole release integration.
-7. Chrome extension and authenticated hosted API. Implemented in source; issues #38 and #39 must close before public availability is claimed.
-8. Hosted AI and billing remain gated by the Issue #29 privacy, cost, and legal decisions.
+1. Issue #92: complete the native English/Dutch editorial and Maillume brand-story pass.
+2. Issue #79: verify password recovery at Gmail and Outlook and lock production callbacks to the app origin.
+3. Issue #47: complete production security evidence, monitoring, and rollback acceptance.
+4. Issue #49: complete trademark evidence and record the founder filing/risk decision.
+5. Issue #93: make the repository public and apply contribution protections in the same release session.
+6. Issue #40: run the trusted-tester period, tag `v0.1.0-beta`, and publish the release.
+7. Issue #39: validate and publish the Chrome extension after the web beta.
+8. Issues #51, #56, #64, and #66: post-beta detection, billing, team, and custom-auth-domain work.
 
 The public heuristic scanner and self-hosted bring-your-own-key mode remain the launch product. See `docs/hosted-service.md` for the approved hosted-service planning baseline.
 

@@ -57,7 +57,7 @@ ANALYSIS_REQUEST_LIMIT=20
 ANALYSIS_REQUEST_WINDOW_SECONDS=60
 ANALYSIS_MAX_REQUEST_BYTES=32768
 FEEDBACK_STORAGE=disabled
-ACCOUNTS_ENABLED=false
+ACCOUNTS_ENABLED=true
 MAILLUME_OPERATOR_LEGAL_NAME=<registered business name>
 MAILLUME_OPERATOR_REGISTERED_ADDRESS=<optional public business address>
 MAILLUME_OPERATOR_KVK=<Dutch Chamber of Commerce number>
@@ -77,7 +77,7 @@ MAILLUME_IMAGE=ghcr.io/matthiasbusscher/maillume:sha-<full-commit>
 
 Do not configure AI provider keys on the official public service. Build-time `NEXT_PUBLIC_` values are embedded in the image; the release workflow builds the official image with canonical defaults. Self-hosters needing different public values should build their own image.
 
-`ACCOUNTS_ENABLED` is server-only and defaults to `false`. Keep it `false` for the public anonymous beta. Set it to the exact value `true` only in a separately reviewed production deployment after the complete account acceptance matrix in [authentication.md](authentication.md) and issue #79 passes.
+`ACCOUNTS_ENABLED` is server-only and defaults to `false`. The account-enabled public beta uses the exact value `true`; setting it to `false` returns the deployment to anonymous-only mode without disabling the scanner. Keep account acceptance evidence current in [authentication.md](authentication.md) and issue #79.
 
 The public privacy, terms, and security pages require the `MAILLUME_OPERATOR_*` values at runtime. Create `support@maillume.io` in Google Workspace and make `privacy@maillume.io` and `security@maillume.io` aliases before setting the corresponding environment values. These are VPS runtime values, never GitHub build variables.
 
@@ -87,7 +87,7 @@ Make `scripts/deploy-production.sh` executable. Authenticate Docker to GHCR usin
 
 Anonymous scanning remains available when authentication is enabled.
 
-For the public anonymous beta, keep Supabase email signups and the Google provider disabled. `ACCOUNTS_ENABLED=false` blocks Maillume routes, but disabling the providers in Supabase prevents someone from initiating an Auth flow directly with the public browser configuration. Re-enable providers only after issue #79's full account acceptance matrix passes.
+The account-enabled beta uses Supabase email signups and Google sign-in. If operations switch Maillume to anonymous-only mode, disable those providers in Supabase as well so users cannot initiate an Auth flow directly with the public browser configuration.
 
 1. Create a production Supabase project in an EU region and apply every migration in `supabase/migrations`, including the account-level API quota and expiring key lifecycle migration. Follow the verification and rollback notes in `docs/api-key-lifecycle.md`.
 2. Enable email/password sign-in, require email confirmation, configure branded SMTP/templates, and keep secure password changes enabled.
@@ -100,7 +100,7 @@ For the public anonymous beta, keep Supabase email signups and the Google provid
 9. Enable production sign-in only after email confirmation, password reset, Google sign-in, sign-out, session refresh, MFA challenge, and confirmation-gated account deletion pass.
 10. Verify Row Level Security is enabled. The feedback table accepts writes only through the server role and contains no scan-content columns.
 
-Complete the Google application identity checklist in `docs/google-oauth-branding.md`. The custom `auth.maillume.io` hostname is optional and adds recurring Supabase cost; Google brand verification should be completed even if the project remains on its Supabase hostname during private beta.
+Complete the Google application identity checklist in `docs/google-oauth-branding.md`. The custom `auth.maillume.io` hostname is optional and adds recurring Supabase cost; Google brand verification should be completed even if the project remains on its Supabase hostname during public beta.
 
 Never prefix a Supabase server secret or AI provider key with `NEXT_PUBLIC_`.
 
@@ -132,7 +132,7 @@ Use synthetic data only.
 5. Confirm production reports `analysis_mode: heuristic` and has no provider key.
 6. Confirm screenshot and `.eml` source files remain browser-side.
 7. Test email/password confirmation and recovery, Google authentication, TOTP enrollment/challenge, and account deletion with dedicated test accounts.
-8. Rehearse deployment rollback and VPS restart recovery before private beta.
+8. Rehearse deployment rollback and VPS restart recovery before the public announcement.
 
 ## Future Migration
 

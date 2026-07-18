@@ -39,7 +39,7 @@ The locked split must maintain:
 - spam non-low recall of at least 85%;
 - an English/Dutch gap no larger than ten percentage points for each metric.
 
-These gates catch code regressions against known synthetic scenarios. Private beta testing and cautious user messaging remain necessary because new attacks and real email distributions differ from the corpus.
+These gates catch code regressions against known synthetic scenarios. Public-beta testing and cautious user messaging remain necessary because new attacks and real email distributions differ from the corpus.
 
 ## Production Feedback Boundary
 

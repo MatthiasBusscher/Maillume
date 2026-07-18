@@ -45,16 +45,7 @@
                 </tr>
               </table>
 
-              <p style="margin:26px 0 12px;font:400 15px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374238;line-height:24px;">{{ if eq .Data.locale "nl" }}Of voer deze eenmalige code in:{{ else }}Or enter this one-time code:{{ end }}</p>
-
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td align="center" style="background:#f7f8f4;border:1px solid #cbd0c5;padding:20px;">
-                    <div style="font:700 34px 'SFMono-Regular',Consolas,'Courier New',monospace;letter-spacing:10px;color:#111711;">{{ .Token }}</div>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin:24px 0 0;font:400 13px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#59655a;line-height:20px;border-top:1px solid #cbd0c5;padding-top:18px;">{{ if eq .Data.locale "nl" }}Deze link en code verlopen over 60 minuten. Als je hier niet om hebt gevraagd, blijft je wachtwoord ongewijzigd en kun je deze e-mail negeren.{{ else }}This link and code expire in 60 minutes. If you didn't request a reset, your password is unchanged and you can ignore this email.{{ end }}</p>
+              <p style="margin:24px 0 0;font:400 13px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#59655a;line-height:20px;border-top:1px solid #cbd0c5;padding-top:18px;">{{ if eq .Data.locale "nl" }}Deze link verloopt over 60 minuten. Als je hier niet om hebt gevraagd, blijft je wachtwoord ongewijzigd en kun je deze e-mail negeren.{{ else }}This link expires in 60 minutes. If you didn't request a reset, your password is unchanged and you can ignore this email.{{ end }}</p>
             </td>
           </tr>
 

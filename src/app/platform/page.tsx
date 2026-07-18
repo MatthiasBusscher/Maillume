@@ -9,11 +9,11 @@ import { platformNl } from "@/lib/i18n/marketing-pages";
 import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 
-export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: "Platform", description: locale === "nl" ? "Bekijk wat beschikbaar is in de openbare Maillume-webbeta en wat later volgt." : "See what is available in the Maillume public web beta and what follows later." }; }
+export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: "Platform", description: locale === "nl" ? "Bekijk wat beschikbaar is in de publieke Maillume-webbèta en wat later volgt." : "See what is available in the Maillume public web beta and what follows later." }; }
 
 const roadmap = [
-  { status: "Disabled for public beta", title: "Accounts and hosted API", description: "Authentication, API keys, quotas, and managed AI remain disabled until their separate production acceptance matrix passes." },
-  { status: "After web beta", title: "Chrome extension", description: "Chrome capture improvements are being validated with early web-beta feedback before any Chrome Web Store submission or availability claim." },
+  { status: "Source beta", title: "Chrome extension", description: "The extension is available for source testing while capture behavior, permissions, and the Chrome Web Store submission are reviewed." },
+  { status: "Later", title: "Hosted AI and paid plans", description: "Managed AI and paid plans remain unavailable until costs, privacy, abuse controls, billing, and real demand have been validated." },
 ];
 
 export default async function PlatformPage() {
@@ -24,7 +24,7 @@ export default async function PlatformPage() {
       <PageIntro
         eyebrow="Maillume Platform"
         title="The web scanner comes first."
-        description="The public beta is intentionally narrow: anonymous, heuristic email checks with no scan history, no hosted AI, and no account requirement."
+        description="The public beta starts with anonymous heuristic checks. Accounts are optional for managing revocable API keys; hosted AI and scan history remain off."
         actions={
           <>
             <a href="#today" className="inline-flex h-12 items-center gap-2 bg-[#dfff52] px-5 text-sm font-bold text-[#111711] hover:bg-white">See the beta boundary <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
@@ -42,11 +42,12 @@ export default async function PlatformPage() {
               Paste an email, use a screenshot, or open an exported .eml file. Maillume applies the same explainable, versioned risk index to each input and returns a practical next step.
             </p>
             <p className="mt-4 border-l-4 border-[#c78c32] bg-[#fff0cf] px-4 py-3 text-sm leading-6 text-[#714812]">
-              Accounts, API keys, Google sign-in, and maintainer-hosted AI are deliberately unavailable in this beta. The web scanner is the only public Maillume service today.
+              Email and Google sign-in, TOTP protection, and quota-limited API keys are available. They never create scan history. Maintainer-hosted AI remains unavailable.
             </p>
             <ul className="mt-7 space-y-3">
               <PlatformCheck>Anonymous paste, screenshot, and .eml checks</PlatformCheck>
               <PlatformCheck>Heuristic analysis with no maintainer-owned provider key</PlatformCheck>
+              <PlatformCheck>Optional accounts with TOTP and revocable API keys</PlatformCheck>
               <PlatformCheck>No scan history or retained source files</PlatformCheck>
               <PlatformCheck>Automated-assessment disclaimer in every result</PlatformCheck>
             </ul>
@@ -55,14 +56,14 @@ export default async function PlatformPage() {
           <div className="overflow-hidden border border-[#111711] bg-[#111711] text-white">
             <div className="flex h-11 items-center justify-between border-b border-white/20 px-4">
               <span className="font-mono text-[10px] uppercase text-[#dfff52]">Public beta boundary</span>
-              <span className="font-mono text-[9px] text-[#849083]">web only</span>
+              <span className="font-mono text-[9px] text-[#849083]">web + API</span>
             </div>
             <dl className="divide-y divide-white/15 p-5 text-sm">
               <BetaBoundary label="Scanner" value="Available anonymously" />
               <BetaBoundary label="Analysis" value="Heuristic only" />
               <BetaBoundary label="Retention" value="No scan history" />
-              <BetaBoundary label="Accounts and API" value="Disabled" />
-              <BetaBoundary label="Chrome extension" value="Not available" />
+              <BetaBoundary label="Accounts and API" value="Optional" />
+              <BetaBoundary label="Chrome extension" value="Source beta" />
             </dl>
           </div>
         </div>
@@ -76,7 +77,7 @@ export default async function PlatformPage() {
               <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">Nothing scans a mailbox in the background.</h2>
             </div>
             <p className="max-w-3xl text-xl leading-8 text-[#d2e6e2]">
-              Maillume does not crawl a mailbox, silently score incoming email, or use a maintainer-owned AI key in the hosted beta. You choose the message, start the check, and receive a non-binding risk indicator.
+              Maillume does not crawl a mailbox, silently score incoming email, or use a maintainer-owned AI key in the hosted beta. You choose the message, start the check, and receive an automated risk indicator rather than a guarantee.
             </p>
           </div>
 
@@ -92,14 +93,14 @@ export default async function PlatformPage() {
         <div className="mx-auto max-w-[1440px] px-5 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr]">
             <div>
-              <p className="font-mono text-[10px] uppercase text-[#087b72]">What follows the web beta</p>
-              <h2 className="mt-4 text-3xl font-semibold text-[#111711]">Expand only after the core service proves itself.</h2>
+              <p className="font-mono text-[10px] uppercase text-[#087b72]">What comes next</p>
+              <h2 className="mt-4 text-3xl font-semibold text-[#111711]">Add reach without weakening the boundary.</h2>
             </div>
             <div className="border-t border-[#aeb6ac]">
               {roadmap.map((item, index) => (
                 <div key={item.title} className="grid gap-3 border-b border-[#cbd0c5] py-6 sm:grid-cols-[54px_120px_0.7fr_1fr] sm:items-start sm:gap-5">
                   <span className="font-mono text-[10px] text-[#5f695f]">0{index + 1}</span>
-                  <span className={`w-fit border px-2 py-1 font-mono text-[9px] uppercase ${item.status === "Disabled for public beta" ? "border-[#c78c32] bg-[#fff0cf] text-[#714812]" : "border-[#111711] bg-[#eef1eb] text-[#374238]"}`}>{item.status}</span>
+                  <span className="w-fit border border-[#111711] bg-[#eef1eb] px-2 py-1 font-mono text-[9px] uppercase text-[#374238]">{item.status}</span>
                   <h3 className="font-semibold text-[#111711]">{item.title}</h3>
                   <p className="text-sm leading-6 text-[#59655a]">{item.description}</p>
                 </div>

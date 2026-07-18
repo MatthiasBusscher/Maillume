@@ -19,7 +19,7 @@ This phase does not require a Supabase custom-domain purchase.
 
 1. Open the production project in Google Auth Platform and select **Branding**.
 2. Set the app name to `Maillume`.
-3. Use a monitored Maillume support address when one is available. A temporary monitored address is acceptable during private beta.
+3. Use the monitored Maillume support address.
 4. Upload the square Maillume application mark.
 5. Configure these public links:
    - Home page: `https://maillume.io`
@@ -27,7 +27,7 @@ This phase does not require a Supabase custom-domain purchase.
    - Terms: `https://maillume.io/terms`
 6. Add `maillume.io` as an authorized domain and verify ownership through Google Search Console using a project owner or editor.
 7. In **Data Access**, keep only `openid`, `email`, and `profile` for account sign-in.
-8. Keep the audience **External**. Use test users until the private-beta acceptance checks pass.
+8. Keep the audience **External**. Use test users until the public-beta acceptance checks pass.
 9. Submit the production OAuth application for brand verification. The name and logo may not appear consistently until Google approves the brand.
 10. Test the full flow with a Google account that has never authorized Maillume before.
 

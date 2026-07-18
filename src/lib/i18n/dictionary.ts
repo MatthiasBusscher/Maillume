@@ -168,7 +168,7 @@ export const dictionaries = {
   nl: {
     app: {
       name: "Maillume",
-      status: "Privacygerichte beta",
+      status: "Privacygerichte bèta",
       startScan: "Nieuwe scan",
       skipToScanner: "Ga naar de scanner",
       privacyStatus: "Scanhistorie uitgeschakeld",
@@ -191,7 +191,7 @@ export const dictionaries = {
       source: "Broncode",
       license: "Licentie",
       notice:
-        "Vrije software onder AGPL-3.0. U mag deze delen en aanpassen volgens de licentie. Zonder garantie geleverd.",
+        "Vrije software onder AGPL-3.0. Je mag deze delen en aanpassen volgens de licentie. Zonder garantie geleverd.",
       copyright: "Copyright 2026 bijdragers aan Maillume.",
     },
     form: {
@@ -224,11 +224,11 @@ export const dictionaries = {
         "De analyse is tijdelijk niet beschikbaar. Controleer de serverconfiguratie en probeer het opnieuw.",
       screenshotPrompt: "Upload een screenshot van de verdachte e-mail.",
       screenshotHelp:
-        "OCR draait in uw browser. Het afbeeldingsbestand wordt niet opgeslagen nadat tekst is geëxtraheerd. Een screenshot toont niet waar een knop of zichtbare link werkelijk naartoe leidt; controleer links daarom apart.",
+        "OCR draait in je browser. Het afbeeldingsbestand wordt niet opgeslagen nadat de tekst is uitgelezen. Een screenshot toont niet waar een knop of zichtbare link werkelijk naartoe leidt; controleer links daarom apart.",
       chooseScreenshot: "Screenshot kiezen",
-      emlPrompt: "Upload een .eml-bestand dat uit uw mailapp is geëxporteerd.",
+      emlPrompt: "Upload een .eml-bestand dat uit je mailapp is geëxporteerd.",
       emlHelp:
-        "Headers, berichttekst, links en bijlagemetadata worden in uw browser verwerkt. Het ruwe bestand wordt niet geüpload.",
+        "Headers, berichttekst, links en bijlagemetadata worden in je browser verwerkt. Het oorspronkelijke bestand wordt niet geüpload.",
       chooseEml: ".eml-bestand kiezen",
       extracting: "Tekst extraheren",
       parsing: "E-mailbestand verwerken",
@@ -248,7 +248,7 @@ export const dictionaries = {
         "Resultaten tonen risiconiveau, risicoscore, verdachte signalen, gevonden links en een aanbevolen vervolgstap.",
       privacyTitle: "Privacygerichte verwerking",
       privacyBody:
-        "Geplakte tekst en geëxtraheerde bestandstekst worden alleen voor deze aanvraag naar de analyse-API gestuurd. Screenshots en .eml-bestanden worden in uw browser verwerkt en niet als bestand geüpload.",
+        "Geplakte tekst en uitgelezen bestandstekst worden alleen voor deze aanvraag naar de analyse-API gestuurd. Screenshots en .eml-bestanden worden in je browser verwerkt en niet als bestand geüpload.",
     },
     result: {
       title: "Beoordelingsrapport",
@@ -277,7 +277,7 @@ export const dictionaries = {
       noLinks: "Geen links gevonden.",
       recommendedAction: "Aanbevolen actie",
       disclaimer:
-        "Dit is een geautomatiseerde risico-inschatting en mag niet als garantie worden beschouwd.",
+        "Dit is een geautomatiseerde risicobeoordeling en biedt geen garantie.",
     },
     feedback: {
       eyebrow: "Optionele feedback",
@@ -285,7 +285,7 @@ export const dictionaries = {
       question: "Was deze beoordeling nuttig?",
       helpful: "Ja",
       notHelpful: "Nee",
-      expectedLabel: "Wat had u verwacht?",
+      expectedLabel: "Wat had je verwacht?",
       classifications: {
         phishing: "Phishing",
         spam: "Spam",
@@ -314,7 +314,7 @@ export const dictionaries = {
       submitting: "Versturen",
       successTitle: "Feedback ontvangen",
       successBody:
-        "Bedankt. Hiermee kunnen nieuwe synthetische testcases worden gemaakt; uw e-mail is niet gedeeld.",
+        "Bedankt. Hiermee kunnen nieuwe synthetische testgevallen worden gemaakt; je e-mail is niet gedeeld.",
       error: "Feedback kon niet worden verstuurd. Probeer het later opnieuw.",
     },
     upload: {

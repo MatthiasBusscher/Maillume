@@ -1,13 +1,14 @@
 # Public Web Beta Launch Runbook
 
-This runbook releases the anonymous Maillume web beta. It intentionally does
-not release accounts, hosted API access, managed AI, Gmail/Outlook add-ons, or
-the Chrome extension.
+This runbook releases the Maillume web beta with anonymous scanning, optional
+accounts, Google/email authentication, TOTP, and account-scoped API keys. It
+does not release managed AI, paid plans, Gmail/Outlook add-ons, or the Chrome
+Web Store extension.
 
 ## Release Invariants
 
 - `ANALYSIS_MODE=heuristic`; no AI-provider key is present on the VPS.
-- `ACCOUNTS_ENABLED=false`; account screens and account APIs are unavailable.
+- `ACCOUNTS_ENABLED=true`; account features remain optional and anonymous scanning stays available.
 - Paste, screenshot, and `.eml` scanning stay anonymous and zero-retention.
 - The public scanner is available only through Cloudflare Tunnel.
 - Scores are automated risk indicators, not probabilities or guarantees.
@@ -20,7 +21,7 @@ identity exactly as registered; do not invent placeholder values.
 
 ```text
 ANALYSIS_MODE=heuristic
-ACCOUNTS_ENABLED=false
+ACCOUNTS_ENABLED=true
 FEEDBACK_STORAGE=disabled
 ANALYSIS_REQUEST_LIMIT=20
 ANALYSIS_REQUEST_WINDOW_SECONDS=60
@@ -53,18 +54,17 @@ In the existing Google Workspace:
    merged SPF TXT record. Do not publish two SPF records for the same domain.
 5. Send and receive a test message at all three addresses before launch.
 
-## 3. Keep Supabase Auth Off During Beta
+## 3. Verify Supabase Authentication
 
 In the production Supabase Dashboard:
 
-1. Disable new user signups.
-2. Disable the email provider and Google provider for this beta.
+1. Keep email confirmation required and Google scopes limited to OpenID, email, and profile.
+2. Verify branded SMTP, TOTP, API-key controls, and account deletion against production.
 3. Retain only `https://app.maillume.io/auth/callback` as the production
    callback allowlist entry; remove any broad or stale redirects.
-4. Copy the reviewed files from `supabase/templates/` into managed Supabase,
-   but do not enable public sign-in yet.
-5. Keep Resend click tracking disabled, then send confirmation and recovery
-   tests to Gmail and Outlook test inboxes as part of the later account gate.
+4. Copy the reviewed files from `supabase/templates/` into managed Supabase.
+5. Keep Resend click tracking disabled. Send confirmation and recovery tests
+   to Gmail and Outlook test inboxes and record sanitized acceptance in #79.
 
 ## 4. Complete Cloudflare And Origin Checks
 
