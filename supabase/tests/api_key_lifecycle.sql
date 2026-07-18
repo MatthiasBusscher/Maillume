@@ -1,5 +1,10 @@
 begin;
 
+-- Linked pgTAP runs authenticate through Supabase's temporary CLI role. Assume
+-- the project owner inside this rollback-only test so extension functions and
+-- privilege assertions match local CI and the deployed schema.
+set role postgres;
+
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
@@ -232,6 +237,7 @@ select is((select count(id) from public.api_keys), 3::bigint, 'RLS exposes only 
 select is((select count(user_id) from public.api_account_limits), 1::bigint, 'RLS exposes only the signed-in account limit');
 select is((select count(user_id) from public.api_account_usage_monthly), 1::bigint, 'RLS exposes only the signed-in account usage');
 reset role;
+set role postgres;
 
 delete from auth.users where id = '20000000-0000-4000-8000-000000000002';
 select is((select count(*) from auth.users where id = '20000000-0000-4000-8000-000000000002'), 0::bigint, 'the test account is deleted');
