@@ -149,6 +149,30 @@ Raw Windows-1252: caf${String.fromCharCode(0xe9)} and euro ${String.fromCharCode
     destinationUrl: "https://credential-capture.example/login",
   }]);
 
+  const escapedMimeParameter = parseEml(`Content-Type: application/pdf
+Content-Disposition: attachment; filename="statement;July\\"2026.pdf"; creation-date="2026-07-19"
+
+ignored`);
+  assert.deepEqual(escapedMimeParameter.attachmentNames, ['statement;July"2026.pdf']);
+
+  const longQuotedMimeParameter = parseEml(`Content-Type: application/pdf; name="${"\\".repeat(16_000)}report.pdf"
+Content-Disposition: attachment
+
+ignored`);
+  assert.equal(longQuotedMimeParameter.attachmentNames.length, 1);
+  assert.match(longQuotedMimeParameter.attachmentNames[0], /report\.pdf$/);
+
+  const sanitizedHtml = parseEml(`Content-Type: text/html; charset=UTF-8
+
+<p data-note="1 > 0">Visible &amp;lt;literal&amp;gt; &amp; text</p>
+<script>doNotKeepThis https://hidden-script.example.test/</script>
+<style>.also-not-visible { color: red; }</style>
+<br>After the markup`);
+  assert.match(sanitizedHtml.body, /Visible &lt;literal&gt; & text/);
+  assert.doesNotMatch(sanitizedHtml.body, /Visible <literal>/);
+  assert.doesNotMatch(sanitizedHtml.body, /doNotKeepThis|also-not-visible/);
+  assert.match(sanitizedHtml.body, /After the markup/);
+
   const iso88591 = parseEml(`Subject: =?ISO-8859-1?Q?R=E9sum=E9?=
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
