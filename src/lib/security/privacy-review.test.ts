@@ -108,11 +108,15 @@ function main() {
   const ciWorkflow = readProjectFile(".github/workflows/ci.yml");
   const releaseWorkflow = readProjectFile(".github/workflows/release.yml");
   const rollbackWorkflow = readProjectFile(".github/workflows/rollback-rehearsal.yml");
+  const runtimeAuditWorkflow = readProjectFile(
+    ".github/workflows/production-runtime-audit.yml",
+  );
   const deployScript = readProjectFile("scripts/deploy-production.sh");
   const rollbackScript = readProjectFile("scripts/rollback-production.sh");
   const rollbackRehearsalScript = readProjectFile(
     "scripts/rehearse-production-rollback.sh",
   );
+  const runtimeAuditScript = readProjectFile("scripts/audit-production-runtime.sh");
 
   assert.match(routeContent, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(routeContent, /console\./);
@@ -357,6 +361,7 @@ function main() {
   assertPinnedActions(ciWorkflow, ".github/workflows/ci.yml");
   assertPinnedActions(releaseWorkflow, ".github/workflows/release.yml");
   assertPinnedActions(rollbackWorkflow, ".github/workflows/rollback-rehearsal.yml");
+  assertPinnedActions(runtimeAuditWorkflow, ".github/workflows/production-runtime-audit.yml");
   assert.doesNotMatch(ciWorkflow, /push:\s*\n\s*branches:/);
   assert.match(ciWorkflow, /fetch-depth: 0/);
   assert.match(ciWorkflow, /gitleaks\/gitleaks-action@[0-9a-f]{40}/);
@@ -419,6 +424,16 @@ function main() {
   assert.match(rollbackWorkflow, /inputs\.confirm == 'REHEARSE'/);
   assert.match(rollbackWorkflow, /environment: production/);
   assert.match(rollbackWorkflow, /EXPECTED_REVISION: \$\{\{ github\.sha \}\}/);
+  assert.match(runtimeAuditWorkflow, /inputs\.confirm == 'AUDIT'/);
+  assert.match(runtimeAuditWorkflow, /environment: production/);
+  assert.match(runtimeAuditWorkflow, /envs: AUDIT_MARKER/);
+  assert.match(runtimeAuditScript, /ReadonlyRootfs/);
+  assert.match(runtimeAuditScript, /OPENAI_API_KEY\|ANTHROPIC_API_KEY\|AI_API_KEY/);
+  assert.match(runtimeAuditScript, /docker logs --since 20m/);
+  assert.match(
+    runtimeAuditScript,
+    /docker logs --since 20m "\$container" 2>&1 \| grep -Fq -- "\$audit_marker"/,
+  );
   assert.match(scanLimits, /MAX_SCREENSHOT_PIXELS = 20_000_000/);
   assert.match(scanLimits, /MAX_SCREENSHOT_DIMENSION = 8_000/);
   assert.match(scanLimits, /hasSupportedScreenshotSignature/);
