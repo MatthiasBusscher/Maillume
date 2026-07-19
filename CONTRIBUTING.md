@@ -63,7 +63,7 @@ Good pull requests should:
 - Explain privacy implications if the change touches scan content, uploads, OCR, `.eml` parsing, logging, or AI prompts.
 - Avoid certainty claims. Maillume provides risk assessments, not guarantees.
 - Pass the required `checks` and `Full-history secret scan` jobs.
-- Resolve review conversations and receive Code Owner approval before merge.
+- Resolve review conversations. While Maillume has one maintainer, GitHub does not require an approving review because the maintainer cannot approve their own pull request. Outside contributions are still reviewed and merged explicitly by the maintainer. One required approval and Code Owner review will be enabled when a second trusted maintainer joins.
 
 Maintainers squash-merge accepted pull requests. Fork pull requests do not receive production secrets and cannot publish images or deploy. Authentication, authorization, database migrations, scoring, privacy boundaries, GitHub workflows, and deployment changes receive additional security review.
 

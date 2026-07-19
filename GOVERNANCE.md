@@ -23,9 +23,9 @@ Additional maintainers may be invited after sustained, trustworthy contributions
 
 ## Merging And Releases
 
-All changes to `main` go through a pull request. Required CI, Code Owner review, and resolved conversations must pass before merge. The release owner approves production deployment of an immutable image built from `main`; contributor workflows and fork pull requests cannot access production secrets or deploy.
+All changes to `main` go through a pull request. Required CI and resolved conversations must pass before merge. The release owner approves production deployment of an immutable image built from `main`; contributor workflows and fork pull requests cannot access production secrets or deploy.
 
-During public beta, one maintainer approval is required. The project should move to two-person review for authentication, authorization, database migrations, analysis scoring, privacy boundaries, workflows, and deployment code once a second active maintainer is established.
+While Maillume has one maintainer, the branch ruleset does not require an approving review because GitHub does not allow authors to approve their own pull requests. The maintainer still reviews and explicitly merges outside contributions. As soon as a second trusted maintainer is established, the project will require one approval and Code Owner review, dismiss stale approvals, and require approval of the latest push. Security-sensitive changes should move to two-person review at that point.
 
 ## Security Changes
 
