@@ -67,6 +67,21 @@ it, restores the starting release, and verifies the public revision. Run it afte
 deploying a release that initialized both state slots. Production secrets remain
 limited to the protected `production` environment.
 
+## Tunnel And VPS Restart Recovery
+
+The protected **Rehearse production Tunnel restart** workflow requires the
+literal confirmation `RESTART`. It records the current public revision, restarts
+only the `cloudflared` sidecar, verifies the Tunnel and application internally,
+and confirms that the same revision recovers through the public Cloudflare edge.
+The workflow exposes no environment values or container logs.
+
+A full VPS reboot remains an operator action because the deployment account must
+not have host-reboot privileges. From the Hostinger console or an SSH session as
+the administrative user, run `sudo reboot`, wait for SSH to return, and then
+verify `/api/health`, the scanner, authentication, Docker container health, and
+the Tunnel status. Record only timestamps, aggregate downtime, the release SHA,
+and pass/fail outcomes.
+
 ## Release Supply-Chain Evidence
 
 Every main-branch image build produces a CycloneDX SBOM artifact named

@@ -127,7 +127,8 @@ weaken the release workflow.
 1. Trigger a harmless external uptime alert for marketing, scanner, health, and
    analysis endpoints. Record that the alert excludes scan content.
 2. Rehearse a deployment that fails health checks and confirm automatic rollback
-   restores the prior digest. Then test a VPS and Tunnel restart.
+   restores the prior digest. Run the protected Tunnel restart rehearsal, then
+   test a full VPS reboot as the administrative operator.
 3. Review `docs/credential-management.md`, record the current private register
    review date, and verify a compromised-server rotation can revoke all listed
    credentials without restoring scan content.
