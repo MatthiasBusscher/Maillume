@@ -6,7 +6,7 @@ Status: public-beta decision record.
 
 - Product name: **Maillume**
 - Repository: `maillume`
-- Target marketing domain: `maillume.io` (pending registration)
+- Target marketing domain: `maillume.io` (owned)
 - Target scanner domain: `app.maillume.io`
 - Category: privacy-first email risk assessment
 - Short promise: **Shine a light on suspicious email.**
