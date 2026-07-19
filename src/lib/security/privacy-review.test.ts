@@ -428,7 +428,10 @@ function main() {
   assert.match(runtimeAuditWorkflow, /environment: production/);
   assert.match(runtimeAuditWorkflow, /envs: AUDIT_MARKER/);
   assert.match(runtimeAuditScript, /ReadonlyRootfs/);
-  assert.match(runtimeAuditScript, /OPENAI_API_KEY\|ANTHROPIC_API_KEY\|AI_API_KEY/);
+  assert.match(
+    runtimeAuditScript,
+    /OPENAI_API_KEY\|ANTHROPIC_API_KEY\|AI_API_KEY\)=\.\+\$/,
+  );
   assert.match(runtimeAuditScript, /docker logs --since 20m/);
   assert.match(
     runtimeAuditScript,
