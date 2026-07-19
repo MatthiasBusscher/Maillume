@@ -62,3 +62,16 @@ test("launch documentation no longer describes the active release as private", (
     assert.doesNotMatch(read(file), /private[- ]beta/i, file);
   }
 });
+
+test("privacy copy names active authentication and operational providers", () => {
+  const privacy = read("src/lib/i18n/trust-privacy.ts");
+
+  for (const provider of ["Hostinger", "Cloudflare", "Supabase", "Resend", "Google Workspace", "GitHub", "UptimeRobot"]) {
+    assert.match(privacy, new RegExp(provider), provider);
+  }
+
+  assert.match(privacy, /Email-and-password sign-in/);
+  assert.match(privacy, /authenticator-app two-factor authentication/);
+  assert.match(privacy, /Inloggen met e-mailadres en wachtwoord/);
+  assert.match(privacy, /tweestapsverificatie met een authenticatie-app/);
+});
