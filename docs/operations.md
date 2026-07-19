@@ -97,7 +97,7 @@ has an SBOM, a clean scan, or a valid attestation.
 ## Compromised VPS
 
 1. Isolate the VPS at Cloudflare and Hostinger; do not attempt to keep serving traffic.
-2. Revoke the Tunnel token, deployment SSH key, GHCR token, Supabase server secret, and any configured provider key.
+2. Revoke the Tunnel token, deployment SSH key, GHCR token, Cloudflare DNS/WAF credential, Supabase server secret, Google OAuth client secret, Resend SMTP/API credential, and any configured AI provider key.
 3. Preserve provider and infrastructure audit evidence without copying private scan content.
 4. Reinstall from a clean Hostinger image instead of trusting an in-place cleanup.
 5. Redeploy a reviewed immutable image, recreate `.env.production` from rotated secrets, and restore only required configuration.

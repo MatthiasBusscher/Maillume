@@ -10,7 +10,7 @@ export const trustPrivacyCopy = {
     title: "Privacy notice",
     description: "Maillume is designed to assess one email at a time without creating a scan history or saving the message or result in application storage. This notice describes the official public-beta data flow; self-hosted operators are responsible for their own deployment notices.",
     updatedLabel: "Last updated",
-    updatedDate: "July 10, 2026",
+    updatedDate: "July 19, 2026",
     sections: {
       assessments: {
         title: "Email assessments",
@@ -33,7 +33,8 @@ export const trustPrivacyCopy = {
       accounts: {
         title: "Optional accounts",
         paragraphs: [
-          "Google sign-in is optional and is provided through Supabase when enabled. The account may include your email address, display name, provider identifier, session cookies, and basic authentication metadata.",
+          "Email-and-password sign-in and Google sign-in are optional and are provided through Supabase when enabled. The account may include your email address, display name, provider identifier, session cookies, and basic authentication metadata.",
+          "If you enable authenticator-app two-factor authentication, Supabase processes the enrollment and verification data needed for TOTP. Maillume does not receive or store the authenticator app's private data outside the authentication service.",
           "Signing in does not create scan history. Authentication cookies maintain the signed-in session. When production authentication is enabled, the account page provides confirmation-gated deletion of the Supabase identity.",
           "When you create an integration API key, Maillume stores its owner, name, short prefix, SHA-256 hash, quota, timestamps, UTC billing month, and aggregate request count. The plaintext key is shown once. API usage records exclude message content, results, links, IP addresses, and message identifiers.",
         ],
@@ -48,7 +49,7 @@ export const trustPrivacyCopy = {
       providers: {
         title: "Service providers and infrastructure",
         paragraphs: [
-          "The official deployment may use Hostinger for application hosting, Cloudflare for DNS, protected ingress, and abuse prevention, Supabase for authentication and non-content feedback, GitHub for source development and releases, and a privacy-configured monitoring service for operational errors. These providers may process technical request, account, or operational data according to their role; that does not mean Maillume stores scan content or results in scan history or application storage.",
+          "The official deployment uses Hostinger for application hosting, Cloudflare for DNS, protected ingress, and abuse prevention, Supabase for authentication and non-content feedback, Resend for transactional authentication email, Google Workspace for monitored contact mailboxes, GitHub for source development and releases, and UptimeRobot for content-free availability monitoring. These providers may process technical request, account, email-delivery, or operational data according to their role; that does not mean Maillume stores scan content or results in scan history or application storage.",
           "If the hosted service enables an external AI provider in the future, normalized message text will be sent to that configured provider for the requested assessment. The provider and its processing terms must be disclosed before that mode is enabled.",
           "Production monitoring must exclude scan and feedback payloads. A provider is active only when it has been configured for the deployed service.",
         ],
@@ -75,7 +76,7 @@ export const trustPrivacyCopy = {
     title: "Privacyverklaring",
     description: "Maillume is ontworpen om telkens één e-mail te beoordelen zonder scangeschiedenis aan te maken of het bericht of resultaat in de applicatieopslag te bewaren. Deze verklaring beschrijft de gegevensstroom van de officiële publieke bèta; beheerders van zelfgehoste omgevingen zijn verantwoordelijk voor hun eigen verklaringen.",
     updatedLabel: "Laatst bijgewerkt",
-    updatedDate: "10 juli 2026",
+    updatedDate: "19 juli 2026",
     sections: {
       assessments: {
         title: "E-mailbeoordelingen",
@@ -98,7 +99,8 @@ export const trustPrivacyCopy = {
       accounts: {
         title: "Optionele accounts",
         paragraphs: [
-          "Inloggen met Google is optioneel en verloopt via Supabase. Je account kan je e-mailadres, weergavenaam, provider-ID, sessiecookies en algemene authenticatiemetadata bevatten.",
+          "Inloggen met e-mailadres en wachtwoord en inloggen met Google zijn optioneel en verlopen via Supabase. Je account kan je e-mailadres, weergavenaam, provider-ID, sessiecookies en algemene authenticatiemetadata bevatten.",
+          "Als je tweestapsverificatie met een authenticatie-app inschakelt, verwerkt Supabase de inschrijf- en verificatiegegevens die nodig zijn voor TOTP. Maillume ontvangt of bewaart de privégegevens van de authenticatie-app niet buiten de authenticatiedienst.",
           "Inloggen maakt geen scangeschiedenis aan. Authenticatiecookies houden de ingelogde sessie in stand. Wanneer productie-authenticatie is ingeschakeld, biedt de accountpagina verwijdering van de Supabase-identiteit na bevestiging.",
           "Wanneer je een integratie-API-sleutel maakt, bewaart Maillume de eigenaar, naam, korte prefix, SHA-256-hash, quota, tijdstippen, UTC-gebruiksmaand en het totale aantal aanvragen. De leesbare sleutel wordt één keer getoond. API-gebruiksrecords bevatten geen berichtinhoud, resultaten, links, IP-adressen of bericht-ID's.",
         ],
@@ -113,7 +115,7 @@ export const trustPrivacyCopy = {
       providers: {
         title: "Dienstverleners en infrastructuur",
         paragraphs: [
-          "De officiële omgeving kan Hostinger gebruiken voor applicatiehosting, Cloudflare voor DNS, beveiligde toegang en misbruikpreventie, Supabase voor authenticatie en feedback zonder berichtinhoud, GitHub voor broncodeontwikkeling en releases, en een privacygericht ingestelde monitoringdienst voor operationele fouten. Deze partijen kunnen technische aanvraag-, account- of operationele gegevens verwerken voor hun rol; dat betekent niet dat Maillume scaninhoud of resultaten in scangeschiedenis of applicatieopslag bewaart.",
+          "De officiële omgeving gebruikt Hostinger voor applicatiehosting, Cloudflare voor DNS, beveiligde toegang en misbruikpreventie, Supabase voor authenticatie en feedback zonder berichtinhoud, Resend voor transactionele authenticatie-e-mail, Google Workspace voor bewaakte contactmailboxen, GitHub voor broncodeontwikkeling en releases, en UptimeRobot voor beschikbaarheidsmonitoring zonder scaninhoud. Deze partijen kunnen technische aanvraag-, account-, e-mailbezorgings- of operationele gegevens verwerken voor hun rol; dat betekent niet dat Maillume scaninhoud of resultaten in scangeschiedenis of applicatieopslag bewaart.",
           "Als de gehoste dienst in de toekomst een externe AI-aanbieder inschakelt, wordt genormaliseerde berichttekst voor de gevraagde beoordeling naar die ingestelde aanbieder gestuurd. De aanbieder en diens verwerkingsvoorwaarden moeten bekend worden gemaakt voordat deze modus wordt ingeschakeld.",
           "Productiemonitoring moet scan- en feedbackinhoud uitsluiten. Een aanbieder is alleen actief wanneer die voor de betreffende omgeving is ingesteld.",
         ],
