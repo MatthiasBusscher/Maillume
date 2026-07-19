@@ -6,6 +6,7 @@ import { useState } from "react";
 import { EmailAuthForm } from "@/components/email-auth-form";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { PasskeySignInButton } from "@/components/passkey-sign-in-button";
+import type { EmailAuthMode } from "@/lib/auth/email-auth-error";
 import type { AccountDictionary } from "@/lib/i18n/account-en";
 import type { SiteLocale } from "@/lib/i18n/site-locale";
 
@@ -13,6 +14,7 @@ export function AuthMethodPanel({
   authErrorMessage,
   configured,
   copy,
+  initialEmailMode,
   locale,
   marketingHref,
   passkeysEnabled,
@@ -21,6 +23,7 @@ export function AuthMethodPanel({
   authErrorMessage: string | null;
   configured: boolean;
   copy: AccountDictionary["signIn"];
+  initialEmailMode?: EmailAuthMode;
   locale: SiteLocale;
   marketingHref: string;
   passkeysEnabled: boolean;
@@ -35,6 +38,7 @@ export function AuthMethodPanel({
       <div className="mt-7">
         <EmailAuthForm
           configured={configured}
+          initialMode={initialEmailMode}
           labels={copy.email}
           locale={locale}
           onEngagementChange={setEmailEngaged}
