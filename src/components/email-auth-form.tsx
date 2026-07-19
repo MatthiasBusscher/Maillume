@@ -16,16 +16,18 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export function EmailAuthForm({
   configured,
+  initialMode = "sign-in",
   labels,
   locale,
   onEngagementChange,
 }: {
   configured: boolean;
+  initialMode?: EmailAuthMode;
   labels: AccountDictionary["signIn"]["email"];
   locale: SiteLocale;
   onEngagementChange?: (engaged: boolean) => void;
 }) {
-  const [mode, setMode] = useState<EmailAuthMode>("sign-in");
+  const [mode, setMode] = useState<EmailAuthMode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

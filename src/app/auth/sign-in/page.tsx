@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; mode?: string }>;
 }) {
   const locale = await getRequestSiteLocale();
   if (!areAccountsEnabled()) {
@@ -31,7 +31,9 @@ export default async function SignInPage({
   const copy = dictionary.signIn;
   const configured = getPublicSupabaseConfig() !== null;
   const marketingHref = getMarketingHref();
-  const authError = (await searchParams).error;
+  const resolvedSearchParams = await searchParams;
+  const authError = resolvedSearchParams.error;
+  const initialEmailMode = resolvedSearchParams.mode === "forgot" ? "forgot" : "sign-in";
   const authErrorMessage = authError === "oauth_callback_failed"
     ? copy.google.callbackFailed
     : authError === "oauth_provider_failed"
@@ -65,6 +67,7 @@ export default async function SignInPage({
             authErrorMessage={authErrorMessage}
             configured={configured}
             copy={copy}
+            initialEmailMode={initialEmailMode}
             locale={locale}
             marketingHref={marketingHref}
             passkeysEnabled={arePasskeysEnabled()}

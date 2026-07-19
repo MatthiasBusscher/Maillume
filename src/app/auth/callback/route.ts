@@ -6,6 +6,7 @@ import {
   PASSWORD_RECOVERY_COOKIE,
   PASSWORD_RECOVERY_COOKIE_VALUE,
   PASSWORD_RECOVERY_MAX_AGE_SECONDS,
+  isPasswordRecoveryPath,
 } from "@/lib/auth/recovery";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
@@ -61,11 +62,15 @@ export async function GET(request: Request) {
               "next",
               `${localizedRedirectUrl.pathname}${localizedRedirectUrl.search}${localizedRedirectUrl.hash}`,
             );
-            return privateRedirect(mfaUrl, false, locale);
+            return privateRedirect(
+              mfaUrl,
+              isPasswordRecoveryPath(localizedRedirectUrl.pathname),
+              locale,
+            );
           }
           return privateRedirect(
             localizedRedirectUrl,
-            isPasswordRecoveryDestination(localizedRedirectUrl),
+            isPasswordRecoveryPath(localizedRedirectUrl.pathname),
             locale,
           );
         }
@@ -121,8 +126,4 @@ function localizeRedirectUrl(redirectUrl: URL, locale: "en" | "nl") {
   const localizedUrl = new URL(redirectUrl);
   localizedUrl.pathname = localizePath(localizedUrl.pathname, locale);
   return localizedUrl;
-}
-
-function isPasswordRecoveryDestination(url: URL) {
-  return /\/(?:auth\/)?update-password$/.test(url.pathname);
 }

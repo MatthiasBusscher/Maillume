@@ -429,7 +429,7 @@ test("marketing routes accurately distinguish available and source-beta features
 });
 
 test("public beta hides accounts and rejects account APIs before request processing", async ({ page, request }) => {
-  for (const path of ["/auth/sign-in", "/auth/mfa", "/auth/update-password", "/account", "/nl/auth/sign-in", "/nl/account"]) {
+  for (const path of ["/auth/sign-in", "/auth/forgot-password", "/auth/mfa", "/auth/update-password", "/account", "/nl/auth/sign-in", "/nl/auth/forgot-password", "/nl/account"]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/(?:nl\/)?app$/);
   }

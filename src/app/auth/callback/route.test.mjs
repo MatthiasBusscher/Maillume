@@ -26,7 +26,18 @@ function compileHelper(fileName) {
 
 const { getSafeOAuthRedirectUrl } = compileHelper("redirect.ts");
 const { getPublicAppOrigin } = compileHelper("origin.ts");
+const { isPasswordRecoveryPath } = compileHelper("../../../lib/auth/recovery.ts");
 const origin = "https://app.maillume.io";
+
+test("recognizes localized password-recovery destinations", () => {
+  for (const pathname of ["/auth/update-password", "/nl/auth/update-password"]) {
+    assert.equal(isPasswordRecoveryPath(pathname), true, pathname);
+  }
+
+  for (const pathname of ["/account", "/auth/mfa", "/update-password/extra"]) {
+    assert.equal(isPasswordRecoveryPath(pathname), false, pathname);
+  }
+});
 
 test("keeps ordinary same-origin callback destinations", () => {
   for (const requestedNext of [
