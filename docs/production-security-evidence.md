@@ -135,3 +135,23 @@ weaken the release workflow.
 
 The release owner signs the launch checklist only after every item has an
 evidence reference or a documented, time-bounded risk acceptance.
+
+## Independent Reviewer Handoff
+
+The final reviewer must not be the release owner and does not need production
+credentials. Give the reviewer the release commit, build and deployment run
+URLs, issue #47, this document, and the public endpoints. The reviewer should:
+
+1. Confirm `/api/health` reports the approved commit and analysis version.
+2. Confirm the English and Dutch privacy, terms, security, and responsible
+   disclosure pages are reachable and describe the active providers.
+3. Confirm the linked build passed CI, full-history secret scanning, the
+   High/Critical container gate, SBOM generation, and immutable deployment.
+4. Review the sanitized edge, origin, zero-retention, Supabase, DAST,
+   monitoring, rollback, and incident-rehearsal evidence in issue #47.
+5. Confirm every exception has an owner, deadline, mitigation, and removal
+   condition, and that no unresolved Critical or High finding remains.
+
+The reviewer records one comment on issue #47 with their GitHub identity, UTC
+timestamp, reviewed commit, result, and any conditions. They must not paste raw
+logs, account data, infrastructure addresses, or secrets into the comment.
