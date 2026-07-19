@@ -2,9 +2,9 @@
 
 This checklist is the source of truth for opening Maillume to outside contributions. Repository settings are security controls and should be reviewed alongside code changes.
 
-## Current Constraint
+## Current State
 
-The repository is private on GitHub Free during release preparation. GitHub rulesets are available for public repositories on GitHub Free, but private repository rules require a plan that supports them. Keep the repository private until the launch gates pass, then make it public and enable the rules below in the same release session.
+The repository is public. The `Protect main` and `Protect release tags` rulesets are active, GitHub Actions use read-only permissions by default, and the `production` environment remains restricted to reviewed deployments from `main`.
 
 ## Default Branch Ruleset
 
@@ -13,9 +13,8 @@ Create an active branch ruleset named `Protect main` targeting the default branc
 - Restrict deletions.
 - Block force pushes.
 - Require a pull request before merging.
-- Require one approving review.
-- Dismiss stale approvals when new commits are pushed.
-- Require review from Code Owners.
+- While there is one maintainer, require zero approving reviews so maintainer-authored pull requests do not deadlock. Outside contributions still require explicit maintainer review and merge.
+- As soon as a second trusted maintainer joins, require one approving review, dismiss stale approvals, require Code Owner review, and require approval of the latest push.
 - Require all conversations to be resolved.
 - Require status checks `checks` and `Full-history secret scan`.
 - Require branches to be up to date before merging.
@@ -77,7 +76,7 @@ Before announcing the public repository:
 1. Open a harmless pull request from a fork.
 2. Confirm it cannot read secrets, publish a package, or deploy.
 3. Confirm `main` cannot be pushed to directly or force-pushed.
-4. Confirm merge remains blocked until both required checks pass, the Code Owner approves, and conversations are resolved.
+4. Confirm merge remains blocked until both required checks pass and conversations are resolved. After a second maintainer joins, also prove that Code Owner approval and approval of the latest push are enforced.
 5. Merge with squash and confirm the head branch is deleted.
 6. Run a manual production deployment and confirm it resolves an immutable image built from the merged `main` commit.
 7. Submit a private test vulnerability report and confirm the maintainer receives a notification.
