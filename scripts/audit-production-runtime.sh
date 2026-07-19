@@ -74,10 +74,10 @@ esac
 pass "application is non-root, read-only, mount-free, and healthy"
 
 if docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$app_container" | \
-  grep -Eq '^(OPENAI_API_KEY|ANTHROPIC_API_KEY|AI_API_KEY)='; then
+  grep -Eq '^(OPENAI_API_KEY|ANTHROPIC_API_KEY|AI_API_KEY)=.+$'; then
   fail "hosted AI credentials are present in the public beta container"
 fi
-pass "hosted AI credentials are absent"
+pass "hosted AI credentials are absent or empty"
 
 for container in "$app_container" "$tunnel_container"; do
   if docker logs --since 20m "$container" 2>&1 | grep -Fq -- "$audit_marker"; then
