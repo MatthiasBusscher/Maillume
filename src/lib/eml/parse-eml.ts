@@ -6,7 +6,6 @@ const HREF_PATTERN = /\bhref\s*=\s*["']([^"']+)["']/gi;
 const HTML_LINK_PAIR_PATTERN = /<a\b[^>]*href\s*=\s*["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
 const DISPLAYED_DOMAIN_PATTERN = /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}(?:\/[^\s<>"']*)?/i;
 const ENCODED_WORD_PATTERN = /=\?([^?\s]+)\?([BQ])\?([^?]*)\?=/gi;
-const MIME_PARAMETER_PATTERN = /(?:^|;)\s*([^=;\s]+)\s*=\s*(?:"((?:\\.|[^"])*)"|([^;]*))/g;
 
 export const MAX_EML_HEADER_CHARACTERS = 64 * 1024;
 export const MAX_EML_MULTIPART_SECTIONS = 64;
@@ -292,20 +291,109 @@ function getHeaderParameter(header: string, parameterName: string): string | und
   let plainValue: string | undefined;
   let extendedValue: string | undefined;
 
-  for (const match of header.matchAll(MIME_PARAMETER_PATTERN)) {
-    const name = match[1].toLowerCase();
-    const value = (match[2] ?? match[3] ?? "")
-      .replace(/\\(["\\])/g, "$1")
-      .trim();
+  for (const { name, value } of parseMimeParameters(header)) {
+    const normalizedName = name.toLowerCase();
 
-    if (name === `${normalizedParameterName}*`) {
+    if (normalizedName === `${normalizedParameterName}*`) {
       extendedValue = decodeExtendedParameter(value);
-    } else if (name === normalizedParameterName) {
+    } else if (normalizedName === normalizedParameterName) {
       plainValue = value;
     }
   }
 
   return extendedValue ?? plainValue;
+}
+
+type MimeParameter = {
+  name: string;
+  value: string;
+};
+
+/**
+ * Reads MIME parameters without a regex that can backtrack over attacker-controlled
+ * quoted values. Header values are already capped before this function is reached.
+ */
+function parseMimeParameters(header: string): MimeParameter[] {
+  const parameters: MimeParameter[] = [];
+  const source = header.slice(0, MAX_EML_HEADER_CHARACTERS);
+  let index = source.indexOf(";");
+
+  while (index !== -1 && index < source.length) {
+    index += 1;
+    index = skipMimeWhitespace(source, index);
+
+    const nameStart = index;
+    while (index < source.length && !isMimeParameterSeparator(source[index])) {
+      index += 1;
+    }
+
+    const name = source.slice(nameStart, index);
+    index = skipMimeWhitespace(source, index);
+
+    if (!name || source[index] !== "=") {
+      index = findNextMimeParameter(source, index);
+      continue;
+    }
+
+    index += 1;
+    index = skipMimeWhitespace(source, index);
+    const parsedValue = source[index] === '"'
+      ? readQuotedMimeParameter(source, index + 1)
+      : readUnquotedMimeParameter(source, index);
+
+    parameters.push({ name, value: parsedValue.value.trim() });
+    index = parsedValue.nextIndex;
+  }
+
+  return parameters;
+}
+
+function isMimeParameterSeparator(character: string | undefined): boolean {
+  return character === undefined || character === ";" || character === "=" || /\s/.test(character);
+}
+
+function skipMimeWhitespace(source: string, index: number): number {
+  while (index < source.length && /\s/.test(source[index])) {
+    index += 1;
+  }
+  return index;
+}
+
+function findNextMimeParameter(source: string, index: number): number {
+  while (index < source.length && source[index] !== ";") {
+    index += 1;
+  }
+  return index;
+}
+
+function readQuotedMimeParameter(source: string, index: number): { value: string; nextIndex: number } {
+  let value = "";
+
+  while (index < source.length) {
+    const character = source[index];
+
+    if (character === '"') {
+      return { value, nextIndex: findNextMimeParameter(source, index + 1) };
+    }
+
+    if (character === "\\" && index + 1 < source.length) {
+      const escaped = source[index + 1];
+      value += escaped === '"' || escaped === "\\" ? escaped : character + escaped;
+      index += 2;
+      continue;
+    }
+
+    value += character;
+    index += 1;
+  }
+
+  return { value, nextIndex: source.length };
+}
+
+function readUnquotedMimeParameter(source: string, index: number): { value: string; nextIndex: number } {
+  const valueStart = index;
+  const nextIndex = findNextMimeParameter(source, index);
+  return { value: source.slice(valueStart, nextIndex), nextIndex };
 }
 
 function decodeExtendedParameter(value: string): string {
@@ -480,21 +568,103 @@ function extractEmail(from: string | undefined): string | undefined {
 }
 
 function htmlToText(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/g, "\"")
+  const text: string[] = [];
+  let ignoredElement: "script" | "style" | undefined;
+  let index = 0;
+
+  while (index < html.length) {
+    const tagStart = html.indexOf("<", index);
+
+    if (tagStart === -1) {
+      if (!ignoredElement) text.push(decodeHtmlEntities(html.slice(index)));
+      break;
+    }
+
+    if (!ignoredElement && tagStart > index) {
+      text.push(decodeHtmlEntities(html.slice(index, tagStart)));
+    }
+
+    const tag = readHtmlTag(html, tagStart);
+    if (!tag) {
+      if (!ignoredElement) text.push(decodeHtmlEntities(html.slice(tagStart)));
+      break;
+    }
+
+    if (ignoredElement) {
+      if (tag.closing && tag.name === ignoredElement) {
+        ignoredElement = undefined;
+      }
+    } else if (!tag.closing && (tag.name === "script" || tag.name === "style")) {
+      ignoredElement = tag.name;
+    } else if (!tag.closing && tag.name === "br") {
+      text.push("\n");
+    } else if (tag.closing && tag.name === "p") {
+      text.push("\n");
+    } else {
+      text.push(" ");
+    }
+
+    index = tag.nextIndex;
+  }
+
+  return text.join("")
     .replace(/[ \t]+/g, " ")
     .replace(/\n\s+/g, "\n")
     .trim();
+}
+
+type HtmlTag = {
+  closing: boolean;
+  name: string;
+  nextIndex: number;
+};
+
+function readHtmlTag(source: string, startIndex: number): HtmlTag | undefined {
+  let index = startIndex + 1;
+  let quote: '"' | "'" | undefined;
+
+  while (index < source.length) {
+    const character = source[index];
+    if (quote) {
+      if (character === quote) quote = undefined;
+    } else if (character === '"' || character === "'") {
+      quote = character;
+    } else if (character === ">") {
+      break;
+    }
+    index += 1;
+  }
+
+  if (index === source.length) return undefined;
+
+  let contentIndex = startIndex + 1;
+  while (contentIndex < index && /\s/.test(source[contentIndex])) contentIndex += 1;
+  const closing = source[contentIndex] === "/";
+  if (closing) contentIndex += 1;
+  while (contentIndex < index && /\s/.test(source[contentIndex])) contentIndex += 1;
+
+  const nameStart = contentIndex;
+  while (contentIndex < index && /[a-z0-9:-]/i.test(source[contentIndex])) contentIndex += 1;
+
+  return {
+    closing,
+    name: source.slice(nameStart, contentIndex).toLowerCase(),
+    nextIndex: index + 1,
+  };
+}
+
+function decodeHtmlEntities(value: string): string {
+  return value.replace(/&(?:nbsp|amp|lt|gt|quot|#39);/gi, (entity) => {
+    switch (entity.toLowerCase()) {
+      case "&nbsp;": return " ";
+      case "&amp;": return "&";
+      case "&lt;": return "<";
+      case "&gt;": return ">";
+      case "&quot;": return '"';
+      case "&#39;": return "'";
+      default: return entity;
+    }
+  });
 }
 
 function attachmentSummary(attachmentNames: string[]): string {
