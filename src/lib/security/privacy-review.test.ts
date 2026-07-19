@@ -111,12 +111,18 @@ function main() {
   const runtimeAuditWorkflow = readProjectFile(
     ".github/workflows/production-runtime-audit.yml",
   );
+  const tunnelRestartWorkflow = readProjectFile(
+    ".github/workflows/tunnel-restart-rehearsal.yml",
+  );
   const deployScript = readProjectFile("scripts/deploy-production.sh");
   const rollbackScript = readProjectFile("scripts/rollback-production.sh");
   const rollbackRehearsalScript = readProjectFile(
     "scripts/rehearse-production-rollback.sh",
   );
   const runtimeAuditScript = readProjectFile("scripts/audit-production-runtime.sh");
+  const tunnelRestartScript = readProjectFile(
+    "scripts/rehearse-production-tunnel-restart.sh",
+  );
 
   assert.match(routeContent, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(routeContent, /console\./);
@@ -362,6 +368,12 @@ function main() {
   assertPinnedActions(releaseWorkflow, ".github/workflows/release.yml");
   assertPinnedActions(rollbackWorkflow, ".github/workflows/rollback-rehearsal.yml");
   assertPinnedActions(runtimeAuditWorkflow, ".github/workflows/production-runtime-audit.yml");
+  assertPinnedActions(tunnelRestartWorkflow, ".github/workflows/tunnel-restart-rehearsal.yml");
+  assert.match(tunnelRestartWorkflow, /environment: production/);
+  assert.match(tunnelRestartWorkflow, /inputs\.confirm == 'RESTART'/);
+  assert.match(tunnelRestartWorkflow, /EXPECTED_REVISION/);
+  assert.match(tunnelRestartScript, /compose restart cloudflared/);
+  assert.doesNotMatch(tunnelRestartScript, /docker logs|printenv|\.env\.production\)/);
   assert.doesNotMatch(ciWorkflow, /push:\s*\n\s*branches:/);
   assert.match(ciWorkflow, /fetch-depth: 0/);
   assert.match(ciWorkflow, /gitleaks\/gitleaks-action@[0-9a-f]{40}/);

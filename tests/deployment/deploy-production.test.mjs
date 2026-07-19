@@ -101,6 +101,30 @@ test("rollback rehearsal restores the release active at the start", (t) => {
   assert.equal(readState(sandbox, ".previous-production-image"), previousImage);
 });
 
+test("Tunnel restart rehearsal waits for origin recovery", (t) => {
+  const sandbox = createSandbox(t);
+
+  const result = runScript(sandbox, "rehearse-production-tunnel-restart.sh");
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Tunnel restart rehearsal completed/);
+  assert.deepEqual(readDockerLog(sandbox), ["restart:cloudflared"]);
+});
+
+test("Tunnel restart rehearsal fails when health does not recover", (t) => {
+  const sandbox = createSandbox(t);
+
+  const result = runScript(
+    sandbox,
+    "rehearse-production-tunnel-restart.sh",
+    [],
+    { FAIL_TUNNEL_HEALTH: "true" },
+  );
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /failed health checks/);
+});
+
 function createSandbox(t) {
   const directory = mkdtempSync(join(tmpdir(), "maillume-deploy-test-"));
   const scriptsDirectory = join(directory, "scripts");
@@ -112,6 +136,7 @@ function createSandbox(t) {
     "deploy-production.sh",
     "rollback-production.sh",
     "rehearse-production-rollback.sh",
+    "rehearse-production-tunnel-restart.sh",
   ]) {
     const target = join(scriptsDirectory, script);
     copyFileSync(join(repositoryRoot, "scripts", script), target);
@@ -134,7 +159,7 @@ if [ "$1" = "compose" ]; then
   action=""
   for argument in "$@"; do
     case "$argument" in
-      config|up|exec) action="$argument"; break ;;
+      config|up|exec|restart|ps) action="$argument"; break ;;
     esac
   done
   case "$action" in
@@ -145,9 +170,17 @@ if [ "$1" = "compose" ]; then
       printf 'up:%s\\n' "$MAILLUME_IMAGE" >> "$DOCKER_LOG"
       ;;
     exec)
-      if [ "\${FAIL_HEALTH_IMAGE:-}" = "\${MAILLUME_IMAGE:-}" ]; then
+      if { [ -n "\${FAIL_HEALTH_IMAGE:-}" ] && \
+           [ "\${FAIL_HEALTH_IMAGE:-}" = "\${MAILLUME_IMAGE:-}" ]; } || \
+         [ "\${FAIL_TUNNEL_HEALTH:-}" = "true" ]; then
         exit 1
       fi
+      ;;
+    restart)
+      printf 'restart:cloudflared\\n' >> "$DOCKER_LOG"
+      ;;
+    ps)
+      echo "cloudflared-container"
       ;;
   esac
   exit 0
@@ -155,6 +188,10 @@ fi
 
 case "$1" in
   pull|image) exit 0 ;;
+  inspect)
+    echo "true"
+    exit 0
+    ;;
 esac
 
 echo "Unexpected fake Docker invocation: $*" >&2
@@ -178,6 +215,8 @@ function runScript(sandbox, script, args = [], extraEnv = {}) {
       DOCKER_LOG: join(sandbox.directory, "docker.log"),
       DEPLOY_HEALTH_ATTEMPTS: "1",
       DEPLOY_HEALTH_DELAY_SECONDS: "0",
+      RESTART_HEALTH_ATTEMPTS: "1",
+      RESTART_HEALTH_DELAY_SECONDS: "0",
     },
   });
 }

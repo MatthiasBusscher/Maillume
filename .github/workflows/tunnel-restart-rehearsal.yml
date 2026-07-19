@@ -1,0 +1,67 @@
+name: Rehearse production Tunnel restart
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type RESTART to restart the production Tunnel and verify recovery
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  rehearse:
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'RESTART'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Check out reviewed recovery script
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Record the currently deployed public revision
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync } from "node:fs";
+
+          const response = await fetch("https://app.maillume.io/api/health", {
+            headers: { Accept: "application/json" },
+            redirect: "error",
+            signal: AbortSignal.timeout(10_000),
+          });
+          if (!response.ok) throw new Error(`Public health returned HTTP ${response.status}.`);
+          const body = await response.json();
+          if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(body.revision ?? "")) {
+            throw new Error("Public health did not report a complete release revision.");
+          }
+          appendFileSync(process.env.GITHUB_ENV, `EXPECTED_REVISION=${body.revision}\n`);
+          process.stdout.write("Recorded the current public release revision.\n");
+          NODE
+      - name: Synchronize the reviewed restart artifacts
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
+          source: docker-compose.production.yml,scripts/rehearse-production-tunnel-restart.sh
+          target: /opt/maillume
+          overwrite: true
+      - name: Restart the Tunnel and verify origin health
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
+          script: |
+            set -eu
+            cd /opt/maillume
+            chmod 750 ./scripts/rehearse-production-tunnel-restart.sh
+            ./scripts/rehearse-production-tunnel-restart.sh
+      - name: Verify the same release recovered through Cloudflare
+        run: node scripts/verify-public-deployment.mjs
