@@ -40,7 +40,17 @@
 - Build: GitHub Actions run `29697665934`
 - Deployment: GitHub Actions run `29698084152`
 - Runtime: `/api/health` reports the commit above and `analysis-v2.1`
-- Remaining human gates: Google OAuth branding confirmation, a disposable Hostinger restore rehearsal or explicit time-bounded acceptance, independent issue #47 sign-off, repository-public controls in issue #93, and the 24-48 hour invited beta.
+- Remaining human gates: Google OAuth branding confirmation, a disposable Hostinger restore rehearsal or explicit time-bounded acceptance, independent issue #47 sign-off, public provenance verification, and the 24-48 hour invited beta.
+
+## Public Repository
+
+- [x] Repository visibility is public and retired Gmail/Outlook build artifacts have been archived offline and removed from GitHub.
+- [x] Active rulesets require pull requests, current green checks, resolved conversations, linear history, and protected `main`/`v*` refs.
+- [x] GitHub Actions require immutable SHAs; workflow tokens are read-only and cannot approve pull requests.
+- [x] Discussions, squash-only merging, auto-merge, and automatic branch deletion are enabled.
+- [x] Secret scanning, push protection, Dependabot security updates, private vulnerability reporting, and CodeQL default setup are enabled.
+- [x] Production deployment remains main-only, requires explicit review, and does not allow administrator bypass.
+- [ ] A public pull request proves required-check enforcement and produces public image provenance.
 
 ## After The Web Beta
 
