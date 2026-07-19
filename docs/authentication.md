@@ -1,6 +1,8 @@
 # Authentication And Account Security
 
-Status: accounts are enabled in production; password-recovery acceptance remains open in issue #79.
+Status: accounts are enabled in production. Confirmation, recovery, Google sign-in,
+TOTP, sign-out, language switching, and account deletion passed production
+acceptance in issue #79.
 
 The hosted public beta offers optional accounts for authentication, TOTP, and revocable integration API keys. Anonymous scanning remains the primary path and does not require a session. Setting `ACCOUNTS_ENABLED=false` still provides an emergency anonymous-only mode that hides account entry points and rejects account/API-key operations before they contact Supabase.
 

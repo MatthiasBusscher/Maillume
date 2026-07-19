@@ -1,17 +1,15 @@
 # Maillume GitHub Issue Roadmap
 
-Implementation status: the scanner, optional accounts, TOTP, account-scoped API, and Chrome extension are implemented in source. Public-beta security evidence, recovery-email acceptance, editorial review, trademark decision, and repository release controls remain open. GitHub milestones and issues are the source of truth.
+Implementation status: the scanner, optional accounts, TOTP, account-scoped API, and Chrome extension are implemented in source. Authentication recovery and the English/Dutch editorial pass are accepted. Public-beta security evidence, the trademark decision, and repository release controls remain open. GitHub milestones and issues are the source of truth.
 
 ## Release And Post-Launch Order
 
-1. Issue #92: complete the native English/Dutch editorial and Maillume brand-story pass.
-2. Issue #79: verify password recovery at Gmail and Outlook and lock production callbacks to the app origin.
-3. Issue #47: complete production security evidence, monitoring, and rollback acceptance.
-4. Issue #49: complete trademark evidence and record the founder filing/risk decision.
-5. Issue #93: make the repository public and apply contribution protections in the same release session.
-6. Issue #40: run the trusted-tester period, tag `v0.1.0-beta`, and publish the release.
-7. Issue #39: validate and publish the Chrome extension after the web beta.
-8. Issues #51, #56, #64, and #66: post-beta detection, billing, team, and custom-auth-domain work.
+1. Issue #47: complete production security evidence, monitoring, and rollback acceptance.
+2. Issue #49: complete trademark evidence and record the founder filing/risk decision.
+3. Issue #93: make the repository public and apply contribution protections in the same release session.
+4. Issue #40: run the trusted-tester period, tag `v0.1.0-beta`, and publish the release.
+5. Issue #39: validate and publish the Chrome extension after the web beta.
+6. Issues #51, #56, #64, and #66: post-beta detection, billing, team, and custom-auth-domain work.
 
 The public heuristic scanner and self-hosted bring-your-own-key mode remain the launch product. See `docs/hosted-service.md` for the approved hosted-service planning baseline.
 

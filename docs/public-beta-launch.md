@@ -140,6 +140,7 @@ Use only synthetic or authorized test messages in English and Dutch.
 3. If no critical privacy, availability, or scoring defect appears, tag
    `v0.1.0-beta`, make the repository public, publish the release notes, and
    post the LinkedIn announcement.
-4. Keep accounts disabled until issue #79 is closed. Treat the Chrome
-   extension as a separate post-beta release; do not advertise it as available
-   before Chrome Web Store approval.
+4. Accounts passed production acceptance in issue #79 and may remain enabled;
+   anonymous scanning remains available. Treat the Chrome extension as a
+   separate post-beta release and do not advertise it as available before
+   Chrome Web Store approval.
