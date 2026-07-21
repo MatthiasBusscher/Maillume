@@ -692,6 +692,19 @@ test("marketing account routes redirect to the canonical app host", async ({ req
   }
 });
 
+test("internal locale parameters cannot point canonical metadata at another route", async ({ page }) => {
+  await page.goto("/app?__maillume_locale=nl&__maillume_path=/nl/pricing");
+
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "http://127.0.0.1:3100/nl/app",
+  );
+  await expect(page.locator('link[rel="canonical"]')).not.toHaveAttribute(
+    "href",
+    /pricing/,
+  );
+});
+
 test("the sourced Odido incident resource states Maillume's limits", async ({ page }) => {
   await page.goto("/resources/odido-phishing-incident");
 
@@ -754,10 +767,16 @@ test("security headers include the production CSP", async ({ request }) => {
   const csp = response.headers()["content-security-policy"];
 
   expect(csp).toContain("default-src 'self'");
+  expect(csp).toMatch(/script-src[^;]*'nonce-[A-Za-z0-9+/=_-]+'/);
+  expect(csp).toContain("'strict-dynamic'");
+  expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
   expect(csp).toContain("object-src 'none'");
   expect(csp).toContain("frame-ancestors 'none'");
   expect(csp).toContain("worker-src 'self' blob:");
   expect(csp).toContain("connect-src 'self'");
+  expect(response.headers()["strict-transport-security"]).toBe(
+    "max-age=63072000; includeSubDomains; preload",
+  );
 });
 
 test("hosted API publishes its machine-readable contract", async ({ request }) => {

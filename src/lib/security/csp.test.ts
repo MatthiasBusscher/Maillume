@@ -1,7 +1,37 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getCspConnectSources } from "./csp";
+import { createContentSecurityPolicy, getCspConnectSources } from "./csp";
+
+test("creates a nonce-based production policy without unsafe inline scripts", () => {
+  const policy = createContentSecurityPolicy({
+    nonce: "request-specific-nonce",
+    supabaseUrl: "https://project.supabase.co",
+  });
+
+  assert.match(policy, /script-src 'self' 'nonce-request-specific-nonce' 'strict-dynamic'/);
+  assert.match(policy, /'wasm-unsafe-eval' blob:/);
+  assert.match(policy, /connect-src 'self' https:\/\/project\.supabase\.co wss:\/\/project\.supabase\.co/);
+  assert.doesNotMatch(policy, /script-src[^;]*'unsafe-inline'/);
+  assert.doesNotMatch(policy, /script-src[^;]*'unsafe-eval'/);
+});
+
+test("adds the React development allowance without weakening inline script protection", () => {
+  const policy = createContentSecurityPolicy({
+    isDevelopment: true,
+    nonce: "development-nonce",
+  });
+
+  assert.match(policy, /script-src[^;]*'unsafe-eval'/);
+  assert.doesNotMatch(policy, /script-src[^;]*'unsafe-inline'/);
+});
+
+test("rejects a nonce that could inject another directive", () => {
+  assert.throws(
+    () => createContentSecurityPolicy({ nonce: "valid; script-src *" }),
+    /unsupported characters/,
+  );
+});
 
 test("keeps browser connections same-origin without Supabase configuration", () => {
   assert.deepEqual(getCspConnectSources(), ["'self'"]);

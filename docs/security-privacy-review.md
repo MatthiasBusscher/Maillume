@@ -52,9 +52,10 @@ OpenAI-compatible endpoints require HTTPS in production and must match an exact 
 - `Referrer-Policy: no-referrer`
 - `Permissions-Policy` disabling camera, microphone, geolocation, and payment APIs
 - `Cross-Origin-Opener-Policy: same-origin`
-- A production CSP that blocks plugins, frames, third-party connections, and media while allowing the local OCR Web Worker and WebAssembly runtime
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
+- A per-request nonce-based production CSP that blocks plugins, frames, third-party connections, inline scripts, and media while allowing the local OCR Web Worker and WebAssembly runtime
 
-The CSP must be reviewed whenever hosted assets, providers, or browser-side processing dependencies change. Development adds `unsafe-eval` only because Next.js development bundles require it; the production image does not include it.
+The CSP must be reviewed whenever hosted assets, providers, or browser-side processing dependencies change. Development adds `unsafe-eval` only because Next.js development bundles require it; the production image does not include it. `unsafe-inline` is never allowed by `script-src`.
 
 ## AI Provider Payload Strategy
 
