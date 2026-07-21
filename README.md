@@ -124,7 +124,7 @@ type EmailAnalysisResult = {
 };
 ```
 
-The current source contract uses `analysis_version: "analysis-v3"`. Applied factor contributions always sum to `risk_score`. Maillume derives classification, level, links, and score server-side; optional AI providers return stable evidence IDs instead of choosing a number.
+The current source contract uses `analysis_version: "analysis-v4"`. Applied factor contributions always sum to `risk_score`. Maillume derives classification, level, links, and score server-side; optional AI providers return stable evidence IDs instead of choosing a number.
 
 ## Self-Hosting and AI
 

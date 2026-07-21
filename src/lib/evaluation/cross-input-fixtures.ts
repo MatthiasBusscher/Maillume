@@ -2,6 +2,7 @@ import type { AnalysisLocale, EmailAnalysisInput, EmailLinkPair } from "../types
 
 export type CrossInputFixture = {
   id: string;
+  expected: "phishing" | "legitimate";
   locale: AnalysisLocale;
   subject: string;
   senderEmail: string;
@@ -12,6 +13,7 @@ export type CrossInputFixture = {
 export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   {
     id: "en-credentials",
+    expected: "phishing",
     locale: "en",
     subject: "Final account warning",
     senderEmail: "security@notice.example.test",
@@ -19,6 +21,7 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   },
   {
     id: "en-payment-change",
+    expected: "phishing",
     locale: "en",
     subject: "Updated invoice payment details",
     senderEmail: "billing@vendor.example.test",
@@ -26,6 +29,7 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   },
   {
     id: "en-delivery",
+    expected: "phishing",
     locale: "en",
     subject: "Parcel delivery failed",
     senderEmail: "tracking@parcel.example.test",
@@ -33,6 +37,7 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   },
   {
     id: "en-mfa-link-mismatch",
+    expected: "phishing",
     locale: "en",
     subject: "Approve your sign-in",
     senderEmail: "identity@notice.example.test",
@@ -44,6 +49,7 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   },
   {
     id: "en-promotion",
+    expected: "legitimate",
     locale: "en",
     subject: "Subscriber renewal offer",
     senderEmail: "offers@newsletter.example.test",
@@ -51,6 +57,7 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   },
   {
     id: "en-legitimate-invoice",
+    expected: "legitimate",
     locale: "en",
     subject: "Invoice review meeting",
     senderEmail: "finance@partner.example.test",
@@ -58,6 +65,7 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   },
   {
     id: "nl-inloggegevens",
+    expected: "phishing",
     locale: "nl",
     subject: "Laatste accountwaarschuwing",
     senderEmail: "beveiliging@melding.example.test",
@@ -65,6 +73,7 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   },
   {
     id: "nl-betaalwijziging",
+    expected: "phishing",
     locale: "nl",
     subject: "Gewijzigde betaalgegevens factuur",
     senderEmail: "facturen@leverancier.example.test",
@@ -72,6 +81,7 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   },
   {
     id: "nl-bezorging",
+    expected: "phishing",
     locale: "nl",
     subject: "Pakket kon niet worden bezorgd",
     senderEmail: "bezorging@pakket.example.test",
@@ -79,6 +89,7 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   },
   {
     id: "nl-oauth-link-mismatch",
+    expected: "phishing",
     locale: "nl",
     subject: "Koppel uw account opnieuw",
     senderEmail: "identiteit@melding.example.test",
@@ -90,6 +101,7 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   },
   {
     id: "nl-aanbieding",
+    expected: "legitimate",
     locale: "nl",
     subject: "Aanbieding voor abonnees",
     senderEmail: "aanbiedingen@nieuwsbrief.example.test",
@@ -97,6 +109,7 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
   },
   {
     id: "nl-legitieme-factuur",
+    expected: "legitimate",
     locale: "nl",
     subject: "Bespreking van de factuur",
     senderEmail: "financien@partner.example.test",
@@ -115,7 +128,7 @@ export function toDirectInput(fixture: CrossInputFixture): EmailAnalysisInput {
 
 export function toOcrInput(fixture: CrossInputFixture): EmailAnalysisInput {
   return {
-    ...toDirectInput(fixture),
+    locale: fixture.locale,
     body: fixture.body.replace(/\. /g, ".\r\n").replace(/ /g, "  "),
   };
 }

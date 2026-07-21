@@ -165,6 +165,60 @@ const changedPaymentDetails = analyzeEmailHeuristic({
 assert.notEqual(changedPaymentDetails.risk_level, "low");
 assert.equal(changedPaymentDetails.classification, "likely_phishing");
 
+const deliveryFeeLures = [
+  analyzeEmailHeuristic({
+    locale: "en",
+    body: "Your parcel could not be delivered. Pay a 1.99 redelivery fee today to prevent return to sender.",
+  }),
+  analyzeEmailHeuristic({
+    locale: "nl",
+    body: "Uw pakket kon niet worden bezorgd. Betaal vandaag 1,99 bezorgkosten om terugzending te voorkomen.",
+  }),
+];
+for (const result of deliveryFeeLures) {
+  assert.notEqual(result.risk_level, "low", "A delivery-fee lure must not be low risk");
+  assert.equal(result.classification, "likely_phishing");
+  assert.ok(result.score_factors.some((factor) => factor.id === "delivery_lure"));
+  assert.ok(result.score_factors.some((factor) => factor.id === "payment_request"));
+}
+
+const legitimateDeliveryUpdate = analyzeEmailHeuristic({
+  senderEmail: "tracking@vendor.example",
+  body: "Your confirmed order was delivered at 14:30. Track the receipt in your signed-in account. No payment is required.",
+});
+assert.ok(!legitimateDeliveryUpdate.score_factors.some((factor) => factor.id === "delivery_lure"));
+assert.notEqual(legitimateDeliveryUpdate.risk_level, "high");
+
+const oauthConsentLures = [
+  analyzeEmailHeuristic({
+    locale: "en",
+    body: "Grant the application permission to read your Microsoft 365 files and continue to the shared document.",
+  }),
+  analyzeEmailHeuristic({
+    locale: "nl",
+    body: "Geef de applicatie toegang tot uw Microsoft 365-bestanden om het gedeelde document te openen.",
+  }),
+];
+for (const result of oauthConsentLures) {
+  assert.ok(result.score_factors.some((factor) => factor.id === "mfa_or_oauth_request"));
+  assert.notEqual(result.risk_level, "low", "An unsolicited application-consent lure must not be low risk");
+}
+
+const hiddenUnicodeCredentialLures = [
+  analyzeEmailHeuristic({
+    locale: "en",
+    body: "Your account is suspended. Verify your pass\u200bword immediately.",
+  }),
+  analyzeEmailHeuristic({
+    locale: "nl",
+    body: "Uw account is geblokkeerd. Bevestig uw wacht\u2060woord direct.",
+  }),
+];
+for (const result of hiddenUnicodeCredentialLures) {
+  assert.ok(result.score_factors.some((factor) => factor.id === "credential_request"));
+  assert.notEqual(result.risk_level, "low", "Invisible separators must not hide credential requests");
+}
+
 const insufficientContext = analyzeEmailHeuristic({ body: "Can you take a look?" });
 assert.equal(insufficientContext.risk_level, "low");
 assert.equal(insufficientContext.classification, "uncertain");
@@ -176,7 +230,7 @@ const noWarningSignals = analyzeEmailHeuristic({
 assert.equal(noWarningSignals.risk_score, 0);
 assert.equal(noWarningSignals.classification, "likely_legitimate");
 
-for (const result of [dutchResult, dutchRenewalFraud, strongSingleFamilySpam, sameFamilyAttackChain, weakSignalsRemainLow, supportTicketBackscatter, hostedStorageLure, structuralUrlRegression, brandSubstringRegression, redirectRegression, changedPaymentDetails, insufficientContext, noWarningSignals]) {
+for (const result of [dutchResult, dutchRenewalFraud, strongSingleFamilySpam, sameFamilyAttackChain, weakSignalsRemainLow, supportTicketBackscatter, hostedStorageLure, structuralUrlRegression, brandSubstringRegression, redirectRegression, changedPaymentDetails, ...deliveryFeeLures, legitimateDeliveryUpdate, ...oauthConsentLures, ...hiddenUnicodeCredentialLures, insufficientContext, noWarningSignals]) {
   assert.equal(
     result.score_factors.reduce((total, factor) => total + factor.contribution, 0),
     result.risk_score,

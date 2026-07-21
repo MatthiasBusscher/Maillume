@@ -15,7 +15,7 @@ export const ANALYSIS_DISCLAIMERS = {
   nl: "Dit is een geautomatiseerde risicobeoordeling en geen garantie.",
 } as const satisfies Record<AnalysisLocale, string>;
 export const ANALYSIS_DISCLAIMER = ANALYSIS_DISCLAIMERS.en;
-export const ANALYSIS_PIPELINE_VERSION = "analysis-v3";
+export const ANALYSIS_PIPELINE_VERSION = "analysis-v4";
 export const ANALYSIS_ENVELOPE_VERSION = "analysis-envelope-v1";
 
 export const MAX_SCAN_BODY_LENGTH = 20_000;

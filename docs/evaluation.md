@@ -1,6 +1,6 @@
 # Synthetic Evaluation
 
-Maillume uses a repository-only synthetic corpus to calibrate `analysis-v3` without retaining or collecting users' email.
+Maillume uses a repository-only synthetic corpus to calibrate `analysis-v4` without retaining or collecting users' email.
 
 The risk score is a versioned, capped index of observed evidence. It is not the probability that a message is malicious and these synthetic checks are not a claim of real-world accuracy.
 
@@ -43,9 +43,11 @@ These gates catch code regressions against known synthetic scenarios. Public-bet
 
 ## Cross-Input Consistency
 
-Twelve paired English and Dutch scenarios exercise paste, OCR-shaped screenshot text, Chrome capture payloads, and parsed `.eml` adapters after canonical normalization. For equivalent available evidence, release checks require at least 95% classification agreement, a median absolute score difference no greater than five points, and a p95 difference no greater than ten points. Larger expected differences must be traceable to visible format-enriched factors, such as authentication headers or a displayed-link/destination mismatch.
+Twelve paired English and Dutch scenarios exercise paste, OCR-shaped screenshot text, Chrome capture payloads, and parsed `.eml` adapters after canonical normalization. The adapters mirror the real evidence boundary: screenshots contain OCR body text only, while Chrome and `.eml` can include sender, subject, and link destinations.
 
-The initial v3 regression set also verifies that missing screenshot metadata cannot produce `likely_legitimate` merely because sender or destination evidence was unavailable. The paired corpus will grow with authorized synthetic scenarios; production scans remain outside it.
+Parity is measured only where the available evidence is equivalent. Those comparisons require at least 95% classification agreement and median and p95 score differences no greater than five points. Format-enriched factors, such as a displayed-link/destination mismatch, are compared between Chrome and `.eml`. OCR-only phishing fixtures must not fall to low risk, and missing screenshot metadata must produce uncertainty rather than a claim that the message is likely legitimate.
+
+These checks measure adapter consistency and a source-specific safety floor, not real-world accuracy. The paired corpus will grow with authorized synthetic scenarios and rendered OCR fixtures; production scans remain outside it.
 
 ## Production Feedback Boundary
 

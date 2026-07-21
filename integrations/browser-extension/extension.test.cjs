@@ -335,7 +335,7 @@ async function testPanelSendsCapturedLinkMetadata() {
     },
     analysis_mode: "heuristic",
     analysis_provider: "heuristic",
-    analysis_version: "analysis-v3",
+    analysis_version: "analysis-v4",
     disclaimer: "This is an automated risk assessment.",
     privacy: {
       stored: false,

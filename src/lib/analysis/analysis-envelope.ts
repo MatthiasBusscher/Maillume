@@ -94,7 +94,9 @@ function normalizeBody(value: string): string {
 }
 
 function normalizeUnicode(value: string): string {
-  return value.replace(/\0/g, "").normalize("NFKC");
+  return value
+    .replace(/[\0\u200B-\u200D\u2060\uFEFF]/g, "")
+    .normalize("NFKC");
 }
 
 function extractVisibleLinks(content: string): string[] {
