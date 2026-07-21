@@ -8,6 +8,7 @@ import {
   DEFAULT_SITE_LOCALE,
   getPathLocale,
   getSiteLocaleCookieDomain,
+  getVerifiedInternalPathname,
   isSiteLocale,
   localizePath,
   SITE_LOCALE_COOKIE,
@@ -16,8 +17,25 @@ import {
   stripSiteLocale,
   type SiteLocale,
 } from "@/lib/i18n/site-locale";
+import { createContentSecurityPolicy } from "@/lib/security/csp";
 
 export async function middleware(request: NextRequest) {
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const contentSecurityPolicy = createContentSecurityPolicy({
+    isDevelopment: process.env.NODE_ENV !== "production",
+    nonce,
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  });
+  const createRequestHeaders = () => {
+    const headers = new Headers(request.headers);
+    headers.set("x-nonce", nonce);
+    headers.set("Content-Security-Policy", contentSecurityPolicy);
+    return headers;
+  };
+  const secureResponse = <T extends NextResponse>(response: T): T => {
+    response.headers.set("Content-Security-Policy", contentSecurityPolicy);
+    return response;
+  };
   const hostname = request.headers.get("host")?.split(":")[0] ?? "";
   const isAppHostname = hostname.startsWith("app.");
   const targetUrl = request.nextUrl.clone();
@@ -29,13 +47,13 @@ export async function middleware(request: NextRequest) {
       if (!areAccountsEnabled()) {
         targetUrl.pathname = "/app";
         targetUrl.search = "";
-        return NextResponse.redirect(targetUrl, 307);
+        return secureResponse(NextResponse.redirect(targetUrl, 307));
       }
-      return NextResponse.redirect(getOAuthFailureUrl(targetUrl.origin), 307);
+      return secureResponse(NextResponse.redirect(getOAuthFailureUrl(targetUrl.origin), 307));
     }
     if (request.nextUrl.searchParams.has("code")) {
       targetUrl.pathname = "/auth/callback";
-      return NextResponse.redirect(targetUrl, 307);
+      return secureResponse(NextResponse.redirect(targetUrl, 307));
     }
   }
 
@@ -44,7 +62,7 @@ export async function middleware(request: NextRequest) {
     targetUrl.hostname = "maillume.io";
     targetUrl.port = "";
     targetUrl.pathname = localizePath(originalPathname, "nl");
-    return NextResponse.redirect(targetUrl, 301);
+    return secureResponse(NextResponse.redirect(targetUrl, 301));
   }
 
   if (
@@ -54,37 +72,41 @@ export async function middleware(request: NextRequest) {
     targetUrl.protocol = "https:";
     targetUrl.hostname = "app.maillume.io";
     targetUrl.port = "";
-    return NextResponse.redirect(targetUrl, 307);
+    return secureResponse(NextResponse.redirect(targetUrl, 307));
   }
 
   if (hostname === "www.maillume.io") {
     targetUrl.protocol = "https:";
     targetUrl.hostname = "maillume.io";
     targetUrl.port = "";
-    return NextResponse.redirect(targetUrl, 301);
+    return secureResponse(NextResponse.redirect(targetUrl, 301));
   }
 
   const internalLocale = request.nextUrl.searchParams.get("__maillume_locale");
   if (isSiteLocale(internalLocale)) {
-    const internalHeaders = new Headers(request.headers);
+    const internalHeaders = createRequestHeaders();
     internalHeaders.set(SITE_LOCALE_HEADER, internalLocale);
     internalHeaders.set(
       SITE_PATHNAME_HEADER,
-      request.nextUrl.searchParams.get("__maillume_path") || originalPathname,
+      getVerifiedInternalPathname(
+        originalPathname,
+        request.nextUrl.searchParams.get("__maillume_path"),
+        internalLocale,
+      ),
     );
-    return NextResponse.next({ request: { headers: internalHeaders } });
+    return secureResponse(NextResponse.next({ request: { headers: internalHeaders } }));
   }
 
   if (pathLocale === DEFAULT_SITE_LOCALE) {
     targetUrl.pathname = stripSiteLocale(originalPathname);
     const redirectResponse = NextResponse.redirect(targetUrl, 308);
     setLocalePreferenceCookies(redirectResponse, request, DEFAULT_SITE_LOCALE);
-    return redirectResponse;
+    return secureResponse(redirectResponse);
   }
 
   if (pathLocale && !shouldUseLocalizedPage(request, stripSiteLocale(originalPathname))) {
     targetUrl.pathname = stripSiteLocale(originalPathname);
-    return NextResponse.redirect(targetUrl, 308);
+    return secureResponse(NextResponse.redirect(targetUrl, 308));
   }
 
   const cookieLocale = request.cookies.get(SITE_LOCALE_COOKIE)?.value;
@@ -96,10 +118,10 @@ export async function middleware(request: NextRequest) {
     shouldUseLocalizedPage(request)
   ) {
     targetUrl.pathname = localizePath(originalPathname, locale);
-    return NextResponse.redirect(targetUrl, 307);
+    return secureResponse(NextResponse.redirect(targetUrl, 307));
   }
 
-  const requestHeaders = new Headers(request.headers);
+  const requestHeaders = createRequestHeaders();
   requestHeaders.set(SITE_LOCALE_HEADER, locale);
   requestHeaders.set(SITE_PATHNAME_HEADER, originalPathname);
 
@@ -123,7 +145,7 @@ export async function middleware(request: NextRequest) {
       setLocalePreferenceCookies(nextResponse, request, locale);
     }
 
-    return nextResponse;
+    return secureResponse(nextResponse);
   };
   let response = createResponse();
 

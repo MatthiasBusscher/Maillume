@@ -28,6 +28,26 @@ export function localizePath(pathname: string, locale: SiteLocale): string {
   return normalized === "/" ? `/${locale}` : `/${locale}${normalized}`;
 }
 
+export function getVerifiedInternalPathname(
+  resolvedPathname: string,
+  internalPathname: string | null,
+  locale: SiteLocale,
+): string {
+  const resolved = normalizePathname(resolvedPathname);
+
+  if (
+    !internalPathname
+    || !internalPathname.startsWith("/")
+    || /[\\?#\u0000-\u001f\u007f]/.test(internalPathname)
+    || getPathLocale(internalPathname) !== locale
+    || stripSiteLocale(internalPathname) !== resolved
+  ) {
+    return resolved;
+  }
+
+  return normalizePathname(internalPathname);
+}
+
 export function getLanguageName(locale: SiteLocale) {
   return locale === "nl" ? "Nederlands" : "English";
 }

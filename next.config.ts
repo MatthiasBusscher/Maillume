@@ -1,7 +1,5 @@
 import type { NextConfig } from "next";
 
-import { getCspConnectSources } from "./src/lib/security/csp";
-
 const baseSecurityHeaders = [
   {
     key: "X-Content-Type-Options",
@@ -19,32 +17,11 @@ const baseSecurityHeaders = [
     key: "Cross-Origin-Opener-Policy",
     value: "same-origin",
   },
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains; preload",
+  },
 ];
-
-const scriptSources = ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", "blob:"];
-const connectSources = getCspConnectSources(process.env.NEXT_PUBLIC_SUPABASE_URL);
-
-if (process.env.NODE_ENV !== "production") {
-  scriptSources.push("'unsafe-eval'");
-}
-
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-  "object-src 'none'",
-  `script-src ${scriptSources.join(" ")}`,
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self' data:",
-  `connect-src ${connectSources.join(" ")}`,
-  "worker-src 'self' blob:",
-  "child-src 'self' blob:",
-  "manifest-src 'self'",
-  "media-src 'none'",
-  "upgrade-insecure-requests",
-].join("; ");
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -56,7 +33,6 @@ const nextConfig: NextConfig = {
         headers: [
           ...baseSecurityHeaders,
           { key: "X-Frame-Options", value: "DENY" },
-          { key: "Content-Security-Policy", value: contentSecurityPolicy },
         ],
       },
     ];
