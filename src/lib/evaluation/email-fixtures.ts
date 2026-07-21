@@ -94,7 +94,7 @@ export const emailEvaluationFixtures: EvaluationFixture[] = [
     expectedRiskLevel: "high",
     minScore: 70,
     minSignals: 5,
-    requiredSignalSnippets: ["payment", "known brand", "external link"],
+    requiredSignalSnippets: ["payment", "known brand", "delivery problem"],
   },
   {
     id: "en_unsolicited_sales_spam",

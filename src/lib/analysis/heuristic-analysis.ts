@@ -14,6 +14,10 @@ const MFA_REQUEST_PATTERNS = [
   /accept (this )?(app|oauth) (request|permission)/i,
   /keur (de )?(inlog|mfa).*(goed|verzoek)/i,
   /accepteer.*(app|oauth).*(toegang|verzoek)/i,
+  /(?:grant|allow|authorize).{0,24}(?:app|application|oauth).{0,24}(?:access|permission)/i,
+  /(?:app|application|oauth).{0,24}(?:access|permission).{0,24}(?:grant|allow|authorize|approve)/i,
+  /(?:geef|verleen|sta toe|machtig).{0,24}(?:app|applicatie|oauth).{0,24}(?:toegang|machtiging|rechten)/i,
+  /(?:app|applicatie|oauth).{0,24}(?:toegang|machtiging|rechten).{0,24}(?:geven|verlenen|toestaan|machtigen|goedkeuren)/i,
 ];
 const MFA_NEGATION_PATTERN = /(?:never|do not|nooit|niet).{0,24}(?:approve|goedkeur|keur).{0,18}(?:mfa|login|inlog)/i;
 const SHORT_LINK_DOMAINS = new Set(["bit.ly", "tinyurl.com", "t.co", "rebrand.ly", "is.gd", "ow.ly"]);
@@ -57,7 +61,7 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   },
   {
     id: "payment_request",
-    patterns: [/wire transfer/i, /gift card/i, /payment (required|overdue|failed)/i, /invoice (overdue|unpaid)/i, /betaal(methode|gegevens)/i, /betaling.*(mislukt|vereist|achterstallig)/i, /niet betaald/i, /achterstallige factuur/i, /terugbetaling/i, /overschrijving/i, /incasso/i],
+    patterns: [/wire transfer/i, /gift card/i, /payment (required|overdue|failed)/i, /invoice (overdue|unpaid)/i, /pay.{0,32}(?:redelivery|delivery|shipping) (?:fee|charge|cost)/i, /betaal(methode|gegevens)/i, /betaling.*(mislukt|vereist|achterstallig)/i, /betaal.{0,40}(?:kosten|toeslag).{0,24}(?:bezorg|lever)/i, /betaal.{0,40}(?:bezorg|lever|herbezorg).{0,20}(?:kosten|toeslag|tarief)/i, /niet betaald/i, /achterstallige factuur/i, /terugbetaling/i, /overschrijving/i, /incasso/i],
   },
   {
     id: "changed_payment_details",
@@ -65,7 +69,7 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   },
   {
     id: "attachment_lure",
-    patterns: [/open (the )?attachment/i, /download (the )?(document|invoice|file)/i, /shared document/i, /docusign/i, /open de bijlage/i, /document (openen|downloaden|gedeeld)/i],
+    patterns: [/open (the )?attachment/i, /download (the )?(document|invoice|file)/i, /shared document/i, /docusign/i, /open de bijlage/i, /document (openen|downloaden|gedeeld)/i, /gedeeld(?:e)? document.{0,12}(?:openen|bekijken)/i],
   },
   {
     id: "prize_promotion",
@@ -168,6 +172,7 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput | AnalysisEnv
       : group.patterns.some((pattern) => pattern.test(messageContent));
     if (matches) evidence.add(group.id);
   }
+  if (hasDeliveryFeeLure(messageContent)) evidence.add("delivery_lure");
   if (/(?:you subscribed|opted in|subscription preferences|aangemeld voor|abonnementsvoorkeuren)/i.test(messageContent)) {
     evidence.delete("prize_promotion");
   }
@@ -222,6 +227,13 @@ function hasActionableMfaRequest(content: string): boolean {
       MFA_REQUEST_PATTERNS.some((pattern) => pattern.test(segment))
       && !MFA_NEGATION_PATTERN.test(segment),
     );
+}
+
+function hasDeliveryFeeLure(content: string): boolean {
+  const deliveryProblem = /(?:parcel|package|shipment|delivery)[\s\S]{0,60}(?:could not be delivered|failed|held|on hold|returned|return to sender)|(?:could not be delivered|delivery failed)[\s\S]{0,60}(?:parcel|package|shipment)|(?:pakket|zending|bezorging|levering)[\s\S]{0,60}(?:niet bezorgd|kon niet worden bezorgd|mislukt|vastgehouden|teruggestuurd|retour)|(?:niet bezorgd|kon niet worden bezorgd)[\s\S]{0,60}(?:pakket|zending)/i.test(content);
+  const feeRequest = /(?:pay|payment|fee|charge|cost|€|\$)|(?:betaal|betaling|kosten|toeslag|tarief)/i.test(content);
+  const pressure = /(?:today|immediately|prevent|return(?:ed)? to sender|within \d{1,2} hours?)|(?:vandaag|direct|voorkom|terugzending|retour|binnen \d{1,2} (?:uur|uren))/i.test(content);
+  return deliveryProblem && feeRequest && pressure;
 }
 
 function addSenderEvidence(sender: string, links: string[], evidence: Set<EvidenceId>) {

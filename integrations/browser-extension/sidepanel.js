@@ -13,7 +13,7 @@ let captureRetryCount = 0;
 let capturePending = false;
 let capturedLinks = [];
 let capturedLinkPairs = [];
-const ANALYSIS_PIPELINE_VERSION = "analysis-v3";
+const ANALYSIS_PIPELINE_VERSION = "analysis-v4";
 
 const dynamicCopy = {
   en: {

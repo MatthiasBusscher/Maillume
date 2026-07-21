@@ -114,7 +114,7 @@
           "result": { "$ref": "#/components/schemas/AnalysisResult" },
           "analysis_mode": { "type": "string", "enum": ["heuristic", "ai"] },
           "analysis_provider": { "type": "string", "enum": ["heuristic", "openai", "anthropic", "openai-compatible"] },
-          "analysis_version": { "const": "analysis-v3" },
+          "analysis_version": { "const": "analysis-v4" },
           "disclaimer": { "type": "string" },
           "privacy": {
             "type": "object",

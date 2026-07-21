@@ -45,6 +45,13 @@ assert.equal(screenshot.availability.sender, false);
 assert.equal(screenshot.availability.linkDestinations, false);
 assert.equal(screenshot.availability.textExtraction, "ocr");
 
+const obfuscated = createAnalysisEnvelope({
+  subject: "Pass\u200bword notice",
+  body: "Verify your pass\u2060word and acc\uFEFFount.",
+});
+assert.equal(obfuscated.subject, "Password notice");
+assert.equal(obfuscated.body, "Verify your password and account.");
+
 const chrome = createAnalysisEnvelope({ body: "Captured project update." }, "chrome");
 assert.equal(chrome.source, "chrome");
 assert.equal(chrome.availability.textExtraction, "direct");

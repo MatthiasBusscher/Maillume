@@ -42,6 +42,7 @@ export const EVIDENCE_IDS = [
   "mfa_or_oauth_request",
   "qr_lure",
   "callback_lure",
+  "delivery_lure",
 ] as const;
 
 export type EvidenceId = (typeof EVIDENCE_IDS)[number];
@@ -88,6 +89,7 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   mfa_or_oauth_request: evidence("intent", 20, "Requests an unexpected MFA or application approval.", "Vraagt om een onverwachte MFA- of applicatiegoedkeuring.", true),
   qr_lure: evidence("delivery", 10, "Directs the recipient to scan a QR code.", "Stuurt de ontvanger naar een QR-code.", true),
   callback_lure: evidence("delivery", 10, "Pushes the recipient to call an unverified number.", "Stuurt de ontvanger naar een onbevestigd telefoonnummer.", true),
+  delivery_lure: evidence("delivery", 20, "Combines a delivery problem with a fee and return pressure.", "Combineert een bezorgprobleem met kosten en druk rond terugzending.", true),
 };
 
 const FAMILY_CAPS: Record<EvidenceFamily, number> = {
@@ -236,7 +238,7 @@ function getClassification(
   const phishingSpecificEvidence = ids.some((id) => PHISHING_SPECIFIC_EVIDENCE.has(id));
 
   if (spamEvidenceFound && !phishingSpecificEvidence) return "likely_spam";
-  if (level === "high" || (phishingEvidence && score >= 35)) return "likely_phishing";
+  if (level === "high" || (phishingEvidence && score >= 35) || (phishingSpecificEvidence && score >= 30)) return "likely_phishing";
   if (level === "low" && score === 0 && !incompleteEvidence) return "likely_legitimate";
   return "uncertain";
 }
@@ -254,6 +256,7 @@ const PHISHING_SPECIFIC_EVIDENCE = new Set<EvidenceId>([
   "mfa_or_oauth_request",
   "qr_lure",
   "callback_lure",
+  "delivery_lure",
 ]);
 
 function getRecommendedAction(
