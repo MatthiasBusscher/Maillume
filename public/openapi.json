@@ -53,6 +53,7 @@
           "subject": { "type": "string", "maxLength": 300 },
           "senderEmail": { "type": "string", "maxLength": 320 },
           "locale": { "type": "string", "enum": ["en", "nl"], "default": "en" },
+          "evidenceTruncated": { "type": "boolean", "default": false },
           "body": { "type": "string", "minLength": 1, "maxLength": 20000 },
           "links": {
             "type": "array",

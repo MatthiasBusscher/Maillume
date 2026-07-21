@@ -8,6 +8,7 @@ const request = specification.components.schemas.AnalyzeRequest;
 const response = specification.components.schemas.AnalyzeResponse;
 
 assert.equal(request.properties.body.maxLength, 20_000);
+assert.equal(request.properties.evidenceTruncated.type, "boolean");
 assert.equal(request.properties.links.type, "array");
 assert.equal(request.properties.links.maxItems, 20);
 assert.equal(request.properties.links.items.maxLength, 2_048);

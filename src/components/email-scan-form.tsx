@@ -67,6 +67,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   const [body, setBody] = useState("");
   const [links, setLinks] = useState<string[]>([]);
   const [linkPairs, setLinkPairs] = useState<EmailLinkPair[]>([]);
+  const [evidenceTruncated, setEvidenceTruncated] = useState(false);
   const [result, setResult] = useState<EmailAnalysisResult | null>(null);
   const [analysisVersion, setAnalysisVersion] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -75,8 +76,8 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   const [fileName, setFileName] = useState("");
   const [fileStatus, setFileStatus] = useState("");
   const requestPayload = useMemo(
-    () => ({ source: activeMode, subject, senderEmail, body, locale, links, linkPairs }),
-    [activeMode, body, linkPairs, links, locale, senderEmail, subject],
+    () => ({ source: activeMode, subject, senderEmail, body, locale, links, linkPairs, evidenceTruncated }),
+    [activeMode, body, evidenceTruncated, linkPairs, links, locale, senderEmail, subject],
   );
   const requestSize = getSerializedRequestSize(requestPayload);
   const bodyIsTooLong = body.length > MAX_SCAN_BODY_LENGTH;
@@ -136,6 +137,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setBody(sampleEmail);
     setLinks([]);
     setLinkPairs([]);
+    setEvidenceTruncated(false);
     setResult(null);
     setError("");
     setFileName("");
@@ -149,6 +151,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setBody("");
     setLinks([]);
     setLinkPairs([]);
+    setEvidenceTruncated(false);
     setResult(null);
     setError("");
     setFileName("");
@@ -168,6 +171,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     }
 
     setActiveMode("screenshot");
+    setEvidenceTruncated(false);
     setResult(null);
     setError("");
     setFileName(file.name);
@@ -206,6 +210,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
       setBody(extracted.body);
       setLinks([]);
       setLinkPairs([]);
+      setEvidenceTruncated(false);
       setFileStatus(dictionary.form.extractedTextReady);
     } catch {
       setError(dictionary.form.extractionFailed);
@@ -228,6 +233,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     }
 
     setActiveMode("eml");
+    setEvidenceTruncated(false);
     setResult(null);
     setError("");
     setFileName(file.name);
@@ -261,6 +267,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
       setBody(parsed.body);
       setLinks(parsed.links);
       setLinkPairs(parsed.linkPairs);
+      setEvidenceTruncated(parsed.evidenceTruncated);
       setFileStatus(dictionary.form.parsedEmlReady);
     } catch {
       setError(dictionary.form.extractionFailed);

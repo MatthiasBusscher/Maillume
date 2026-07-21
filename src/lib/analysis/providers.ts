@@ -232,7 +232,9 @@ function finalizeAiAnalysis(aiEvidence: EvidenceId[], input: AnalysisEnvelope): 
   const evidence = [...deterministic.evidence, ...aiEvidence];
 
   return buildAnalysisResult(evidence, deterministic.links, input.locale, {
-    incompleteEvidence: !input.availability.sender || !input.availability.linkDestinations,
+    incompleteEvidence: !input.availability.sender
+      || !input.availability.linkDestinations
+      || !input.availability.contentComplete,
   });
 }
 

@@ -38,6 +38,7 @@ export function createAnalysisEnvelope(
       linkDestinations: source !== "screenshot",
       authenticationHeaders: false,
       textExtraction: source === "screenshot" ? "ocr" : source === "eml" ? "parsed" : "direct",
+      contentComplete: input.evidenceTruncated !== true,
     },
   };
 }

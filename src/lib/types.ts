@@ -35,6 +35,7 @@ export type EmailAnalysisInput = {
   locale?: AnalysisLocale;
   links?: string[];
   linkPairs?: EmailLinkPair[];
+  evidenceTruncated?: boolean;
 };
 
 export type NormalizedScanInput = EmailAnalysisInput & {
@@ -48,6 +49,7 @@ export type AnalysisEvidenceAvailability = {
   linkDestinations: boolean;
   authenticationHeaders: boolean;
   textExtraction: "direct" | "ocr" | "parsed";
+  contentComplete: boolean;
 };
 
 export type AnalysisEnvelope = {

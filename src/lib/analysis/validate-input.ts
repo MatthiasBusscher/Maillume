@@ -30,7 +30,7 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
 
   const data = payload as Record<string, unknown>;
   const unsupportedFields = Object.keys(data).filter(
-    (field) => !["source", "subject", "senderEmail", "body", "locale", "links", "linkPairs"].includes(field),
+    (field) => !["source", "subject", "senderEmail", "body", "locale", "links", "linkPairs", "evidenceTruncated"].includes(field),
   );
   if (unsupportedFields.length > 0) {
     return { ok: false, error: "Request contains unsupported fields." };
@@ -42,6 +42,7 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
   const locale = data.locale;
   const links = normalizeLinks(data.links);
   const linkPairs = normalizeLinkPairs(data.linkPairs);
+  const evidenceTruncated = data.evidenceTruncated;
   const fieldErrors: Partial<Record<keyof NormalizedScanInput, string>> = {};
 
   if (source !== undefined && (typeof source !== "string" || !SOURCES.has(source as ScanSource))) {
@@ -74,6 +75,10 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
     fieldErrors.links = "Link metadata is invalid.";
   }
 
+  if (evidenceTruncated !== undefined && typeof evidenceTruncated !== "boolean") {
+    fieldErrors.evidenceTruncated = "Evidence completeness metadata is invalid.";
+  }
+
   if (Object.keys(fieldErrors).length > 0) {
     return {
       ok: false,
@@ -92,6 +97,7 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
       body,
       links: links ?? undefined,
       linkPairs: linkPairs ?? undefined,
+      evidenceTruncated: evidenceTruncated === true,
     },
   };
 }
