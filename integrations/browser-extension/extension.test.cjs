@@ -288,6 +288,7 @@ function testInactiveInputSelectionFallback() {
 
 function createPanelElement() {
   const listeners = new Map();
+  const attributes = new Map();
   return {
     value: "",
     disabled: false,
@@ -297,13 +298,15 @@ function createPanelElement() {
     style: {},
     addEventListener(type, listener) { listeners.set(type, listener); },
     async dispatch(type) { return listeners.get(type)?.(); },
+    getAttribute(name) { return attributes.get(name) ?? null; },
     replaceChildren() {},
+    setAttribute(name, value) { attributes.set(name, String(value)); },
   };
 }
 
 async function testPanelSendsCapturedLinkMetadata() {
   const runtime = event();
-  const ids = ["capture", "subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"];
+  const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"];
   const elements = new Map(ids.map((id) => [id, createPanelElement()]));
   const responses = [
     {
@@ -379,6 +382,11 @@ async function testPanelSendsCapturedLinkMetadata() {
   await new Promise((resolve) => setTimeout(resolve, 100));
   await flush();
   assert.equal(elements.get("body").value, "Captured once");
+  await elements.get("captureHelpToggle").dispatch("click");
+  assert.equal(elements.get("captureHelp").hidden, true);
+  assert.equal(elements.get("captureHelpToggle").textContent, "Show instructions");
+  await elements.get("captureHelpToggle").dispatch("click");
+  assert.equal(elements.get("captureHelp").hidden, false);
   await elements.get("analyze").dispatch("click");
   assert.deepEqual(requestPayload, {
     source: "chrome",
@@ -392,6 +400,10 @@ async function testPanelSendsCapturedLinkMetadata() {
       destinationUrl: "https://bit.ly/synthetic-review",
     }],
   });
+  assert.equal(elements.get("reviewStep").hidden, true, "successful analysis must collapse the captured-detail step");
+  assert.equal(elements.get("analyze").hidden, true, "successful analysis must replace the analyze action with the result");
+  assert.equal(elements.get("result").hidden, false);
+  assert.equal(elements.get("level").dataset.level, "low");
 
   assert.equal(context.isAnalysisResponse(validResponse), true);
   for (const invalidResponse of [
@@ -411,6 +423,22 @@ async function testPanelSendsCapturedLinkMetadata() {
   runtime.listener({ type: "capture-ready", tabId: 22, captureId: "capture-7" });
   await flush();
   assert.equal(elements.get("body").value, "Captured once", "a duplicate consumer must not erase a successful capture");
+
+  responses.push({
+    status: "success",
+    text: "Freshly captured message",
+    source: "open_message",
+    subject: "Fresh capture",
+    sender: "fresh@notice.example",
+    captureId: "capture-8",
+  });
+  runtime.listener({ type: "capture-started", tabId: 22, captureId: "capture-8" });
+  await flush();
+  assert.equal(elements.get("reviewStep").hidden, false, "a new capture must restore the captured-detail step");
+  assert.equal(elements.get("result").hidden, true, "a new capture must clear the previous result");
+  runtime.listener({ type: "capture-ready", tabId: 22, captureId: "capture-8" });
+  await flush();
+  assert.equal(elements.get("body").value, "Freshly captured message");
 }
 
 (async () => {

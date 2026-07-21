@@ -257,7 +257,7 @@ See `docs/deployment.md` and `docs/cost-controls.md` for deployment and cost-con
 
 ## Canonical Analysis Envelope
 
-Every input adapter produces the same `analysis-envelope-v1` structure before scoring. Paste and Chrome capture provide direct text, screenshot OCR provides extracted text with sender and destination evidence marked unavailable, and `.eml` parsing provides normalized text plus any parsed sender, link, and displayed-link/destination evidence.
+Every input adapter produces the same `analysis-envelope-v1` structure before scoring. Paste and Chrome capture provide direct text, screenshot OCR can separate explicitly labelled subject and sender fields while leaving destination evidence unavailable, and `.eml` parsing provides normalized text plus any parsed sender, link, and displayed-link/destination evidence.
 
 The envelope applies Unicode NFKC normalization, stable whitespace and line endings, normalized HTTP(S) URLs without fragments, and deterministic link and link-pair ordering. File names and attachment names remain parser or interface metadata; they are not silently scored as message content.
 

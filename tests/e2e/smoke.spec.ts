@@ -84,6 +84,22 @@ test("Dutch routes render server-side and persist across navigation", async ({ p
   });
 });
 
+test("Dutch input controls stay inside their buttons on mobile", async ({ page }) => {
+  await page.goto("/nl/app");
+  await page.setViewportSize({ width: 320, height: 800 });
+
+  const modeGroup = page.getByRole("group", { name: "Invoermethode" });
+  const emlMode = modeGroup.getByRole("button", { name: ".eml-bestand" });
+  await expect(emlMode).toBeVisible();
+  expect(await emlMode.evaluate((button) => button.scrollWidth <= button.clientWidth)).toBe(true);
+
+  await emlMode.click();
+  const uploadButton = page.locator("label").filter({ hasText: ".eml-bestand kiezen" });
+  await expect(uploadButton).toBeVisible();
+  expect(await uploadButton.evaluate((button) => button.scrollWidth <= button.clientWidth)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(321);
+});
+
 test("marketing language redirects use the configured public origin", async ({ page, request }) => {
   const response = await request.get("/language/en?next=%2Fnl", {
     headers: { Host: "0.0.0.0:3000" },
@@ -243,12 +259,14 @@ test("screenshot mode validates unsupported files before OCR", async ({ page }) 
   );
 });
 
-test("screenshot OCR uses only locally served assets", async ({ page }) => {
+test("screenshot OCR extracts labelled subject and sender without remote assets", async ({ page }) => {
   test.setTimeout(120_000);
-  await page.setViewportSize({ width: 1_000, height: 500 });
+  await page.setViewportSize({ width: 1_100, height: 500 });
   await page.setContent(`
-    <main style="padding:60px;background:white;color:black;font:700 42px Arial,sans-serif">
-      URGENT ACCOUNT LOCKED<br>VERIFY YOUR LOGIN NOW
+    <main style="padding:48px;background:white;color:black;font:700 36px Arial,sans-serif;line-height:1.5">
+      SUBJECT: URGENT ACCOUNT LOCKED<br>
+      FROM: alerts@notice.example<br><br>
+      VERIFY YOUR LOGIN NOW
     </main>
   `);
   const screenshot = await page.screenshot({ type: "png" });
@@ -270,8 +288,49 @@ test("screenshot OCR uses only locally served assets", async ({ page }) => {
   await expect(page.getByText("Extracted text is ready to analyze.")).toBeVisible({
     timeout: 90_000,
   });
-  await expect(page.getByLabel("Email content")).toHaveValue(/URGENT ACCOUNT LOCKED/i);
+  await expect(page.getByLabel("Subject")).toHaveValue(/URGENT ACCOUNT LOCKED/i);
+  await expect(page.getByLabel("Sender email")).toHaveValue("alerts@notice.example");
+  await expect(page.getByLabel("Email content")).toHaveValue(/VERIFY YOUR LOGIN NOW/i);
+  await expect(page.getByLabel("Email content")).not.toHaveValue(/SUBJECT:|FROM:/i);
   expect(externalOcrRequests).toEqual([]);
+});
+
+test("risk meter color follows the evidence-derived level instead of fixed score bands", async ({ page }) => {
+  await page.route("**/api/analyze", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      json: {
+        result: {
+          classification: "likely_spam",
+          risk_level: "medium",
+          risk_score: 67,
+          score_factors: [
+            { id: "synthetic-intent", family: "intent", contribution: 30, label: "Synthetic intent factor" },
+            { id: "synthetic-identity", family: "identity", contribution: 20, label: "Synthetic identity factor" },
+            { id: "synthetic-destination", family: "destination", contribution: 17, label: "Synthetic destination factor" },
+          ],
+          suspicious_signals: ["Synthetic test factor"],
+          detected_links: [],
+          recommended_action: "Review before acting.",
+          short_explanation: "Synthetic medium-risk result.",
+        },
+        analysis_mode: "heuristic",
+        analysis_provider: "heuristic",
+        analysis_version: "analysis-v4",
+        disclaimer: "Automated assessment.",
+        privacy: { stored: false, retention: "not_stored", message: "Not stored." },
+      },
+      status: 200,
+    });
+  });
+
+  await page.getByLabel("Email content").fill("Synthetic message body");
+  await page.getByRole("button", { name: "Analyze email" }).click();
+
+  const meter = page.getByRole("meter");
+  await expect(meter).toHaveAttribute("data-risk-level", "medium");
+  await expect(meter.getByTestId("risk-score-fill")).toHaveClass(/bg-\[#c38122\]/);
+  await expect(meter.getByText("Medium", { exact: true }).last()).toHaveClass(/text-\[#714812\]/);
 });
 
 test("rate-limited analysis shows a clear localized error", async ({ page }) => {

@@ -16,16 +16,38 @@
     </header>
 
     <main>
-      <section class="step">
+      <section class="step step-primary">
         <span class="number">01</span>
-        <div class="capture-intro">
-          <h2 data-nl="Leg het geopende bericht vast">Capture the open message</h2>
-          <p data-nl="Open een bericht in Gmail of Outlook. Gebruik deze knop voor elk volgend bericht zonder het zijpaneel opnieuw te openen. Een selectie krijgt voorrang.">Open a message in Gmail or Outlook. Use this button for each next message without reopening the side panel. A text selection takes priority.</p>
-          <button id="capture" type="button" class="secondary" data-nl="Huidig bericht gebruiken">Use current message</button>
+        <div class="step-content">
+          <div class="capture-intro">
+            <div class="heading-row">
+              <h2 data-nl="Leg het geopende bericht vast">Capture the open message</h2>
+              <button id="captureHelpToggle" type="button" class="help-toggle" aria-expanded="true" aria-controls="captureHelp" data-nl="Uitleg verbergen">Hide instructions</button>
+            </div>
+            <p id="captureHelp" data-nl="Open een bericht in Gmail of Outlook. Gebruik deze knop voor elk volgend bericht zonder het zijpaneel opnieuw te openen. Een selectie krijgt voorrang.">Open a message in Gmail or Outlook. Use this button for each next message without reopening the side panel. A text selection takes priority.</p>
+            <button id="capture" type="button" class="secondary" data-nl="Huidig bericht gebruiken">Use current message</button>
+          </div>
+
+          <section id="result" class="result" hidden>
+            <div class="score-row">
+              <div><span data-nl="Risicoscore">Risk score</span><strong id="score"></strong></div>
+              <span id="level" class="level"></span>
+            </div>
+            <p id="classification" class="classification"></p>
+            <p id="explanation"></p>
+            <h2 data-nl="Zo werkt deze score">How this score works</h2>
+            <p data-nl="Dit is een versiegebonden risico-index op basis van de signalen die Maillume kon onderzoeken. Het is geen waarschijnlijkheid of garantie.">This is a versioned risk index based on the signals Maillume could inspect. It is not a probability or guarantee.</p>
+            <ul id="factors" class="factors"></ul>
+            <h2 data-nl="Verdachte signalen">Suspicious signals</h2>
+            <ul id="signals"></ul>
+            <h2 data-nl="Aanbevolen vervolgstap">Recommended action</h2>
+            <p id="action"></p>
+            <p class="disclaimer" data-nl="Dit is een geautomatiseerde risicobeoordeling en geen garantie.">This is an automated risk assessment and should not be considered a guarantee.</p>
+          </section>
         </div>
       </section>
 
-      <section class="step">
+      <section id="reviewStep" class="step">
         <span class="number">02</span>
         <div class="fields">
           <h2 data-nl="Controleer de vastgelegde gegevens">Review the captured details</h2>
@@ -50,22 +72,6 @@
       <button id="analyze" type="button" disabled data-nl="Bericht analyseren">Analyze message</button>
       <p id="status" role="status" aria-live="polite"></p>
 
-      <section id="result" class="result" hidden>
-        <div class="score-row">
-          <div><span data-nl="Risicoscore">Risk score</span><strong id="score"></strong></div>
-          <span id="level" class="level"></span>
-        </div>
-        <p id="classification" class="classification"></p>
-        <p id="explanation"></p>
-        <h2 data-nl="Zo werkt deze score">How this score works</h2>
-        <p data-nl="Dit is een versiegebonden risico-index op basis van de signalen die Maillume kon onderzoeken. Het is geen waarschijnlijkheid of garantie.">This is a versioned risk index based on the signals Maillume could inspect. It is not a probability or guarantee.</p>
-        <ul id="factors" class="factors"></ul>
-        <h2 data-nl="Verdachte signalen">Suspicious signals</h2>
-        <ul id="signals"></ul>
-        <h2 data-nl="Aanbevolen vervolgstap">Recommended action</h2>
-        <p id="action"></p>
-        <p class="disclaimer" data-nl="Dit is een geautomatiseerde risicobeoordeling en geen garantie.">This is an automated risk assessment and should not be considered a guarantee.</p>
-      </section>
     </main>
     <script src="sidepanel.js"></script>
   </body>

@@ -129,6 +129,8 @@ async function run() {
     assert.equal(await panelPage.locator("#capture").textContent(), "Use current message");
     const recoveredBody = await waitForPanelBody(panelPage, "Window selection text");
     assert.equal(recoveredBody, "Window selection text");
+    await panelPage.locator("#reviewStep").evaluate((element) => { element.hidden = true; });
+    assert.equal(await panelPage.locator("#reviewStep").isHidden(), true, "the review step must collapse after analysis");
 
   } finally {
     if (context) await context.close();
