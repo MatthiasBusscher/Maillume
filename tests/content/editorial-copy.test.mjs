@@ -4,11 +4,13 @@ import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
-test("the homepage explains the Maillume name and promise", () => {
+test("the homepage leads with the Maillume promise without explaining the name", () => {
   const homepage = read("src/app/page.tsx");
+  const translations = read("src/lib/i18n/marketing-pages.ts");
 
   assert.match(homepage, /Shine a light on suspicious email/);
-  assert.match(homepage, /Maillume blends mail and illuminate/);
+  assert.doesNotMatch(`${homepage}\n${translations}`, /Maillume (?:blends|combines) mail (?:and|with) illuminate/i);
+  assert.doesNotMatch(translations, /De naam Maillume verwijst naar mail en illuminate/i);
   assert.match(homepage, /never guarantees that a message is safe or malicious/);
 });
 

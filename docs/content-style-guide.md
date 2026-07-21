@@ -2,7 +2,7 @@
 
 ## Brand Promise
 
-Maillume combines **mail** with **illuminate**. It shines a light on suspicious email signals so people can make a safer decision. Keep this explanation near the first meaningful introduction to the product; do not turn every page into a slogan.
+Lead with what Maillume does rather than explaining how the name was formed. The short promise is enough: it shines a light on suspicious email signals so people can make a safer decision.
 
 Preferred English line: **Shine a light on suspicious email.**
 

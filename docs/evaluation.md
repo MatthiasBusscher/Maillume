@@ -43,7 +43,7 @@ These gates catch code regressions against known synthetic scenarios. Public-bet
 
 ## Cross-Input Consistency
 
-Twelve paired English and Dutch scenarios exercise paste, OCR-shaped screenshot text, Chrome capture payloads, and parsed `.eml` adapters after canonical normalization. The adapters mirror the real evidence boundary: screenshots contain OCR body text only, while Chrome and `.eml` can include sender, subject, and link destinations.
+Twelve paired English and Dutch scenarios exercise paste, OCR-shaped screenshot text, Chrome capture payloads, and parsed `.eml` adapters after canonical normalization. The adapters mirror the real evidence boundary: screenshots can recover explicitly labelled subject and sender fields from OCR, but cannot reveal link destinations; Chrome and `.eml` can preserve richer sender, subject, and destination evidence.
 
 Parity is measured only where the available evidence is equivalent. Those comparisons require at least 95% classification agreement and median and p95 score differences no greater than five points. Format-enriched factors, such as a displayed-link/destination mismatch, are compared between Chrome and `.eml`. OCR-only phishing fixtures must not fall to low risk, and missing screenshot metadata must produce uncertainty rather than a claim that the message is likely legitimate.
 

@@ -1,5 +1,5 @@
 const elements = Object.fromEntries(
-  ["capture", "subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"]
+  ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"]
     .map((id) => [id, document.getElementById(id)]),
 );
 let activeTabId;
@@ -60,6 +60,8 @@ const dynamicCopy = {
     levels: { low: "Low", medium: "Medium", high: "High" },
     classifications: { likely_phishing: "Likely phishing or fraud", likely_spam: "Likely spam", likely_legitimate: "Likely legitimate", uncertain: "Uncertain" },
     points: "points",
+    hideInstructions: "Hide instructions",
+    showInstructions: "Show instructions",
   },
   nl: {
     noTab: "Er is geen actief browsertabblad beschikbaar. Open een e-mail en klik opnieuw op de Maillume-knop in de werkbalk.",
@@ -105,6 +107,8 @@ const dynamicCopy = {
     levels: { low: "Laag", medium: "Middel", high: "Hoog" },
     classifications: { likely_phishing: "Waarschijnlijk phishing of fraude", likely_spam: "Waarschijnlijk spam", likely_legitimate: "Waarschijnlijk legitiem", uncertain: "Onzeker" },
     points: "punten",
+    hideInstructions: "Uitleg verbergen",
+    showInstructions: "Uitleg tonen",
   },
 };
 
@@ -303,6 +307,15 @@ elements.capture.addEventListener("click", async () => {
   } finally {
     setCapturePending(false);
   }
+});
+
+elements.captureHelpToggle.addEventListener("click", () => {
+  const hidden = !elements.captureHelp.hidden;
+  elements.captureHelp.hidden = hidden;
+  elements.captureHelpToggle.setAttribute("aria-expanded", String(!hidden));
+  elements.captureHelpToggle.textContent = hidden
+    ? getDynamicCopy().showInstructions
+    : getDynamicCopy().hideInstructions;
 });
 
 elements.reset.addEventListener("click", async () => {
@@ -561,6 +574,8 @@ function clearMessageData() {
   capturedLinks = [];
   capturedLinkPairs = [];
   clearResult();
+  elements.reviewStep.hidden = false;
+  elements.analyze.hidden = false;
   updateAnalyzeState();
 }
 
@@ -572,6 +587,7 @@ function clearResult() {
   elements.factors.replaceChildren();
   elements.action.textContent = "";
   elements.signals.replaceChildren();
+  elements.level.dataset.level = "";
   elements.result.hidden = true;
 }
 
@@ -579,6 +595,7 @@ function renderResult(result) {
   const copy = getDynamicCopy();
   elements.score.textContent = String(result.risk_score);
   elements.level.textContent = copy.levels[result.risk_level];
+  elements.level.dataset.level = result.risk_level;
   elements.classification.textContent = copy.classifications[result.classification];
   elements.explanation.textContent = result.short_explanation;
   elements.action.textContent = result.recommended_action;
@@ -592,5 +609,7 @@ function renderResult(result) {
     item.textContent = signal;
     return item;
   }));
+  elements.reviewStep.hidden = true;
+  elements.analyze.hidden = true;
   elements.result.hidden = false;
 }

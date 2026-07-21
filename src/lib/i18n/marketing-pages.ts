@@ -2,8 +2,6 @@ import type { MarketingDictionary } from "./marketing-translate";
 
 const nl: MarketingDictionary = {
   "Shine a light on suspicious email": "Werpt licht op verdachte e-mail",
-  "Maillume blends mail and illuminate: it shines a light on warning signs before you click, reply, share details, or pay.": "De naam Maillume verwijst naar mail en illuminate: het werpt licht op waarschuwingssignalen voordat je klikt, antwoordt, gegevens deelt of betaalt.",
-  "Maillume combines mail with illuminate. Paste an email, add a screenshot, or open an .eml file to see the warning signs, risk score, and a safer next step before you click, reply, share details, or pay.": "Maillume combineert mail met illuminate. Plak een e-mail, voeg een screenshot toe of open een .eml-bestand en bekijk de waarschuwingssignalen, risicoscore en veiligere vervolgstap voordat je klikt, antwoordt, gegevens deelt of betaalt.",
   "Uploaded files stay in your browser": "Geüploade bestanden blijven in je browser",
   "Signals you can inspect": "Inzicht in meegewogen signalen",
   "A clearer risk assessment": "Een heldere risicobeoordeling",

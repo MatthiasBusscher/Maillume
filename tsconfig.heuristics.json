@@ -33,6 +33,8 @@
     "src/lib/analysis/providers.ts",
     "src/lib/eml/parse-eml.test.ts",
     "src/lib/eml/parse-eml.ts",
+    "src/lib/ocr/extract-email-fields.test.ts",
+    "src/lib/ocr/extract-email-fields.ts",
     "src/lib/evaluation/email-fixtures.test.ts",
     "src/lib/evaluation/email-fixtures.ts",
     "src/lib/evaluation/synthetic-corpus.test.ts",

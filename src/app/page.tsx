@@ -69,9 +69,6 @@ export default async function MarketingHomePage() {
             <h1 className="mt-5 text-5xl font-semibold leading-[0.96] text-white sm:text-6xl lg:text-7xl">
               Maillume
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-7 text-[#d9e0d7] sm:text-xl sm:leading-8">
-              Maillume blends mail and illuminate: it shines a light on warning signs before you click, reply, share details, or pay.
-            </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href={appHref}
