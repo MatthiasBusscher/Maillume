@@ -1,9 +1,11 @@
 import type {
   AnalysisMode,
+  AnalysisEnvelope,
   AnalysisProviderName,
   EmailAnalysisInput,
   EmailAnalysisResult,
 } from "../types";
+import { ensureAnalysisEnvelope } from "./analysis-envelope";
 import {
   DEFAULT_AI_PROVIDER_TIMEOUT_MS,
   type AiAnalysisConfig,
@@ -19,7 +21,7 @@ type Fetcher = typeof fetch;
 export type AnalysisProvider = {
   mode: AnalysisMode;
   provider: AnalysisProviderName;
-  analyze: (input: EmailAnalysisInput) => Promise<EmailAnalysisResult>;
+  analyze: (input: EmailAnalysisInput | AnalysisEnvelope) => Promise<EmailAnalysisResult>;
 };
 
 export class AiProviderRequestError extends Error {
@@ -43,14 +45,15 @@ export function createAnalysisProvider(
 const heuristicProvider: AnalysisProvider = {
   mode: "heuristic",
   provider: "heuristic",
-  analyze: async (input) => analyzeEmailHeuristic(input),
+  analyze: async (input) => analyzeEmailHeuristic(ensureAnalysisEnvelope(input)),
 };
 
 function createSelfHostedAiProvider(config: AiAnalysisConfig, fetcher: Fetcher): AnalysisProvider {
   return {
     mode: "ai",
     provider: config.provider,
-    analyze: async (input) => {
+    analyze: async (rawInput) => {
+      const input = ensureAnalysisEnvelope(rawInput);
       if (config.provider === "openai") {
         return analyzeWithOpenAi(config, input, fetcher);
       }
@@ -66,7 +69,7 @@ function createSelfHostedAiProvider(config: AiAnalysisConfig, fetcher: Fetcher):
 
 async function analyzeWithOpenAi(
   config: AiAnalysisConfig,
-  input: EmailAnalysisInput,
+  input: AnalysisEnvelope,
   fetcher: Fetcher,
 ): Promise<EmailAnalysisResult> {
   return fetchProvider(
@@ -119,7 +122,7 @@ async function analyzeWithOpenAi(
 
 async function analyzeWithAnthropic(
   config: AiAnalysisConfig,
-  input: EmailAnalysisInput,
+  input: AnalysisEnvelope,
   fetcher: Fetcher,
 ): Promise<EmailAnalysisResult> {
   return fetchProvider(
@@ -170,7 +173,7 @@ async function analyzeWithAnthropic(
 
 async function analyzeWithOpenAiCompatible(
   config: AiAnalysisConfig,
-  input: EmailAnalysisInput,
+  input: AnalysisEnvelope,
   fetcher: Fetcher,
 ): Promise<EmailAnalysisResult> {
   return fetchProvider(
@@ -224,11 +227,13 @@ async function analyzeWithOpenAiCompatible(
   );
 }
 
-function finalizeAiAnalysis(aiEvidence: EvidenceId[], input: EmailAnalysisInput): EmailAnalysisResult {
+function finalizeAiAnalysis(aiEvidence: EvidenceId[], input: AnalysisEnvelope): EmailAnalysisResult {
   const deterministic = collectHeuristicEvidence(input);
   const evidence = [...deterministic.evidence, ...aiEvidence];
 
-  return buildAnalysisResult(evidence, deterministic.links, input.locale ?? "en");
+  return buildAnalysisResult(evidence, deterministic.links, input.locale, {
+    incompleteEvidence: !input.availability.sender || !input.availability.linkDestinations,
+  });
 }
 
 async function fetchProvider<T>(

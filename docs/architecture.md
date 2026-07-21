@@ -255,6 +255,14 @@ Do not support a public shared AI endpoint backed by the project owner's API key
 
 See `docs/deployment.md` and `docs/cost-controls.md` for deployment and cost-control guidance.
 
+## Canonical Analysis Envelope
+
+Every input adapter produces the same `analysis-envelope-v1` structure before scoring. Paste and Chrome capture provide direct text, screenshot OCR provides extracted text with sender and destination evidence marked unavailable, and `.eml` parsing provides normalized text plus any parsed sender, link, and displayed-link/destination evidence.
+
+The envelope applies Unicode NFKC normalization, stable whitespace and line endings, normalized HTTP(S) URLs without fragments, and deterministic link and link-pair ordering. File names and attachment names remain parser or interface metadata; they are not silently scored as message content.
+
+Scoring consumes canonical evidence IDs rather than input-mode branches. Missing sender or destination evidence can keep a low-score result `uncertain`, but cannot create a reassuring `likely_legitimate` classification. Real format-enriched evidence may still change a result when it is exposed as a named `score_factor`.
+
 ## No-Storage API Contract
 
 `POST /api/analyze` accepts normalized scan input and returns a structured analysis envelope:
@@ -264,7 +272,7 @@ type AnalyzeResponse = {
   result: EmailAnalysisResult;
   analysis_mode: "heuristic" | "ai";
   analysis_provider: "heuristic" | "openai" | "anthropic" | "openai-compatible";
-  analysis_version: "analysis-v2.1";
+  analysis_version: "analysis-v3";
   disclaimer: string;
   privacy: {
     stored: false;

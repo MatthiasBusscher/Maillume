@@ -91,7 +91,6 @@ export function parseEml(raw: string): ParsedEml {
   const body = [
     state.textParts.join("\n\n"),
     state.htmlParts.join("\n\n"),
-    attachmentSummary(state.attachmentNames),
   ]
     .filter(Boolean)
     .join("\n\n")
@@ -665,14 +664,6 @@ function decodeHtmlEntities(value: string): string {
       default: return entity;
     }
   });
-}
-
-function attachmentSummary(attachmentNames: string[]): string {
-  if (attachmentNames.length === 0) {
-    return "";
-  }
-
-  return `Attachment metadata:\n${attachmentNames.map((name) => `- ${name}`).join("\n")}`;
 }
 
 function appendWithinLimit<T>(target: T[], values: T[], limit: number): void {

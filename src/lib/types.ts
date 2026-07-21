@@ -15,7 +15,8 @@ export const ANALYSIS_DISCLAIMERS = {
   nl: "Dit is een geautomatiseerde risicobeoordeling en biedt geen garantie.",
 } as const satisfies Record<AnalysisLocale, string>;
 export const ANALYSIS_DISCLAIMER = ANALYSIS_DISCLAIMERS.en;
-export const ANALYSIS_PIPELINE_VERSION = "analysis-v2.1";
+export const ANALYSIS_PIPELINE_VERSION = "analysis-v3";
+export const ANALYSIS_ENVELOPE_VERSION = "analysis-envelope-v1";
 
 export const MAX_SCAN_BODY_LENGTH = 20_000;
 
@@ -38,6 +39,26 @@ export type EmailAnalysisInput = {
 export type NormalizedScanInput = EmailAnalysisInput & {
   source: ScanSource;
   locale: AnalysisLocale;
+};
+
+export type AnalysisEvidenceAvailability = {
+  subject: boolean;
+  sender: boolean;
+  linkDestinations: boolean;
+  authenticationHeaders: boolean;
+  textExtraction: "direct" | "ocr" | "parsed";
+};
+
+export type AnalysisEnvelope = {
+  version: typeof ANALYSIS_ENVELOPE_VERSION;
+  source: ScanSource;
+  locale: AnalysisLocale;
+  subject?: string;
+  senderEmail?: string;
+  body: string;
+  links: string[];
+  linkPairs: EmailLinkPair[];
+  availability: AnalysisEvidenceAvailability;
 };
 
 export type EmailAnalysisResult = {

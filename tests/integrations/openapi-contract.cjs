@@ -23,7 +23,7 @@ assert.deepEqual(response.required, [
   "disclaimer",
   "privacy",
 ]);
-assert.equal(response.properties.analysis_version.const, "analysis-v2.1");
+assert.equal(response.properties.analysis_version.const, "analysis-v3");
 assert.equal(response.properties.privacy.properties.stored.const, false);
 
 console.log("OpenAPI integration request limits and analysis privacy envelope passed.");

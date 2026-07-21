@@ -199,7 +199,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
         return;
       }
 
-      setSubject(file.name.replace(/\.[^.]+$/, ""));
+      setSubject("");
       setSenderEmail("");
       setBody(extractedText);
       setLinks([]);
@@ -254,7 +254,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
         return;
       }
 
-      setSubject(parsed.subject ?? file.name.replace(/\.eml$/i, ""));
+      setSubject(parsed.subject ?? "");
       setSenderEmail(parsed.senderEmail ?? "");
       setBody(parsed.body);
       setLinks(parsed.links);

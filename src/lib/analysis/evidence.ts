@@ -102,6 +102,7 @@ export function buildAnalysisResult(
   evidenceIds: Iterable<EvidenceId>,
   detectedLinks: string[],
   locale: AnalysisLocale,
+  options: { incompleteEvidence?: boolean } = {},
 ): EmailAnalysisResult {
   const unique = Array.from(new Set(evidenceIds));
   const familyScores: Record<EvidenceFamily, number> = {
@@ -143,7 +144,12 @@ export function buildAnalysisResult(
 
   const riskScore = scoreFactors.reduce((total, factor) => total + factor.contribution, 0);
   const riskLevel = getRiskLevel(unique, riskScore, familyScores);
-  const classification = getClassification(unique, riskLevel, riskScore);
+  const classification = getClassification(
+    unique,
+    riskLevel,
+    riskScore,
+    options.incompleteEvidence ?? false,
+  );
 
   return {
     classification,
@@ -222,6 +228,7 @@ function getClassification(
   ids: EvidenceId[],
   level: RiskLevel,
   score: number,
+  incompleteEvidence: boolean,
 ): AssessmentClassification {
   const definitions = ids.map((id) => EVIDENCE[id]);
   const phishingEvidence = definitions.some((definition) => definition.phishing);
@@ -230,7 +237,7 @@ function getClassification(
 
   if (spamEvidenceFound && !phishingSpecificEvidence) return "likely_spam";
   if (level === "high" || (phishingEvidence && score >= 35)) return "likely_phishing";
-  if (level === "low" && score === 0) return "likely_legitimate";
+  if (level === "low" && score === 0 && !incompleteEvidence) return "likely_legitimate";
   return "uncertain";
 }
 
@@ -258,12 +265,14 @@ function getRecommendedAction(
     if (classification === "likely_spam") return "Reageer niet en meld of verwijder het bericht als ongewenste e-mail.";
     if (level === "high") return "Klik niet, antwoord niet en controleer de afzender via een bekend, onafhankelijk kanaal.";
     if (level === "medium") return "Controleer de afzender en bestemming via bekende contactgegevens voordat u handelt.";
+    if (classification === "uncertain") return "Er ontbreekt informatie voor een sterke conclusie. Controleer onverwachte verzoeken via een bekend, onafhankelijk kanaal.";
     return "Er zijn weinig waarschuwingstekens gevonden. Controleer onverwachte verzoeken nog steeds via een bekend kanaal.";
   }
 
   if (classification === "likely_spam") return "Do not reply; report or delete the message as unwanted email.";
   if (level === "high") return "Do not click or reply. Verify the sender through a known, independent channel.";
   if (level === "medium") return "Verify the sender and destination using trusted contact details before acting.";
+  if (classification === "uncertain") return "Some evidence is unavailable, so no strong conclusion is possible. Verify unexpected requests through a known, independent channel.";
   return "Few warning signs were found. Still verify unexpected requests through a trusted channel.";
 }
 

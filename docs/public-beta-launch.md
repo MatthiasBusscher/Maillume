@@ -110,7 +110,7 @@ curl --silent --head https://maillume.nl/privacy
 ```
 
 The health response must contain `status: "ok"`, the approved revision, and
-`analysis_version: "analysis-v2.1"`. Trust pages must show the real business
+`analysis_version: "analysis-v3"`. Trust pages must show the real business
 identity and Maillume contact addresses.
 
 ## 6. Privacy, Abuse, And Rollback Evidence

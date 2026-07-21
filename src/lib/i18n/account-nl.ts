@@ -146,7 +146,7 @@ export const accountNl = {
   apiKeys: {
     title: "API-sleutels voor integraties",
     description: "API-sleutels verifiëren integraties, zoals de broncodebèta van de Chrome-extensie. Maillume bewaart alleen een hash; de volledige sleutel wordt één keer getoond en moet bij verlies worden vervangen.",
-    limitsNote: "Limiet tijdens de publieke beta: 100 aanvragen per maand, gedeeld door het account, met maximaal 5 actieve sleutels.",
+    limitsNote: "Limiet tijdens de publieke beta: 25 aanvragen per maand, gedeeld door het account, met maximaal 5 actieve sleutels.",
     monthlyUsage: "Maandelijks API-gebruik",
     usagePeriod: "Gebruiksperiode",
     usageDescription: "Dit accounttotaal omvat alle integratiesleutels en wordt aan het begin van elke maandelijkse periode opnieuw ingesteld.",

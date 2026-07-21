@@ -96,6 +96,9 @@ function main() {
   const apiMfaMigration = readProjectFile(
     "supabase/migrations/20260715120000_require_mfa_for_api_key_metadata.sql",
   );
+  const betaQuotaMigration = readProjectFile(
+    "supabase/migrations/20260721100000_limit_beta_api_quota.sql",
+  );
   const hostedApiRoute = readProjectFile("src/app/api/v1/analyze/route.ts");
   const accountApiKeysRoute = readProjectFile("src/app/account/api-keys/route.ts");
   const operatorConfig = readProjectFile("src/lib/operator.ts");
@@ -338,6 +341,8 @@ function main() {
   assert.match(apiLifecycleMigration, /revoke all on table public\.api_account_limits from public, anon, authenticated, service_role/);
   assert.match(apiLifecycleMigration, /on delete cascade/);
   assert.doesNotMatch(apiLifecycleMigration, /^\s*(body|subject|sender_email|message_text|links|result|ip_address)\s+/im);
+  assert.match(betaQuotaMigration, /alter column monthly_quota set default 25/g);
+  assert.match(betaQuotaMigration, /least\(monthly_quota, 25\)/g);
   assert.equal((apiMfaMigration.match(/auth\.jwt\(\) ->> 'aal'\) = 'aal2'/g) ?? []).length, 3);
   assert.match(accountApiKeysRoute, /hasAal2Session/);
   assert.match(accountApiKeysRoute, /create_hosted_api_key/);
