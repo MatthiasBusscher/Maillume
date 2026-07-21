@@ -277,7 +277,7 @@ export const dictionaries = {
       noLinks: "Geen links gevonden.",
       recommendedAction: "Aanbevolen actie",
       disclaimer:
-        "Dit is een geautomatiseerde risicobeoordeling en biedt geen garantie.",
+        "Dit is een geautomatiseerde risicobeoordeling en geen garantie.",
     },
     feedback: {
       eyebrow: "Optionele feedback",

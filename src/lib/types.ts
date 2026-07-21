@@ -12,7 +12,7 @@ export type AnalysisLocale = "en" | "nl";
 
 export const ANALYSIS_DISCLAIMERS = {
   en: "This is an automated risk assessment and should not be considered a guarantee.",
-  nl: "Dit is een geautomatiseerde risicobeoordeling en biedt geen garantie.",
+  nl: "Dit is een geautomatiseerde risicobeoordeling en geen garantie.",
 } as const satisfies Record<AnalysisLocale, string>;
 export const ANALYSIS_DISCLAIMER = ANALYSIS_DISCLAIMERS.en;
 export const ANALYSIS_PIPELINE_VERSION = "analysis-v3";

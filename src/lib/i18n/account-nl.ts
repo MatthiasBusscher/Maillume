@@ -12,7 +12,7 @@ export const accountNl = {
     eyebrow: "Optioneel account",
     title: "Log in wanneer je een integratie gebruikt.",
     intro: "Scannen blijft mogelijk zonder account. Log in om API-sleutels voor integraties te maken en in te trekken; je account maakt nooit scangeschiedenis aan.",
-    authNote: "Je aanmelding wordt veilig verwerkt. Maillume ontvangt je wachtwoord niet.",
+    authNote: "Je wachtwoord wordt rechtstreeks naar Supabase gestuurd om je in te loggen. Maillume bewaart het niet.",
     accountEyebrow: "Maillume-account",
     continueTitle: "Kies hoe je wilt inloggen",
     continueBody: "Gebruik e-mail en wachtwoord of ga verder met Google.",

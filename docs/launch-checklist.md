@@ -34,11 +34,11 @@
 - [x] The private credential register is reviewed using `docs/credential-management.md`; no credentials appear in repository files, issues, or release evidence.
 - [ ] A small invited beta completes successfully before broad anonymous traffic is announced.
 
-## Current Release Candidate
+## Last Deployed Baseline
 
-- Commit: `ffa6fd7b9c2eba9281a5f25d9eb6afb230e648db`
-- Build: GitHub Actions run `29810443386`
-- Deployment: GitHub Actions run `29811094270`
+- Commit: `c1cbc370f3f3f61d6d4c8adbf7590fb45dc46e82`
+- Build: GitHub Actions run `29814741549`
+- Deployment: GitHub Actions run `29815422611`
 - Runtime: `/api/health` reports the commit above and `analysis-v3`
 - Remaining human gates: Google OAuth branding confirmation, a disposable Hostinger restore rehearsal or explicit time-bounded acceptance, independent issue #47 sign-off, public provenance verification, and the 24-48 hour invited beta.
 

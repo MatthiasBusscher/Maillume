@@ -15,12 +15,16 @@ test("the homepage explains the Maillume name and promise", () => {
 test("launch copy reflects optional accounts without advertising hosted AI", () => {
   const platform = read("src/app/platform/page.tsx");
   const pricing = read("src/app/pricing/page.tsx");
+  const translations = read("src/lib/i18n/marketing-pages.ts");
 
   assert.match(platform, /Accounts are optional/);
   assert.match(platform, /Maintainer-hosted AI remains unavailable/);
   assert.doesNotMatch(platform, /Accounts, API keys, Google sign-in.*unavailable/);
   assert.match(pricing, /Optional accounts and quota-limited API keys are available/);
   assert.match(pricing, /managed AI and paid plans are not for sale/);
+  assert.doesNotMatch(translations, /Accounts, API keys, Google sign-in.*unavailable/);
+  assert.doesNotMatch(translations, /Authentication, API keys, quotas.*remain disabled/);
+  assert.doesNotMatch(translations, /Account, API, and managed AI features remain disabled/);
 });
 
 test("Dutch terminology and account tone remain consistent", () => {
@@ -32,6 +36,22 @@ test("Dutch terminology and account tone remain consistent", () => {
   assert.match(dictionary, /geautomatiseerde risicobeoordeling/);
   assert.doesNotMatch(`${dictionary}\n${account}\n${terms}`, /risico-inschatting/);
   assert.doesNotMatch(`${dictionary}\n${account}\n${terms}`, /\b(?:U|Uw)\b/);
+  assert.match(dictionary, /Dit is een geautomatiseerde risicobeoordeling en geen garantie\./);
+  assert.doesNotMatch(`${dictionary}\n${account}\n${terms}`, /biedt geen garantie/);
+});
+
+test("privacy and authentication copy describe the real data flow", () => {
+  const privacy = read("src/lib/i18n/trust-privacy.ts");
+  const accountEn = read("src/lib/i18n/account-en.ts");
+  const accountNl = read("src/lib/i18n/account-nl.ts");
+  const extension = read("integrations/browser-extension/sidepanel.html");
+
+  assert.match(privacy, /Normalized scan text is sent to Maillume only for the requested assessment/);
+  assert.match(privacy, /Genormaliseerde scantekst wordt alleen voor de gevraagde beoordeling naar Maillume verstuurd/);
+  assert.match(accountEn, /password is sent directly to Supabase/);
+  assert.match(accountNl, /wachtwoord wordt rechtstreeks naar Supabase gestuurd/);
+  assert.match(extension, /Review the captured details/);
+  assert.doesNotMatch(extension, /Review before sending|Controleer vóór verzending/);
 });
 
 test("auth templates describe real product behavior", () => {

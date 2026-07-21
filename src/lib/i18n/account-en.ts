@@ -10,7 +10,7 @@ export const accountEn = {
     eyebrow: "Optional account",
     title: "Sign in when you need an integration.",
     intro: "Scanning stays available without an account. Sign in to create and revoke API keys for integrations; your account never creates scan history.",
-    authNote: "Your sign-in is handled securely. Maillume never receives your password.",
+    authNote: "Your password is sent directly to Supabase to sign you in. Maillume does not store it.",
     accountEyebrow: "Maillume account",
     continueTitle: "Choose how to sign in",
     continueBody: "Use email and password or continue with Google.",
