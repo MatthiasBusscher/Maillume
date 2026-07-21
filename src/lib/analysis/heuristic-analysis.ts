@@ -1,4 +1,5 @@
-import type { EmailAnalysisInput, EmailLinkPair } from "../types";
+import type { AnalysisEnvelope, EmailAnalysisInput, EmailLinkPair } from "../types";
+import { ensureAnalysisEnvelope } from "./analysis-envelope";
 import {
   buildAnalysisResult,
   getRegistrableDomain,
@@ -146,14 +147,19 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   },
 ];
 
-export function analyzeEmailHeuristic(input: EmailAnalysisInput) {
-  const { evidence, links } = collectHeuristicEvidence(input);
-  return buildAnalysisResult(evidence, links, input.locale ?? "en");
+export function analyzeEmailHeuristic(input: EmailAnalysisInput | AnalysisEnvelope) {
+  const envelope = ensureAnalysisEnvelope(input);
+  const { evidence, links } = collectHeuristicEvidence(envelope);
+  return buildAnalysisResult(evidence, links, envelope.locale, {
+    incompleteEvidence: !envelope.availability.sender
+      || !envelope.availability.linkDestinations,
+  });
 }
 
-export function collectHeuristicEvidence(input: EmailAnalysisInput) {
-  const locale = input.locale ?? "en";
-  const messageContent = [input.subject, input.body].filter(Boolean).join("\n");
+export function collectHeuristicEvidence(input: EmailAnalysisInput | AnalysisEnvelope) {
+  const envelope = ensureAnalysisEnvelope(input);
+  const locale = envelope.locale;
+  const messageContent = [envelope.subject, envelope.body].filter(Boolean).join("\n");
   const evidence = new Set<EvidenceId>();
 
   for (const group of PATTERN_GROUPS) {
@@ -169,17 +175,17 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput) {
   if (mentionsKnownBrand(messageContent)) evidence.add("brand_mention");
   if (hasExcessiveFormattingPressure(messageContent)) evidence.add("format_pressure");
   if (hasObfuscatedSpamWords(messageContent)) evidence.add("obfuscation");
-  if (input.body.trim().length < 80) evidence.add("little_context");
+  if (envelope.body.trim().length < 80) evidence.add("little_context");
 
-  const links = mergeHttpLinks(input.links ?? [], extractHttpLinks(messageContent));
+  const links = mergeHttpLinks(envelope.links, extractHttpLinks(messageContent));
   if (links.length > 0) evidence.add("external_link");
   if (links.some(isShortUrl)) evidence.add("short_url");
   if (links.some(hasRiskyTld)) evidence.add("risky_link_domain");
 
-  const linkPairs = [...extractHtmlLinkPairs(input.body), ...(input.linkPairs ?? [])];
+  const linkPairs = [...extractHtmlLinkPairs(envelope.body), ...envelope.linkPairs];
   if (linkPairs.some(hasMismatchedLinkPair)) evidence.add("link_mismatch");
 
-  if (input.senderEmail) addSenderEvidence(input.senderEmail, links, evidence);
+  if (envelope.senderEmail) addSenderEvidence(envelope.senderEmail, links, evidence);
 
   return { evidence: Array.from(evidence), links, locale };
 }

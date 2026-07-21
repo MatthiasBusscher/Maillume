@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
 
-const EXPECTED_ANALYSIS_VERSION = "analysis-v2.1";
+const EXPECTED_ANALYSIS_VERSION = "analysis-v3";
 
 export async function verifyPublicDeployment({
   appUrl = "https://app.maillume.io",

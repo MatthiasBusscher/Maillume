@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 
 export const MAX_API_KEYS_PER_USER = 5;
-export const DEFAULT_MONTHLY_API_QUOTA = 100;
+export const DEFAULT_MONTHLY_API_QUOTA = 25;
 export const API_KEY_LIFETIME_DAYS = [30, 90, 180] as const;
 export const DEFAULT_API_KEY_LIFETIME_DAYS = 90;
 

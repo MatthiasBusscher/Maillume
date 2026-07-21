@@ -14,7 +14,7 @@ Maillume remains an open-source, privacy-first scanner first and a hosted servic
 - Raw email content, screenshots, `.eml` files, OCR text, links, and assessment results are not retained after scoring.
 - Detection improvements use synthetic fixtures and optional non-content feedback. Production emails do not become a dataset.
 - Moneybird is the preferred first billing and invoicing system for the Dutch operator. Stripe is deferred unless international payment coverage, marketplace requirements, or measured conversion needs justify the extra provider and reconciliation complexity.
-- A hosted account may have at most five active API keys. The public-beta quota is 100 heuristic integration requests per account per UTC month, shared by those keys. Creating or managing integration keys requires authenticator-app 2FA and an AAL2 session.
+- A hosted account may have at most five active API keys. The public-beta quota is 25 heuristic integration requests per account per UTC month, shared by those keys. Creating or managing integration keys requires authenticator-app 2FA and an AAL2 session.
 - Organization administration, colleague invitations, role-based access, and audit logs are a later team-account project. A broad application-wide admin role is not part of the beta.
 
 ## Product Boundaries
@@ -22,7 +22,7 @@ Maillume remains an open-source, privacy-first scanner first and a hosted servic
 | Mode | Account | Analyzer | Planning limit | Content retention |
 | --- | --- | --- | --- | --- |
 | Anonymous free | No | Hosted heuristic runtime | No monthly entitlement; fair-use request rate limits | Request lifetime only |
-| Free account API | Yes | Hosted heuristic runtime | 100 authenticated integration calls/month during beta | Request lifetime only |
+| Free account API | Yes | Hosted heuristic runtime | 25 authenticated integration calls/month during beta | Request lifetime only |
 | Plus account | Yes | Heuristic plus hosted AI | Hypothesis: 20 AI scans/day and 100/month | Request lifetime only |
 | Self-hosted | Determined by installer | Heuristic or installer-selected AI provider | Determined and paid by installer | Determined by installer; no-storage remains the project default |
 
@@ -138,7 +138,7 @@ The application database is authoritative for entitlements and hard quota enforc
 | Plan | Monthly price hypothesis | Included service |
 | --- | --- | --- |
 | Anonymous | EUR 0 | Heuristic scanning without an account |
-| Free account | EUR 0 | Heuristic scanning plus 100 authenticated integration API calls/month during beta |
+| Free account | EUR 0 | Heuristic scanning plus 25 authenticated integration API calls/month during beta |
 | Plus | Not set | Pricing follows measured hosted-AI costs, useful allowances, tax, support burden, and beta demand |
 | Self-hosted | EUR 0 from the project | Full source code and bring-your-own-key provider usage |
 

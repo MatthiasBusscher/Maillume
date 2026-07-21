@@ -29,7 +29,7 @@ function main() {
   assert.equal(normalizeApiKeyName("  Chrome  "), "Chrome");
   assert.equal(normalizeApiKeyName(""), null);
   assert.equal(normalizeApiKeyName("x".repeat(51)), null);
-  assert.equal(DEFAULT_MONTHLY_API_QUOTA, 100);
+  assert.equal(DEFAULT_MONTHLY_API_QUOTA, 25);
   assert.equal(MAX_API_KEYS_PER_USER, 5);
   assert.deepEqual(API_KEY_LIFETIME_DAYS, [30, 90, 180]);
   assert.equal(DEFAULT_API_KEY_LIFETIME_DAYS, 90);

@@ -12,6 +12,8 @@
   },
   "include": [
     "src/lib/analysis/heuristic-analysis.test.ts",
+    "src/lib/analysis/analysis-envelope.test.ts",
+    "src/lib/analysis/analysis-envelope.ts",
     "src/lib/analysis/heuristic-fixtures.ts",
     "src/lib/analysis/heuristic-analysis.ts",
     "src/lib/analysis/evidence.ts",
@@ -35,6 +37,7 @@
     "src/lib/evaluation/email-fixtures.ts",
     "src/lib/evaluation/synthetic-corpus.test.ts",
     "src/lib/evaluation/synthetic-corpus.ts",
+    "src/lib/evaluation/cross-input-consistency.test.ts",
     "src/lib/feedback/config.ts",
     "src/lib/feedback/feedback.test.ts",
     "src/lib/feedback/rate-limit.ts",
