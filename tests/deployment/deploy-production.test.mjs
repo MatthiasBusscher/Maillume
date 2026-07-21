@@ -63,6 +63,39 @@ test("a failed deployment returns to the current known-good release", (t) => {
   assert.equal(readState(sandbox, ".previous-production-image"), olderImage);
 });
 
+test("hosted deployment refuses to collapse clients into the shared bucket", (t) => {
+  const sandbox = createSandbox(t);
+  writeFileSync(join(sandbox.directory, ".env.production"), "ANALYSIS_MODE=heuristic\n");
+
+  const result = runScript(
+    sandbox,
+    "deploy-production.sh",
+    [image("c"), revision("3")],
+  );
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /requires TRUST_CF_CONNECTING_IP=true/);
+  assert.deepEqual(readDockerLog(sandbox), []);
+});
+
+test("hosted deployment rejects ambiguous trusted-proxy configuration", (t) => {
+  const sandbox = createSandbox(t);
+  writeFileSync(
+    join(sandbox.directory, ".env.production"),
+    "TRUST_CF_CONNECTING_IP=true\nTRUSTED_PROXY_IP_HEADER=x-forwarded-for\n",
+  );
+
+  const result = runScript(
+    sandbox,
+    "deploy-production.sh",
+    [image("c"), revision("3")],
+  );
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /must not combine Cloudflare and generic proxy header trust/);
+  assert.deepEqual(readDockerLog(sandbox), []);
+});
+
 test("manual rollback swaps current and previous release slots", (t) => {
   const sandbox = createSandbox(t);
   const previousImage = image("a");
@@ -143,7 +176,10 @@ function createSandbox(t) {
     chmodSync(target, 0o750);
   }
 
-  writeFileSync(join(directory, ".env.production"), "ANALYSIS_MODE=heuristic\n");
+  writeFileSync(
+    join(directory, ".env.production"),
+    "ANALYSIS_MODE=heuristic\nTRUST_CF_CONNECTING_IP=true\n",
+  );
   writeFileSync(join(directory, ".env.infrastructure"), "CLOUDFLARE_TUNNEL_TOKEN=test\n");
   writeFileSync(join(directory, "docker-compose.production.yml"), "services: {}\n");
   writeFileSync(join(directory, "docker.log"), "");

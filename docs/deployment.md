@@ -56,6 +56,8 @@ NEXT_PUBLIC_APP_URL=https://app.maillume.io
 ANALYSIS_REQUEST_LIMIT=20
 ANALYSIS_REQUEST_WINDOW_SECONDS=60
 ANALYSIS_MAX_REQUEST_BYTES=32768
+TRUST_CF_CONNECTING_IP=true
+TRUSTED_PROXY_IP_HEADER=
 FEEDBACK_STORAGE=disabled
 ACCOUNTS_ENABLED=true
 MAILLUME_OPERATOR_LEGAL_NAME=<registered business name>
@@ -67,6 +69,22 @@ MAILLUME_SUPPORT_EMAIL=support@maillume.io
 MAILLUME_PRIVACY_EMAIL=privacy@maillume.io
 MAILLUME_SECURITY_EMAIL=security@maillume.io
 ```
+
+`TRUST_CF_CONNECTING_IP=true` is safe here only because Cloudflare Tunnel is the
+origin's exclusive ingress. Do not enable it when clients can reach the application
+directly or through a proxy that does not replace `CF-Connecting-IP`.
+
+For the hosted rollout, add `TRUST_CF_CONNECTING_IP=true` to `.env.production` before deploying
+the application change. Verify normal scans and the existing edge/application `429` checks.
+Rollback is `TRUST_CF_CONNECTING_IP=false` followed by an application-container restart; this
+fails safely to one shared bucket while Cloudflare's edge limiter remains active.
+
+For a non-Cloudflare reverse proxy, leave Cloudflare trust false and set exactly one of
+`TRUSTED_PROXY_IP_HEADER=x-forwarded-for` or `TRUSTED_PROXY_IP_HEADER=x-real-ip`. The proxy must
+be the only ingress and must delete the incoming header before writing one client IP. Direct
+container deployments leave both trust settings disabled; because the Next.js request API
+does not expose the socket peer here, they intentionally use the shared fail-safe bucket and
+need an edge limiter for per-client fairness. Never enable both trust modes.
 
 Configure infrastructure-only values separately so the application container never receives the Tunnel token:
 

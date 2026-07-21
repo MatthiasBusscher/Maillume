@@ -35,11 +35,27 @@ AI mode has a best-effort in-memory rate limit before provider requests are sent
 AI_RATE_LIMIT_ENABLED=true
 AI_RATE_LIMIT_MAX_REQUESTS=10
 AI_RATE_LIMIT_WINDOW_SECONDS=60
+TRUST_CF_CONNECTING_IP=false
+TRUSTED_PROXY_IP_HEADER=
 ```
 
 When the limit is exceeded, `/api/analyze` returns `429` with a `Retry-After` header and a clear message.
 
 This protects simple deployments and local installs, but it is not a complete abuse-control system. In serverless, multi-region, or multi-instance deployments, memory is not shared across every runtime instance.
+
+Each process retains at most 10,000 active analysis rate-limit buckets. At capacity it removes
+expired buckets and rejects new client identities while all retained buckets remain active.
+
+`CF-Connecting-IP` is ignored by default because it is client-controlled unless the origin is
+isolated behind Cloudflare. Set `TRUST_CF_CONNECTING_IP=true` only when Cloudflare is the
+exclusive ingress. Otherwise production uses a shared conservative bucket; configure a
+trusted edge rate limit for per-client fairness.
+
+A non-Cloudflare reverse proxy may instead set `TRUSTED_PROXY_IP_HEADER` to
+`x-forwarded-for` or `x-real-ip`, but only when that proxy is the exclusive ingress and
+overwrites the header with exactly one client IP. Leave both trust settings disabled for a
+direct container. Ambiguous, malformed, and multi-value configurations use the shared
+fail-safe bucket.
 
 ## Production Protections
 

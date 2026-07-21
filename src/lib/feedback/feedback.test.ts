@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { FeedbackConfigError, getFeedbackConfig, isFeedbackEnabled } from "./config";
 import {
   enforceFeedbackRateLimit,
+  FEEDBACK_RATE_LIMIT_MAX_BUCKETS,
   FEEDBACK_RATE_LIMIT_MAX_REQUESTS,
+  FEEDBACK_RATE_LIMIT_WINDOW_MS,
   FeedbackRateLimitError,
   type FeedbackRateLimitStore,
 } from "./rate-limit";
@@ -195,7 +197,62 @@ async function main() {
     FeedbackRateLimitError,
   );
 
+  const boundedRateLimitStore: FeedbackRateLimitStore = new Map();
+  for (const ip of ["203.0.113.80", "203.0.113.81"]) {
+    enforceFeedbackRateLimit(requestFromIp(ip), {
+      maxBuckets: 2,
+      now: () => now,
+      salt: "test-salt",
+      store: boundedRateLimitStore,
+    });
+  }
+  assert.throws(
+    () =>
+      enforceFeedbackRateLimit(requestFromIp("203.0.113.82"), {
+        maxBuckets: 2,
+        now: () => now + 1,
+        salt: "test-salt",
+        store: boundedRateLimitStore,
+      }),
+    FeedbackRateLimitError,
+    "a full active feedback store must reject new identities",
+  );
+  assert.equal(boundedRateLimitStore.size, 2);
+  enforceFeedbackRateLimit(requestFromIp("203.0.113.82"), {
+    maxBuckets: 2,
+    now: () => now + FEEDBACK_RATE_LIMIT_WINDOW_MS + 1,
+    salt: "test-salt",
+    store: boundedRateLimitStore,
+  });
+  assert.equal(
+    boundedRateLimitStore.size,
+    1,
+    "expired feedback buckets must be removed before allocating a new key",
+  );
+
+  const defaultCapacityStore: FeedbackRateLimitStore = new Map();
+  for (let index = 0; index < FEEDBACK_RATE_LIMIT_MAX_BUCKETS; index += 1) {
+    enforceFeedbackRateLimit(requestFromIp(`2001:db8::${index.toString(16)}`), {
+      now: () => now,
+      salt: "test-salt",
+      store: defaultCapacityStore,
+    });
+  }
+  assert.equal(defaultCapacityStore.size, FEEDBACK_RATE_LIMIT_MAX_BUCKETS);
+  enforceFeedbackRateLimit(requestFromIp("2001:db8::ffff"), {
+    now: () => now + FEEDBACK_RATE_LIMIT_WINDOW_MS + 1,
+    salt: "test-salt",
+    store: defaultCapacityStore,
+  });
+  assert.equal(defaultCapacityStore.size, 1, "the default ceiling must sweep stale feedback keys");
+
   console.log("Checked privacy-safe feedback contracts.");
 }
 
 void main();
+
+function requestFromIp(ip: string): Request {
+  return new Request("https://example.test/api/feedback", {
+    headers: { "x-forwarded-for": ip },
+  });
+}
