@@ -21,7 +21,7 @@ export async function SiteFooter() {
             {nl ? "Open-source e-mailrisicobeoordeling die signalen uitlegt en geen schijnzekerheid biedt." : "Open-source email risk assessment that explains the signals and keeps certainty in check."}
           </p>
           <p className="mt-5 font-mono text-[10px] uppercase text-[#849083]">
-            {nl ? "Dit is een geautomatiseerde risicobeoordeling en biedt geen garantie." : "This is an automated risk assessment and should not be considered a guarantee."}
+            {nl ? "Dit is een geautomatiseerde risicobeoordeling en geen garantie." : "This is an automated risk assessment and should not be considered a guarantee."}
           </p>
         </div>
 
