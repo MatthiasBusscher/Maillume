@@ -20,7 +20,8 @@ export const ANALYSIS_ENVELOPE_VERSION = "analysis-envelope-v1";
 
 export const MAX_SCAN_BODY_LENGTH = 20_000;
 
-export type ScanSource = "paste" | "screenshot" | "eml";
+export type ScanSource = "paste" | "screenshot" | "eml" | "chrome";
+export type WebScanSource = Exclude<ScanSource, "chrome">;
 
 export type EmailLinkPair = {
   displayedUrl: string;

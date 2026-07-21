@@ -38,6 +38,7 @@
     "src/lib/evaluation/synthetic-corpus.test.ts",
     "src/lib/evaluation/synthetic-corpus.ts",
     "src/lib/evaluation/cross-input-consistency.test.ts",
+    "src/lib/evaluation/cross-input-fixtures.ts",
     "src/lib/feedback/config.ts",
     "src/lib/feedback/feedback.test.ts",
     "src/lib/feedback/rate-limit.ts",

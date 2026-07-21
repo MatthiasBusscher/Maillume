@@ -36,10 +36,10 @@
 
 ## Current Release Candidate
 
-- Commit: `90e3a09507deb31e65b2d262942d4ee41c3d3cc8`
-- Build: GitHub Actions run `29697665934`
-- Deployment: GitHub Actions run `29698084152`
-- Runtime: `/api/health` reports the commit above and `analysis-v2.1`
+- Commit: `ffa6fd7b9c2eba9281a5f25d9eb6afb230e648db`
+- Build: GitHub Actions run `29810443386`
+- Deployment: GitHub Actions run `29811094270`
+- Runtime: `/api/health` reports the commit above and `analysis-v3`
 - Remaining human gates: Google OAuth branding confirmation, a disposable Hostinger restore rehearsal or explicit time-bounded acceptance, independent issue #47 sign-off, public provenance verification, and the 24-48 hour invited beta.
 
 ## Public Repository
@@ -52,6 +52,7 @@
 - [x] Production deployment remains main-only, requires explicit review, and does not allow administrator bypass.
 - [ ] A public pull request proves required-check enforcement and produces public image provenance.
 
-## After The Web Beta
+## Chrome Manual Beta
 
-- [ ] Chrome extension passes Chrome Web Store validation using synthetic messages and the published privacy disclosure (#39).
+- [ ] The unpacked extension passes the production-key Gmail/Outlook matrix with synthetic messages, including revocation and quota handling (#39).
+- [ ] Chrome Web Store validation and the published privacy disclosure pass before claiming store availability (#39).

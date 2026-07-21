@@ -1,5 +1,5 @@
 import type { Locale } from "@/lib/i18n/dictionary";
-import type { RiskLevel, ScanSource } from "@/lib/types";
+import type { RiskLevel, WebScanSource } from "@/lib/types";
 
 export const feedbackClassifications = ["phishing", "spam", "legitimate", "unsure"] as const;
 export const feedbackKinds = ["accurate", "false_positive", "false_negative", "unsure"] as const;
@@ -20,7 +20,7 @@ export type DetectionFeedbackSubmission = {
   expectedClassification: FeedbackClassification;
   feedbackKind: FeedbackKind;
   locale: Locale;
-  source: ScanSource;
+  source: WebScanSource;
   analyzerVersion: string;
   scoreBand: RiskLevel;
   signalCategories: FeedbackSignalCategory[];

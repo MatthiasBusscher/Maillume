@@ -49,7 +49,7 @@
         "additionalProperties": false,
         "required": ["body"],
         "properties": {
-          "source": { "type": "string", "enum": ["paste", "screenshot", "eml"] },
+          "source": { "type": "string", "enum": ["paste", "screenshot", "eml", "chrome"] },
           "subject": { "type": "string", "maxLength": 300 },
           "senderEmail": { "type": "string", "maxLength": 320 },
           "locale": { "type": "string", "enum": ["en", "nl"], "default": "en" },

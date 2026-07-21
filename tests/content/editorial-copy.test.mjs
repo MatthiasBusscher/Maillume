@@ -8,7 +8,7 @@ test("the homepage explains the Maillume name and promise", () => {
   const homepage = read("src/app/page.tsx");
 
   assert.match(homepage, /Shine a light on suspicious email/);
-  assert.match(homepage, /Maillume combines mail with illuminate/);
+  assert.match(homepage, /Maillume blends mail and illuminate/);
   assert.match(homepage, /never guarantees that a message is safe or malicious/);
 });
 

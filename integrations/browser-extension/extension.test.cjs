@@ -381,7 +381,7 @@ async function testPanelSendsCapturedLinkMetadata() {
   assert.equal(elements.get("body").value, "Captured once");
   await elements.get("analyze").dispatch("click");
   assert.deepEqual(requestPayload, {
-    source: "paste",
+    source: "chrome",
     subject: "Synthetic account review",
     senderEmail: "alerts@notice.example",
     body: "Captured once",

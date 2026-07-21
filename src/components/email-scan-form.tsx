@@ -21,7 +21,7 @@ import {
   type EmailAnalysisResult,
   type EmailLinkPair,
   MAX_SCAN_BODY_LENGTH,
-  type ScanSource,
+  type WebScanSource,
 } from "@/lib/types";
 import { parseEml } from "@/lib/eml/parse-eml";
 import type { Dictionary, Locale } from "@/lib/i18n/dictionary";
@@ -60,7 +60,7 @@ type EmailScanFormProps = {
 };
 
 export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestBytes }: EmailScanFormProps) {
-  const [activeMode, setActiveMode] = useState<ScanSource>("paste");
+  const [activeMode, setActiveMode] = useState<WebScanSource>("paste");
   const [subject, setSubject] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
   const [body, setBody] = useState("");
@@ -141,7 +141,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setFileStatus("");
   }
 
-  function switchMode(mode: ScanSource) {
+  function switchMode(mode: WebScanSource) {
     setActiveMode(mode);
     setSubject("");
     setSenderEmail("");
@@ -691,7 +691,7 @@ function AnalysisResult({
   feedbackEnabled: boolean;
   locale: Locale;
   result: EmailAnalysisResult;
-  source: ScanSource;
+  source: WebScanSource;
 }) {
   return (
     <div>

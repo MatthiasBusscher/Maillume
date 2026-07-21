@@ -12,7 +12,7 @@ export const accountNl = {
     eyebrow: "Optioneel account",
     title: "Log in wanneer je een integratie gebruikt.",
     intro: "Scannen blijft mogelijk zonder account. Log in om API-sleutels voor integraties te maken en in te trekken; je account maakt nooit scangeschiedenis aan.",
-    authNote: "Supabase verwerkt inloggen met e-mail en Google. Maillume ontvangt je wachtwoord niet.",
+    authNote: "Je aanmelding wordt veilig verwerkt. Maillume ontvangt je wachtwoord niet.",
     accountEyebrow: "Maillume-account",
     continueTitle: "Kies hoe je wilt inloggen",
     continueBody: "Gebruik e-mail en wachtwoord of ga verder met Google.",
@@ -191,7 +191,7 @@ export const accountNl = {
   },
   notFound: {
     eyebrow: "404 / Bericht niet gevonden",
-    title: "Deze route kwam niet door de controle.",
+    title: "We konden deze pagina niet vinden.",
     body: "De pagina is mogelijk verplaatst of het adres is onvolledig. De scanner en openbare productpagina's zijn nog steeds beschikbaar.",
     backHome: "Terug naar home",
     openScanner: "Scanner openen",

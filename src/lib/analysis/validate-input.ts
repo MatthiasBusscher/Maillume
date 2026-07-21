@@ -17,7 +17,7 @@ type ValidationResult =
       fieldErrors?: Partial<Record<keyof NormalizedScanInput, string>>;
     };
 
-const SOURCES = new Set<ScanSource>(["paste", "screenshot", "eml"]);
+const SOURCES = new Set<ScanSource>(["paste", "screenshot", "eml", "chrome"]);
 const LOCALES = new Set<AnalysisLocale>(["en", "nl"]);
 
 export function validateAnalyzeRequest(payload: unknown): ValidationResult {

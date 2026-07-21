@@ -33,5 +33,6 @@ Stored API metadata is limited to key owner, name, prefix, hash, quota, creation
 - There are no persistent Gmail or Outlook host permissions and no content script.
 - Optional host access is requested only for the deployment chosen by the user.
 - The endpoint is stored locally; the API key lives only in Chrome session storage. Captured text crosses to the tab-specific panel through a one-time in-memory handoff and message content and results are never written to extension storage.
+- Chrome requests identify their canonical source as `chrome`, preserving the difference between DOM-derived link metadata and manually pasted text without changing the server-derived scoring rules.
 
 Chrome Web Store publication requires final icons, operator identity, privacy-policy URLs, test accounts, validation, and review. Those release operations must be completed before claiming store availability.

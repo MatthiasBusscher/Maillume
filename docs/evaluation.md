@@ -43,7 +43,7 @@ These gates catch code regressions against known synthetic scenarios. Public-bet
 
 ## Cross-Input Consistency
 
-Paired English and Dutch scenarios exercise paste, screenshot/OCR, and `.eml` adapters after canonical normalization. For equivalent available evidence, release checks require at least 95% classification agreement, a median absolute score difference no greater than five points, and a p95 difference no greater than ten points. Larger expected differences must be traceable to visible format-enriched factors, such as authentication headers or a displayed-link/destination mismatch.
+Twelve paired English and Dutch scenarios exercise paste, OCR-shaped screenshot text, Chrome capture payloads, and parsed `.eml` adapters after canonical normalization. For equivalent available evidence, release checks require at least 95% classification agreement, a median absolute score difference no greater than five points, and a p95 difference no greater than ten points. Larger expected differences must be traceable to visible format-enriched factors, such as authentication headers or a displayed-link/destination mismatch.
 
 The initial v3 regression set also verifies that missing screenshot metadata cannot produce `likely_legitimate` merely because sender or destination evidence was unavailable. The paired corpus will grow with authorized synthetic scenarios; production scans remain outside it.
 
@@ -63,4 +63,4 @@ See `docs/feedback.md` for the API allowlist, retention behavior, and synthetic-
 npm run test:analysis
 ```
 
-This validates corpus shape and split isolation, applies the locked gates, reports cross-input classification and score deltas, checks factor sums and URL/domain regressions, and verifies AI evidence normalization with synthetic outputs.
+This validates corpus shape and split isolation, applies the locked gates, reports cross-input classification, median/p95 score deltas, and format-enriched factor agreement, checks factor sums and URL/domain regressions, and verifies AI evidence normalization with synthetic outputs.
