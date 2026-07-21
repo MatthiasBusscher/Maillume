@@ -10,6 +10,17 @@ const dutch = validateAnalyzeRequest({
 assert.equal(dutch.ok, true);
 if (dutch.ok) assert.equal(dutch.input.locale, "nl");
 
+const chrome = validateAnalyzeRequest({
+  source: "chrome",
+  body: "Synthetic captured message",
+  linkPairs: [{
+    displayedUrl: "https://portal.example.test/security",
+    destinationUrl: "https://short.example.test/review",
+  }],
+});
+assert.equal(chrome.ok, true);
+if (chrome.ok) assert.equal(chrome.input.source, "chrome");
+
 const fallback = validateAnalyzeRequest({ body: "Synthetic message" });
 assert.equal(fallback.ok, true);
 if (fallback.ok) assert.equal(fallback.input.locale, "en");

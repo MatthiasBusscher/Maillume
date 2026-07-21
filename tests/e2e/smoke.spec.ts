@@ -403,7 +403,7 @@ test("feedback controls work from the keyboard and reject content fields", async
   await expect(page.getByText("Feedback received")).toBeVisible();
 });
 
-test("marketing routes accurately distinguish available and source-beta features", async ({ page }) => {
+test("marketing routes accurately distinguish available and manual-beta features", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "Maillume", exact: true })).toBeVisible();
@@ -424,7 +424,7 @@ test("marketing routes accurately distinguish available and source-beta features
   await page.goto("/platform");
   await expect(page.getByRole("heading", { name: "The web scanner comes first." })).toBeVisible();
   await expect(page.getByText("Optional", { exact: true })).toBeVisible();
-  await expect(page.getByText("Source beta", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Manual beta", { exact: true })).toHaveCount(2);
   await expect(page.getByText("Later", { exact: true })).toBeVisible();
 });
 

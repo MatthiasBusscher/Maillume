@@ -27,7 +27,7 @@ const capabilityRows = [
     label: "Three input options",
     title: "Check the message in front of you.",
     description:
-      "Paste the text, read a screenshot, or open an exported .eml file. Screenshot and .eml source files stay in your browser.",
+      "Paste the text, read a screenshot, or open an exported .eml file. Source files stay in your browser; normalized text is sent once for the assessment and is not retained.",
   },
   {
     icon: Eye,
@@ -70,7 +70,7 @@ export default async function MarketingHomePage() {
               Maillume
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-7 text-[#d9e0d7] sm:text-xl sm:leading-8">
-              Maillume combines mail with illuminate. Paste an email, add a screenshot, or open an .eml file to see the warning signs, risk score, and a safer next step before you click, reply, share details, or pay.
+              Maillume blends mail and illuminate: it shines a light on warning signs before you click, reply, share details, or pay.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -91,7 +91,7 @@ export default async function MarketingHomePage() {
               </a>
             </div>
             <p className="mt-5 font-mono text-[10px] uppercase leading-5 text-[#93a091]">
-              Free heuristic checks. No account required. No scan history.
+              Free built-in checks. No account required. No scan history.
             </p>
           </div>
 
@@ -167,7 +167,7 @@ export default async function MarketingHomePage() {
               <p className="mt-5 font-mono text-[10px] uppercase text-[#687268]">Hosted by us</p>
               <h2 className="mt-3 text-3xl font-semibold text-[#111711]">Check an email without setting anything up.</h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
-                The hosted scanner uses transparent heuristic checks. Anonymous scans need no account; an optional account lets you manage API keys without creating scan history.
+                The hosted scanner uses built-in checks based on visible warning signs. Anonymous scans need no account; an optional account lets you manage API keys without creating scan history.
               </p>
               <a href={appHref} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">
                 Open Maillume <ArrowRight className="h-4 w-4" aria-hidden="true" />

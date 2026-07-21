@@ -6,7 +6,7 @@ import { localizePath } from "@/lib/i18n/site-locale";
 const title = "Maillume";
 const descriptions = {
   en: "Shine a light on suspicious email with an explainable risk score, warning signals, and a safer next step.",
-  nl: "Breng verdachte e-mail aan het licht met een uitlegbare risicoscore, waarschuwingssignalen en een veiligere vervolgstap.",
+  nl: "Werpt licht op verdachte e-mail met een uitlegbare risicoscore, waarschuwingssignalen en een veiligere vervolgstap.",
 };
 
 export async function generateMetadata(): Promise<Metadata> {

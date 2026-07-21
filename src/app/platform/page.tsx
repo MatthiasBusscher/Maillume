@@ -12,19 +12,20 @@ import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: "Platform", description: locale === "nl" ? "Bekijk wat beschikbaar is in de publieke Maillume-webbèta en wat later volgt." : "See what is available in the Maillume public web beta and what follows later." }; }
 
 const roadmap = [
-  { status: "Source beta", title: "Chrome extension", description: "The extension is available for source testing while capture behavior, permissions, and the Chrome Web Store submission are reviewed." },
+  { status: "Manual beta", title: "Chrome extension", description: "Install it locally in Chrome with your Maillume API key. It is not yet available in the Chrome Web Store." },
   { status: "Later", title: "Hosted AI and paid plans", description: "Managed AI and paid plans remain unavailable until costs, privacy, abuse controls, billing, and real demand have been validated." },
 ];
 
 export default async function PlatformPage() {
-  const copy = (await getRequestSiteLocale()) === "nl" ? platformNl : {};
+  const locale = await getRequestSiteLocale();
+  const copy = locale === "nl" ? platformNl : {};
   return translateMarketingTree((
     <main className="min-h-screen bg-[#f7f8f4]">
       <SiteHeader />
       <PageIntro
         eyebrow="Maillume Platform"
         title="The web scanner comes first."
-        description="The public beta starts with anonymous heuristic checks. Accounts are optional for managing revocable API keys; hosted AI and scan history remain off."
+        description="The public beta starts with anonymous built-in checks. Accounts are optional for managing revocable API keys; hosted AI and scan history remain off."
         actions={
           <>
             <a href="#today" className="inline-flex h-12 items-center gap-2 bg-[#dfff52] px-5 text-sm font-bold text-[#111711] hover:bg-white">See the beta boundary <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
@@ -46,7 +47,7 @@ export default async function PlatformPage() {
             </p>
             <ul className="mt-7 space-y-3">
               <PlatformCheck>Anonymous paste, screenshot, and .eml checks</PlatformCheck>
-              <PlatformCheck>Heuristic analysis with no maintainer-owned provider key</PlatformCheck>
+              <PlatformCheck>Built-in checks based on visible warning signs</PlatformCheck>
               <PlatformCheck>Optional accounts with TOTP and revocable API keys</PlatformCheck>
               <PlatformCheck>No scan history or retained source files</PlatformCheck>
               <PlatformCheck>Automated-assessment disclaimer in every result</PlatformCheck>
@@ -59,11 +60,11 @@ export default async function PlatformPage() {
               <span className="font-mono text-[9px] text-[#849083]">web + API</span>
             </div>
             <dl className="divide-y divide-white/15 p-5 text-sm">
-              <BetaBoundary label="Scanner" value="Available anonymously" />
-              <BetaBoundary label="Analysis" value="Heuristic only" />
-              <BetaBoundary label="Retention" value="No scan history" />
-              <BetaBoundary label="Accounts and API" value="Optional" />
-              <BetaBoundary label="Chrome extension" value="Source beta" />
+              <BetaBoundary label="Scanner" value={locale === "nl" ? "Anoniem beschikbaar" : "Available anonymously"} />
+              <BetaBoundary label="Analysis" value={locale === "nl" ? "Ingebouwde controles" : "Built-in checks"} />
+              <BetaBoundary label="Retention" value={locale === "nl" ? "Geen scangeschiedenis" : "No scan history"} />
+              <BetaBoundary label="Accounts and API" value={locale === "nl" ? "Optioneel" : "Optional"} />
+              <BetaBoundary label="Chrome extension" value={locale === "nl" ? "Handmatige bèta" : "Manual beta"} />
             </dl>
           </div>
         </div>
@@ -84,7 +85,7 @@ export default async function PlatformPage() {
           <div className="mt-14 grid border-y border-white/35 md:grid-cols-3 md:divide-x md:divide-white/25">
             <Principle icon={MailCheck} title="User initiated" description="No background mailbox harvesting or silent scanning." />
             <Principle icon={ShieldCheck} title="Explicit boundary" description="The public service accepts only the current web request and stores no scan history." />
-            <Principle icon={PlugZap} title="Future integrations" description="Browser integration waits for web-beta validation and Chrome Web Store review." />
+            <Principle icon={PlugZap} title="Manual Chrome beta" description="Install the extension locally after creating a revocable Maillume API key. Store review follows later." />
           </div>
         </div>
       </section>

@@ -36,5 +36,5 @@ export async function analyzeEmail(
 }
 
 function isScanSource(value: unknown): value is ScanSource {
-  return value === "paste" || value === "screenshot" || value === "eml";
+  return value === "paste" || value === "screenshot" || value === "eml" || value === "chrome";
 }

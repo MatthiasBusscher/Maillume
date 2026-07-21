@@ -38,7 +38,7 @@ Paste an email, add a screenshot, or open an exported `.eml` file. Maillume show
 
 ## Project Status
 
-Maillume is preparing for public beta. Anonymous scanning and optional account/API-key features are running in production; Chrome Web Store publication remains a separate post-web-beta gate.
+Maillume is preparing for public beta. Anonymous scanning and optional account/API-key features are running in production. A manual Chrome beta is available from source; Chrome Web Store publication remains a separate gate.
 
 | Capability | Status |
 | --- | --- |
@@ -47,7 +47,7 @@ Maillume is preparing for public beta. Anonymous scanning and optional account/A
 | Local heuristic assessment | Available |
 | Self-hosted AI with an operator-owned key | Available from source |
 | Email/Google accounts, TOTP 2FA, and hosted API keys | Available; account optional |
-| Chrome extension | In validation; not advertised or distributed during web beta |
+| Chrome extension | Manual beta from source; Chrome Web Store review pending |
 | Maintainer-hosted AI and payments | Not implemented |
 
 Follow the [web-beta release checklist](https://github.com/MatthiasBusscher/Maillume/issues/40), [security verification](https://github.com/MatthiasBusscher/Maillume/issues/47), and [Chrome publication](https://github.com/MatthiasBusscher/Maillume/issues/39) on GitHub.

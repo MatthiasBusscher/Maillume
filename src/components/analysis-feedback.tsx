@@ -12,14 +12,14 @@ import {
   type FeedbackSignalCategory,
 } from "@/lib/feedback/types";
 import type { Dictionary, Locale } from "@/lib/i18n/dictionary";
-import type { RiskLevel, ScanSource } from "@/lib/types";
+import type { RiskLevel, WebScanSource } from "@/lib/types";
 
 type AnalysisFeedbackProps = {
   analyzerVersion: string;
   dictionary: Dictionary;
   locale: Locale;
   scoreBand: RiskLevel;
-  source: ScanSource;
+  source: WebScanSource;
 };
 
 const classifications: FeedbackClassification[] = [

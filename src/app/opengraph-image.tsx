@@ -46,7 +46,7 @@ export default function OpenGraphImage() {
         </div>
 
         <div style={{ color: "#dfff52", fontSize: 19, fontWeight: 700, marginTop: 62 }}>
-          ILLUMINATE SUSPICIOUS EMAIL
+          SHINE A LIGHT ON SUSPICIOUS EMAIL
         </div>
         <div
           style={{

@@ -70,7 +70,7 @@ function normalizeLocale(locale: AnalysisLocale | undefined): AnalysisLocale {
 }
 
 function isScanSource(value: unknown): value is ScanSource {
-  return value === "paste" || value === "screenshot" || value === "eml";
+  return value === "paste" || value === "screenshot" || value === "eml" || value === "chrome";
 }
 
 function normalizeOptionalText(value: string | undefined): string | undefined {

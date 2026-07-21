@@ -22,7 +22,7 @@ const plans = [
     accent: true,
     features: [
       "No account required",
-      "Heuristic email risk assessment",
+      "Built-in checks based on visible warning signs",
       "Paste, screenshot, and .eml inputs",
       "English and Dutch interface",
       "Optional account and quota-limited API keys",
@@ -73,7 +73,7 @@ export default async function PricingPage() {
       <PageIntro
         eyebrow="Pricing"
         title="The safety workflow stays free."
-        description="Core heuristic checks are free and need no account. Optional accounts and quota-limited API keys are available; managed AI and paid plans are not for sale."
+        description="Core built-in checks are free and need no account. Optional accounts and quota-limited API keys are available; managed AI and paid plans are not for sale."
       />
 
       <section className="border-b border-[#cbd0c5] py-16 sm:py-20">

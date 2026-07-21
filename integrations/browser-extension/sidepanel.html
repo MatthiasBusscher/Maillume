@@ -11,7 +11,7 @@
       <div class="mark" aria-hidden="true">M</div>
       <div>
         <h1>Maillume</h1>
-        <p data-nl="Beoordeling van geopende e-mail">Open-email assessment</p>
+        <p data-nl="E-mail beoordelen">Review an email</p>
       </div>
     </header>
 
@@ -38,11 +38,11 @@
       <details>
         <summary data-nl="Verbindingsinstellingen">Connection settings</summary>
         <div class="settings fields">
-          <label><span data-nl="Maillume-installatie">Maillume deployment</span> <input id="endpoint" type="url" value="https://app.maillume.io" /></label>
+          <label><span data-nl="Maillume-omgeving">Maillume deployment</span> <input id="endpoint" type="url" value="https://app.maillume.io" /></label>
           <label><span data-nl="API-sleutel">API key</span> <input id="apiKey" type="password" autocomplete="off" placeholder="mlm_..." /></label>
           <button id="save" type="button" class="secondary" data-nl="Verbinding opslaan">Save connection</button>
           <button id="reset" type="button" class="danger" data-nl="Verbinding verwijderen">Remove connection</button>
-          <p class="small" data-nl="De implementatie-URL blijft lokaal opgeslagen. De API-sleutel blijft alleen tijdens deze browsersessie beschikbaar. Berichtinhoud en resultaten worden niet opgeslagen.">The deployment URL remains in local extension storage. The API key is available only for this browser session. Message content and results are not stored.</p>
+          <p class="small" data-nl="De URL van de Maillume-omgeving blijft lokaal opgeslagen. De API-sleutel blijft alleen tijdens deze browsersessie beschikbaar. Berichtinhoud en resultaten worden niet opgeslagen.">The deployment URL remains in local extension storage. The API key is available only for this browser session. Message content and results are not stored.</p>
         </div>
       </details>
 
@@ -58,7 +58,7 @@
         <p id="classification" class="classification"></p>
         <p id="explanation"></p>
         <h2 data-nl="Zo werkt deze score">How this score works</h2>
-        <p data-nl="De score is een gewogen risico-index, geen waarschijnlijkheid of garantie.">The score is a weighted risk index, not a probability or guarantee.</p>
+        <p data-nl="Dit is een versiegebonden risico-index op basis van de signalen die Maillume kon onderzoeken. Het is geen waarschijnlijkheid of garantie.">This is a versioned risk index based on the signals Maillume could inspect. It is not a probability or guarantee.</p>
         <ul id="factors" class="factors"></ul>
         <h2 data-nl="Verdachte signalen">Suspicious signals</h2>
         <ul id="signals"></ul>

@@ -10,7 +10,7 @@ export const accountEn = {
     eyebrow: "Optional account",
     title: "Sign in when you need an integration.",
     intro: "Scanning stays available without an account. Sign in to create and revoke API keys for integrations; your account never creates scan history.",
-    authNote: "Supabase handles email and Google sign-in. Maillume never receives your authentication password.",
+    authNote: "Your sign-in is handled securely. Maillume never receives your password.",
     accountEyebrow: "Maillume account",
     continueTitle: "Choose how to sign in",
     continueBody: "Use email and password or continue with Google.",
@@ -189,7 +189,7 @@ export const accountEn = {
   },
   notFound: {
     eyebrow: "404 / Message not found",
-    title: "This route did not pass inspection.",
+    title: "We couldn't find this page.",
     body: "The page may have moved, or the address may be incomplete. The scanner and public product pages are still available.",
     backHome: "Back home",
     openScanner: "Open scanner",

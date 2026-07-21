@@ -141,6 +141,6 @@ Use only synthetic or authorized test messages in English and Dutch.
    `v0.1.0-beta`, make the repository public, publish the release notes, and
    post the LinkedIn announcement.
 4. Accounts passed production acceptance in issue #79 and may remain enabled;
-   anonymous scanning remains available. Treat the Chrome extension as a
-   separate post-beta release and do not advertise it as available before
-   Chrome Web Store approval.
+   anonymous scanning remains available. The unpacked Chrome extension may be
+   offered as a clearly labeled manual beta after its production-key test
+   matrix passes. Do not claim Chrome Web Store availability before approval.
