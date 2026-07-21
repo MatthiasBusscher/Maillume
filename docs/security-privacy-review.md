@@ -31,7 +31,17 @@ The app does not write uploads to disk. Browser `File` objects are read in memor
 
 ## Proxy And Rate-Limit Boundary
 
-In production, application-level rate limits use only Cloudflare's `CF-Connecting-IP` header. The Hostinger origin is reachable only through Cloudflare Tunnel, so a request without that header is placed in one conservative shared `anonymous` bucket instead of trusting a client-controlled forwarding header. Development and test environments may use `X-Forwarded-For` to support local proxy tests.
+In production, application-level rate limits use Cloudflare's `CF-Connecting-IP` header only
+when `TRUST_CF_CONNECTING_IP=true`. The hosted Hostinger origin enables this because it is
+reachable only through Cloudflare Tunnel. Direct and differently proxied deployments leave
+the setting false; their requests use one conservative shared `anonymous` bucket rather than
+trusting client-controlled forwarding headers. Development and test environments may use
+`X-Forwarded-For` to support local proxy tests.
+
+Self-hosters behind another exclusive reverse proxy may explicitly select an overwritten
+single-value `X-Forwarded-For` or `X-Real-IP` header with `TRUSTED_PROXY_IP_HEADER`. Direct
+container deployments cannot obtain a socket peer from the Next.js request API used here and
+therefore retain the shared fail-safe bucket. Both trust modes must never be enabled together.
 
 ## Logging
 

@@ -62,6 +62,9 @@ Verify the Cron job named `purge-expired-detection-feedback` in the Supabase Das
 
 `/api/feedback` accepts at most 4 KB and applies a best-effort limit of five requests per ten minutes. The limiter hashes the client network address with a random process-local salt and never writes that identifier to the database. Public deployments should also configure an edge rate limit because process memory is not shared across serverless instances.
 
+The process-local limiter retains at most 10,000 active buckets. At capacity it removes expired
+buckets and rejects new client identities while all retained buckets remain active.
+
 The route uses `Cache-Control: no-store` and does not log request bodies. Operational logs and analytics must not add feedback payloads or scan content later.
 
 ## Calibration Workflow
