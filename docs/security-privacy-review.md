@@ -1,6 +1,6 @@
 # Security and Privacy Review
 
-Review date: 2026-07-09
+Review date: 2026-07-22
 
 ## Scope
 
@@ -9,8 +9,9 @@ This review covers the launch data flow for pasted text, screenshot OCR, `.eml` 
 ## Data Flow
 
 - Paste mode sends subject, sender email, and body text to `/api/analyze`.
-- Screenshot mode runs OCR in the browser, then sends extracted text to `/api/analyze`.
-- `.eml` mode parses headers, body text, links, and attachment metadata in the browser, then sends normalized text to `/api/analyze`.
+- Screenshot mode runs OCR and QR decoding in the browser, then sends extracted text and any decoded HTTP(S) QR destination to `/api/analyze`.
+- `.eml` mode parses headers, body text, links, and attachment metadata in the browser, then sends normalized text plus coarse attachment-risk categories to `/api/analyze`; filenames and attachment contents are not sent.
+- Screenshot mode decodes QR destinations locally and sends only a valid HTTP(S) destination string alongside OCR text. It does not fetch or follow the destination.
 - Raw screenshot files and raw `.eml` files are not uploaded as files.
 - `/api/analyze` returns only the structured assessment envelope and does not include the original input fields.
 
@@ -27,7 +28,7 @@ This review covers the launch data flow for pasted text, screenshot OCR, `.eml` 
 
 ## Temporary File Handling
 
-The app does not write uploads to disk. Browser `File` objects are read in memory for OCR or parsing, and the file input value is cleared after selection. The server receives normalized text only and does not write raw scan content, prompts, provider responses, or assessment results to a database.
+The app does not write uploads to disk. Browser `File` objects are read in memory for OCR or parsing, and the file input value is cleared after selection. The server receives only the normalized request fields documented above and does not write raw scan content, prompts, provider responses, or assessment results to a database.
 
 ## Proxy And Rate-Limit Boundary
 

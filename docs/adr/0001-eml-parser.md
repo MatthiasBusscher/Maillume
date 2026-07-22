@@ -16,7 +16,8 @@ analysis API, written to disk, or retained after the current assessment.
 The current parser in `src/lib/eml/parse-eml.ts` is custom and runs in the
 browser. It enforces a 2 MB input limit before parsing, then bounds header
 characters, MIME depth, multipart sections, per-part body characters,
-attachment names, link count, link length, and final normalized text. It ignores
+attachment metadata, link count, link length, and final normalized text. It derives
+only coarse `executable`, `macro_enabled`, and `double_extension` risk categories and ignores
 attachment content and unsupported MIME structures rather than attempting to
 render or execute them. Regression tests cover malformed input, nested MIME,
 base64 and quoted-printable decoding, supported legacy character sets,
@@ -61,7 +62,7 @@ is acceptable only when it:
 
 - keeps the raw file entirely in browser memory;
 - preserves Maillume's sender, subject, text, link, displayed-link-pair, and
-  attachment-name contract;
+  attachment-risk contract;
 - enforces the same or stricter size, depth, section, text, link, and time/
   memory limits in a visible wrapper;
 - passes the existing parser regression suite plus malformed and fuzzed

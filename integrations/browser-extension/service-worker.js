@@ -220,6 +220,20 @@ function readSelectionFromFrame() {
       return right.viewportScore - left.viewportScore;
     });
   };
+  const selectUnambiguousCandidate = (candidates) => {
+    if (candidates.length === 0) return null;
+    if (candidates.length === 1) return candidates[0];
+    const [best, runnerUp] = candidates;
+    if (best.viewportScore >= 1_000_000_000) return best;
+    if (best.viewportScore > 0 && runnerUp.viewportScore <= 0) return best;
+    if (
+      best.viewportScore > 0
+      && runnerUp.viewportScore > 0
+      && best.viewportScore >= runnerUp.viewportScore * 1.75
+      && best.viewportScore - runnerUp.viewportScore >= 40_000
+    ) return best;
+    return null;
+  };
   const firstText = (root, selectors) => {
     for (const selector of selectors) {
       const element = root?.querySelector?.(selector);
@@ -277,8 +291,8 @@ function readSelectionFromFrame() {
 
   if (isGmail) {
     const candidates = collectCandidates([".a3s.aiL", ".a3s", "[data-message-id] [role='document']"]);
-    if (candidates.length > 1) return { text: "", source: "window", focused, errorCode: "multiple_messages" };
-    const candidate = candidates[0];
+    const candidate = selectUnambiguousCandidate(candidates);
+    if (!candidate && candidates.length > 1) return { text: "", source: "window", focused, errorCode: "multiple_messages" };
     if (!candidate) return { text: "", source: "window", focused };
     const container = candidate.element.closest(".adn, [data-message-id]") || document;
     return {
@@ -301,8 +315,8 @@ function readSelectionFromFrame() {
     "[role='document']",
     ".allowTextSelection",
   ]);
-  if (candidates.length > 1) return { text: "", source: "window", focused, errorCode: "multiple_messages" };
-  const candidate = candidates[0];
+  const candidate = selectUnambiguousCandidate(candidates);
+  if (!candidate && candidates.length > 1) return { text: "", source: "window", focused, errorCode: "multiple_messages" };
   if (!candidate) return { text: "", source: "window", focused };
   const container = candidate.element.closest("[data-testid*='message'], [role='listitem']") || document;
   return {

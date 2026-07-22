@@ -49,6 +49,15 @@ Content-Type: text/html; charset=UTF-8
   });
   assert.ok(hiddenLinkResult.score_factors.some((factor) => factor.id === "link_mismatch"));
 
+  const unquotedHiddenLink = parseEml(`Content-Type: text/html; charset=UTF-8
+
+<a href=https://credential-capture.example/login>vendor.example/security</a>`);
+  assert.deepEqual(unquotedHiddenLink.linkPairs, [{
+    displayedUrl: "https://vendor.example/security",
+    destinationUrl: "https://credential-capture.example/login",
+  }]);
+  assert.deepEqual(unquotedHiddenLink.links, ["https://credential-capture.example/login"]);
+
   const parityEml = parseEml(`From: Synthetic alerts <alerts@notice.example>
 Subject: Synthetic account review
 Content-Type: text/html; charset=UTF-8
@@ -260,6 +269,50 @@ ${attachmentParts}
 ${Array.from({ length: MAX_EML_LINKS + 10 }, (_, index) => `https://example-${index}.test/path`).join(" ")}`);
   assert.equal(manyLinks.links.length, MAX_EML_LINKS);
   assert.equal(manyLinks.evidenceTruncated, true);
+
+  const riskyAttachments = parseEml(`Content-Type: multipart/mixed; boundary=risks
+
+--risks
+Content-Type: text/plain
+
+Please review the attached documents.
+--risks
+Content-Type: application/octet-stream; name="invoice.pdf.exe"
+Content-Disposition: attachment; filename="invoice.pdf.exe"
+
+ignored
+--risks
+Content-Type: application/vnd.ms-word.document.macroEnabled.12; name="notes.docm"
+Content-Disposition: attachment; filename="notes.docm"
+
+ignored
+--risks--`);
+  assert.deepEqual(riskyAttachments.attachmentRiskTypes, [
+    "double_extension",
+    "executable",
+    "macro_enabled",
+  ]);
+
+  const dangerousMimeWithoutFilename = parseEml(`Content-Type: multipart/mixed; boundary=mime
+
+--mime
+Content-Type: text/plain
+
+Please review this file.
+--mime
+Content-Type: application/x-msdownload
+
+ignored
+--mime--`);
+  assert.deepEqual(dangerousMimeWithoutFilename.attachmentRiskTypes, ["executable"]);
+
+  for (const filename of ["invoice.pdf", "notes.docx", "budget.xlsx", "photo.png", "archive.zip"]) {
+    const ordinaryAttachment = parseEml(`Content-Type: application/octet-stream; name="${filename}"
+Content-Disposition: attachment; filename="${filename}"
+
+ignored`);
+    assert.deepEqual(ordinaryAttachment.attachmentRiskTypes, [], `${filename} must remain a hard negative`);
+  }
 
   console.log("Checked .eml parsing regressions.");
 }

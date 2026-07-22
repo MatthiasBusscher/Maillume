@@ -11,9 +11,12 @@ import type {
 export const EVIDENCE_IDS = [
   "urgency_pressure",
   "credential_request",
+  "identity_reverification",
   "payment_request",
   "changed_payment_details",
   "attachment_lure",
+  "dangerous_attachment",
+  "macro_enabled_attachment",
   "brand_mention",
   "prize_promotion",
   "account_threat",
@@ -23,7 +26,6 @@ export const EVIDENCE_IDS = [
   "investment_pitch",
   "high_risk_spam",
   "generic_greeting",
-  "external_link",
   "short_url",
   "risky_link_domain",
   "link_mismatch",
@@ -58,9 +60,12 @@ type EvidenceDefinition = {
 const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   urgency_pressure: evidence("intent", 10, "Creates pressure to act quickly.", "Zet aan om snel te handelen.", true),
   credential_request: evidence("intent", 20, "Requests credentials or identity verification.", "Vraagt om inloggegevens of identiteitsverificatie.", true),
+  identity_reverification: evidence("intent", 30, "Requests renewed identity or account verification.", "Vraagt om hernieuwde identiteits- of accountverificatie.", true),
   payment_request: evidence("intent", 20, "Requests or pressures a payment or transfer.", "Vraagt om of dringt aan op een betaling of overschrijving.", true),
   changed_payment_details: evidence("intent", 30, "Changes trusted payment or bank details.", "Wijzigt vertrouwde betaal- of bankgegevens.", true),
   attachment_lure: evidence("delivery", 10, "Uses an attachment or document as a lure.", "Gebruikt een bijlage of document als lokaas.", true),
+  dangerous_attachment: evidence("delivery", 20, "Includes a potentially executable or disguised attachment.", "Bevat een mogelijk uitvoerbare of vermomde bijlage.", true),
+  macro_enabled_attachment: evidence("delivery", 10, "Includes a macro-enabled Office attachment.", "Bevat een Office-bijlage waarin macro's kunnen worden uitgevoerd."),
   brand_mention: evidence("identity", 4, "References a familiar brand or authority.", "Verwijst naar een bekend merk of een bekende instantie."),
   prize_promotion: spamEvidence("intent", 30, "Uses prize, giveaway, or promotional language.", "Gebruikt taal over prijzen, winacties of aanbiedingen."),
   account_threat: evidence("intent", 20, "Threatens account blocking or subscription expiry.", "Dreigt met accountblokkering of het verlopen van een abonnement.", true),
@@ -70,7 +75,6 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   investment_pitch: spamEvidence("intent", 30, "Contains a high-return investment or loan pitch.", "Bevat een aanbod voor hoge beleggingsopbrengsten of een lening."),
   high_risk_spam: spamEvidence("intent", 30, "Contains common high-risk spam topics.", "Bevat onderwerpen die vaak in risicovolle spam voorkomen."),
   generic_greeting: evidence("style", 4, "Uses a generic greeting.", "Gebruikt een algemene aanhef."),
-  external_link: evidence("destination", 5, "Contains an external link.", "Bevat een externe link."),
   short_url: evidence("destination", 10, "Uses a shortened URL that hides the destination.", "Gebruikt een verkorte URL die de bestemming verbergt.", true),
   risky_link_domain: evidence("destination", 10, "Uses a link domain pattern often abused in campaigns.", "Gebruikt een linkdomein dat vaak in campagnes wordt misbruikt.", true),
   link_mismatch: evidence("destination", 30, "Displays one domain but links to another.", "Toont één domein maar linkt naar een ander domein.", true),
@@ -88,7 +92,7 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   payroll_or_tax_request: evidence("intent", 20, "Requests payroll, tax, or employee-account changes.", "Vraagt om wijzigingen in salaris-, belasting- of personeelsgegevens.", true),
   mfa_or_oauth_request: evidence("intent", 20, "Requests an unexpected MFA or application approval.", "Vraagt om een onverwachte MFA- of applicatiegoedkeuring.", true),
   qr_lure: evidence("delivery", 10, "Directs the recipient to scan a QR code.", "Stuurt de ontvanger naar een QR-code.", true),
-  callback_lure: evidence("delivery", 10, "Pushes the recipient to call an unverified number.", "Stuurt de ontvanger naar een onbevestigd telefoonnummer.", true),
+  callback_lure: evidence("delivery", 20, "Pushes the recipient to call an unverified number.", "Stuurt de ontvanger naar een onbevestigd telefoonnummer.", true),
   delivery_lure: evidence("delivery", 20, "Combines a delivery problem with a fee and return pressure.", "Combineert een bezorgprobleem met kosten en druk rond terugzending.", true),
 };
 
@@ -245,6 +249,7 @@ function getClassification(
 
 const PHISHING_SPECIFIC_EVIDENCE = new Set<EvidenceId>([
   "credential_request",
+  "identity_reverification",
   "payment_request",
   "changed_payment_details",
   "account_threat",
@@ -254,6 +259,7 @@ const PHISHING_SPECIFIC_EVIDENCE = new Set<EvidenceId>([
   "executive_impersonation",
   "payroll_or_tax_request",
   "mfa_or_oauth_request",
+  "dangerous_attachment",
   "qr_lure",
   "callback_lure",
   "delivery_lure",

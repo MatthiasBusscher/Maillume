@@ -76,4 +76,21 @@ const malformedLinkPairs = validateAnalyzeRequest({
 });
 assert.equal(malformedLinkPairs.ok, false);
 
+const attachmentRisks = validateAnalyzeRequest({
+  body: "Synthetic message",
+  attachmentRiskTypes: ["macro_enabled", "executable", "executable"],
+});
+assert.equal(attachmentRisks.ok, true);
+if (attachmentRisks.ok) {
+  assert.deepEqual(attachmentRisks.input.attachmentRiskTypes, ["executable", "macro_enabled"]);
+}
+assert.equal(validateAnalyzeRequest({
+  body: "Synthetic message",
+  attachmentRiskTypes: ["archive"],
+}).ok, false);
+assert.equal(validateAnalyzeRequest({
+  body: "Synthetic message",
+  attachmentNames: ["private-name.pdf.exe"],
+}).ok, false);
+
 console.log("Checked hosted analysis request validation.");

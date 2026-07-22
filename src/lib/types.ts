@@ -15,8 +15,8 @@ export const ANALYSIS_DISCLAIMERS = {
   nl: "Dit is een geautomatiseerde risicobeoordeling en geen garantie.",
 } as const satisfies Record<AnalysisLocale, string>;
 export const ANALYSIS_DISCLAIMER = ANALYSIS_DISCLAIMERS.en;
-export const ANALYSIS_PIPELINE_VERSION = "analysis-v4";
-export const ANALYSIS_ENVELOPE_VERSION = "analysis-envelope-v1";
+export const ANALYSIS_PIPELINE_VERSION = "analysis-v6";
+export const ANALYSIS_ENVELOPE_VERSION = "analysis-envelope-v2";
 
 export const MAX_SCAN_BODY_LENGTH = 20_000;
 
@@ -28,6 +28,8 @@ export type EmailLinkPair = {
   destinationUrl: string;
 };
 
+export type AttachmentRiskType = "executable" | "macro_enabled" | "double_extension";
+
 export type EmailAnalysisInput = {
   subject?: string;
   senderEmail?: string;
@@ -35,6 +37,7 @@ export type EmailAnalysisInput = {
   locale?: AnalysisLocale;
   links?: string[];
   linkPairs?: EmailLinkPair[];
+  attachmentRiskTypes?: AttachmentRiskType[];
   evidenceTruncated?: boolean;
 };
 
@@ -61,6 +64,7 @@ export type AnalysisEnvelope = {
   body: string;
   links: string[];
   linkPairs: EmailLinkPair[];
+  attachmentRiskTypes: AttachmentRiskType[];
   availability: AnalysisEvidenceAvailability;
 };
 

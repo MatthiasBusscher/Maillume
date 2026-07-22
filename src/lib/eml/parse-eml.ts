@@ -1,9 +1,13 @@
-import { MAX_SCAN_BODY_LENGTH, type EmailLinkPair } from "../types";
+import {
+  MAX_SCAN_BODY_LENGTH,
+  type AttachmentRiskType,
+  type EmailLinkPair,
+} from "../types";
 
 const HEADER_BODY_SEPARATOR = /\r?\n\r?\n/;
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
-const HREF_PATTERN = /\bhref\s*=\s*["']([^"']+)["']/gi;
-const HTML_LINK_PAIR_PATTERN = /<a\b[^>]*href\s*=\s*["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+const HREF_PATTERN = /\bhref\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'=<>`]+))/gi;
+const HTML_LINK_PAIR_PATTERN = /<a\b[^>]*\bhref\s*=\s*(?:"(https?:\/\/[^"\s>]+)"|'(https?:\/\/[^'\s>]+)'|(https?:\/\/[^\s"'=<>`]+))[^>]*>([\s\S]*?)<\/a>/gi;
 const DISPLAYED_DOMAIN_PATTERN = /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}(?:\/[^\s<>"']*)?/i;
 const ENCODED_WORD_PATTERN = /=\?([^?\s]+)\?([BQ])\?([^?]*)\?=/gi;
 
@@ -57,6 +61,7 @@ export type ParsedEml = {
   links: string[];
   linkPairs: EmailLinkPair[];
   attachmentNames: string[];
+  attachmentRiskTypes: AttachmentRiskType[];
   evidenceTruncated: boolean;
 };
 
@@ -72,6 +77,7 @@ type ParseState = {
   rawLinks: string[];
   linkPairs: EmailLinkPair[];
   attachmentNames: string[];
+  attachmentRiskTypes: AttachmentRiskType[];
   sectionsProcessed: number;
   evidenceTruncated: boolean;
 };
@@ -86,6 +92,7 @@ export function parseEml(raw: string): ParsedEml {
     rawLinks: [],
     linkPairs: [],
     attachmentNames: [],
+    attachmentRiskTypes: [],
     sectionsProcessed: 0,
     evidenceTruncated: false,
   };
@@ -113,6 +120,7 @@ export function parseEml(raw: string): ParsedEml {
     links: allLinks.slice(0, MAX_EML_LINKS),
     linkPairs: allLinkPairs.slice(0, MAX_EML_LINKS),
     attachmentNames: state.attachmentNames,
+    attachmentRiskTypes: state.attachmentRiskTypes.sort(),
     evidenceTruncated: state.evidenceTruncated,
   };
 }
@@ -123,17 +131,22 @@ function parseMimePart(part: MimePart, depth: number, state: ParseState, isRootP
   const disposition = part.headers.get("content-disposition") ?? "";
   const rawFilename =
     getHeaderParameter(disposition, "filename") ?? getHeaderParameter(contentType, "name");
-  const isAttachment = /(?:^|;)\s*attachment\b/i.test(disposition) || rawFilename !== undefined;
+  const mediaType = contentType.split(";", 1)[0].trim().toLowerCase();
+  const filename = rawFilename === undefined ? undefined : decodeHeader(rawFilename);
+  const riskTypes = classifyAttachmentRiskTypes(filename, mediaType);
+  const isAttachment = /(?:^|;)\s*attachment\b/i.test(disposition)
+    || rawFilename !== undefined
+    || (!isRootPart && riskTypes.includes("executable"));
 
   if (isAttachment) {
     if (state.attachmentNames.length < MAX_EML_ATTACHMENT_NAMES) {
-      const filename = rawFilename === undefined ? undefined : decodeHeader(rawFilename);
       state.attachmentNames.push(filename?.trim() || "Unnamed attachment");
+    } else {
+      state.evidenceTruncated = true;
     }
+    state.attachmentRiskTypes = Array.from(new Set([...state.attachmentRiskTypes, ...riskTypes]));
     return;
   }
-
-  const mediaType = contentType.split(";", 1)[0].trim().toLowerCase();
 
   if (mediaType.startsWith("multipart/")) {
     if (depth >= MAX_EML_MIME_DEPTH) {
@@ -188,15 +201,73 @@ function parseMimePart(part: MimePart, depth: number, state: ParseState, isRootP
   }
 }
 
+const EXECUTABLE_EXTENSIONS = new Set([
+  "bat", "cmd", "com", "cpl", "exe", "hta", "jar", "js", "jse", "lnk", "msi", "msp",
+  "ps1", "reg", "scr", "vbe", "vbs", "wsf",
+]);
+const MACRO_ENABLED_EXTENSIONS = new Set([
+  "docm", "dotm", "potm", "ppam", "ppsm", "pptm", "sldm", "xlam", "xlsb", "xlsm", "xltm",
+]);
+const SAFE_LOOKING_EXTENSIONS = new Set([
+  "csv", "doc", "docx", "gif", "jpeg", "jpg", "pdf", "png", "ppt", "pptx", "txt", "xls", "xlsx", "zip",
+]);
+const EXECUTABLE_MEDIA_TYPES = new Set([
+  "application/java-archive",
+  "application/vnd.microsoft.portable-executable",
+  "application/x-dosexec",
+  "application/x-msdownload",
+  "application/x-msi",
+  "text/javascript",
+]);
+const MACRO_ENABLED_MEDIA_TYPE_MARKERS = [
+  "macroenabled", "ms-excel.addin.macroenabled", "ms-excel.sheet.binary.macroenabled",
+];
+
+export function classifyAttachmentRiskTypes(
+  filename: string | undefined,
+  mediaType: string,
+): AttachmentRiskType[] {
+  const normalizedName = filename
+    ?.normalize("NFKC")
+    .replace(/[\u0000-\u001f\u007f\u200b-\u200d\u2060\ufeff]/g, "")
+    .replace(/.*[\\/]/, "")
+    .trim()
+    .replace(/[. ]+$/, "")
+    .toLowerCase();
+  const extensions = normalizedName?.split(".").slice(1) ?? [];
+  const finalExtension = extensions.at(-1);
+  const penultimateExtension = extensions.at(-2);
+  const normalizedMediaType = mediaType.trim().toLowerCase();
+  const risks = new Set<AttachmentRiskType>();
+
+  if (
+    (finalExtension && EXECUTABLE_EXTENSIONS.has(finalExtension))
+    || EXECUTABLE_MEDIA_TYPES.has(normalizedMediaType)
+  ) risks.add("executable");
+  if (
+    (finalExtension && MACRO_ENABLED_EXTENSIONS.has(finalExtension))
+    || MACRO_ENABLED_MEDIA_TYPE_MARKERS.some((marker) => normalizedMediaType.includes(marker))
+  ) risks.add("macro_enabled");
+  if (
+    finalExtension
+    && penultimateExtension
+    && EXECUTABLE_EXTENSIONS.has(finalExtension)
+    && SAFE_LOOKING_EXTENSIONS.has(penultimateExtension)
+  ) risks.add("double_extension");
+
+  return Array.from(risks).sort();
+}
+
 function extractDisplayedLinkPairs(html: string): EmailLinkPair[] {
   return Array.from(html.matchAll(HTML_LINK_PAIR_PATTERN)).flatMap((match) => {
-    const displayedText = htmlToText(match[2]);
+    const destinationUrl = match[1] ?? match[2] ?? match[3];
+    const displayedText = htmlToText(match[4]);
     const fullUrl = displayedText.match(LINK_PATTERN)?.[0];
     const bareDomain = displayedText.match(DISPLAYED_DOMAIN_PATTERN)?.[0];
     const displayedUrl = fullUrl ?? (bareDomain ? `https://${bareDomain}` : undefined);
-    if (!displayedUrl) return [];
+    if (!displayedUrl || !destinationUrl) return [];
     const normalizedDisplayedUrl = displayedUrl.replace(/[.,!?;:]+$/, "");
-    const normalizedDestinationUrl = match[1].replace(/[.,!?;:]+$/, "");
+    const normalizedDestinationUrl = destinationUrl.replace(/[.,!?;:]+$/, "");
 
     if (
       normalizedDisplayedUrl.length > MAX_EML_LINK_LENGTH ||
@@ -238,7 +309,10 @@ function extractLinks(content: string): string[] {
   const visibleLinks = Array.from(content.matchAll(LINK_PATTERN), (match) =>
     match[0].replace(/[.,!?;:]+$/, ""),
   ).filter((link) => link.length <= MAX_EML_LINK_LENGTH);
-  const hrefLinks = Array.from(content.matchAll(HREF_PATTERN), (match) => match[1]).filter(
+  const hrefLinks = Array.from(
+    content.matchAll(HREF_PATTERN),
+    (match) => match[1] ?? match[2] ?? match[3],
+  ).filter(
     (link) => /^https?:\/\//i.test(link) && link.length <= MAX_EML_LINK_LENGTH,
   );
 

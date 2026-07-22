@@ -2,6 +2,7 @@ import {
   ANALYSIS_ENVELOPE_VERSION,
   type AnalysisEnvelope,
   type AnalysisLocale,
+  type AttachmentRiskType,
   type EmailAnalysisInput,
   type EmailLinkPair,
   type ScanSource,
@@ -22,6 +23,7 @@ export function createAnalysisEnvelope(
     ...(input.linkPairs ?? []).map((pair) => pair.destinationUrl),
   ]);
   const linkPairs = normalizeLinkPairs(input.linkPairs ?? []);
+  const attachmentRiskTypes = normalizeAttachmentRiskTypes(input.attachmentRiskTypes ?? []);
 
   return {
     version: ANALYSIS_ENVELOPE_VERSION,
@@ -32,10 +34,11 @@ export function createAnalysisEnvelope(
     body,
     links,
     linkPairs,
+    attachmentRiskTypes,
     availability: {
       subject: Boolean(subject),
       sender: Boolean(senderEmail),
-      linkDestinations: source !== "screenshot",
+      linkDestinations: source !== "screenshot" || links.length > 0,
       authenticationHeaders: false,
       textExtraction: source === "screenshot" ? "ocr" : source === "eml" ? "parsed" : "direct",
       contentComplete: input.evidenceTruncated !== true,
@@ -63,7 +66,13 @@ export function isAnalysisEnvelope(value: unknown): value is AnalysisEnvelope {
     && typeof candidate.body === "string"
     && Array.isArray(candidate.links)
     && Array.isArray(candidate.linkPairs)
+    && Array.isArray(candidate.attachmentRiskTypes)
     && Boolean(candidate.availability);
+}
+
+function normalizeAttachmentRiskTypes(types: AttachmentRiskType[]): AttachmentRiskType[] {
+  const allowed = new Set<AttachmentRiskType>(["executable", "macro_enabled", "double_extension"]);
+  return Array.from(new Set(types.filter((type) => allowed.has(type)))).sort();
 }
 
 function normalizeLocale(locale: AnalysisLocale | undefined): AnalysisLocale {

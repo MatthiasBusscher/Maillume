@@ -18,6 +18,7 @@ import {
 import {
   type AnalyzeErrorResponse,
   type AnalyzeResponse,
+  type AttachmentRiskType,
   type EmailAnalysisResult,
   type EmailLinkPair,
   MAX_SCAN_BODY_LENGTH,
@@ -27,6 +28,7 @@ import { parseEml } from "@/lib/eml/parse-eml";
 import type { Dictionary, Locale } from "@/lib/i18n/dictionary";
 import { extractTextFromImage } from "@/lib/ocr/extract-text";
 import { extractScreenshotEmailFields } from "@/lib/ocr/extract-email-fields";
+import { extractQrHttpLinksFromImage } from "@/lib/qr/extract-qr-links";
 import {
   EML_ACCEPT,
   getScreenshotDimensions,
@@ -86,6 +88,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   const [body, setBody] = useState("");
   const [links, setLinks] = useState<string[]>([]);
   const [linkPairs, setLinkPairs] = useState<EmailLinkPair[]>([]);
+  const [attachmentRiskTypes, setAttachmentRiskTypes] = useState<AttachmentRiskType[]>([]);
   const [evidenceTruncated, setEvidenceTruncated] = useState(false);
   const [result, setResult] = useState<EmailAnalysisResult | null>(null);
   const [analysisVersion, setAnalysisVersion] = useState("");
@@ -95,8 +98,8 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   const [fileName, setFileName] = useState("");
   const [fileStatus, setFileStatus] = useState("");
   const requestPayload = useMemo(
-    () => ({ source: activeMode, subject, senderEmail, body, locale, links, linkPairs, evidenceTruncated }),
-    [activeMode, body, evidenceTruncated, linkPairs, links, locale, senderEmail, subject],
+    () => ({ source: activeMode, subject, senderEmail, body, locale, links, linkPairs, attachmentRiskTypes, evidenceTruncated }),
+    [activeMode, attachmentRiskTypes, body, evidenceTruncated, linkPairs, links, locale, senderEmail, subject],
   );
   const requestSize = getSerializedRequestSize(requestPayload);
   const bodyIsTooLong = body.length > MAX_SCAN_BODY_LENGTH;
@@ -157,6 +160,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setBody(sample.body);
     setLinks([]);
     setLinkPairs([]);
+    setAttachmentRiskTypes([]);
     setEvidenceTruncated(false);
     setResult(null);
     setError("");
@@ -171,6 +175,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setBody("");
     setLinks([]);
     setLinkPairs([]);
+    setAttachmentRiskTypes([]);
     setEvidenceTruncated(false);
     setResult(null);
     setError("");
@@ -191,6 +196,9 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     }
 
     setActiveMode("screenshot");
+    setLinks([]);
+    setLinkPairs([]);
+    setAttachmentRiskTypes([]);
     setEvidenceTruncated(false);
     setResult(null);
     setError("");
@@ -216,20 +224,24 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setFileStatus(dictionary.form.extracting);
 
     try {
+      const qrLinks = await extractQrHttpLinksFromImage(file).catch(() => []);
       const extractedText = await extractTextFromImage(file);
 
-      if (!extractedText) {
+      if (!extractedText && qrLinks.length === 0) {
         setError(dictionary.form.noTextFound);
         setFileStatus("");
         return;
       }
 
-      const extracted = extractScreenshotEmailFields(extractedText);
+      const extracted = extractScreenshotEmailFields(
+        extractedText || (locale === "nl" ? "Er is een QR-code in de screenshot gevonden." : "A QR code was detected in the screenshot."),
+      );
       setSubject(extracted.subject ?? "");
       setSenderEmail(extracted.senderEmail ?? "");
       setBody(extracted.body);
-      setLinks([]);
+      setLinks(qrLinks);
       setLinkPairs([]);
+      setAttachmentRiskTypes([]);
       setEvidenceTruncated(false);
       setFileStatus(dictionary.form.extractedTextReady);
     } catch {
@@ -253,6 +265,9 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     }
 
     setActiveMode("eml");
+    setLinks([]);
+    setLinkPairs([]);
+    setAttachmentRiskTypes([]);
     setEvidenceTruncated(false);
     setResult(null);
     setError("");
@@ -287,6 +302,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
       setBody(parsed.body);
       setLinks(parsed.links);
       setLinkPairs(parsed.linkPairs);
+      setAttachmentRiskTypes(parsed.attachmentRiskTypes);
       setEvidenceTruncated(parsed.evidenceTruncated);
       setFileStatus(dictionary.form.parsedEmlReady);
     } catch {

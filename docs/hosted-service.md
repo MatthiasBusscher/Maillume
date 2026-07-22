@@ -46,7 +46,7 @@ flowchart LR
   H -. "discard after response" .-> K
 ```
 
-Screenshot OCR and `.eml` parsing happen in the browser. The hosted API receives normalized subject, sender, and body text, not the original file. Hosted AI mode transmits that normalized text to the selected provider only after authentication and a successful quota reservation.
+Screenshot OCR, QR decoding, and `.eml` parsing happen in the browser. The hosted API receives normalized subject, sender, body text, links, and coarse attachment-risk categories—not the original file, attachment filenames, or attachment contents. QR destinations are not fetched. Hosted AI mode transmits the normalized request to the selected provider only after authentication and a successful quota reservation.
 
 ### Data Inventory
 

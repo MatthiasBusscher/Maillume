@@ -16,6 +16,8 @@ assert.equal(request.properties.links.items.pattern, "^[Hh][Tt][Tt][Pp][Ss]?://"
 assert.equal(request.properties.linkPairs.maxItems, 20);
 assert.equal(request.properties.linkPairs.items.properties.displayedUrl.maxLength, 2_048);
 assert.equal(request.properties.linkPairs.items.properties.destinationUrl.maxLength, 2_048);
+assert.equal(request.properties.attachmentRiskTypes.maxItems, 3);
+assert.deepEqual(request.properties.attachmentRiskTypes.items.enum, ["executable", "macro_enabled", "double_extension"]);
 assert.deepEqual(response.required, [
   "result",
   "analysis_mode",
@@ -24,7 +26,7 @@ assert.deepEqual(response.required, [
   "disclaimer",
   "privacy",
 ]);
-assert.equal(response.properties.analysis_version.const, "analysis-v4");
+assert.equal(response.properties.analysis_version.const, "analysis-v6");
 assert.equal(response.properties.privacy.properties.stored.const, false);
 
 console.log("OpenAPI integration request limits and analysis privacy envelope passed.");

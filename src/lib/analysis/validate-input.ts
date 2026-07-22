@@ -1,5 +1,6 @@
 import {
   MAX_SCAN_BODY_LENGTH,
+  type AttachmentRiskType,
   type AnalysisLocale,
   type EmailLinkPair,
   type NormalizedScanInput,
@@ -19,6 +20,9 @@ type ValidationResult =
 
 const SOURCES = new Set<ScanSource>(["paste", "screenshot", "eml", "chrome"]);
 const LOCALES = new Set<AnalysisLocale>(["en", "nl"]);
+const ATTACHMENT_RISK_TYPES = new Set<AttachmentRiskType>([
+  "executable", "macro_enabled", "double_extension",
+]);
 
 export function validateAnalyzeRequest(payload: unknown): ValidationResult {
   if (!payload || typeof payload !== "object") {
@@ -30,7 +34,7 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
 
   const data = payload as Record<string, unknown>;
   const unsupportedFields = Object.keys(data).filter(
-    (field) => !["source", "subject", "senderEmail", "body", "locale", "links", "linkPairs", "evidenceTruncated"].includes(field),
+    (field) => !["source", "subject", "senderEmail", "body", "locale", "links", "linkPairs", "attachmentRiskTypes", "evidenceTruncated"].includes(field),
   );
   if (unsupportedFields.length > 0) {
     return { ok: false, error: "Request contains unsupported fields." };
@@ -42,6 +46,7 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
   const locale = data.locale;
   const links = normalizeLinks(data.links);
   const linkPairs = normalizeLinkPairs(data.linkPairs);
+  const attachmentRiskTypes = normalizeAttachmentRiskTypes(data.attachmentRiskTypes);
   const evidenceTruncated = data.evidenceTruncated;
   const fieldErrors: Partial<Record<keyof NormalizedScanInput, string>> = {};
 
@@ -75,6 +80,10 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
     fieldErrors.links = "Link metadata is invalid.";
   }
 
+  if (data.attachmentRiskTypes !== undefined && !attachmentRiskTypes) {
+    fieldErrors.attachmentRiskTypes = "Attachment risk metadata is invalid.";
+  }
+
   if (evidenceTruncated !== undefined && typeof evidenceTruncated !== "boolean") {
     fieldErrors.evidenceTruncated = "Evidence completeness metadata is invalid.";
   }
@@ -97,9 +106,22 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
       body,
       links: links ?? undefined,
       linkPairs: linkPairs ?? undefined,
+      attachmentRiskTypes: attachmentRiskTypes ?? undefined,
       evidenceTruncated: evidenceTruncated === true,
     },
   };
+}
+
+function normalizeAttachmentRiskTypes(value: unknown): AttachmentRiskType[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > ATTACHMENT_RISK_TYPES.size) return null;
+
+  const types: AttachmentRiskType[] = [];
+  for (const item of value) {
+    if (typeof item !== "string" || !ATTACHMENT_RISK_TYPES.has(item as AttachmentRiskType)) return null;
+    types.push(item as AttachmentRiskType);
+  }
+  return Array.from(new Set(types)).sort();
 }
 
 function normalizeLinks(value: unknown): string[] | null {
