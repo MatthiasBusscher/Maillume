@@ -4,9 +4,10 @@ const captureHandoffs = new Map();
 let captureStorageQueue = Promise.resolve();
 
 disableGlobalPanel();
+restrictLocalStorageAccess();
 
-chrome.runtime.onInstalled.addListener(disableGlobalPanel);
-chrome.runtime.onStartup.addListener(disableGlobalPanel);
+chrome.runtime.onInstalled.addListener(() => { disableGlobalPanel(); restrictLocalStorageAccess(); });
+chrome.runtime.onStartup.addListener(() => { disableGlobalPanel(); restrictLocalStorageAccess(); });
 chrome.action.onClicked.addListener(handleToolbarAction);
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -23,12 +24,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return undefined;
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status !== "loading" && typeof changeInfo.url !== "string") return;
-  clearCapture(tabId);
+  await clearCapture(tabId);
   notifyPanel("capture-cleared", tabId);
   if (changeInfo.status === "loading") {
-    chrome.sidePanel.setOptions({ tabId, enabled: false }).catch(() => {});
+    const nextUrl = changeInfo.url || tab?.url;
+    const keepPanelOpen = isSupportedWebmailPage(nextUrl);
+    chrome.sidePanel.setOptions(keepPanelOpen
+      ? { tabId, path: "sidepanel.html", enabled: true }
+      : { tabId, enabled: false }).catch(() => {});
   }
 });
 
@@ -38,6 +43,27 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 
 function disableGlobalPanel() {
   chrome.sidePanel.setOptions({ enabled: false }).catch(() => {});
+}
+
+function restrictLocalStorageAccess() {
+  chrome.storage?.local?.setAccessLevel?.({ accessLevel: "TRUSTED_CONTEXTS" }).catch(() => {});
+}
+
+function isSupportedWebmailPage(value) {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.toLowerCase();
+    if (hostname === "mail.google.com") return true;
+    return [
+      "outlook.live.com",
+      "outlook.office.com",
+      "outlook.office365.com",
+      "outlook.cloud.microsoft",
+    ].includes(hostname) && /^\/mail(?:\/|$)/i.test(url.pathname);
+  } catch {
+    return false;
+  }
 }
 
 async function handleToolbarAction(tab) {
@@ -204,21 +230,19 @@ function readSelectionFromFrame() {
     return activeBonus + (visibleWidth * visibleHeight) - centerDistance;
   };
   const collectCandidates = (selectors) => {
-    const seen = new Set();
-    const candidates = [];
-    selectors.forEach((selector, priority) => {
+    for (const selector of selectors) {
+      const candidates = [];
       document.querySelectorAll(selector).forEach((element) => {
-        if (seen.has(element) || !isVisible(element)) return;
+        if (!isVisible(element)) return;
         const text = elementText(element);
         if (!text) return;
-        seen.add(element);
-        candidates.push({ element, text, priority: selectors.length - priority, viewportScore: viewportScore(element) });
+        candidates.push({ element, text, viewportScore: viewportScore(element) });
       });
-    });
-    return candidates.sort((left, right) => {
-      if (left.priority !== right.priority) return right.priority - left.priority;
-      return right.viewportScore - left.viewportScore;
-    });
+      if (candidates.length > 0) {
+        return candidates.sort((left, right) => right.viewportScore - left.viewportScore);
+      }
+    }
+    return [];
   };
   const selectUnambiguousCandidate = (candidates) => {
     if (candidates.length === 0) return null;

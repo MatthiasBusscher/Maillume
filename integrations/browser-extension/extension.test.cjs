@@ -44,6 +44,7 @@ function createWorkerContext(sessionStorage = createSessionStorage()) {
     installed: event(), startup: event(), message: event(), action: event(), updated: event(), removed: event(),
   };
   let frameResults = [];
+  const panelOptions = [];
   let captureSequence = 0;
   const context = {
     crypto: { randomUUID: () => `capture-${++captureSequence}` },
@@ -60,7 +61,7 @@ function createWorkerContext(sessionStorage = createSessionStorage()) {
         onRemoved: events.removed,
         get: async (tabId) => ({ id: tabId, url: "https://mail.google.com/mail/u/0/#inbox/thread" }),
       },
-      sidePanel: { setOptions: async () => {}, open: async () => {} },
+      sidePanel: { setOptions: async (options) => { panelOptions.push(options); }, open: async () => {} },
       scripting: { executeScript: async () => frameResults },
       storage: { session: sessionStorage },
     },
@@ -71,11 +72,12 @@ function createWorkerContext(sessionStorage = createSessionStorage()) {
     Promise,
     Set,
     String,
+    URL,
     setTimeout: () => 1,
   };
   vm.createContext(context);
   vm.runInContext(fs.readFileSync(path.join(extensionDir, "service-worker.js"), "utf8"), context);
-  return { context, events, setFrameResults(value) { frameResults = value; } };
+  return { context, events, panelOptions, setFrameResults(value) { frameResults = value; } };
 }
 
 async function testCapturePriorityAndMetadata() {
@@ -106,7 +108,7 @@ async function testCapturePriorityAndMetadata() {
     sender: "next@example.com",
     captureId: "capture-2",
   });
-  worker.events.updated.listener(10, { url: "https://mail.google.com/mail/u/0/#inbox/next" });
+  await worker.events.updated.listener(10, { url: "https://mail.google.com/mail/u/0/#inbox/next" });
   assert.deepEqual(
     plain(await worker.context.consumeCapture(10)),
     { status: "error", code: "handoff_missing" },
@@ -125,6 +127,33 @@ async function testCapturePriorityAndMetadata() {
     sender: "sender@example.com",
     captureId: "capture-3",
   });
+
+  worker.setFrameResults([
+    { frameId: 0, result: { text: "Outlook message before navigation", source: "open_message", focused: true } },
+  ]);
+  await worker.events.action.listener({ id: 11, url: "https://outlook.office.com/mail/inbox/id/first" });
+  await worker.events.updated.listener(
+    11,
+    { status: "loading", url: "https://outlook.office.com/mail/inbox/id/second" },
+    { id: 11, url: "https://outlook.office.com/mail/inbox/id/second" },
+  );
+  assert.deepEqual(plain(worker.panelOptions.at(-1)), {
+    tabId: 11,
+    path: "sidepanel.html",
+    enabled: true,
+  }, "Outlook message navigation must keep the tab-specific side panel enabled");
+  assert.deepEqual(
+    plain(await worker.context.consumeCapture(11)),
+    { status: "error", code: "handoff_missing" },
+    "Outlook navigation must clear the previous message while keeping the panel open",
+  );
+
+  await worker.events.updated.listener(
+    11,
+    { status: "loading", url: "https://outlook.office.com/calendar/view/week" },
+    { id: 11, url: "https://outlook.office.com/calendar/view/week" },
+  );
+  assert.deepEqual(plain(worker.panelOptions.at(-1)), { tabId: 11, enabled: false }, "leaving Outlook mail must disable the panel");
 }
 
 async function testCaptureRecoversAfterWorkerRestart() {
@@ -295,6 +324,29 @@ function testOpenMessageExtractors() {
     viewportScore: 206850,
   });
 
+  const outlookGenericWrapper = fakeElement({ innerText: "Please review this Outlook message." });
+  context.document.querySelectorAll = (selector) => {
+    if (selector === "[data-testid='message-body']") return [outlookBody];
+    if (selector === "[role='document']" || selector === ".allowTextSelection") return [outlookGenericWrapper];
+    return [];
+  };
+  assert.equal(
+    plain(context.readSelectionFromFrame()).text,
+    "Please review this Outlook message.",
+    "nested fallback containers for one Outlook message must not be treated as multiple expanded messages",
+  );
+
+  const secondOutlookBody = fakeElement({ innerText: "A genuinely second expanded Outlook message." });
+  context.document.querySelectorAll = (selector) => selector === "[data-testid='message-body']"
+    ? [outlookBody, secondOutlookBody]
+    : [];
+  assert.deepEqual(plain(context.readSelectionFromFrame()), {
+    text: "",
+    source: "window",
+    focused: true,
+    errorCode: "multiple_messages",
+  });
+
   context.window = { getSelection: () => ({ toString: () => "Only analyze this sentence" }) };
   assert.deepEqual(plain(context.readSelectionFromFrame()), {
     text: "Only analyze this sentence",
@@ -345,8 +397,10 @@ function createPanelElement() {
   const attributes = new Map();
   return {
     value: "",
+    checked: false,
     disabled: false,
     hidden: false,
+    type: "password",
     textContent: "",
     dataset: {},
     style: {},
@@ -360,8 +414,13 @@ function createPanelElement() {
 
 async function testPanelSendsCapturedLinkMetadata() {
   const runtime = event();
-  const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"];
+  const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"];
   const elements = new Map(ids.map((id) => [id, createPanelElement()]));
+  const localStorage = { endpoint: "https://app.maillume.io" };
+  const sessionStorage = { apiKey: `mlm_${"a".repeat(43)}` };
+  const getStored = (storage, keys) => Object.fromEntries(keys.filter((key) => storage[key] !== undefined).map((key) => [key, storage[key]]));
+  const setStored = async (storage, values) => { Object.assign(storage, values); };
+  const removeStored = async (storage, keys) => { keys.forEach((key) => { delete storage[key]; }); };
   const responses = [
     {
       status: "success",
@@ -408,8 +467,8 @@ async function testPanelSendsCapturedLinkMetadata() {
       i18n: { getUILanguage: () => "en-US" },
       runtime: { onMessage: runtime, sendMessage: async () => responses.shift() },
       storage: {
-        local: { get: async () => ({ endpoint: "https://app.maillume.io" }), set: async () => {}, remove: async () => {} },
-        session: { get: async () => ({ apiKey: `mlm_${"a".repeat(43)}` }), set: async () => {}, remove: async () => {} },
+        local: { get: async (keys) => getStored(localStorage, keys), set: async (values) => setStored(localStorage, values), remove: async (keys) => removeStored(localStorage, keys) },
+        session: { get: async (keys) => getStored(sessionStorage, keys), set: async (values) => setStored(sessionStorage, values), remove: async (keys) => removeStored(sessionStorage, keys) },
       },
       permissions: { request: async () => permissionGranted, remove: async () => true },
       tabs: { query: async () => [{ id: 22 }] },
@@ -438,10 +497,21 @@ async function testPanelSendsCapturedLinkMetadata() {
   await new Promise((resolve) => setTimeout(resolve, 100));
   await flush();
   assert.equal(elements.get("body").value, "Captured once");
+  assert.equal(elements.get("rememberApiKey").checked, false, "an existing session-only key must remain session-only until the user opts in");
+  await elements.get("apiKeyVisibility").dispatch("click");
+  assert.equal(elements.get("apiKey").type, "text");
+  assert.equal(elements.get("apiKeyVisibility").getAttribute("aria-pressed"), "true");
+  await elements.get("apiKeyVisibility").dispatch("click");
+  assert.equal(elements.get("apiKey").type, "password");
   permissionGranted = false;
   await elements.get("save").dispatch("click");
   assert.equal(elements.get("status").textContent, "Chrome did not grant access to that deployment.");
   permissionGranted = true;
+  elements.get("rememberApiKey").checked = true;
+  await elements.get("save").dispatch("click");
+  assert.equal(localStorage.apiKey, `mlm_${"a".repeat(43)}`);
+  assert.equal(sessionStorage.apiKey, undefined);
+  assert.equal(elements.get("status").textContent, "Deployment and API key saved in this Chrome profile for restarts and updates.");
   await elements.get("captureHelpToggle").dispatch("click");
   assert.equal(elements.get("captureHelp").hidden, true);
   assert.equal(elements.get("captureHelpToggle").textContent, "Show instructions");
@@ -478,7 +548,7 @@ async function testPanelSendsCapturedLinkMetadata() {
   responsePayload = { ...validResponse, analysis_version: "analysis-v2.0" };
   await elements.get("analyze").dispatch("click");
   assert.equal(elements.get("result").hidden, true, "the panel must reject an invalid API envelope");
-  assert.equal(elements.get("status").textContent, "The deployment returned an invalid analysis response.");
+  assert.equal(elements.get("status").textContent, "The extension and deployment use different analysis versions. Update the extension from the official source, then reload it in chrome://extensions.");
 
   runtime.listener({ type: "capture-ready", tabId: 22, captureId: "capture-7" });
   await flush();

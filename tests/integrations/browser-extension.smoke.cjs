@@ -129,6 +129,19 @@ async function run() {
     assert.equal(await panelPage.locator("#capture").textContent(), "Use current message");
     const recoveredBody = await waitForPanelBody(panelPage, "Window selection text");
     assert.equal(recoveredBody, "Window selection text");
+
+    const rememberedKey = `mlm_${"r".repeat(43)}`;
+    await panelPage.evaluate(async (apiKey) => {
+      await chrome.storage.local.set({ apiKey });
+      await chrome.storage.session.remove(["apiKey"]);
+    }, rememberedKey);
+    await panelPage.reload();
+    assert.equal(await panelPage.locator("#apiKey").inputValue(), rememberedKey);
+    assert.equal(await panelPage.locator("#rememberApiKey").isChecked(), true);
+    await panelPage.locator("summary").click();
+    await panelPage.locator("#apiKeyVisibility").click();
+    assert.equal(await panelPage.locator("#apiKey").getAttribute("type"), "text");
+    assert.equal(await panelPage.locator("#apiKeyVisibility").getAttribute("aria-pressed"), "true");
     await panelPage.locator("#reviewStep").evaluate((element) => { element.hidden = true; });
     assert.equal(await panelPage.locator("#reviewStep").isHidden(), true, "the review step must collapse after analysis");
 
@@ -138,7 +151,7 @@ async function run() {
     fs.rmSync(userDataDir, { force: true, recursive: true });
   }
 
-  console.log("Captured framed-input and window selections and verified the in-panel recapture action in Playwright Chromium.");
+  console.log("Captured selections and verified in-panel recapture plus remembered-key visibility in Playwright Chromium.");
 }
 
 async function waitForPanelBody(panelPage, expectedBody) {

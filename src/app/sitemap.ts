@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
 
-const publicRoutes = ["", "/platform", "/pricing", "/privacy", "/resources/odido-phishing-incident", "/security", "/self-hosted", "/terms"];
+const publicRoutes = ["", "/chrome-extension", "/platform", "/pricing", "/privacy", "/resources/odido-phishing-incident", "/security", "/self-hosted", "/terms"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_MARKETING_URL?.replace(/\/$/, "") || "https://maillume.io";
-  const lastModified = new Date("2026-07-10T00:00:00.000Z");
+  const lastModified = new Date("2026-07-22T00:00:00.000Z");
 
   return publicRoutes.flatMap((route) => {
     const englishUrl = `${baseUrl}${route}`;

@@ -22,6 +22,13 @@ p, label { color: #4f5b50; font-size: 13px; line-height: 1.5; }
 .fields { display: grid; gap: 12px; }
 label { display: grid; gap: 5px; font: 10px ui-monospace, monospace; text-transform: uppercase; }
 input, textarea { width: 100%; border: 1px solid #aeb6ac; border-radius: 0; background: white; padding: 9px; color: #111711; font: 13px Inter, ui-sans-serif, sans-serif; text-transform: none; }
+.secret-field { display: grid; grid-template-columns: minmax(0, 1fr) 42px; }
+.secret-field input { border-right: 0; }
+.icon-button { display: grid; width: 42px; padding: 0; place-items: center; border-color: #aeb6ac; background: white; color: #111711; }
+.eye-icon { width: 18px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.icon-button[aria-pressed="false"] .eye-slash { display: none; }
+.remember-key { display: flex; align-items: center; gap: 8px; color: #374238; font: 12px Inter, ui-sans-serif, sans-serif; text-transform: none; }
+.remember-key input { width: 16px; height: 16px; padding: 0; accent-color: #087b72; }
 textarea { resize: vertical; }
 button { width: 100%; border: 1px solid #111711; border-radius: 0; background: #111711; color: white; padding: 11px 12px; font-weight: 700; cursor: pointer; }
 button:hover { background: #087b72; }

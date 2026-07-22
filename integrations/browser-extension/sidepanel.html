@@ -61,10 +61,18 @@
         <summary data-nl="Verbindingsinstellingen">Connection settings</summary>
         <div class="settings fields">
           <label><span data-nl="Maillume-omgeving">Maillume deployment</span> <input id="endpoint" type="url" value="https://app.maillume.io" /></label>
-          <label><span data-nl="API-sleutel">API key</span> <input id="apiKey" type="password" autocomplete="off" placeholder="mlm_..." /></label>
+          <label><span data-nl="API-sleutel">API key</span>
+            <span class="secret-field">
+              <input id="apiKey" type="password" autocomplete="off" placeholder="mlm_..." />
+              <button id="apiKeyVisibility" type="button" class="icon-button" aria-label="Show API key" data-nl-aria-label="API-sleutel tonen" aria-pressed="false">
+                <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m4 4 16 16"/></svg>
+              </button>
+            </span>
+          </label>
+          <label class="remember-key"><input id="rememberApiKey" type="checkbox" checked /> <span data-nl="API-sleutel op dit apparaat onthouden">Remember API key on this device</span></label>
           <button id="save" type="button" class="secondary" data-nl="Verbinding opslaan">Save connection</button>
           <button id="reset" type="button" class="danger" data-nl="Verbinding verwijderen">Remove connection</button>
-          <p class="small" data-nl="De URL van de Maillume-omgeving blijft lokaal opgeslagen. De API-sleutel blijft alleen tijdens deze browsersessie beschikbaar. Berichtinhoud en resultaten worden niet opgeslagen.">The deployment URL remains in local extension storage. The API key is available only for this browser session. Message content and results are not stored.</p>
+          <p class="small" data-nl="De URL van de Maillume-omgeving wordt lokaal opgeslagen. Als onthouden is ingeschakeld, blijft de API-sleutel in de lokale extensieopslag van dit Chrome-profiel staan voor herstarts en updates. Schakel dit uit voor opslag alleen tijdens de browsersessie. Berichtinhoud en resultaten worden nooit opgeslagen.">The deployment URL is stored locally. When remember is enabled, the API key remains in this Chrome profile's local extension storage across restarts and updates. Turn it off for browser-session-only storage. Message content and results are never stored.</p>
         </div>
       </details>
 

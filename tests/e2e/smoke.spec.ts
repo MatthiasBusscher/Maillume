@@ -420,6 +420,7 @@ test("launch metadata and generated assets are available", async ({ page, reques
   expect(await robotsResponse.text()).toContain("Disallow: /app");
   expect(sitemapResponse.ok()).toBe(true);
   expect(await sitemapResponse.text()).toContain("/self-hosted");
+  expect(await sitemapResponse.text()).toContain("/chrome-extension");
 
   const sourceLinks = page.getByRole("link", { name: "Source", exact: true });
   await expect(sourceLinks.first()).toHaveAttribute(
@@ -529,6 +530,17 @@ test("marketing routes accurately distinguish available and manual-beta features
   await expect(page.getByText("Optional", { exact: true })).toBeVisible();
   await expect(page.getByText("Manual beta", { exact: true })).toHaveCount(2);
   await expect(page.getByText("Later", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Installation guide" })).toHaveAttribute("href", "/chrome-extension");
+
+  await page.goto("/chrome-extension");
+  await expect(page.getByRole("heading", { name: "Check suspicious email where you already read it." })).toBeVisible();
+  await expect(page.getByText("Manual installation only", { exact: true })).toBeVisible();
+  await expect(page.getByText("Chrome Web Store submission pending", { exact: true })).toBeVisible();
+
+  await page.goto("/nl/chrome-extension");
+  await expect(page.getByRole("heading", { name: "Controleer verdachte e-mail waar je die al leest." })).toBeVisible();
+  await expect(page.getByText("Alleen handmatig te installeren", { exact: true })).toBeVisible();
+  await expect(page.getByText("Inzending bij de Chrome Web Store moet nog plaatsvinden", { exact: true })).toBeVisible();
 });
 
 test("public beta hides accounts and rejects account APIs before request processing", async ({ page, request }) => {
@@ -773,6 +785,7 @@ test("primary pages fit mobile and desktop viewports without horizontal overflow
       "/",
       "/app",
       "/platform",
+      "/chrome-extension",
       "/pricing",
       "/auth/sign-in",
       "/resources/odido-phishing-incident",
