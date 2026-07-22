@@ -28,6 +28,13 @@ export function localizePath(pathname: string, locale: SiteLocale): string {
   return normalized === "/" ? `/${locale}` : `/${locale}${normalized}`;
 }
 
+export function localizeHref(href: string, locale: SiteLocale): string {
+  if (href.startsWith("/")) return localizePath(href, locale);
+  const url = new URL(href);
+  url.pathname = localizePath(url.pathname || "/", locale);
+  return url.toString();
+}
+
 export function getVerifiedInternalPathname(
   resolvedPathname: string,
   internalPathname: string | null,

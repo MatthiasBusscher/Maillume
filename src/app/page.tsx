@@ -20,7 +20,7 @@ import { getAppHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
 import { homeNl } from "@/lib/i18n/marketing-pages";
 import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
-import { localizePath } from "@/lib/i18n/site-locale";
+import { localizeHref, localizePath } from "@/lib/i18n/site-locale";
 
 const capabilityRows = [
   {
@@ -47,8 +47,8 @@ const capabilityRows = [
 ];
 
 export default async function MarketingHomePage() {
-  const appHref = getAppHref();
   const locale = await getRequestSiteLocale();
+  const appHref = localizeHref(getAppHref(), locale);
   const copy = locale === "nl" ? homeNl : {};
 
   return translateMarketingTree((
