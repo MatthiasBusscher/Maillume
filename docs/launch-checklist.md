@@ -8,8 +8,8 @@
 - [x] No email text, screenshot, `.eml`, OCR output, link, prompt, or result appears in application storage, logs, monitoring, or feedback under the scoped zero-retention acceptance in issue #47.
 - [x] The `.eml` parser decision in `docs/adr/0001-eml-parser.md` remains within its review deadline, or a reviewed replacement/renewal is recorded.
 - [x] The automated-assessment disclaimer remains visible.
-- [ ] The launch sign-off links to the production security evidence in issue #47.
-- [x] The release record follows `docs/production-security-evidence.md`, including rate-limit, zero-retention, origin, scan, SBOM, and rollback evidence. Public provenance remains a repository-public release step.
+- [x] The founder launch decision links to the production security evidence and explicit independent-sign-off waiver in issue #47.
+- [x] The release record follows `docs/production-security-evidence.md`, including rate-limit, zero-retention, origin, scan, SBOM, rollback, and public provenance evidence.
 
 ## Infrastructure
 
@@ -25,23 +25,25 @@
 
 - [x] Supabase production migrations and RLS are verified.
 - [x] Email confirmation/recovery and Google OAuth permit only production callbacks; branded SMTP is active.
-- [ ] Google OAuth branding identifies Maillume and `maillume.io` ownership is verified; the `auth.maillume.io` cost decision is recorded.
+- [x] The founder deferred free Google OAuth branding/domain verification and separately deferred the paid optional `auth.maillume.io` Supabase custom domain; the known consent/security-message limitation is disclosed in the beta release.
 - [x] TOTP enrollment, AAL2 challenge, factor removal, new-session behavior, and account deletion pass in production.
 - [x] Passkeys remain disabled or the documented real-device beta matrix and rollback have passed.
 - [x] API-key creation, one-time display, revocation, quota exhaustion, and account-deletion cascade pass against production Supabase.
 - [x] Uptime alerts reach the operator without including scan content; VPS resource alerts use the time-bounded beta acceptance in issue #47.
 - [x] DDoS, credential rotation, rollback, and compromised-host runbooks are rehearsed.
 - [x] The private credential register is reviewed using `docs/credential-management.md`; no credentials appear in repository files, issues, or release evidence.
-- [ ] A small invited beta completes successfully before broad anonymous traffic is announced.
+- [x] The founder replaced the pre-launch invited-beta gate with monitored post-launch beta observation beginning 22 July 2026 and will address critical tester findings immediately.
 
 ## Last Deployed Baseline
 
-- Commit: `41cef3b5452cdb30f0972a9195eb82066eedaabd`
-- Build: GitHub Actions run `29898275462`
-- Deployment: GitHub Actions run `29898997528`
+- Release: `v0.1.0-beta`
+- Commit: `cdc05cdfdd0650ed926ec7950e292914d9bf4487`
+- Container: `ghcr.io/matthiasbusscher/maillume@sha256:384492facd1d24bb1aa3fb944b251f523432b87fb8bfb53844f132d5fea022d0`
+- Build: GitHub Actions run `29901267974`
+- Deployment: GitHub Actions run `29902308597`
 - Runtime: `/api/health` reports the commit above and `analysis-v4`
-- Runtime audit: GitHub Actions run `29900139827` passed the synthetic no-store probe plus VPS isolation, resource, credential, port, and zero-retention checks.
-- Remaining human gates: Google OAuth branding confirmation, independent issue #47 sign-off, separate-account issue #93 acceptance tests, five trusted testers, and the monitored 24-48 hour invited beta.
+- Runtime audit: GitHub Actions run `29902566050` passed the synthetic no-store probe plus VPS isolation, resource, credential, port, and zero-retention checks.
+- Founder waivers: independent second-person production sign-off, separate-account GitHub acceptance tests, Google OAuth branding verification, and the pre-launch five-person/24-48-hour soft launch were waived rather than marked as passed. Issues #40, #47, #93, and the prerelease notes contain the decision and residual-risk record.
 
 ## Public Repository
 
@@ -52,6 +54,7 @@
 - [x] Secret scanning, push protection, Dependabot security updates, private vulnerability reporting, and CodeQL default setup are enabled.
 - [x] Production deployment remains main-only, requires explicit review, and does not allow administrator bypass.
 - [x] Public pull requests prove required-check enforcement; the public release workflow publishes immutable image provenance.
+- [x] Protected tag `v0.1.0-beta` points to the deployed commit and its public prerelease discloses integration status, known limitations, and founder waivers.
 
 ## Chrome Manual Beta
 
