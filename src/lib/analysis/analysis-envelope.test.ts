@@ -15,6 +15,7 @@ const envelope = createAnalysisEnvelope({
       destinationUrl: "https://login.example.test/session#hidden",
     },
   ],
+  attachmentRiskTypes: ["macro_enabled", "executable", "macro_enabled"],
 }, "eml");
 
 assert.equal(envelope.version, ANALYSIS_ENVELOPE_VERSION);
@@ -31,6 +32,7 @@ assert.deepEqual(envelope.linkPairs, [
     destinationUrl: "https://login.example.test/session",
   },
 ]);
+assert.deepEqual(envelope.attachmentRiskTypes, ["executable", "macro_enabled"]);
 assert.deepEqual(envelope.availability, {
   subject: true,
   sender: true,
@@ -45,6 +47,11 @@ const screenshot = createAnalysisEnvelope({ body: "Ordinary project update." }, 
 assert.equal(screenshot.availability.sender, false);
 assert.equal(screenshot.availability.linkDestinations, false);
 assert.equal(screenshot.availability.textExtraction, "ocr");
+const screenshotWithQr = createAnalysisEnvelope({
+  body: "Open the portal shown in the QR code.",
+  links: ["https://qr.example.test/login"],
+}, "screenshot");
+assert.equal(screenshotWithQr.availability.linkDestinations, true);
 
 const truncatedEml = createAnalysisEnvelope({
   body: "Incomplete parsed message.",

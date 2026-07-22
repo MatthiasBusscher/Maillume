@@ -149,6 +149,15 @@ assert.ok(
   "Bare displayed domains must be compared with their link destination",
 );
 
+const unquotedHrefMismatch = analyzeEmailHeuristic({
+  senderEmail: "security@vendor.example",
+  body: '<a href=https://credential-capture.example/login>vendor.example/security</a>',
+});
+assert.ok(
+  unquotedHrefMismatch.score_factors.some((factor) => factor.id === "link_mismatch"),
+  "Valid unquoted href attributes must preserve displayed-link mismatch evidence",
+);
+
 const mfaNegationBypass = analyzeEmailHeuristic({
   senderEmail: "security@account-notice.example",
   body: "Never approve an MFA login you did not request. Approve the MFA login request immediately to prevent suspension.",
@@ -219,6 +228,64 @@ for (const result of hiddenUnicodeCredentialLures) {
   assert.notEqual(result.risk_level, "low", "Invisible separators must not hide credential requests");
 }
 
+const credentialMentionHardNegatives = [
+  analyzeEmailHeuristic({
+    locale: "en",
+    senderEmail: "security@service.example",
+    body: "Your password was changed successfully. No action is needed. Review recent activity at https://security.service.example/activity.",
+  }),
+  analyzeEmailHeuristic({
+    locale: "en",
+    senderEmail: "training@company.example",
+    body: "Never share your password or credentials with anyone. Read the security policy at https://intranet.company.example/security.",
+  }),
+  analyzeEmailHeuristic({
+    locale: "nl",
+    senderEmail: "beveiliging@dienst.example",
+    body: "Uw wachtwoord is succesvol gewijzigd. U hoeft niets te doen. Bekijk recente activiteit via https://beveiliging.dienst.example/activiteit.",
+  }),
+  analyzeEmailHeuristic({
+    locale: "nl",
+    senderEmail: "training@bedrijf.example",
+    body: "Deel uw wachtwoord of inloggegevens nooit met anderen. Lees het beveiligingsbeleid via https://intranet.bedrijf.example/beveiliging.",
+  }),
+];
+for (const result of credentialMentionHardNegatives) {
+  assert.ok(
+    !result.score_factors.some((factor) => factor.id === "credential_request"),
+    "A credential mention, confirmation, or safety warning is not a credential request",
+  );
+  assert.equal(result.risk_level, "low", "Routine credential notices with first-party links should stay low risk");
+}
+
+const uwvConfirmationWithoutButton = analyzeEmailHeuristic({
+  locale: "nl",
+  body: "Beste relatie, namens UWV vragen wij u vriendelijk om uw gegevens te controleren en te bevestigen om uw account veilig te houden.",
+});
+assert.notEqual(
+  uwvConfirmationWithoutButton.risk_level,
+  "low",
+  "The core UWV verification wording must remain detectable when screenshot OCR misses the button",
+);
+
+const digitSubstitutionLookalikes = [
+  analyzeEmailHeuristic({
+    senderEmail: "security@paypa1-alert.example",
+    body: "Verify your PayPal account immediately to keep access.",
+  }),
+  analyzeEmailHeuristic({
+    senderEmail: "security@micros0ft-login.example",
+    body: "Sign in here now to restore your Microsoft mailbox.",
+  }),
+];
+for (const result of digitSubstitutionLookalikes) {
+  assert.ok(
+    result.score_factors.some((factor) => factor.id === "brand_lookalike_sender"),
+    "Common digit substitutions in brand sender domains must be detected",
+  );
+  assert.notEqual(result.risk_level, "low");
+}
+
 const insufficientContext = analyzeEmailHeuristic({ body: "Can you take a look?" });
 assert.equal(insufficientContext.risk_level, "low");
 assert.equal(insufficientContext.classification, "uncertain");
@@ -230,7 +297,47 @@ const noWarningSignals = analyzeEmailHeuristic({
 assert.equal(noWarningSignals.risk_score, 0);
 assert.equal(noWarningSignals.classification, "likely_legitimate");
 
-for (const result of [dutchResult, dutchRenewalFraud, strongSingleFamilySpam, sameFamilyAttackChain, weakSignalsRemainLow, supportTicketBackscatter, hostedStorageLure, structuralUrlRegression, brandSubstringRegression, redirectRegression, changedPaymentDetails, ...deliveryFeeLures, legitimateDeliveryUpdate, ...oauthConsentLures, ...hiddenUnicodeCredentialLures, insufficientContext, noWarningSignals]) {
+const dangerousAttachment = analyzeEmailHeuristic({
+  body: "Open the attachment immediately to review the document.",
+  attachmentRiskTypes: ["executable", "double_extension"],
+});
+assert.equal(dangerousAttachment.classification, "likely_phishing");
+assert.notEqual(dangerousAttachment.risk_level, "low");
+assert.ok(dangerousAttachment.score_factors.some((factor) => factor.id === "dangerous_attachment"));
+
+const macroOnlyAttachment = analyzeEmailHeuristic({
+  senderEmail: "colleague@example.test",
+  body: "Here are the quarterly notes we discussed during today's meeting.",
+  attachmentRiskTypes: ["macro_enabled"],
+});
+assert.equal(macroOnlyAttachment.risk_level, "low");
+assert.equal(macroOnlyAttachment.classification, "uncertain");
+
+const maillumeFirstPartyMessages = [
+  analyzeEmailHeuristic({
+    senderEmail: "accounts@maillume.example",
+    body: "Welcome to Maillume. Confirm this email address to activate your account and use protected account features. This link expires in 60 minutes. If you did not create an account, ignore this email.",
+    links: ["https://app.maillume.example/auth/confirm"],
+  }),
+  analyzeEmailHeuristic({
+    senderEmail: "accounts@maillume.example",
+    body: "Use the button below to sign in to Maillume. No password required. This one-time link and code expire in 60 minutes. If you did not request this, ignore this email.",
+    links: ["https://app.maillume.example/auth/magic"],
+  }),
+  analyzeEmailHeuristic({
+    senderEmail: "accounts@maillume.example",
+    body: "Someone requested a password reset for your Maillume account. Choose a new password using the button below. If you did not request a reset, your password is unchanged.",
+    links: ["https://app.maillume.example/auth/recovery"],
+  }),
+];
+for (const result of maillumeFirstPartyMessages) {
+  assert.equal(result.risk_level, "low", "Maillume account mail must be scannable without being labelled spam");
+  assert.notEqual(result.classification, "likely_spam");
+  assert.notEqual(result.classification, "likely_phishing");
+  assert.ok(!result.score_factors.some((factor) => factor.id === "external_link"));
+}
+
+for (const result of [dutchResult, dutchRenewalFraud, strongSingleFamilySpam, sameFamilyAttackChain, weakSignalsRemainLow, supportTicketBackscatter, hostedStorageLure, structuralUrlRegression, brandSubstringRegression, redirectRegression, bareDomainMismatch, unquotedHrefMismatch, changedPaymentDetails, ...deliveryFeeLures, legitimateDeliveryUpdate, ...oauthConsentLures, ...hiddenUnicodeCredentialLures, ...credentialMentionHardNegatives, uwvConfirmationWithoutButton, ...digitSubstitutionLookalikes, insufficientContext, noWarningSignals, dangerousAttachment, macroOnlyAttachment, ...maillumeFirstPartyMessages]) {
   assert.equal(
     result.score_factors.reduce((total, factor) => total + factor.contribution, 0),
     result.risk_score,

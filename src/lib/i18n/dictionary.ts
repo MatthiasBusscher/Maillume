@@ -67,11 +67,11 @@ export const dictionaries = {
         "Analysis is temporarily unavailable. Check the server configuration and try again.",
       screenshotPrompt: "Upload a screenshot of the suspicious email.",
       screenshotHelp:
-        "The screenshot stays in your browser. Extracted text is sent once for this assessment and is not retained. Screenshots cannot reveal where a button or displayed link actually leads, so check links separately.",
+        "The screenshot stays in your browser. Extracted text and any HTTP(S) destination decoded from a QR code are sent once for this assessment and are not retained. Ordinary buttons and displayed links still cannot reveal their destination, so check those separately.",
       chooseScreenshot: "Choose screenshot",
       emlPrompt: "Upload a .eml file exported from your mail app.",
       emlHelp:
-        "The .eml file stays in your browser. Normalized text, sender details, and extracted links are sent once for this assessment and are not retained.",
+        "The .eml file stays in your browser. Normalized text, sender details, links, and coarse attachment-risk categories are sent once and not retained. Filenames and attachment contents are never sent.",
       chooseEml: "Choose .eml file",
       extracting: "Extracting text",
       parsing: "Parsing email file",
@@ -224,11 +224,11 @@ export const dictionaries = {
         "De analyse is tijdelijk niet beschikbaar. Controleer de serverconfiguratie en probeer het opnieuw.",
       screenshotPrompt: "Upload een screenshot van de verdachte e-mail.",
       screenshotHelp:
-        "De screenshot blijft in je browser. Uitgelezen tekst wordt eenmalig voor deze beoordeling verstuurd en niet bewaard. Een screenshot toont niet waar een knop of zichtbare link werkelijk naartoe leidt; controleer links daarom apart.",
+        "De screenshot blijft in je browser. Uitgelezen tekst en een eventuele HTTP(S)-bestemming uit een QR-code worden eenmalig verstuurd en niet bewaard. Van gewone knoppen en zichtbare links blijft de bestemming onbekend; controleer die daarom apart.",
       chooseScreenshot: "Screenshot kiezen",
       emlPrompt: "Upload een .eml-bestand dat uit je mailapp is geëxporteerd.",
       emlHelp:
-        "Het .eml-bestand blijft in je browser. Genormaliseerde tekst, afzendergegevens en gevonden links worden eenmalig voor deze beoordeling verstuurd en niet bewaard.",
+        "Het .eml-bestand blijft in je browser. Genormaliseerde tekst, afzendergegevens, links en globale risicocategorieën voor bijlagen worden eenmalig verstuurd en niet bewaard. Bestandsnamen en de inhoud van bijlagen worden nooit verstuurd.",
       chooseEml: ".eml-bestand kiezen",
       extracting: "Tekst extraheren",
       parsing: "E-mailbestand verwerken",

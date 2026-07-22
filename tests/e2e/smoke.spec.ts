@@ -82,7 +82,7 @@ test("Dutch routes render server-side and persist across navigation", async ({ p
   expect(await apiResponse.json()).toEqual({
     status: "ok",
     revision: "development",
-    analysis_version: "analysis-v4",
+    analysis_version: "analysis-v6",
   });
 });
 
@@ -253,6 +253,37 @@ test("eml upload is parsed and can be analyzed", async ({ page }) => {
   await expect(page.getByText("Risk score")).toBeVisible();
 });
 
+test("eml attachment analysis sends only coarse risk categories", async ({ page }) => {
+  await page.getByRole("button", { name: ".eml file" }).click();
+  await page.locator('input[type="file"][accept=".eml,message/rfc822"]').setInputFiles({
+    name: "synthetic-attachment.eml",
+    mimeType: "message/rfc822",
+    buffer: Buffer.from(`From: Synthetic sender <sender@example.test>
+Subject: Synthetic attachment review
+Content-Type: multipart/mixed; boundary=risk
+
+--risk
+Content-Type: text/plain
+
+Open the attachment immediately to review the document.
+--risk
+Content-Type: application/octet-stream; name="private-invoice.pdf.exe"
+Content-Disposition: attachment; filename="private-invoice.pdf.exe"
+
+ignored bytes
+--risk--`),
+  });
+
+  await expect(page.getByText("Email file parsed and ready to analyze.")).toBeVisible();
+  const requestPromise = page.waitForRequest((request) => request.url().endsWith("/api/analyze"));
+  await page.getByRole("button", { name: "Analyze email" }).click();
+  const payload = (await requestPromise).postDataJSON();
+
+  expect(payload.attachmentRiskTypes).toEqual(["double_extension", "executable"]);
+  expect(JSON.stringify(payload)).not.toContain("private-invoice.pdf.exe");
+  await expect(page.getByText("Risk score")).toBeVisible();
+});
+
 test("screenshot mode validates unsupported files before OCR", async ({ page }) => {
   await page.getByRole("button", { name: "Screenshot" }).click();
 
@@ -325,7 +356,7 @@ test("risk meter color follows the evidence-derived level instead of fixed score
         },
         analysis_mode: "heuristic",
         analysis_provider: "heuristic",
-        analysis_version: "analysis-v4",
+        analysis_version: "analysis-v6",
         disclaimer: "Automated assessment.",
         privacy: { stored: false, retention: "not_stored", message: "Not stored." },
       },
@@ -423,7 +454,7 @@ test("optional feedback sends labels without scan content", async ({ page }) => 
     feedbackKind: "false_positive",
     locale: "en",
     source: "paste",
-    analyzerVersion: "analysis-v4",
+    analyzerVersion: "analysis-v6",
     scoreBand: "high",
     signalCategories: ["urgency"],
   });
@@ -443,7 +474,7 @@ test("feedback controls work from the keyboard and reject content fields", async
       feedbackKind: "false_positive",
       locale: "en",
       source: "paste",
-      analyzerVersion: "analysis-v4",
+      analyzerVersion: "analysis-v6",
       scoreBand: "high",
       signalCategories: [],
       body: "must never be accepted",
@@ -659,7 +690,7 @@ test("health endpoint exposes no dependency or secret details", async ({ request
   expect(await response.json()).toEqual({
     status: "ok",
     revision: "development",
-    analysis_version: "analysis-v4",
+    analysis_version: "analysis-v6",
   });
 });
 
@@ -799,7 +830,7 @@ test("hosted API publishes its machine-readable contract", async ({ request }) =
   expect(specification.openapi).toBe("3.1.0");
   expect(specification.paths["/api/v1/analyze"].post.security).toEqual([{ apiKey: [] }]);
   expect(specification.components.schemas.AnalysisResult.required).toEqual(expect.arrayContaining(["classification", "score_factors"]));
-  expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v4");
+  expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v6");
 });
 
 test("primary public pages have no serious accessibility violations", async ({ page }) => {

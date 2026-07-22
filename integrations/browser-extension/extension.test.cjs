@@ -257,6 +257,19 @@ function testOpenMessageExtractors() {
     errorCode: "multiple_messages",
   });
 
+  const offscreenBody = fakeElement({
+    innerText: "An older expanded Gmail message outside the viewport.",
+    getBoundingClientRect: () => ({ top: 1_200, bottom: 1_500, left: 10, right: 700 }),
+  });
+  context.document.querySelectorAll = (selector) => selector === ".a3s.aiL" || selector === ".a3s"
+    ? [body, offscreenBody]
+    : [];
+  assert.equal(
+    plain(context.readSelectionFromFrame()).text,
+    "Please review this Gmail message.",
+    "A clearly dominant in-viewport message should be captured from an expanded thread",
+  );
+
   const outlookSender = fakeElement({ attributes: { title: "alerts@outlook.test" } });
   const outlookSubject = fakeElement({ innerText: "Account notice" });
   const outlookContainer = fakeElement({
@@ -379,7 +392,7 @@ async function testPanelSendsCapturedLinkMetadata() {
     },
     analysis_mode: "heuristic",
     analysis_provider: "heuristic",
-    analysis_version: "analysis-v4",
+    analysis_version: "analysis-v6",
     disclaimer: "This is an automated risk assessment.",
     privacy: {
       stored: false,

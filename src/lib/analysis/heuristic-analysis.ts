@@ -7,8 +7,29 @@ import {
 } from "./evidence";
 
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
-const HTML_LINK_PATTERN = /<a\b[^>]*href\s*=\s*["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+const HTML_LINK_PATTERN = /<a\b[^>]*\bhref\s*=\s*(?:"(https?:\/\/[^"\s>]+)"|'(https?:\/\/[^'\s>]+)'|(https?:\/\/[^\s"'=<>`]+))[^>]*>([\s\S]*?)<\/a>/gi;
 const DISPLAYED_DOMAIN_PATTERN = /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}(?:\/[^\s<>"']*)?/i;
+const CREDENTIAL_REQUEST_PATTERNS = [
+  /\b(?:enter|provide|submit|send|share|confirm|verify|update|re-?enter|type|reset|change)\b.{0,32}\b(?:password|credentials?|login details?|sign-in details?)\b/i,
+  /\b(?:password|credentials?|login details?|sign-in details?)\b.{0,24}\b(?:required|needed|enter|provide|submit|confirm|verify|update|reset|change)\b/i,
+  /verify (your )?(?:[a-z-]+ )?(account|identity)/i,
+  /sign in (below|here|now)/i,
+  /\b(?:voer|vul|verstrek|deel|stuur|bevestig|verifieer|controleer|wijzig|reset)\b.{0,32}\b(?:wachtwoord|inloggegevens)\b/i,
+  /\b(?:wachtwoord|inloggegevens)\b.{0,24}\b(?:invoeren|invullen|verstrekken|delen|sturen|bevestigen|verifiëren|controleren|wijzigen|resetten|vereist|nodig)\b/i,
+  /\b(?:gegevens|identiteit)\b.{0,48}\b(?:controleren.{0,24})?(?:bevestigen|verifiëren)\b/i,
+  /identiteit bevestigen/i,
+  /bevestig (?:direct )?(uw|je) (?:[a-z-]+)?(?:account|gegevens|identiteit)/i,
+  /\bidentificeer (?:uzelf|jezelf)\b/i,
+  /\bidentify yourself\b/i,
+];
+const CREDENTIAL_NEGATION_PATTERNS = [
+  /\b(?:never|do not|don't|must not|should not)\b.{0,48}\b(?:enter|provide|submit|send|share|confirm|verify|update|re-?enter|type)\b.{0,32}\b(?:password|credentials?|login details?|sign-in details?)\b/i,
+  /\b(?:enter|provide|submit|send|share|confirm|verify|update|re-?enter|type)\b.{0,32}\b(?:password|credentials?|login details?|sign-in details?)\b.{0,16}\b(?:never|not)\b/i,
+  /\bno\b.{0,16}\b(?:password|credentials?|login details?|sign-in details?)\b.{0,16}\b(?:required|needed)\b/i,
+  /\b(?:nooit|niet|mag niet)\b.{0,48}\b(?:voer|vul|verstrek|deel|stuur|bevestig|verifieer|controleer)\b.{0,32}\b(?:wachtwoord|inloggegevens)\b/i,
+  /\b(?:voer|vul|verstrek|deel|stuur|bevestig|verifieer|controleer)\b.{0,32}\b(?:wachtwoord|inloggegevens)\b.{0,16}\b(?:nooit|niet)\b/i,
+  /\bgeen\b.{0,16}\b(?:wachtwoord|inloggegevens)\b.{0,16}\b(?:vereist|nodig)\b/i,
+];
 const MFA_REQUEST_PATTERNS = [
   /approve (?:the )?(?:mfa|login|sign-in)(?: login)? (?:request|prompt)/i,
   /accept (this )?(app|oauth) (request|permission)/i,
@@ -32,6 +53,7 @@ const BRAND_DOMAINS: Record<string, string[]> = {
   fedex: ["fedex.com"],
   google: ["google.com"],
   ing: ["ing.nl"],
+  ics: ["icsbusiness.nl", "icscards.nl"],
   instagram: ["instagram.com", "meta.com"],
   mcafee: ["mcafee.com"],
   microsoft: ["microsoft.com", "office.com", "outlook.com"],
@@ -41,6 +63,7 @@ const BRAND_DOMAINS: Record<string, string[]> = {
   postnl: ["postnl.nl"],
   rabobank: ["rabobank.nl"],
   ups: ["ups.com"],
+  uwv: ["uwv.nl"],
 };
 
 const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
@@ -57,7 +80,16 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   },
   {
     id: "credential_request",
-    patterns: [/\bpassword\b/i, /\bcredentials?\b/i, /verify (your )?(?:[a-z-]+ )?(account|identity)/i, /sign in (below|here|now)/i, /wachtwoord/i, /inloggegevens/i, /identiteit bevestigen/i, /bevestig (?:direct )?(uw|je) (?:[a-z-]+)?(?:account|gegevens|identiteit)/i],
+    patterns: CREDENTIAL_REQUEST_PATTERNS,
+  },
+  {
+    id: "identity_reverification",
+    patterns: [
+      /\b(?:re-?identify|re-?identification|re-?verify|re-?verification)\b.{0,32}\b(?:your )?(?:account|identity|personal (?:details|information))\b/i,
+      /\b(?:account|identity|personal (?:details|information))\b.{0,32}\b(?:re-?identify|re-?identification|re-?verify|re-?verification)\b/i,
+      /\b(?:opnieuw\s+|her)(?:identificeren|identificatie|verifiëren|verificatie)\b/i,
+      /\b(?:account|identiteit|persoonsgegevens)\b.{0,32}\b(?:opnieuw\s+|her)(?:identificeren|identificatie|verifiëren|verificatie)\b/i,
+    ],
   },
   {
     id: "payment_request",
@@ -87,9 +119,15 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
     id: "account_threat",
     patterns: [
       /account (?:is )?(blocked|locked|suspended|restricted|closed)/i,
+      /account (?:will be|is going to be) (?:blocked|locked|suspended|restricted|closed)/i,
+      /account.{0,24}(?:blocked|locked|suspended|restricted|closed|deleted)/i,
       /subscription.*(expires|expired|renew|blocked)/i, /complete (?:your )?renewal/i,
       /update (?:your )?payment method/i, /last (?:system|payment) attempt/i,
       /account (?:is )?(geblokkeerd|vergrendeld|opgeschort|beperkt|gesloten)/i,
+      /account (?:wordt|zal worden) (?:geblokkeerd|vergrendeld|opgeschort|beperkt|gesloten)/i,
+      /account.{0,24}(?:geblokkeerd|vergrendeld|opgeschort|beperkt|gesloten|verwijderd)/i,
+      /(?:cannot|can no longer).{0,36}(?:use|access).{0,24}(?:services?|account)/i,
+      /(?:niet langer|geen).{0,36}gebruik.{0,24}(?:diensten|account)/i,
       /abonnement.*(verloopt|verlopen|verleng)/i, /voltooi (?:uw|je) verlenging/i,
       /betaalmethode bijwerken/i, /laatste (?:systeem|betaal)poging/i,
       /(?:cloud )?storage.*(?:nearing|near|at) capacity/i, /storage.*\b(?:9[0-9]|100)% used\b/i,
@@ -107,7 +145,7 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   },
   {
     id: "link_call_to_action",
-    patterns: [/click here/i, /open this link/i, /follow the link/i, /use the button/i, /upgrade now/i, /secure company data/i, /visit (?:our|the) website/i, /klik hier/i, /open deze link/i, /gebruik de knop/i, /volg de link/i, /bezoek (?:onze|de) website/i],
+    patterns: [/click here/i, /open this link/i, /follow the link/i, /use the button/i, /upgrade now/i, /secure company data/i, /visit (?:our|the) website/i, /open.{0,32}message.{0,24}link/i, /klik hier/i, /open deze link/i, /gebruik de knop/i, /volg de link/i, /bezoek (?:onze|de) website/i, /open.{0,32}bericht.{0,24}link/i],
   },
   {
     id: "unsolicited_sales",
@@ -123,7 +161,7 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   },
   {
     id: "generic_greeting",
-    patterns: [/dear (customer|user|client|member)/i, /hello friend/i, /beste (klant|gebruiker|abonnee|lid)/i, /geachte (klant|gebruiker|abonnee|lid)/i],
+    patterns: [/dear (customer|user|client|member|partner)/i, /hello friend/i, /beste (klant|gebruiker|abonnee|lid|relatie)/i, /geachte (klant|gebruiker|abonnee|lid|relatie)/i],
   },
   {
     id: "executive_impersonation",
@@ -170,9 +208,12 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput | AnalysisEnv
   for (const group of PATTERN_GROUPS) {
     const matches = group.id === "mfa_or_oauth_request"
       ? hasActionableMfaRequest(messageContent)
-      : group.patterns.some((pattern) => pattern.test(messageContent));
+      : group.id === "credential_request"
+        ? hasActionableCredentialRequest(messageContent)
+        : group.patterns.some((pattern) => pattern.test(messageContent));
     if (matches) evidence.add(group.id);
   }
+  if (evidence.has("identity_reverification")) evidence.delete("credential_request");
   if (hasDeliveryFeeLure(messageContent)) evidence.add("delivery_lure");
   if (/(?:you subscribed|opted in|subscription preferences|aangemeld voor|abonnementsvoorkeuren)/i.test(messageContent)) {
     evidence.delete("prize_promotion");
@@ -182,9 +223,15 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput | AnalysisEnv
   if (hasExcessiveFormattingPressure(messageContent)) evidence.add("format_pressure");
   if (hasObfuscatedSpamWords(messageContent)) evidence.add("obfuscation");
   if (envelope.body.trim().length < 80) evidence.add("little_context");
+  if (
+    envelope.attachmentRiskTypes.includes("executable")
+    || envelope.attachmentRiskTypes.includes("double_extension")
+  ) evidence.add("dangerous_attachment");
+  if (envelope.attachmentRiskTypes.includes("macro_enabled")) {
+    evidence.add("macro_enabled_attachment");
+  }
 
   const links = mergeHttpLinks(envelope.links, extractHttpLinks(messageContent));
-  if (links.length > 0) evidence.add("external_link");
   if (links.some(isShortUrl)) evidence.add("short_url");
   if (links.some(hasRiskyTld)) evidence.add("risky_link_domain");
 
@@ -212,13 +259,23 @@ function mergeHttpLinks(...groups: string[][]): string[] {
 
 export function extractHtmlLinkPairs(content: string): EmailLinkPair[] {
   return Array.from(content.matchAll(HTML_LINK_PATTERN)).flatMap((match) => {
-    const displayedText = stripHtml(match[2]);
+    const destinationUrl = match[1] ?? match[2] ?? match[3];
+    const displayedText = stripHtml(match[4]);
     const fullUrl = displayedText.match(LINK_PATTERN)?.[0];
     const bareDomain = displayedText.match(DISPLAYED_DOMAIN_PATTERN)?.[0];
     const displayedUrl = fullUrl ?? (bareDomain ? `https://${bareDomain}` : undefined);
-    if (!displayedUrl) return [];
-    return [{ displayedUrl: cleanLink(displayedUrl), destinationUrl: cleanLink(match[1]) }];
+    if (!displayedUrl || !destinationUrl) return [];
+    return [{ displayedUrl: cleanLink(displayedUrl), destinationUrl: cleanLink(destinationUrl) }];
   });
+}
+
+function hasActionableCredentialRequest(content: string): boolean {
+  return content
+    .split(/(?:[.!?]+\s+|\n+)/)
+    .some((segment) =>
+      CREDENTIAL_REQUEST_PATTERNS.some((pattern) => pattern.test(segment))
+      && !CREDENTIAL_NEGATION_PATTERNS.some((pattern) => pattern.test(segment)),
+    );
 }
 
 function hasActionableMfaRequest(content: string): boolean {
@@ -309,8 +366,22 @@ function looksLikeBrandImpersonation(senderDomain: string): boolean {
   const tokens = registrable.split(/[^a-z0-9]+/i);
 
   return Object.entries(BRAND_DOMAINS).some(([brand, officialDomains]) =>
-    tokens.includes(brand) && !officialDomains.includes(registrable),
+    tokens.some((token) => isBrandTokenLookalike(token, brand))
+    && !officialDomains.includes(registrable),
   );
+}
+
+function isBrandTokenLookalike(token: string, brand: string): boolean {
+  if (token === brand) return true;
+  if (brand.length < 5) return false;
+
+  return token
+    .replace(/0/g, "o")
+    .replace(/1/g, "l")
+    .replace(/3/g, "e")
+    .replace(/4/g, "a")
+    .replace(/5/g, "s")
+    .replace(/7/g, "t") === brand;
 }
 
 function mentionsKnownBrand(content: string): boolean {

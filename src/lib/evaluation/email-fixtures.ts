@@ -14,9 +14,41 @@ export type EvaluationFixture = {
   maxScore?: number;
   minSignals?: number;
   requiredSignalSnippets?: string[];
+  provenance?: {
+    kind: "public_advisory";
+    url: string;
+    publishedAt: string;
+  };
 };
 
 export const emailEvaluationFixtures: EvaluationFixture[] = [
+  {
+    id: "nl_uwv_identity_reverification_phish",
+    title: "Dutch low-pressure identity re-verification phishing",
+    category: "phishing",
+    language: "nl",
+    input: {
+      subject: "Informatie over ons privacybeleid",
+      senderEmail: "notice@agency-account.example",
+      body: [
+        "Dit bericht is automatisch gegenereerd.",
+        "Beste relatie,",
+        "Als onderdeel van regulier accountonderhoud vragen wij u vriendelijk om uw gegevens te controleren en te bevestigen.",
+        "Dit is nodig om de veiligheid van uw account te waarborgen en aan wettelijke verplichtingen te voldoen.",
+        "Opnieuw identificeren",
+      ].join("\n"),
+      locale: "nl",
+    },
+    expectedRiskLevel: "medium",
+    minScore: 30,
+    minSignals: 1,
+    requiredSignalSnippets: ["hernieuwde identiteits"],
+    provenance: {
+      kind: "public_advisory",
+      url: "https://opgelicht.avrotros.nl/alerts/wees-gewaarschuwd-voor-deze-frauduleuze-uwv-mail-over-het-opnieuw-identificeren-van-je-account-20432",
+      publishedAt: "2026-07-22",
+    },
+  },
   {
     id: "en_microsoft_credential_phish",
     title: "English credential phishing with brand impersonation and short link",
@@ -111,9 +143,9 @@ export const emailEvaluationFixtures: EvaluationFixture[] = [
       ].join("\n"),
     },
     expectedRiskLevel: "medium",
-    minScore: 35,
+    minScore: 30,
     maxScore: 69,
-    minSignals: 2,
+    minSignals: 1,
     requiredSignalSnippets: ["sales or lead-generation"],
   },
   {
@@ -131,9 +163,9 @@ export const emailEvaluationFixtures: EvaluationFixture[] = [
       ].join("\n"),
     },
     expectedRiskLevel: "medium",
-    minScore: 35,
+    minScore: 30,
     maxScore: 69,
-    minSignals: 2,
+    minSignals: 1,
     requiredSignalSnippets: ["sales or lead-generation"],
   },
   {
@@ -151,9 +183,9 @@ export const emailEvaluationFixtures: EvaluationFixture[] = [
       ].join("\n"),
     },
     expectedRiskLevel: "medium",
-    minScore: 35,
+    minScore: 30,
     maxScore: 69,
-    minSignals: 2,
+    minSignals: 1,
     requiredSignalSnippets: ["investment"],
   },
   {

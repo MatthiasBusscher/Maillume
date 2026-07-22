@@ -45,7 +45,7 @@ jobs:
             throw new Error("Synthetic production probe is missing Cache-Control: no-store.");
           }
           const payload = await response.json();
-          if (payload.analysis_version !== "analysis-v4" || !payload.result) {
+          if (payload.analysis_version !== "analysis-v6" || !payload.result) {
             throw new Error("Synthetic production probe returned an unexpected contract.");
           }
           process.stdout.write("Synthetic zero-retention probe completed.\n");

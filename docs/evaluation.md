@@ -1,6 +1,6 @@
 # Synthetic Evaluation
 
-Maillume uses a repository-only synthetic corpus to calibrate `analysis-v4` without retaining or collecting users' email.
+Maillume uses repository-only synthetic and sanitized public-advisory corpora to calibrate `analysis-v6` without retaining or collecting users' email.
 
 The risk score is a versioned, capped index of observed evidence. It is not the probability that a message is malicious and these synthetic checks are not a claim of real-world accuracy.
 
@@ -41,9 +41,17 @@ The locked split must maintain:
 
 These gates catch code regressions against known synthetic scenarios. Public-beta testing and cautious user messaging remain necessary because new attacks and real email distributions differ from the corpus.
 
+## Public Advisory Regressions
+
+Confirmed public advisories may contribute independently written, sanitized regression fixtures. Each fixture records the advisory URL and publication date, but replaces real recipients, sender addresses, destinations, identifiers, and message-specific details with reserved synthetic data. The fixture should preserve only the attack mechanism and the wording needed to exercise it.
+
+The frozen advisory holdout currently contains 12 independently written phishing and legitimate hard-negative cases, including two Maillume product-template regressions. It is evaluated separately from the generated 300-case corpus and is never imported by runtime scoring code.
+
+This is deliberately not a production database of known phishing emails. Maillume does not retain user scans or perform exact-message lookup. Campaign text and infrastructure change too quickly for signatures to be a sufficient detector; advisory-derived phishing fixtures must be paired with similar legitimate hard negatives so a new rule cannot improve recall by silently degrading precision.
+
 ## Cross-Input Consistency
 
-Twelve paired English and Dutch scenarios exercise paste, OCR-shaped screenshot text, Chrome capture payloads, and parsed `.eml` adapters after canonical normalization. The adapters mirror the real evidence boundary: screenshots can recover explicitly labelled subject and sender fields from OCR, but cannot reveal link destinations; Chrome and `.eml` can preserve richer sender, subject, and destination evidence.
+Twelve paired English and Dutch scenarios exercise paste, OCR-shaped screenshot text, Chrome capture payloads, and parsed `.eml` adapters after canonical normalization. The adapters mirror the real evidence boundary: screenshots can recover explicitly labelled subject and sender fields from OCR and can decode an HTTP(S) destination embedded in a QR code, but cannot reveal ordinary button destinations; Chrome and `.eml` can preserve richer sender, subject, and destination evidence.
 
 Parity is measured only where the available evidence is equivalent. Those comparisons require at least 95% classification agreement and median and p95 score differences no greater than five points. Format-enriched factors, such as a displayed-link/destination mismatch, are compared between Chrome and `.eml`. OCR-only phishing fixtures must not fall to low risk, and missing screenshot metadata must produce uncertainty rather than a claim that the message is likely legitimate.
 

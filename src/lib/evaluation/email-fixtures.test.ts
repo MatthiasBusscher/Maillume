@@ -56,5 +56,9 @@ assert.ok(
   AI_ANALYSIS_SYSTEM_PROMPT.includes("Return only the requested structured JSON field."),
   "AI prompt should require structured JSON output",
 );
+assert.ok(
+  AI_ANALYSIS_SYSTEM_PROMPT.includes("a completed password change or safety advice does not qualify"),
+  "AI prompt should distinguish credential requests from hard-negative mentions",
+);
 
 console.log(`Checked ${emailEvaluationFixtures.length} shared evaluation fixtures.`);

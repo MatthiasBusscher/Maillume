@@ -68,7 +68,7 @@ Open `http://localhost:3000/app`. Heuristic mode needs no account, database, or 
 
 ## Privacy Model
 
-Screenshot OCR and `.eml` parsing run in the browser. The source file is not uploaded. The normalized text needed for the current assessment is sent to the selected Maillume deployment and discarded when the request ends.
+Screenshot OCR, QR decoding, and `.eml` parsing run in the browser. The source file is not uploaded. The normalized text, HTTP(S) QR destination when present, and coarse attachment-risk categories needed for the current assessment are sent to the selected Maillume deployment and discarded when the request ends. Attachment filenames and contents are never sent.
 
 Maillume does not create scan history and does not use ordinary scans as training data. It does not write email bodies, sender details, subjects, links, screenshots, `.eml` files, prompts, or completed results to Supabase.
 
@@ -124,7 +124,7 @@ type EmailAnalysisResult = {
 };
 ```
 
-The current source contract uses `analysis_version: "analysis-v4"`. Applied factor contributions always sum to `risk_score`. Maillume derives classification, level, links, and score server-side; optional AI providers return stable evidence IDs instead of choosing a number.
+The current source contract uses `analysis_version: "analysis-v6"`. Applied factor contributions always sum to `risk_score`. Maillume derives classification, level, links, and score server-side; optional AI providers return stable evidence IDs instead of choosing a number.
 
 ## Self-Hosting and AI
 

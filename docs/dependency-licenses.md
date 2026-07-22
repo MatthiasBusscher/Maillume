@@ -1,6 +1,6 @@
 # Direct Dependency License Review
 
-Review date: 2026-07-10
+Review date: 2026-07-22
 
 This is a lightweight engineering review of direct npm dependency metadata before adopting AGPL-3.0. It is not a legal opinion and does not replace a complete software-composition analysis before public release.
 
@@ -10,11 +10,13 @@ This is a lightweight engineering review of direct npm dependency metadata befor
 | --- | --- |
 | `@supabase/ssr` | MIT |
 | `@supabase/supabase-js` | MIT |
+| `jsqr` | Apache-2.0 |
 | `lucide-react` | ISC |
 | `next` | MIT |
 | `react` | MIT |
 | `react-dom` | MIT |
 | `tesseract.js` | Apache-2.0 |
+| `tldts` | MIT |
 
 ## Development Dependencies
 

@@ -16,4 +16,4 @@ The deployment URL is stored in extension-local storage. The API key is kept in 
 
 Chrome 116 or newer is required for programmatic, tab-specific side-panel opening.
 
-The panel requires the `analysis-v4` classification and score-factor breakdown, verifies that factor contributions sum to the risk index, and rejects unsafe detected-link schemes.
+The panel requires the `analysis-v6` classification and score-factor breakdown, verifies that factor contributions sum to the risk index, and rejects unsafe detected-link schemes.

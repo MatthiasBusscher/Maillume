@@ -41,7 +41,7 @@
 - Container: `ghcr.io/matthiasbusscher/maillume@sha256:384492facd1d24bb1aa3fb944b251f523432b87fb8bfb53844f132d5fea022d0`
 - Build: GitHub Actions run `29901267974`
 - Deployment: GitHub Actions run `29902308597`
-- Runtime: `/api/health` reports the commit above and `analysis-v4`
+- Runtime: `/api/health` reports the commit above and `analysis-v6`
 - Runtime audit: GitHub Actions run `29902566050` passed the synthetic no-store probe plus VPS isolation, resource, credential, port, and zero-retention checks.
 - Founder waivers: independent second-person production sign-off, separate-account GitHub acceptance tests, Google OAuth branding verification, and the pre-launch five-person/24-48-hour soft launch were waived rather than marked as passed. Issues #40, #47, #93, and the prerelease notes contain the decision and residual-risk record.
 
