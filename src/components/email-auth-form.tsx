@@ -243,13 +243,15 @@ export function EmailAuthForm({
             {mode === "magic-link" ? labels.usePassword : labels.useMagicLink}
           </button>
         ) : null}
-        <button
-          type="button"
-          onClick={() => selectMode(mode === "forgot" ? "sign-in" : "forgot")}
-          className="text-xs font-semibold text-[#087b72] hover:text-[#111711]"
-        >
-          {mode === "forgot" ? labels.backToSignIn : labels.forgot}
-        </button>
+        {mode === "sign-in" || mode === "forgot" ? (
+          <button
+            type="button"
+            onClick={() => selectMode(mode === "forgot" ? "sign-in" : "forgot")}
+            className="text-xs font-semibold text-[#087b72] hover:text-[#111711]"
+          >
+            {mode === "forgot" ? labels.backToSignIn : labels.forgot}
+          </button>
+        ) : null}
       </div>
 
       {message ? <p className="mt-4 border-l-4 border-[#087b72] bg-[#eaf6f5] px-4 py-3 text-sm leading-6 text-[#204e51]" role="status">{message}</p> : null}

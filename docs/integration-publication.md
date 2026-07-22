@@ -36,6 +36,21 @@ Before submission:
 - Complete Chrome Web Store data-use declarations from the production privacy notice.
 - Test unpacked installation, permission grant/denial, key revocation, quota exhaustion, and update packaging.
 
+## Manual Chrome Stable Acceptance
+
+Use the exact checksummed release candidate and synthetic content only. Record the Chrome Stable version, operating system, artifact checksum, UTC test time, and sanitized screenshot filename for each applicable row in issue #39.
+
+1. Confirm the installed manifest shows only `activeTab`, `scripting`, `sidePanel`, and `storage`, with deployment host access requested only after saving a connection. Capture the install and host-permission prompts.
+2. In Gmail, test selected text and one visibly open synthetic message. Confirm subject, sender, text, displayed-link metadata, and destination-link metadata are correct. Expand two messages and confirm Maillume asks for a manual selection instead of choosing one.
+3. Repeat the selected-text and visibly open-message checks in Outlook. Keep the panel open, change messages, press **Use current message**, and confirm the previous message and result disappear before the new capture appears.
+4. Switch tabs and navigate within each webmail client. Confirm the panel never analyzes stale content. On a restricted page such as `chrome://settings`, confirm capture is refused with the restricted-page explanation.
+5. Deny the deployment permission once and confirm no connection is saved. Grant it on the next attempt. Verify Dutch/English text containing `café — 日本語 — 🛡️` survives capture, and confirm a message beyond 20,000 characters is bounded to the documented limit.
+6. Create a fresh production key from an AAL2 account and complete one synthetic assessment. Revoke that key, retry without changing the panel key, and capture the `401` rejection state. Do not record the key value.
+7. With an exhausted test account, confirm the panel explains the `429` limit and retains the session key so the user can retry after the limit resets. Record only status and aggregate quota evidence.
+8. Use **Remove connection** and confirm the endpoint, session key, and optional deployment permission are removed. Restart Chrome and confirm the API key is absent from the new browser session.
+
+The automated suite exercises the corresponding capture and response branches, but it does not replace these real Chrome Stable, Gmail, Outlook, production-key, and permission-prompt observations.
+
 ## Release Evidence
 
 Store the following with the release record:

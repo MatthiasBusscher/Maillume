@@ -4,6 +4,10 @@ import { getRequestPathname, getRequestSiteLocale } from "@/lib/i18n/request-loc
 import { localizePath } from "@/lib/i18n/site-locale";
 
 const title = "Maillume";
+const pageTitles = {
+  en: "Maillume — Explainable email risk checks",
+  nl: "Maillume — Uitlegbare controle van e-mailrisico",
+};
 const descriptions = {
   en: "Shine a light on suspicious email with an explainable risk score, warning signals, and a safer next step.",
   nl: "Werpt licht op verdachte e-mail met een uitlegbare risicoscore, waarschuwingssignalen en een veiligere vervolgstap.",
@@ -12,19 +16,22 @@ const descriptions = {
 export async function generateMetadata(): Promise<Metadata> {
   const [locale, pathname] = await Promise.all([getRequestSiteLocale(), getRequestPathname()]);
   const description = descriptions[locale];
+  const pageTitle = pageTitles[locale];
   const cleanPath = localizePath(pathname, "en");
+  const localizedPath = localizePath(cleanPath, locale);
   return {
     metadataBase: getMetadataBase(),
   title: {
-    default: title,
+    default: pageTitle,
     template: `%s | ${title}`,
   },
   description,
   applicationName: title,
   keywords: ["email safety", "phishing", "spam", "email risk assessment", "open source"],
   openGraph: {
-    title,
+    title: pageTitle,
     description,
+    url: localizedPath,
     type: "website",
     locale: locale === "nl" ? "nl_NL" : "en_US",
     alternateLocale: [locale === "nl" ? "en_US" : "nl_NL"],
@@ -32,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
   },
   twitter: {
     card: "summary_large_image",
-    title,
+    title: pageTitle,
     description,
   },
   robots: {
@@ -40,7 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
     follow: true,
   },
   alternates: {
-    canonical: localizePath(cleanPath, locale),
+    canonical: localizedPath,
     languages: { en: cleanPath, nl: localizePath(cleanPath, "nl"), "x-default": cleanPath },
   },
   };

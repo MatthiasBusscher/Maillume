@@ -43,7 +43,11 @@ import {
 import { AnalysisFeedback } from "./analysis-feedback";
 import { RiskMeter } from "./risk-meter";
 
-const sampleEmail = `Hi,
+const sampleEmails = {
+  en: {
+    subject: "Action required: mailbox access expiring",
+    senderEmail: "security-alert@microsoft-support-login.click",
+    body: `Hi,
 
 Your Microsoft 365 account will be suspended today unless you verify your password immediately.
 
@@ -51,7 +55,22 @@ Open this secure link to keep access:
 https://bit.ly/account-verify-now
 
 Thank you,
-IT Administrator`;
+IT Administrator`,
+  },
+  nl: {
+    subject: "Actie vereist: toegang tot mailbox verloopt",
+    senderEmail: "beveiligingsmelding@microsoft-ondersteuning-inloggen.click",
+    body: `Hoi,
+
+Je Microsoft 365-account wordt vandaag geblokkeerd tenzij je onmiddellijk je wachtwoord verifieert.
+
+Open deze beveiligde link om toegang te behouden:
+https://bit.ly/account-verificatie-nu
+
+Bedankt,
+IT-beheerder`,
+  },
+} as const;
 
 type EmailScanFormProps = {
   dictionary: Dictionary;
@@ -131,10 +150,11 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   }
 
   function loadSample() {
+    const sample = sampleEmails[locale];
     setActiveMode("paste");
-    setSubject("Action required: mailbox access expiring");
-    setSenderEmail("security-alert@microsoft-support-login.click");
-    setBody(sampleEmail);
+    setSubject(sample.subject);
+    setSenderEmail(sample.senderEmail);
+    setBody(sample.body);
     setLinks([]);
     setLinkPairs([]);
     setEvidenceTruncated(false);

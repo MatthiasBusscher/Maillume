@@ -46,7 +46,9 @@ export async function verifyPublicDeployment({
   await Promise.all([
     verifyPage(fetchImpl, new URL("/auth/sign-in", appOrigin), "application sign-in"),
     verifyPage(fetchImpl, new URL("/app", appOrigin), "scanner workspace"),
-    verifyPage(fetchImpl, new URL("/", marketingOrigin), "marketing site"),
+    verifyPage(fetchImpl, new URL("/", marketingOrigin), "marketing site", {
+      rejectEmailObfuscation: true,
+    }),
     verifyPage(fetchImpl, new URL("/privacy", marketingOrigin), "privacy page"),
     verifyPage(fetchImpl, new URL("/terms", marketingOrigin), "terms page"),
     verifyPage(fetchImpl, new URL("/security", marketingOrigin), "security page"),
@@ -56,7 +58,7 @@ export async function verifyPublicDeployment({
   return health;
 }
 
-async function verifyPage(fetchImpl, url, label) {
+async function verifyPage(fetchImpl, url, label, { rejectEmailObfuscation = false } = {}) {
   const response = await fetchImpl(url, { redirect: "error" });
   if (!response.ok) throw new Error(`Public ${label} returned HTTP ${response.status}.`);
   if (response.headers.get("x-content-type-options")?.toLowerCase() !== "nosniff") {
@@ -65,6 +67,14 @@ async function verifyPage(fetchImpl, url, label) {
   const csp = response.headers.get("content-security-policy")?.toLowerCase() ?? "";
   if (!csp.includes("default-src 'self'") || !csp.includes("frame-ancestors 'none'")) {
     throw new Error(`Public ${label} is missing the production Content-Security-Policy.`);
+  }
+  if (rejectEmailObfuscation) {
+    const body = await response.text();
+    if (/data-cfemail|\/cdn-cgi\/l\/email-protection|__cf_email__/i.test(body)) {
+      throw new Error(
+        `Public ${label} contains Cloudflare Email Address Obfuscation markup that can break React hydration.`,
+      );
+    }
   }
 }
 

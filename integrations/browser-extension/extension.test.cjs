@@ -155,6 +155,37 @@ async function testCaptureRecoversAfterWorkerRestart() {
   assert.deepEqual(sessionStorage.snapshot(), {}, "consuming a recovered handoff must clear its session descriptor");
 }
 
+async function testCaptureBoundaries() {
+  const worker = createWorkerContext();
+
+  await worker.events.action.listener({ id: 13, url: "chrome://settings" });
+  assert.deepEqual(
+    plain(await worker.context.consumeCapture(13)),
+    { status: "error", code: "restricted_page" },
+    "restricted browser pages must fail without attempting a capture",
+  );
+
+  worker.setFrameResults([
+    { frameId: 0, result: { text: "x".repeat(20_001), source: "window", focused: true } },
+  ]);
+  await worker.events.action.listener({ id: 14, url: "https://mail.google.com/mail/u/0/#inbox/oversized" });
+  const boundedCapture = plain(await worker.context.consumeCapture(14));
+  assert.equal(boundedCapture.status, "success");
+  assert.equal(boundedCapture.text.length, 20_000, "captured text must respect the API character limit");
+
+  const unicodeText = `${"x".repeat(19_997)}🛡️`;
+  assert.equal(unicodeText.length, 20_000);
+  worker.setFrameResults([
+    { frameId: 0, result: { text: unicodeText, source: "window", focused: true } },
+  ]);
+  await worker.events.action.listener({ id: 15, url: "https://outlook.office.com/mail/inbox/id/unicode" });
+  assert.deepEqual(
+    plain(await worker.context.consumeCapture(15)),
+    { status: "success", text: unicodeText },
+    "Unicode text at the maximum accepted length must survive capture unchanged",
+  );
+}
+
 function fakeElement(options = {}) {
   return Object.assign(new FakeElement(), {
     tagName: "DIV",
@@ -214,6 +245,16 @@ function testOpenMessageExtractors() {
       displayedUrl: "https://portal.example.test/security",
       destinationUrl: "https://bit.ly/synthetic-review",
     }],
+  });
+
+  context.document.querySelectorAll = (selector) => selector === ".a3s.aiL" || selector === ".a3s"
+    ? [body, fakeElement({ innerText: "A second expanded Gmail message." })]
+    : [];
+  assert.deepEqual(plain(context.readSelectionFromFrame()), {
+    text: "",
+    source: "window",
+    focused: true,
+    errorCode: "multiple_messages",
   });
 
   const outlookSender = fakeElement({ attributes: { title: "alerts@outlook.test" } });
@@ -347,6 +388,8 @@ async function testPanelSendsCapturedLinkMetadata() {
     },
   };
   let responsePayload = validResponse;
+  let responseStatus = 200;
+  let permissionGranted = true;
   const context = {
     chrome: {
       i18n: { getUILanguage: () => "en-US" },
@@ -355,7 +398,7 @@ async function testPanelSendsCapturedLinkMetadata() {
         local: { get: async () => ({ endpoint: "https://app.maillume.io" }), set: async () => {}, remove: async () => {} },
         session: { get: async () => ({ apiKey: `mlm_${"a".repeat(43)}` }), set: async () => {}, remove: async () => {} },
       },
-      permissions: { request: async () => true, remove: async () => true },
+      permissions: { request: async () => permissionGranted, remove: async () => true },
       tabs: { query: async () => [{ id: 22 }] },
     },
     document: {
@@ -369,8 +412,8 @@ async function testPanelSendsCapturedLinkMetadata() {
     fetch: async (_url, options) => {
       requestPayload = JSON.parse(options.body);
       return {
-        ok: true,
-        status: 200,
+        ok: responseStatus >= 200 && responseStatus < 300,
+        status: responseStatus,
         json: async () => responsePayload,
       };
     },
@@ -382,6 +425,10 @@ async function testPanelSendsCapturedLinkMetadata() {
   await new Promise((resolve) => setTimeout(resolve, 100));
   await flush();
   assert.equal(elements.get("body").value, "Captured once");
+  permissionGranted = false;
+  await elements.get("save").dispatch("click");
+  assert.equal(elements.get("status").textContent, "Chrome did not grant access to that deployment.");
+  permissionGranted = true;
   await elements.get("captureHelpToggle").dispatch("click");
   assert.equal(elements.get("captureHelp").hidden, true);
   assert.equal(elements.get("captureHelpToggle").textContent, "Show instructions");
@@ -439,15 +486,27 @@ async function testPanelSendsCapturedLinkMetadata() {
   runtime.listener({ type: "capture-ready", tabId: 22, captureId: "capture-8" });
   await flush();
   assert.equal(elements.get("body").value, "Freshly captured message");
+
+  responsePayload = validResponse;
+  responseStatus = 401;
+  await elements.get("analyze").dispatch("click");
+  assert.equal(elements.get("result").hidden, true, "a revoked key must not leave a stale result visible");
+  assert.equal(elements.get("status").textContent, "The deployment rejected the API key.");
+
+  responseStatus = 429;
+  await elements.get("analyze").dispatch("click");
+  assert.equal(elements.get("result").hidden, true, "a quota response must not leave a stale result visible");
+  assert.equal(elements.get("status").textContent, "This request was limited. Check account usage or wait before trying again.");
 }
 
 (async () => {
   await testCapturePriorityAndMetadata();
   await testCaptureRecoversAfterWorkerRestart();
+  await testCaptureBoundaries();
   testOpenMessageExtractors();
   testInactiveInputSelectionFallback();
   await testPanelSendsCapturedLinkMetadata();
-  console.log("Browser extension capture, fallback, and handoff race checks passed.");
+  console.log("Browser extension capture, fallback, boundary, API-response, and handoff race checks passed.");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
