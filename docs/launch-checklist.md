@@ -17,7 +17,7 @@
 - [x] `.nl` and `www` redirects preserve paths and use HTTP 301.
 - [x] Ports 80/443 are closed and only required SSH access remains.
 - [x] Cloudflare DDoS, managed WAF, and `/api/` rate limiting for anonymous and authenticated analysis are enabled.
-- [ ] Hostinger backups are current and a restore rehearsal is recorded.
+- [x] Hostinger backups cover persisted VPS state. Issue #47 records the architecture-backed beta acceptance, full VPS restart, and immutable rebuild evidence; a destructive same-VPS restore is explicitly deferred.
 - [x] GitHub deployment verifies the VPS SSH host-key fingerprint and synchronizes deployment artifacts from the approved commit.
 - [x] Production environment approval, immutable deployment, health check, and rollback are tested.
 
@@ -36,11 +36,12 @@
 
 ## Last Deployed Baseline
 
-- Commit: `c1cbc370f3f3f61d6d4c8adbf7590fb45dc46e82`
-- Build: GitHub Actions run `29814741549`
-- Deployment: GitHub Actions run `29815422611`
-- Runtime: `/api/health` reports the commit above and `analysis-v3`
-- Remaining human gates: Google OAuth branding confirmation, a disposable Hostinger restore rehearsal or explicit time-bounded acceptance, independent issue #47 sign-off, public provenance verification, and the 24-48 hour invited beta.
+- Commit: `41cef3b5452cdb30f0972a9195eb82066eedaabd`
+- Build: GitHub Actions run `29898275462`
+- Deployment: GitHub Actions run `29898997528`
+- Runtime: `/api/health` reports the commit above and `analysis-v4`
+- Runtime audit: GitHub Actions run `29900139827` passed the synthetic no-store probe plus VPS isolation, resource, credential, port, and zero-retention checks.
+- Remaining human gates: Google OAuth branding confirmation, independent issue #47 sign-off, separate-account issue #93 acceptance tests, five trusted testers, and the monitored 24-48 hour invited beta.
 
 ## Public Repository
 
@@ -50,7 +51,7 @@
 - [x] Discussions, squash-only merging, auto-merge, and automatic branch deletion are enabled.
 - [x] Secret scanning, push protection, Dependabot security updates, private vulnerability reporting, and CodeQL default setup are enabled.
 - [x] Production deployment remains main-only, requires explicit review, and does not allow administrator bypass.
-- [ ] A public pull request proves required-check enforcement and produces public image provenance.
+- [x] Public pull requests prove required-check enforcement; the public release workflow publishes immutable image provenance.
 
 ## Chrome Manual Beta
 
