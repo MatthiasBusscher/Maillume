@@ -9,6 +9,8 @@ test("the homepage leads with the Maillume promise without explaining the name",
   const translations = read("src/lib/i18n/marketing-pages.ts");
 
   assert.match(homepage, /Shine a light on suspicious email/);
+  assert.match(homepage, /See the risk before you act\./);
+  assert.match(translations, /Zie het risico voordat je handelt\./);
   assert.doesNotMatch(`${homepage}\n${translations}`, /Maillume (?:blends|combines) mail (?:and|with) illuminate/i);
   assert.doesNotMatch(translations, /De naam Maillume verwijst naar mail en illuminate/i);
   assert.match(homepage, /never guarantees that a message is safe or malicious/);
@@ -52,6 +54,9 @@ test("privacy and authentication copy describe the real data flow", () => {
   assert.match(privacy, /Genormaliseerde scantekst wordt alleen voor de gevraagde beoordeling naar Maillume verstuurd/);
   assert.match(accountEn, /password is sent directly to Supabase/);
   assert.match(accountNl, /wachtwoord wordt rechtstreeks naar Supabase gestuurd/);
+  assert.match(accountEn, /Sign in or create an account/);
+  assert.match(accountNl, /Log in of maak een account/);
+  assert.match(read("src/components/email-auth-form.tsx"), /mode === "sign-in" \|\| mode === "forgot"/);
   assert.match(extension, /Review the captured details/);
   assert.doesNotMatch(extension, /Review before sending|Controleer vóór verzending/);
 });

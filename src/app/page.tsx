@@ -20,6 +20,7 @@ import { getAppHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
 import { homeNl } from "@/lib/i18n/marketing-pages";
 import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
+import { localizePath } from "@/lib/i18n/site-locale";
 
 const capabilityRows = [
   {
@@ -67,7 +68,7 @@ export default async function MarketingHomePage() {
               Shine a light on suspicious email
             </div>
             <h1 className="mt-5 text-5xl font-semibold leading-[0.96] text-white sm:text-6xl lg:text-7xl">
-              Maillume
+              See the risk before you act.
             </h1>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -195,7 +196,7 @@ export default async function MarketingHomePage() {
             <p className="max-w-3xl text-base leading-7 text-[#59655a]">
               NOS reported that the Odido attack combined credential phishing, impersonation of internal IT, and fraudulent login approval. The case shows why email checks are only one layer of a safer verification process.
             </p>
-            <Link href="/resources/odido-phishing-incident" className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">
+            <Link href={localizePath("/resources/odido-phishing-incident", locale)} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">
               Read the incident notes <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>

@@ -30,6 +30,8 @@ test("language switching updates the scanner", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Controleer een verdachte e-mail" })).toBeVisible();
   await expect(page.getByRole("button", { name: "E-mail analyseren" })).toBeVisible();
   await page.getByRole("button", { name: "Voorbeeld" }).click();
+  await expect(page.getByLabel("Onderwerp")).toHaveValue("Actie vereist: toegang tot mailbox verloopt");
+  await expect(page.getByLabel("E-mailinhoud")).toHaveValue(/Je Microsoft 365-account wordt vandaag geblokkeerd/);
   await page.getByRole("button", { name: "E-mail analyseren" }).click();
   await expect(page.getByRole("heading", { name: "Verdachte signalen", exact: true })).toBeVisible();
   await expect(page.getByText(/Klik niet, antwoord niet|Controleer de afzender|Er zijn weinig waarschuwingstekens/)).toBeVisible();
@@ -150,7 +152,10 @@ test("Dutch marketing preview and app navigation are visibly localized", async (
   await expect(page.getByText("Weegt risicosignalen en geeft een uitlegbare beoordeling terug.", { exact: true })).toBeVisible();
   await expect(page.getByText("E-mailinhoud en resultaten worden niet in de applicatieopslag bewaard.", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Ontdek self-hosting" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Lees de incidentnotities" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Lees de incidentnotities" })).toHaveAttribute(
+    "href",
+    "/nl/resources/odido-phishing-incident",
+  );
   await expect(page.getByText("Parses files and extracts readable text.", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Checks risk patterns and returns structured JSON.", { exact: true })).toHaveCount(0);
 
@@ -352,10 +357,14 @@ test("rate-limited analysis shows a clear localized error", async ({ page }) => 
 
 test("launch metadata and generated assets are available", async ({ page, request }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle("Maillume");
+  await expect(page).toHaveTitle("Maillume — Explainable email risk checks");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
     /shine a light on suspicious email/i,
+  );
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+    "content",
+    "http://127.0.0.1:3100",
   );
 
   const [iconResponse, openGraphResponse, manifestResponse, robotsResponse, sitemapResponse] = await Promise.all([
@@ -465,7 +474,7 @@ test("feedback controls work from the keyboard and reject content fields", async
 test("marketing routes accurately distinguish available and manual-beta features", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Maillume", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "See the risk before you act.", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Check an email" }).first()).toHaveAttribute(
     "href",
     "/app",

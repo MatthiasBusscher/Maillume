@@ -71,6 +71,43 @@ test("rejects unexpected public health fields", async (t) => {
   );
 });
 
+test("rejects Cloudflare email obfuscation on the marketing page", async (t) => {
+  const server = await createServer((request, response) => {
+    response.setHeader("X-Content-Type-Options", "nosniff");
+    response.setHeader("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'");
+    if (request.url?.startsWith("/api/health")) {
+      response.setHeader("Cache-Control", "no-store");
+      response.setHeader("Content-Type", "application/json");
+      response.end(JSON.stringify({ status: "ok", revision, analysis_version: "analysis-v4" }));
+      return;
+    }
+    if (request.url === "/api/analyze") {
+      response.setHeader("Cache-Control", "no-store");
+      response.setHeader("Content-Type", "application/json");
+      response.end(JSON.stringify({ analysis_version: "analysis-v4", result: { risk_score: 0 } }));
+      return;
+    }
+    if (request.url === "/") {
+      response.end('<a href="/cdn-cgi/l/email-protection"><span data-cfemail="1234">email</span></a>');
+      return;
+    }
+    response.end("ok");
+  });
+  t.after(() => server.close());
+
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  await assert.rejects(
+    verifyPublicDeployment({
+      appUrl: origin,
+      marketingUrl: origin,
+      expectedRevision: revision,
+      attempts: 1,
+      delayMs: 0,
+    }),
+    /Email Address Obfuscation markup that can break React hydration/,
+  );
+});
+
 function createServer(handler) {
   return new Promise((resolve, reject) => {
     const server = http.createServer(handler);

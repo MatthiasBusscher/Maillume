@@ -2,6 +2,7 @@ import type { MarketingDictionary } from "./marketing-translate";
 
 const nl: MarketingDictionary = {
   "Shine a light on suspicious email": "Werpt licht op verdachte e-mail",
+  "See the risk before you act.": "Zie het risico voordat je handelt.",
   "Uploaded files stay in your browser": "Geüploade bestanden blijven in je browser",
   "Signals you can inspect": "Inzicht in meegewogen signalen",
   "A clearer risk assessment": "Een heldere risicobeoordeling",
