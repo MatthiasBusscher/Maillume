@@ -56,7 +56,7 @@ Content-Type: text/html; charset=UTF-8
     displayedUrl: "https://vendor.example/security",
     destinationUrl: "https://credential-capture.example/login",
   }]);
-  assert.ok(unquotedHiddenLink.links.includes("https://credential-capture.example/login"));
+  assert.deepEqual(unquotedHiddenLink.links, ["https://credential-capture.example/login"]);
 
   const parityEml = parseEml(`From: Synthetic alerts <alerts@notice.example>
 Subject: Synthetic account review
