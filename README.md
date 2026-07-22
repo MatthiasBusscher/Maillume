@@ -4,11 +4,11 @@
 
 **Shine a light on suspicious email.**
 
-Maillume combines *mail* with *illuminate*: it makes suspicious signals easier to see before you click, reply, share information, or pay.
+Maillume makes it easier to see suspicious signals before you click, reply, share information, or pay.
 
 [Try Maillume](https://app.maillume.io) · [Website](https://maillume.io) · [Documentation](docs/architecture.md) · [Roadmap](docs/roadmap.md) · [Contributing](CONTRIBUTING.md)
 
-[![CI](https://github.com/MatthiasBusscher/Maillume/actions/workflows/ci.yml/badge.svg)](https://github.com/MatthiasBusscher/Maillume/actions/workflows/ci.yml)
+[![CI](https://github.com/MatthiasBusscher/Maillume/actions/workflows/ci.yml/badge.svg?event=pull_request)](https://github.com/MatthiasBusscher/Maillume/actions/workflows/ci.yml?query=event%3Apull_request)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-087b72.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-15-111711.svg?logo=next.js)](https://nextjs.org/)
 [![Languages](https://img.shields.io/badge/UI-English%20%7C%20Nederlands-ff705f.svg)](docs/roadmap.md)
