@@ -156,7 +156,8 @@ export function analyzeEmailHeuristic(input: EmailAnalysisInput | AnalysisEnvelo
   const { evidence, links } = collectHeuristicEvidence(envelope);
   return buildAnalysisResult(evidence, links, envelope.locale, {
     incompleteEvidence: !envelope.availability.sender
-      || !envelope.availability.linkDestinations,
+      || !envelope.availability.linkDestinations
+      || !envelope.availability.contentComplete,
   });
 }
 

@@ -28,6 +28,7 @@ This is synthetic test data.`);
   assert.match(parsed.body, /Your mailbox access expires today/);
   assert.match(parsed.body, /This is synthetic test data/);
   assert.deepEqual(parsed.links, ["https://login.example.test/verify"]);
+  assert.equal(parsed.evidenceTruncated, false);
 
   const hiddenLink = parseEml(`From: PayPal notice <billing@paypal-review.invalid>
 Subject: Account review
@@ -205,21 +206,43 @@ not valid base64 !!!`);
 
   const depthLimited = parseEml(nestedDepth(MAX_EML_MIME_DEPTH + 2));
   assert.doesNotMatch(depthLimited.body, /content beyond depth limit/);
+  assert.equal(depthLimited.evidenceTruncated, true);
 
   const oversizedBody = parseEml(`Content-Type: text/plain
 
 ${"x".repeat(MAX_SCAN_BODY_LENGTH + 1_000)}`);
   assert.equal(oversizedBody.body.length, MAX_SCAN_BODY_LENGTH);
+  assert.equal(oversizedBody.evidenceTruncated, true);
+  assert.equal(
+    analyzeEmailHeuristic({
+      body: oversizedBody.body,
+      evidenceTruncated: oversizedBody.evidenceTruncated,
+    }).classification,
+    "uncertain",
+    "truncated EML evidence must never produce a likely-legitimate classification",
+  );
 
   const headerPastLimit = parseEml(`${"X-Fill: x\n".repeat(MAX_EML_HEADER_CHARACTERS)}Subject: outside header cap
 
 body`);
   assert.equal(headerPastLimit.subject, undefined);
+  assert.equal(headerPastLimit.evidenceTruncated, true);
 
   const linkPastPartLimit = parseEml(`Content-Type: text/plain
 
 ${"x".repeat(MAX_EML_PART_BODY_CHARACTERS)} https://outside-part-limit.example.test/`);
-  assert.equal(linkPastPartLimit.links.includes("https://outside-part-limit.example.test/"), false);
+  assert.deepEqual(linkPastPartLimit.links, []);
+  assert.equal(linkPastPartLimit.evidenceTruncated, true);
+
+  const linkInsideTruncatedPart = parseEml(`Content-Type: text/plain
+
+https://inside-part-limit.example.test/ ${"x".repeat(MAX_EML_PART_BODY_CHARACTERS)}`);
+  assert.deepEqual(
+    linkInsideTruncatedPart.links,
+    ["https://inside-part-limit.example.test/"],
+    "evidence inside the accepted prefix must remain available",
+  );
+  assert.equal(linkInsideTruncatedPart.evidenceTruncated, true);
 
   const attachmentParts = Array.from(
     { length: MAX_EML_MULTIPART_SECTIONS + 5 },
@@ -230,11 +253,13 @@ ${"x".repeat(MAX_EML_PART_BODY_CHARACTERS)} https://outside-part-limit.example.t
 ${attachmentParts}
 --cap--`);
   assert.equal(boundedMultipart.attachmentNames.length, MAX_EML_ATTACHMENT_NAMES);
+  assert.equal(boundedMultipart.evidenceTruncated, true);
 
   const manyLinks = parseEml(`Content-Type: text/plain
 
 ${Array.from({ length: MAX_EML_LINKS + 10 }, (_, index) => `https://example-${index}.test/path`).join(" ")}`);
   assert.equal(manyLinks.links.length, MAX_EML_LINKS);
+  assert.equal(manyLinks.evidenceTruncated, true);
 
   console.log("Checked .eml parsing regressions.");
 }

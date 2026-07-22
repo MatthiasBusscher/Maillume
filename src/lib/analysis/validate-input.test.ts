@@ -25,6 +25,21 @@ const fallback = validateAnalyzeRequest({ body: "Synthetic message" });
 assert.equal(fallback.ok, true);
 if (fallback.ok) assert.equal(fallback.input.locale, "en");
 
+const truncatedEml = validateAnalyzeRequest({
+  source: "eml",
+  body: "Synthetic truncated message",
+  evidenceTruncated: true,
+});
+assert.equal(truncatedEml.ok, true);
+if (truncatedEml.ok) assert.equal(truncatedEml.input.evidenceTruncated, true);
+
+const invalidCompleteness = validateAnalyzeRequest({
+  source: "eml",
+  body: "Synthetic message",
+  evidenceTruncated: "yes",
+});
+assert.equal(invalidCompleteness.ok, false);
+
 const unsupportedLocale = validateAnalyzeRequest({ body: "Synthetic message", locale: "de" });
 assert.equal(unsupportedLocale.ok, false);
 

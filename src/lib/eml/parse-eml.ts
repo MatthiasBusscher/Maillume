@@ -57,11 +57,13 @@ export type ParsedEml = {
   links: string[];
   linkPairs: EmailLinkPair[];
   attachmentNames: string[];
+  evidenceTruncated: boolean;
 };
 
 type MimePart = {
   headers: Map<string, string>;
   body: string;
+  headersTruncated: boolean;
 };
 
 type ParseState = {
@@ -71,6 +73,7 @@ type ParseState = {
   linkPairs: EmailLinkPair[];
   attachmentNames: string[];
   sectionsProcessed: number;
+  evidenceTruncated: boolean;
 };
 
 export function parseEml(raw: string): ParsedEml {
@@ -84,34 +87,38 @@ export function parseEml(raw: string): ParsedEml {
     linkPairs: [],
     attachmentNames: [],
     sectionsProcessed: 0,
+    evidenceTruncated: false,
   };
 
   parseMimePart(root, 0, state, true);
 
-  const body = [
+  const fullBody = [
     state.textParts.join("\n\n"),
     state.htmlParts.join("\n\n"),
   ]
     .filter(Boolean)
     .join("\n\n")
-    .trim()
-    .slice(0, MAX_SCAN_BODY_LENGTH);
-  const links = Array.from(new Set([...state.rawLinks, ...extractLinks(body)])).slice(
-    0,
-    MAX_EML_LINKS,
-  );
+    .trim();
+  const body = fullBody.slice(0, MAX_SCAN_BODY_LENGTH);
+  const allLinks = Array.from(new Set([...state.rawLinks, ...extractLinks(body)]));
+  const allLinkPairs = deduplicateLinkPairs(state.linkPairs);
+  state.evidenceTruncated ||= fullBody.length > MAX_SCAN_BODY_LENGTH
+    || allLinks.length > MAX_EML_LINKS
+    || allLinkPairs.length > MAX_EML_LINKS;
 
   return {
     subject,
     senderEmail: extractEmail(from),
     body,
-    links,
-    linkPairs: deduplicateLinkPairs(state.linkPairs).slice(0, MAX_EML_LINKS),
+    links: allLinks.slice(0, MAX_EML_LINKS),
+    linkPairs: allLinkPairs.slice(0, MAX_EML_LINKS),
     attachmentNames: state.attachmentNames,
+    evidenceTruncated: state.evidenceTruncated,
   };
 }
 
 function parseMimePart(part: MimePart, depth: number, state: ParseState, isRootPart: boolean): void {
+  state.evidenceTruncated ||= part.headersTruncated;
   const contentType = part.headers.get("content-type") ?? "text/plain";
   const disposition = part.headers.get("content-disposition") ?? "";
   const rawFilename =
@@ -130,6 +137,7 @@ function parseMimePart(part: MimePart, depth: number, state: ParseState, isRootP
 
   if (mediaType.startsWith("multipart/")) {
     if (depth >= MAX_EML_MIME_DEPTH) {
+      state.evidenceTruncated = true;
       return;
     }
 
@@ -138,8 +146,12 @@ function parseMimePart(part: MimePart, depth: number, state: ParseState, isRootP
       return;
     }
 
-    for (const section of splitMultipartSections(part.body, boundary)) {
+    const multipart = splitMultipartSections(part.body, boundary);
+    state.evidenceTruncated ||= multipart.evidenceTruncated;
+
+    for (const section of multipart.sections) {
       if (state.sectionsProcessed >= MAX_EML_MULTIPART_SECTIONS) {
+        state.evidenceTruncated = true;
         break;
       }
 
@@ -151,16 +163,25 @@ function parseMimePart(part: MimePart, depth: number, state: ParseState, isRootP
 
   const transferEncoding = part.headers.get("content-transfer-encoding") ?? "";
   const charset = getHeaderParameter(contentType, "charset") ?? "utf-8";
+  state.evidenceTruncated ||= part.body.length > MAX_EML_PART_BODY_CHARACTERS;
   const decodedBody = decodeTransferBody(
     part.body.slice(0, MAX_EML_PART_BODY_CHARACTERS),
     transferEncoding,
     charset,
   );
 
-  appendWithinLimit(state.rawLinks, extractLinks(decodedBody), MAX_EML_LINKS);
+  if (appendWithinLimit(state.rawLinks, extractLinks(decodedBody), MAX_EML_LINKS)) {
+    state.evidenceTruncated = true;
+  }
 
   if (mediaType === "text/html") {
-    appendWithinLimit(state.linkPairs, extractDisplayedLinkPairs(decodedBody), MAX_EML_LINKS);
+    if (appendWithinLimit(
+      state.linkPairs,
+      extractDisplayedLinkPairs(decodedBody),
+      MAX_EML_LINKS,
+    )) {
+      state.evidenceTruncated = true;
+    }
     state.htmlParts.push(htmlToText(decodedBody));
   } else if (mediaType === "text/plain" || isRootPart) {
     state.textParts.push(decodedBody);
@@ -201,12 +222,15 @@ function splitMimePart(source: string): MimePart {
     return {
       headers: parseHeaders(source.slice(0, MAX_EML_HEADER_CHARACTERS)),
       body: "",
+      headersTruncated: source.length > MAX_EML_HEADER_CHARACTERS,
     };
   }
 
+  const rawHeaders = source.slice(0, separator.index);
   return {
-    headers: parseHeaders(source.slice(0, separator.index).slice(0, MAX_EML_HEADER_CHARACTERS)),
+    headers: parseHeaders(rawHeaders.slice(0, MAX_EML_HEADER_CHARACTERS)),
     body: source.slice(separator.index + separator[0].length),
+    headersTruncated: rawHeaders.length > MAX_EML_HEADER_CHARACTERS,
   };
 }
 
@@ -244,11 +268,15 @@ function parseHeaders(rawHeaders: string): Map<string, string> {
   return headers;
 }
 
-function splitMultipartSections(body: string, boundary: string): string[] {
+function splitMultipartSections(
+  body: string,
+  boundary: string,
+): { sections: string[]; evidenceTruncated: boolean } {
   const boundaryPattern = new RegExp(`^--${escapeRegExp(boundary)}(--)?[ \\t]*$`);
   const sections: string[] = [];
   const currentLines: string[] = [];
   let started = false;
+  let evidenceTruncated = false;
 
   for (const line of body.split(/\r?\n/)) {
     const boundaryMatch = boundaryPattern.exec(line);
@@ -262,7 +290,12 @@ function splitMultipartSections(body: string, boundary: string): string[] {
         currentLines.length = 0;
       }
 
-      if (boundaryMatch[1] === "--" || sections.length >= MAX_EML_MULTIPART_SECTIONS) {
+      if (boundaryMatch[1] === "--") {
+        break;
+      }
+
+      if (sections.length >= MAX_EML_MULTIPART_SECTIONS) {
+        evidenceTruncated = true;
         break;
       }
 
@@ -282,7 +315,7 @@ function splitMultipartSections(body: string, boundary: string): string[] {
     }
   }
 
-  return sections;
+  return { sections, evidenceTruncated };
 }
 
 function getHeaderParameter(header: string, parameterName: string): string | undefined {
@@ -666,12 +699,14 @@ function decodeHtmlEntities(value: string): string {
   });
 }
 
-function appendWithinLimit<T>(target: T[], values: T[], limit: number): void {
+function appendWithinLimit<T>(target: T[], values: T[], limit: number): boolean {
   const remaining = limit - target.length;
 
   if (remaining > 0) {
     target.push(...values.slice(0, remaining));
   }
+
+  return values.length > Math.max(0, remaining);
 }
 
 function escapeRegExp(value: string): string {

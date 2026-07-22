@@ -37,6 +37,7 @@ assert.deepEqual(envelope.availability, {
   linkDestinations: true,
   authenticationHeaders: false,
   textExtraction: "parsed",
+  contentComplete: true,
 });
 assert.equal(ensureAnalysisEnvelope(envelope), envelope);
 
@@ -44,6 +45,12 @@ const screenshot = createAnalysisEnvelope({ body: "Ordinary project update." }, 
 assert.equal(screenshot.availability.sender, false);
 assert.equal(screenshot.availability.linkDestinations, false);
 assert.equal(screenshot.availability.textExtraction, "ocr");
+
+const truncatedEml = createAnalysisEnvelope({
+  body: "Incomplete parsed message.",
+  evidenceTruncated: true,
+}, "eml");
+assert.equal(truncatedEml.availability.contentComplete, false);
 
 const obfuscated = createAnalysisEnvelope({
   subject: "Pass\u200bword notice",
