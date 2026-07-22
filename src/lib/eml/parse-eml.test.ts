@@ -231,15 +231,15 @@ body`);
   const linkPastPartLimit = parseEml(`Content-Type: text/plain
 
 ${"x".repeat(MAX_EML_PART_BODY_CHARACTERS)} https://outside-part-limit.example.test/`);
-  assert.equal(linkPastPartLimit.links.includes("https://outside-part-limit.example.test/"), false);
+  assert.deepEqual(linkPastPartLimit.links, []);
   assert.equal(linkPastPartLimit.evidenceTruncated, true);
 
   const linkInsideTruncatedPart = parseEml(`Content-Type: text/plain
 
 https://inside-part-limit.example.test/ ${"x".repeat(MAX_EML_PART_BODY_CHARACTERS)}`);
-  assert.equal(
-    linkInsideTruncatedPart.links.includes("https://inside-part-limit.example.test/"),
-    true,
+  assert.deepEqual(
+    linkInsideTruncatedPart.links,
+    ["https://inside-part-limit.example.test/"],
     "evidence inside the accepted prefix must remain available",
   );
   assert.equal(linkInsideTruncatedPart.evidenceTruncated, true);
