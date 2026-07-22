@@ -4,7 +4,7 @@ import { Github, LogIn, Menu, ScanSearch } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { getAppHref, getAppRouteHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
 import { getRequestPathname, getRequestSiteLocale } from "@/lib/i18n/request-locale";
-import { localizePath } from "@/lib/i18n/site-locale";
+import { localizeHref, localizePath } from "@/lib/i18n/site-locale";
 import { areAccountsEnabled } from "@/lib/accounts/config";
 
 export async function SiteHeader() {
@@ -129,11 +129,4 @@ export function SiteLanguageLinks({ locale, pathname }: { locale: "en" | "nl"; p
       ))}
     </div>
   );
-}
-
-function localizeHref(href: string, locale: "en" | "nl") {
-  if (href.startsWith("/")) return localizePath(href, locale);
-  const url = new URL(href);
-  url.pathname = localizePath(url.pathname || "/app", locale);
-  return url.toString();
 }

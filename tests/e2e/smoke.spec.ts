@@ -151,6 +151,10 @@ test("Dutch marketing preview and app navigation are visibly localized", async (
   await expect(page.getByText("Verwerkt bestanden en haalt leesbare tekst op.", { exact: true })).toBeVisible();
   await expect(page.getByText("Weegt risicosignalen en geeft een uitlegbare beoordeling terug.", { exact: true })).toBeVisible();
   await expect(page.getByText("E-mailinhoud en resultaten worden niet in de applicatieopslag bewaard.", { exact: true })).toBeVisible();
+  const scannerLinks = page.getByRole("link", { name: "Controleer een e-mail", exact: true });
+  await expect(scannerLinks).toHaveCount(2);
+  await expect(scannerLinks.nth(0)).toHaveAttribute("href", "/nl/app");
+  await expect(scannerLinks.nth(1)).toHaveAttribute("href", "/nl/app");
   await expect(page.getByRole("link", { name: "Ontdek self-hosting" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Lees de incidentnotities" })).toHaveAttribute(
     "href",
