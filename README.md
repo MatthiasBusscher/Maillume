@@ -137,9 +137,29 @@ AI_BASE_URL=https://your-provider.example/v1
 AI_ALLOWED_HOSTS=your-provider.example
 AI_API_KEY=your-own-provider-key
 AI_MODEL=your-model-id
+TRUST_CF_CONNECTING_IP=false
+TRUSTED_PROXY_IP_HEADER=
 ```
 
 Never prefix provider secrets with `NEXT_PUBLIC_`. Configure provider budgets and deployment-level rate limiting before exposing AI mode publicly. See [AI cost controls](docs/cost-controls.md).
+
+Only set `TRUST_CF_CONNECTING_IP=true` when the application origin is reachable exclusively
+through Cloudflare and clients cannot supply that header directly.
+
+Client IP trust depends on the deployment topology:
+
+- **Direct container:** leave both trust settings disabled. Production requests share a
+  conservative in-process rate-limit bucket, so add a trusted edge limiter before exposing a
+  public or AI-enabled instance.
+- **Cloudflare Tunnel:** set `TRUST_CF_CONNECTING_IP=true` only when Tunnel is the exclusive
+  ingress and direct origin access is blocked.
+- **Another reverse proxy:** keep Cloudflare trust disabled and set
+  `TRUSTED_PROXY_IP_HEADER=x-forwarded-for` or `x-real-ip`. The proxy must be the exclusive
+  ingress, remove any client-supplied value, and write exactly one validated client IP. A
+  comma-separated forwarding chain is rejected.
+
+Do not enable both trust modes. Missing, malformed, multi-value, or ambiguously configured
+headers fail safely into the shared bucket instead of creating attacker-controlled buckets.
 
 For a production-style local container:
 

@@ -62,6 +62,17 @@ for required_env in "$production_env" "$infrastructure_env"; do
   fi
 done
 
+trust_cf_assignments="$(grep -Ec '^[[:space:]]*TRUST_CF_CONNECTING_IP=' "$production_env" || true)"
+if [ "$trust_cf_assignments" -ne 1 ] || \
+   ! grep -Eq '^[[:space:]]*TRUST_CF_CONNECTING_IP=true[[:space:]]*$' "$production_env"; then
+  echo "Hosted production requires TRUST_CF_CONNECTING_IP=true before deployment." >&2
+  exit 1
+fi
+if grep -Eq '^[[:space:]]*TRUSTED_PROXY_IP_HEADER=[[:space:]]*[^[:space:]#]' "$production_env"; then
+  echo "Hosted production must not combine Cloudflare and generic proxy header trust." >&2
+  exit 1
+fi
+
 case "$health_attempts:$health_delay_seconds" in
   *[!0-9:]*|:*|*:)
     echo "Deployment health timing must use non-negative integers." >&2

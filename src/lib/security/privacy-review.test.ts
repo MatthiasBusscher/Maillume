@@ -191,8 +191,15 @@ function main() {
   assert.match(operatorConfig, /getPublicBetaOperatorProfile/);
   assert.match(operatorConfig, /Public-beta operator configuration is incomplete/);
   assert.match(clientIdentifier, /cf-connecting-ip/);
+  assert.match(clientIdentifier, /environment\.TRUST_CF_CONNECTING_IP === "true"/);
+  assert.match(clientIdentifier, /TRUSTED_PROXY_IP_HEADER/);
   assert.match(clientIdentifier, /environment\.NODE_ENV === "production"/);
-  assert.doesNotMatch(clientIdentifier, /x-forwarded-for[\s\S]*cf-connecting-ip/);
+  assert.ok(
+    clientIdentifier.indexOf("getTrustedHeader(environment)") <
+      clientIdentifier.indexOf("headers.get(trustedHeader)"),
+    "client IP headers must be selected by the explicit trust gate before they are read",
+  );
+  assert.match(clientIdentifier, /if \(trustCloudflare === Boolean\(trustedProxyHeader\)\) return undefined/);
   assert.ok(
     accountDeletionContent.indexOf("getUser()") <
       accountDeletionContent.indexOf("admin.auth.admin.deleteUser"),

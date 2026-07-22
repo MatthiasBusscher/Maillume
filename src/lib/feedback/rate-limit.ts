@@ -3,6 +3,7 @@ import { getTrustedClientIdentifier } from "../security/client-identifier";
 
 export const FEEDBACK_RATE_LIMIT_MAX_REQUESTS = 5;
 export const FEEDBACK_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1_000;
+export const FEEDBACK_RATE_LIMIT_MAX_BUCKETS = 10_000;
 
 type FeedbackRateLimitBucket = {
   count: number;
@@ -12,7 +13,8 @@ type FeedbackRateLimitBucket = {
 export type FeedbackRateLimitStore = Map<string, FeedbackRateLimitBucket>;
 
 type FeedbackRateLimitOptions = {
-  env?: Pick<NodeJS.ProcessEnv, "NODE_ENV">;
+  env?: Partial<Pick<NodeJS.ProcessEnv, "NODE_ENV" | "TRUST_CF_CONNECTING_IP" | "TRUSTED_PROXY_IP_HEADER">>;
+  maxBuckets?: number;
   now?: () => number;
   salt?: string;
   store?: FeedbackRateLimitStore;
@@ -44,6 +46,7 @@ export function enforceFeedbackRateLimit(
   const bucket = store.get(key);
 
   if (!bucket || bucket.resetAt <= now) {
+    if (!bucket) ensureBucketCapacity(store, options.maxBuckets ?? FEEDBACK_RATE_LIMIT_MAX_BUCKETS, now);
     store.set(key, {
       count: 1,
       resetAt: now + FEEDBACK_RATE_LIMIT_WINDOW_MS,
@@ -56,6 +59,27 @@ export function enforceFeedbackRateLimit(
   }
 
   bucket.count += 1;
+}
+
+function ensureBucketCapacity(
+  store: FeedbackRateLimitStore,
+  maxBuckets: number,
+  now: number,
+): void {
+  const boundedMaximum = Math.max(1, Math.floor(maxBuckets));
+  if (store.size < boundedMaximum) return;
+
+  let earliestResetAt = Number.POSITIVE_INFINITY;
+  for (const [key, bucket] of store) {
+    if (bucket.resetAt <= now) {
+      store.delete(key);
+    } else {
+      earliestResetAt = Math.min(earliestResetAt, bucket.resetAt);
+    }
+  }
+
+  if (store.size < boundedMaximum) return;
+  throw new FeedbackRateLimitError(Math.max(1, Math.ceil((earliestResetAt - now) / 1_000)));
 }
 
 function getGlobalStore(): FeedbackRateLimitStore {
