@@ -30,6 +30,7 @@ export async function SiteFooter() {
           links={[
             { href: getAppHref(), label: "Scanner", external: true },
             { href: page("/platform"), label: "Platform" },
+            { href: page("/chrome-extension"), label: nl ? "Chrome-extensie" : "Chrome extension" },
             { href: page("/pricing"), label: nl ? "Prijzen" : "Pricing" },
             { href: page("/resources/odido-phishing-incident"), label: nl ? "Informatie" : "Resources" },
           ]}

@@ -31,6 +31,36 @@ test("launch copy reflects optional accounts without advertising hosted AI", () 
   assert.doesNotMatch(translations, /Account, API, and managed AI features remain disabled/);
 });
 
+test("Chrome extension instructions cover both languages and the manual-beta boundary", () => {
+  const instructions = read("src/app/chrome-extension/page.tsx");
+  const platform = read("src/app/platform/page.tsx");
+
+  assert.match(instructions, /Manual installation only/);
+  assert.match(instructions, /Alleen handmatig te installeren/);
+  assert.match(instructions, /chrome:\/\/extensions/);
+  assert.match(instructions, /Maillume-main\/integrations\/browser-extension/);
+  assert.match(instructions, /No background scanning/);
+  assert.match(instructions, /Geen scans op de achtergrond/);
+  assert.match(instructions, /Invalid analysis response/);
+  assert.match(instructions, /Ongeldig analyseresultaat/);
+  assert.match(platform, /Installation guide/);
+  assert.match(platform, /Chrome Web Store/);
+});
+
+test("API-key controls make one-time copy and lost-key replacement visible", () => {
+  const manager = read("src/components/api-key-manager.tsx");
+  const english = read("src/lib/i18n/account-en.ts");
+  const dutch = read("src/lib/i18n/account-nl.ts");
+
+  assert.match(manager, /copyFeedback === "copied"/);
+  assert.match(manager, /labels\.copiedButton/);
+  assert.match(manager, /labels\.replaceLostKey/);
+  assert.match(english, /Copied/);
+  assert.match(english, /Replace lost key/);
+  assert.match(dutch, /Gekopieerd/);
+  assert.match(dutch, /Verloren sleutel vervangen/);
+});
+
 test("Dutch terminology and account tone remain consistent", () => {
   const dictionary = read("src/lib/i18n/dictionary.ts");
   const account = read("src/lib/i18n/account-nl.ts");
@@ -58,6 +88,8 @@ test("privacy and authentication copy describe the real data flow", () => {
   assert.match(accountNl, /Log in of maak een account/);
   assert.match(read("src/components/email-auth-form.tsx"), /mode === "sign-in" \|\| mode === "forgot"/);
   assert.match(extension, /Review the captured details/);
+  assert.match(extension, /Remember API key on this device/);
+  assert.match(extension, /API-sleutel op dit apparaat onthouden/);
   assert.doesNotMatch(extension, /Review before sending|Controleer vóór verzending/);
 });
 

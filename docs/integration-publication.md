@@ -23,10 +23,10 @@ Permission justifications:
 - `activeTab`: temporary access after the toolbar action so the extension can read text selected by the user or the visibly open message in a supported webmail client.
 - `scripting`: executes the small, one-time capture function in that temporary active tab.
 - `sidePanel`: keeps the review and result interface beside the email.
-- `storage`: stores the deployment URL locally and the API key for the Chrome session only; never message content or results.
+- `storage`: stores the deployment URL locally and, when the user enables the clearly disclosed remember option, stores the dedicated API key in trusted extension-local storage across restarts and updates. Otherwise the key remains session-only. It never stores message content or results.
 - Optional host access: requested interactively for the exact Maillume deployment selected by the user so the extension can call its API.
 
-Changing deployments revokes the previous origin grant. Removing the saved connection clears the session key and revokes the active origin grant. Captured text uses a one-time in-memory handoff and expires if it is not consumed. The English and Dutch interfaces request assessment output in the browser UI language.
+Changing deployments revokes the previous origin grant. Removing the saved connection clears the key from both local and session storage and revokes the active origin grant. Captured text uses a one-time in-memory handoff and expires if it is not consumed. The English and Dutch interfaces request assessment output in the browser UI language.
 
 The package declares no content scripts, persistent webmail host access, tabs permission, cookies permission, webRequest permission, or background mailbox behavior.
 
@@ -46,8 +46,8 @@ Use the exact checksummed release candidate and synthetic content only. Record t
 4. Switch tabs and navigate within each webmail client. Confirm the panel never analyzes stale content. On a restricted page such as `chrome://settings`, confirm capture is refused with the restricted-page explanation.
 5. Deny the deployment permission once and confirm no connection is saved. Grant it on the next attempt. Verify Dutch/English text containing `café — 日本語 — 🛡️` survives capture, and confirm a message beyond 20,000 characters is bounded to the documented limit.
 6. Create a fresh production key from an AAL2 account and complete one synthetic assessment. Revoke that key, retry without changing the panel key, and capture the `401` rejection state. Do not record the key value.
-7. With an exhausted test account, confirm the panel explains the `429` limit and retains the session key so the user can retry after the limit resets. Record only status and aggregate quota evidence.
-8. Use **Remove connection** and confirm the endpoint, session key, and optional deployment permission are removed. Restart Chrome and confirm the API key is absent from the new browser session.
+7. With an exhausted test account, confirm the panel explains the `429` limit and retains the configured key so the user can retry after the limit resets. Record only status and aggregate quota evidence.
+8. Test both key-storage choices. With remember disabled, restart Chrome and confirm the key is absent. With remember enabled, reload the unpacked extension from the same directory and confirm the key remains available and can be revealed. Use **Remove connection** and confirm the endpoint, local key, session key, and optional deployment permission are all removed.
 
 The automated suite exercises the corresponding capture and response branches, but it does not replace these real Chrome Stable, Gmail, Outlook, production-key, and permission-prompt observations.
 

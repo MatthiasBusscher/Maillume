@@ -108,6 +108,7 @@ function main() {
   const emlParser = readProjectFile("src/lib/eml/parse-eml.ts");
   const extensionManifest = readProjectFile("integrations/browser-extension/manifest.json");
   const extensionPanel = readProjectFile("integrations/browser-extension/sidepanel.js");
+  const extensionWorker = readProjectFile("integrations/browser-extension/service-worker.js");
   const ciWorkflow = readProjectFile(".github/workflows/ci.yml");
   const releaseWorkflow = readProjectFile(".github/workflows/release.yml");
   const rollbackWorkflow = readProjectFile(".github/workflows/rollback-rehearsal.yml");
@@ -381,8 +382,11 @@ function main() {
   assert.match(extensionManifest, /"minimum_chrome_version": "116"/);
   assert.doesNotMatch(extensionManifest, /"content_scripts"|"tabs"|mail\.google\.com|outlook\.office\.com/);
   assert.doesNotMatch(extensionPanel, /storage\.local\.set\([^)]*(?:body|result)[\s\S]*?\)/);
+  assert.match(extensionPanel, /storeApiKey\(apiKey, rememberApiKey\)/);
+  assert.match(extensionPanel, /storage\.local\.set\(\{ apiKey \}\)/);
   assert.match(extensionPanel, /storage\.session\.set\(\{ apiKey \}\)/);
-  assert.doesNotMatch(extensionPanel, /storage\.local\.set\(\{ apiKey \}\)/);
+  assert.match(extensionPanel, /rememberApiKey/);
+  assert.match(extensionWorker, /setAccessLevel\?\.\(\{ accessLevel: "TRUSTED_CONTEXTS" \}\)/);
   assertPinnedActions(ciWorkflow, ".github/workflows/ci.yml");
   assertPinnedActions(releaseWorkflow, ".github/workflows/release.yml");
   assertPinnedActions(rollbackWorkflow, ".github/workflows/rollback-rehearsal.yml");

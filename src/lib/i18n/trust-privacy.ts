@@ -43,7 +43,7 @@ export const trustPrivacyCopy = {
         title: "Chrome browser extension",
         paragraphs: [
           "The Chrome extension captures text you explicitly select or, when supported and unambiguous, the visibly open webmail message after you start the action. It sends those fields to the Maillume deployment displayed in the extension for that assessment.",
-          "The extension does not perform background mailbox scanning and does not persist message content or results. Its endpoint preference is stored locally and its API key is kept in browser session storage.",
+          "The extension does not perform background mailbox scanning and does not persist message content or results. Its endpoint preference is stored locally. You can explicitly remember a dedicated API key in trusted extension-local storage across restarts and updates, or keep it only for the browser session.",
         ],
       },
       providers: {
@@ -109,7 +109,7 @@ export const trustPrivacyCopy = {
         title: "Chrome-browserextensie",
         paragraphs: [
           "De Chrome-extensie legt tekst vast die je uitdrukkelijk selecteert of, wanneer dit wordt ondersteund en ondubbelzinnig is, het zichtbaar geopende webmailbericht nadat je de actie start. De extensie stuurt die velden voor de beoordeling naar de Maillume-omgeving die in de extensie wordt getoond.",
-          "De extensie scant postvakken niet op de achtergrond en bewaart geen berichtinhoud of resultaten. De voorkeur voor het endpoint wordt lokaal opgeslagen en de API-sleutel blijft in de sessieopslag van de browser.",
+          "De extensie scant postvakken niet op de achtergrond en bewaart geen berichtinhoud of resultaten. De voorkeur voor het endpoint wordt lokaal opgeslagen. Je kunt er uitdrukkelijk voor kiezen een aparte API-sleutel in vertrouwde lokale extensieopslag te bewaren voor herstarts en updates, of de sleutel alleen tijdens de browsersessie bewaren.",
         ],
       },
       providers: {

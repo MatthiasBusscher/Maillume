@@ -58,7 +58,7 @@
 
 ## Chrome Manual Beta
 
-- Automated readiness is green for the reviewed v0.3.1 artifact: `maillume-browser-extension.zip` has SHA-256 `ec152651b6aa3a3651dd02b1641629cc68941f85cb4d057e0e39bec3955b91f3`. Automated checks cover capture, fallback, restricted pages, multiple-message ambiguity, navigation clearing, Unicode and size boundaries, handoff, in-panel recapture, permission denial, revoked-key and quota response handling, the manifest, privacy invariants, and the API contract.
+- Automated readiness is green for the reviewed v0.3.3 artifact: `maillume-browser-extension.zip` has SHA-256 `dbeb52ecc7a130012e8c5aa98e336c676ffacb8870ae692ab31200f541907b4f`. Automated checks cover capture, fallback, restricted pages, real versus nested multiple-message ambiguity, Outlook panel continuity with stale-capture clearing, Unicode and size boundaries, handoff, in-panel recapture, remembered-key visibility, analysis-version mismatch guidance, permission denial, revoked-key and quota response handling, the manifest, privacy invariants, and the API contract.
 - Status: not cleared for Chrome distribution. The public web beta may remain live, but do not claim Chrome Web Store or generally available extension support until both gates below are checked.
 - [ ] The unpacked extension passes the production-key Gmail/Outlook matrix with synthetic messages, including revocation and quota handling (#39).
 - [ ] Chrome Web Store validation and the published privacy disclosure pass before claiming store availability (#39).

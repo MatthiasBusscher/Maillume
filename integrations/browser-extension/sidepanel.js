@@ -1,10 +1,11 @@
 const elements = Object.fromEntries(
-  ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"]
+  ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"]
     .map((id) => [id, document.getElementById(id)]),
 );
 let activeTabId;
 let committedEndpoint = "";
 let committedApiKey = "";
+let committedRememberApiKey = false;
 let captureQueue = Promise.resolve();
 let latestCaptureId = "";
 let lastAppliedCaptureId = "";
@@ -38,21 +39,23 @@ const dynamicCopy = {
     permissionError: "Chrome could not update the deployment permission.",
     permissionCleanupFailed: "The previous deployment permission could not be removed. The connection was not changed.",
     saveFailed: "The connection settings could not be saved.",
-    saved: "Deployment saved on this device. API key kept for this browser session.",
-    removed: "Connection, session key, and deployment permission removed.",
+    savedPersistent: "Deployment and API key saved in this Chrome profile for restarts and updates.",
+    savedSession: "Deployment saved. API key kept only for this browser session.",
+    removed: "Connection, API key, and deployment permission removed.",
     removeStorageFailed: "Chrome could not clear all connection settings. Try removing the connection again.",
-    removePermissionFailed: "The connection and session key were cleared, but Chrome could not remove the deployment permission.",
+    removePermissionFailed: "The connection and API key were cleared, but Chrome could not remove the deployment permission.",
     bodyRequired: "Capture or enter the email text first.",
-    connectionRequired: "Save a deployment and API key for this browser session first.",
+    connectionRequired: "Save a deployment and API key first.",
     sending: (origin) => `Sending the reviewed text to ${origin}...`,
     invalidResult: "The deployment returned an invalid analysis response.",
+    incompatibleResult: "The extension and deployment use different analysis versions. Update the extension from the official source, then reload it in chrome://extensions.",
     authenticationFailed: "The deployment rejected the API key.",
     quotaExceeded: "This request was limited. Check account usage or wait before trying again.",
     requestFailed: (status) => `The deployment returned HTTP ${status}.`,
     unreachable: "The deployment could not be reached. Check the URL and connection permission.",
     complete: "Assessment complete. Message content and results were not saved by the extension.",
     destination: (endpoint) => `Destination: ${endpoint}`,
-    destinationNeedsKey: (endpoint) => `Destination: ${endpoint}. Enter and save an API key for this browser session.`,
+    destinationNeedsKey: (endpoint) => `Destination: ${endpoint}. Enter and save an API key.`,
     unsavedDestination: (endpoint) => `Unsaved destination: ${endpoint}`,
     unsavedKey: (endpoint) => `Destination: ${endpoint}. The edited API key has not been saved for this session.`,
     configureDestination: "Destination: configure a Maillume deployment",
@@ -62,6 +65,8 @@ const dynamicCopy = {
     points: "points",
     hideInstructions: "Hide instructions",
     showInstructions: "Show instructions",
+    showApiKey: "Show API key",
+    hideApiKey: "Hide API key",
   },
   nl: {
     noTab: "Er is geen actief browsertabblad beschikbaar. Open een e-mail en klik opnieuw op de Maillume-knop in de werkbalk.",
@@ -85,21 +90,23 @@ const dynamicCopy = {
     permissionError: "Chrome kon de toestemming voor deze omgeving niet bijwerken.",
     permissionCleanupFailed: "De vorige toestemming voor deze omgeving kon niet worden verwijderd. De verbinding is niet gewijzigd.",
     saveFailed: "De verbindingsinstellingen konden niet worden opgeslagen.",
-    saved: "Omgeving opgeslagen op dit apparaat. API-sleutel bewaard voor deze browsersessie.",
-    removed: "Verbinding, sessiesleutel en toestemming voor deze omgeving verwijderd.",
+    savedPersistent: "Omgeving en API-sleutel opgeslagen in dit Chrome-profiel voor herstarts en updates.",
+    savedSession: "Omgeving opgeslagen. API-sleutel alleen voor deze browsersessie bewaard.",
+    removed: "Verbinding, API-sleutel en toestemming voor deze omgeving verwijderd.",
     removeStorageFailed: "Chrome kon niet alle verbindingsinstellingen wissen. Probeer de verbinding opnieuw te verwijderen.",
-    removePermissionFailed: "De verbinding en sessiesleutel zijn gewist, maar Chrome kon de toestemming voor deze omgeving niet verwijderen.",
+    removePermissionFailed: "De verbinding en API-sleutel zijn gewist, maar Chrome kon de toestemming voor deze omgeving niet verwijderen.",
     bodyRequired: "Leg eerst de e-mailtekst vast of voer die in.",
-    connectionRequired: "Sla eerst een Maillume-omgeving en API-sleutel voor deze browsersessie op.",
+    connectionRequired: "Sla eerst een Maillume-omgeving en API-sleutel op.",
     sending: (origin) => `De gecontroleerde tekst wordt naar ${origin} verzonden...`,
     invalidResult: "De Maillume-omgeving gaf een ongeldig analyseresultaat terug.",
+    incompatibleResult: "De extensie en Maillume-omgeving gebruiken verschillende analyseversies. Werk de extensie bij vanuit de officiële broncode en laad haar daarna opnieuw via chrome://extensions.",
     authenticationFailed: "De Maillume-omgeving heeft de API-sleutel geweigerd.",
     quotaExceeded: "Deze aanvraag is beperkt. Controleer het accountgebruik of wacht voordat je het opnieuw probeert.",
     requestFailed: (status) => `De Maillume-omgeving gaf HTTP ${status} terug.`,
     unreachable: "De Maillume-omgeving is niet bereikbaar. Controleer de URL en toestemming.",
     complete: "Beoordeling voltooid. De extensie heeft berichtinhoud en resultaten niet opgeslagen.",
     destination: (endpoint) => `Bestemming: ${endpoint}`,
-    destinationNeedsKey: (endpoint) => `Bestemming: ${endpoint}. Voer een API-sleutel in en sla die op voor deze browsersessie.`,
+    destinationNeedsKey: (endpoint) => `Bestemming: ${endpoint}. Voer een API-sleutel in en sla die op.`,
     unsavedDestination: (endpoint) => `Niet-opgeslagen bestemming: ${endpoint}`,
     unsavedKey: (endpoint) => `Bestemming: ${endpoint}. De gewijzigde API-sleutel is nog niet opgeslagen voor deze sessie.`,
     configureDestination: "Bestemming: configureer een Maillume-omgeving",
@@ -109,6 +116,8 @@ const dynamicCopy = {
     points: "punten",
     hideInstructions: "Uitleg verbergen",
     showInstructions: "Uitleg tonen",
+    showApiKey: "API-sleutel tonen",
+    hideApiKey: "API-sleutel verbergen",
   },
 };
 
@@ -123,13 +132,16 @@ initialize().catch(() => setStatus(getDynamicCopy().initializationFailed, true))
 async function initialize() {
   localizeUi();
   const [localSettings, sessionSettings] = await Promise.all([
-    chrome.storage.local.get(["endpoint"]),
+    chrome.storage.local.get(["endpoint", "apiKey"]),
     chrome.storage.session.get(["apiKey"]),
   ]);
   if (localSettings.endpoint) elements.endpoint.value = localSettings.endpoint;
-  if (sessionSettings.apiKey) elements.apiKey.value = sessionSettings.apiKey;
+  const storedApiKey = localSettings.apiKey || sessionSettings.apiKey || "";
+  if (storedApiKey) elements.apiKey.value = storedApiKey;
   committedEndpoint = localSettings.endpoint || "";
-  committedApiKey = sessionSettings.apiKey || "";
+  committedApiKey = storedApiKey;
+  committedRememberApiKey = Boolean(localSettings.apiKey);
+  elements.rememberApiKey.checked = committedRememberApiKey || !sessionSettings.apiKey;
   updateDestination();
   updateAnalyzeState();
 
@@ -141,7 +153,10 @@ async function initialize() {
 function localizeUi() {
   const locale = getLocale();
   document.documentElement.lang = locale;
-  if (locale === "nl") document.querySelectorAll("[data-nl]").forEach((node) => { node.textContent = node.dataset.nl; });
+  if (locale === "nl") {
+    document.querySelectorAll("[data-nl]").forEach((node) => { node.textContent = node.dataset.nl; });
+    document.querySelectorAll("[data-nl-aria-label]").forEach((node) => { node.setAttribute("aria-label", node.dataset.nlAriaLabel); });
+  }
 }
 
 async function handleCaptureNotification(message) {
@@ -242,6 +257,7 @@ elements.save.addEventListener("click", async () => {
   const endpoint = normalizeEndpoint(elements.endpoint.value);
   if (!endpoint) return setStatus(copy.invalidEndpoint, true);
   const apiKey = elements.apiKey.value.trim();
+  const rememberApiKey = elements.rememberApiKey.checked === true;
   if (!/^mlm_[A-Za-z0-9_-]{43}$/.test(apiKey)) return setStatus(copy.invalidApiKey, true);
 
   const originPattern = permissionPattern(endpoint);
@@ -257,7 +273,7 @@ elements.save.addEventListener("click", async () => {
   try {
     await Promise.all([
       chrome.storage.local.set({ endpoint }),
-      chrome.storage.session.set({ apiKey }),
+      storeApiKey(apiKey, rememberApiKey),
     ]);
   } catch {
     await restoreCommittedSettings();
@@ -281,10 +297,20 @@ elements.save.addEventListener("click", async () => {
 
   committedEndpoint = endpoint;
   committedApiKey = apiKey;
+  committedRememberApiKey = rememberApiKey;
   elements.endpoint.value = endpoint;
   updateDestination();
   updateAnalyzeState();
-  setStatus(copy.saved);
+  setStatus(rememberApiKey ? copy.savedPersistent : copy.savedSession);
+});
+
+elements.apiKeyVisibility.addEventListener("click", () => {
+  const visible = elements.apiKey.type !== "text";
+  const label = visible ? getDynamicCopy().hideApiKey : getDynamicCopy().showApiKey;
+  elements.apiKey.type = visible ? "text" : "password";
+  elements.apiKeyVisibility.setAttribute("aria-pressed", String(visible));
+  elements.apiKeyVisibility.setAttribute("aria-label", label);
+  elements.apiKeyVisibility.setAttribute("title", label);
 });
 
 elements.capture.addEventListener("click", async () => {
@@ -322,18 +348,20 @@ elements.reset.addEventListener("click", async () => {
   const copy = getDynamicCopy();
   const originPattern = committedEndpoint ? permissionPattern(committedEndpoint) : null;
   const storageResults = await Promise.allSettled([
-    chrome.storage.local.remove(["endpoint"]),
+    chrome.storage.local.remove(["endpoint", "apiKey"]),
     chrome.storage.session.remove(["apiKey"]),
   ]);
   if (storageResults.some(({ status }) => status === "rejected")) {
     const [localSettings, sessionSettings] = await Promise.all([
-      chrome.storage.local.get(["endpoint"]).catch(() => ({})),
+      chrome.storage.local.get(["endpoint", "apiKey"]).catch(() => ({})),
       chrome.storage.session.get(["apiKey"]).catch(() => ({})),
     ]);
     committedEndpoint = localSettings.endpoint || "";
-    committedApiKey = sessionSettings.apiKey || "";
+    committedApiKey = localSettings.apiKey || sessionSettings.apiKey || "";
+    committedRememberApiKey = Boolean(localSettings.apiKey);
     elements.endpoint.value = committedEndpoint || "https://app.maillume.io";
     elements.apiKey.value = committedApiKey;
+    elements.rememberApiKey.checked = committedRememberApiKey;
     clearMessageData();
     updateDestination();
     return setStatus(copy.removeStorageFailed, true);
@@ -349,8 +377,11 @@ elements.reset.addEventListener("click", async () => {
   }
   committedEndpoint = "";
   committedApiKey = "";
+  committedRememberApiKey = false;
   elements.endpoint.value = "https://app.maillume.io";
   elements.apiKey.value = "";
+  elements.apiKey.type = "password";
+  elements.rememberApiKey.checked = true;
   clearMessageData();
   updateDestination();
   updateAnalyzeState();
@@ -398,6 +429,7 @@ elements.analyze.addEventListener("click", async () => {
     } catch {
       throw new Error(copy.invalidResult);
     }
+    if (payload?.analysis_version !== ANALYSIS_PIPELINE_VERSION) throw new Error(copy.incompatibleResult);
     if (!isAnalysisResponse(payload)) throw new Error(copy.invalidResult);
     renderResult(payload.result);
     setStatus(copy.complete);
@@ -478,9 +510,26 @@ async function restoreCommittedSettings() {
     ? chrome.storage.local.set({ endpoint: committedEndpoint })
     : chrome.storage.local.remove(["endpoint"]);
   const keyOperation = committedApiKey
-    ? chrome.storage.session.set({ apiKey: committedApiKey })
-    : chrome.storage.session.remove(["apiKey"]);
+    ? storeApiKey(committedApiKey, committedRememberApiKey)
+    : Promise.all([
+        chrome.storage.local.remove(["apiKey"]),
+        chrome.storage.session.remove(["apiKey"]),
+      ]);
   await Promise.allSettled([endpointOperation, keyOperation]);
+}
+
+async function storeApiKey(apiKey, remember) {
+  if (remember) {
+    await Promise.all([
+      chrome.storage.local.set({ apiKey }),
+      chrome.storage.session.remove(["apiKey"]),
+    ]);
+    return;
+  }
+  await Promise.all([
+    chrome.storage.local.remove(["apiKey"]),
+    chrome.storage.session.set({ apiKey }),
+  ]);
 }
 
 async function removePermission(originPattern) {

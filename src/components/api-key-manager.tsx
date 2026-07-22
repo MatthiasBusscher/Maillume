@@ -34,6 +34,7 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
   const [lifetimeDays, setLifetimeDays] = useState<ApiKeyLifetimeDays>(90);
   const [plaintext, setPlaintext] = useState<string>();
   const [plaintextVisible, setPlaintextVisible] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState<"idle" | "copied" | "error">("idle");
   const [message, setMessage] = useState<string>(labels.loading);
   const [busy, setBusy] = useState(false);
 
@@ -54,10 +55,17 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
 
   useEffect(() => { void loadKeys(); }, [loadKeys]);
 
+  useEffect(() => {
+    if (copyFeedback !== "copied") return;
+    const timer = window.setTimeout(() => setCopyFeedback("idle"), 2_500);
+    return () => window.clearTimeout(timer);
+  }, [copyFeedback]);
+
   async function createKey() {
     setBusy(true);
     setPlaintext(undefined);
     setPlaintextVisible(false);
+    setCopyFeedback("idle");
     setMessage("");
 
     try {
@@ -87,6 +95,7 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
     setBusy(true);
     setPlaintext(undefined);
     setPlaintextVisible(false);
+    setCopyFeedback("idle");
     setMessage("");
 
     try {
@@ -132,8 +141,14 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
 
   async function copyPlaintext() {
     if (!plaintext) return;
-    await navigator.clipboard.writeText(plaintext);
-    setMessage(labels.copied);
+    try {
+      await navigator.clipboard.writeText(plaintext);
+      setCopyFeedback("copied");
+      setMessage("");
+    } catch {
+      setCopyFeedback("error");
+      setMessage(labels.copyFailed);
+    }
   }
 
   const usagePercent = usage && usage.monthly_quota > 0
@@ -214,8 +229,15 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
             <button type="button" onClick={() => setPlaintextVisible((visible) => !visible)} title={plaintextVisible ? labels.hideTitle : labels.revealTitle} aria-label={plaintextVisible ? labels.hideTitle : labels.revealTitle} className="grid h-11 w-11 flex-none place-items-center border border-[#111711] bg-white">
               {plaintextVisible ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
             </button>
-            <button type="button" onClick={copyPlaintext} title={labels.copyTitle} aria-label={labels.copyTitle} className="grid h-11 w-11 flex-none place-items-center border border-[#111711] bg-white">
-              <Copy className="h-4 w-4" aria-hidden="true" />
+            <button
+              type="button"
+              onClick={copyPlaintext}
+              title={copyFeedback === "copied" ? labels.copied : labels.copyTitle}
+              aria-live="polite"
+              className={`inline-flex h-11 min-w-[7.5rem] flex-none items-center justify-center gap-2 border px-4 text-sm font-semibold ${copyFeedback === "copied" ? "border-[#087b72] bg-[#087b72] text-white" : "border-[#111711] bg-white text-[#111711] hover:bg-[#eef1eb]"}`}
+            >
+              {copyFeedback === "copied" ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+              {copyFeedback === "copied" ? labels.copiedButton : labels.copyButton}
             </button>
           </div>
         </div>
@@ -250,9 +272,10 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
                   disabled={busy}
                   title={labels.rotateTitle}
                   aria-label={`${labels.rotateTitle}: ${key.name}`}
-                  className="grid h-10 w-10 place-items-center border border-[#85b9b3] text-[#17645e] hover:bg-[#eaf6f5] disabled:opacity-50"
+                  className="inline-flex h-10 items-center gap-2 border border-[#85b9b3] px-3 text-xs font-semibold text-[#17645e] hover:bg-[#eaf6f5] disabled:opacity-50"
                 >
                   <RotateCw className="h-4 w-4" aria-hidden="true" />
+                  {labels.replaceLostKey}
                 </button>
                 <button
                   type="button"
@@ -270,7 +293,6 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
         ))}
       </div>
       <p role="status" className="flex min-h-12 items-center gap-2 px-6 text-sm text-[#59655a]">
-        {message === labels.copied ? <Check className="h-4 w-4 text-[#087b72]" aria-hidden="true" /> : null}
         {message}
       </p>
     </section>

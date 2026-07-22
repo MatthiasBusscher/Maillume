@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ArrowRight, Check, Github, MailCheck, PlugZap, ShieldCheck } from "lucide-react";
 
 import { PageIntro } from "@/components/page-intro";
@@ -8,12 +9,14 @@ import { SOURCE_REPOSITORY_URL } from "@/lib/site";
 import { platformNl } from "@/lib/i18n/marketing-pages";
 import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
+import { localizePath } from "@/lib/i18n/site-locale";
 
 export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: "Platform", description: locale === "nl" ? "Bekijk wat beschikbaar is in de publieke Maillume-webbèta en wat later volgt." : "See what is available in the Maillume public web beta and what follows later." }; }
 
 const roadmap = [
-  { status: "Manual beta", title: "Chrome extension", description: "Install it locally in Chrome with your Maillume API key. It is not yet available in the Chrome Web Store." },
-  { status: "Later", title: "Hosted AI and paid plans", description: "Managed AI and paid plans remain unavailable until costs, privacy, abuse controls, billing, and real demand have been validated." },
+  { status: "Manual beta", title: "Chrome extension", description: "Install it locally in Chrome with your Maillume API key. It is not yet available in the Chrome Web Store.", guide: true },
+  { status: "Next", title: "Chrome Web Store", description: "Submission and review are still pending. Until approval, install only the manual source beta.", guide: false },
+  { status: "Later", title: "Hosted AI and paid plans", description: "Managed AI and paid plans remain unavailable until costs, privacy, abuse controls, billing, and real demand have been validated.", guide: false },
 ];
 
 export default async function PlatformPage() {
@@ -103,7 +106,10 @@ export default async function PlatformPage() {
                   <span className="font-mono text-[10px] text-[#5f695f]">0{index + 1}</span>
                   <span className="w-fit border border-[#111711] bg-[#eef1eb] px-2 py-1 font-mono text-[9px] uppercase text-[#374238]">{item.status}</span>
                   <h3 className="font-semibold text-[#111711]">{item.title}</h3>
-                  <p className="text-sm leading-6 text-[#59655a]">{item.description}</p>
+                  <div>
+                    <p className="text-sm leading-6 text-[#59655a]">{item.description}</p>
+                    {item.guide ? <Link href={localizePath("/chrome-extension", locale)} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#087b72] hover:text-[#111711]">Installation guide <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link> : null}
+                  </div>
                 </div>
               ))}
             </div>
