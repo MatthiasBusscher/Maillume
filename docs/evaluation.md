@@ -51,11 +51,13 @@ This is deliberately not a production database of known phishing emails. Maillum
 
 ## Cross-Input Consistency
 
-Twelve paired English and Dutch scenarios exercise paste, OCR-shaped screenshot text, Chrome capture payloads, and parsed `.eml` adapters after canonical normalization. The adapters mirror the real evidence boundary: screenshots can recover explicitly labelled subject and sender fields from OCR and can decode an HTTP(S) destination embedded in a QR code, but cannot reveal ordinary button destinations; Chrome and `.eml` can preserve richer sender, subject, and destination evidence.
+Eighteen paired English and Dutch scenarios exercise paste, OCR-shaped screenshot text, Chrome capture payloads, and parsed `.eml` adapters after canonical normalization. The matrix includes credential, payment-change, delivery, MFA/OAuth, business-email-compromise, callback-fraud, malformed-MIME, promotion, and legitimate invoice cases. The adapters mirror the real evidence boundary: screenshots can recover explicitly labelled subject and sender fields from OCR and can decode an HTTP(S) destination embedded in a QR code, but cannot reveal ordinary button destinations; Chrome and `.eml` can preserve richer sender, subject, and destination evidence.
 
 Parity is measured only where the available evidence is equivalent. Those comparisons require at least 95% classification agreement and median and p95 score differences no greater than five points. Format-enriched factors, such as a displayed-link/destination mismatch, are compared between Chrome and `.eml`. OCR-only phishing fixtures must not fall to low risk, and missing screenshot metadata must produce uncertainty rather than a claim that the message is likely legitimate.
 
-These checks measure adapter consistency and a source-specific safety floor, not real-world accuracy. The paired corpus will grow with authorized synthetic scenarios and rendered OCR fixtures; production scans remain outside it.
+The browser suite also renders synthetic BEC and callback messages to PNG and passes them through the real local OCR path. Those screenshots must remain above low risk without loading OCR assets from third parties.
+
+These checks measure adapter consistency and a source-specific safety floor, not real-world accuracy. The paired corpus will grow with authorized synthetic scenarios; production scans remain outside it.
 
 ## Production Feedback Boundary
 
