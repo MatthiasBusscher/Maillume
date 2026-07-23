@@ -563,7 +563,7 @@ test("feedback controls work from the keyboard and reject content fields", async
   await expect(page.getByText("Feedback received")).toBeVisible();
 });
 
-test("marketing routes accurately distinguish available and manual-beta features", async ({ page }) => {
+test("marketing routes accurately distinguish available and future features", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "See the risk before you act.", exact: true })).toBeVisible();
@@ -584,19 +584,26 @@ test("marketing routes accurately distinguish available and manual-beta features
   await page.goto("/platform");
   await expect(page.getByRole("heading", { name: "The web scanner comes first." })).toBeVisible();
   await expect(page.getByText("Optional", { exact: true })).toBeVisible();
-  await expect(page.getByText("Manual beta", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Available", { exact: true })).toBeVisible();
+  await expect(page.getByText("Chrome Web Store", { exact: true })).toBeVisible();
   await expect(page.getByText("Later", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Installation guide" })).toHaveAttribute("href", "/chrome-extension");
 
   await page.goto("/chrome-extension");
   await expect(page.getByRole("heading", { name: "Check suspicious email where you already read it." })).toBeVisible();
-  await expect(page.getByText("Manual installation only", { exact: true })).toBeVisible();
-  await expect(page.getByText("Chrome Web Store submission pending", { exact: true })).toBeVisible();
+  await expect(page.getByText("Available in the Chrome Web Store", { exact: true })).toBeVisible();
+  await expect(page.getByText("Official listing", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Add to Chrome" })).toHaveCount(3);
+  await expect(page.getByRole("link", { name: "Add to Chrome" }).first()).toHaveAttribute(
+    "href",
+    "https://chromewebstore.google.com/detail/maillume/bjiiailjalkfjimkjdikoockjlnjolle",
+  );
 
   await page.goto("/nl/chrome-extension");
   await expect(page.getByRole("heading", { name: "Controleer verdachte e-mail waar je die al leest." })).toBeVisible();
-  await expect(page.getByText("Alleen handmatig te installeren", { exact: true })).toBeVisible();
-  await expect(page.getByText("Inzending bij de Chrome Web Store moet nog plaatsvinden", { exact: true })).toBeVisible();
+  await expect(page.getByText("Beschikbaar in de Chrome Web Store", { exact: true })).toBeVisible();
+  await expect(page.getByText("Officiële vermelding", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Toevoegen aan Chrome" })).toHaveCount(3);
 });
 
 test("public beta hides accounts and rejects account APIs before request processing", async ({ page, request }) => {
