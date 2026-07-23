@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import path from "node:path";
 
@@ -335,6 +335,52 @@ test("screenshot OCR extracts labelled subject and sender without remote assets"
   expect(externalOcrRequests).toEqual([]);
 });
 
+test("rendered screenshot OCR keeps BEC and callback fraud above low risk", async ({ page }) => {
+  test.setTimeout(180_000);
+  const cases = [
+    {
+      name: "synthetic-bec.png",
+      lines: [
+        "SUBJECT: CONFIDENTIAL TRANSFER UPDATE",
+        "FROM: director@company-finance.example",
+        "",
+        "THIS IS THE CEO.",
+        "USE OUR NEW BANK ACCOUNT FOR THE URGENT TRANSFER TODAY.",
+        "KEEP THIS CONFIDENTIAL.",
+      ],
+    },
+    {
+      name: "synthetic-callback.png",
+      lines: [
+        "SUBJECT: ANTIVIRUS RENEWAL CHARGE",
+        "FROM: renewal@security-billing.invalid",
+        "",
+        "YOUR ANTIVIRUS SUBSCRIPTION PAYMENT FAILED.",
+        "CALL THIS NUMBER IMMEDIATELY TO CANCEL THE CHARGE.",
+      ],
+    },
+  ];
+
+  for (const fixture of cases) {
+    const screenshot = await renderSyntheticEmailScreenshot(page, fixture.lines);
+    await page.goto("/app");
+    await page.getByRole("button", { name: "Screenshot" }).click();
+    await page.locator('input[type="file"][accept^="image/png"]').setInputFiles({
+      buffer: screenshot,
+      mimeType: "image/png",
+      name: fixture.name,
+    });
+    await expect(page.getByText("Extracted text is ready to analyze.")).toBeVisible({
+      timeout: 90_000,
+    });
+    await page.getByRole("button", { name: "Analyze email" }).click();
+    const meter = page.getByRole("meter");
+    await expect(meter).toBeVisible();
+    expect(Number(await meter.getAttribute("aria-valuenow"))).toBeGreaterThan(0);
+    await expect(meter).toHaveAttribute("data-risk-level", /^(medium|high)$/);
+  }
+});
+
 test("risk meter color follows the evidence-derived level instead of fixed score bands", async ({ page }) => {
   await page.route("**/api/analyze", async (route) => {
     await route.fulfill({
@@ -372,6 +418,16 @@ test("risk meter color follows the evidence-derived level instead of fixed score
   await expect(meter.getByTestId("risk-score-fill")).toHaveClass(/bg-\[#c38122\]/);
   await expect(meter.getByText("Medium", { exact: true }).last()).toHaveClass(/text-\[#714812\]/);
 });
+
+async function renderSyntheticEmailScreenshot(page: Page, lines: string[]): Promise<Buffer> {
+  await page.setViewportSize({ width: 1_280, height: 800 });
+  await page.setContent(`
+    <main style="min-height:100vh;padding:64px;background:white;color:black;font:700 32px Arial,sans-serif;line-height:1.55">
+      ${lines.map((line) => line || "&nbsp;").join("<br>")}
+    </main>
+  `);
+  return page.screenshot({ type: "png" });
+}
 
 test("rate-limited analysis shows a clear localized error", async ({ page }) => {
   await page.route("**/api/analyze", async (route) => {

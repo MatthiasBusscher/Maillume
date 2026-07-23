@@ -8,6 +8,7 @@ export type CrossInputFixture = {
   senderEmail: string;
   body: string;
   linkPair?: EmailLinkPair;
+  emlVariant?: "unterminated_multipart";
 };
 
 export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
@@ -46,6 +47,31 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
       displayedUrl: "https://portal.example.test/security",
       destinationUrl: "https://identity-review.invalid/approve",
     },
+  },
+  {
+    id: "en-bec-bank-change",
+    expected: "phishing",
+    locale: "en",
+    subject: "Confidential transfer update",
+    senderEmail: "director@company-finance.example",
+    body: "This is the CEO. Use our new bank account for the urgent transfer today. Keep this confidential and confirm when sent.",
+  },
+  {
+    id: "en-security-callback",
+    expected: "phishing",
+    locale: "en",
+    subject: "Antivirus renewal charge",
+    senderEmail: "renewal@security-billing.invalid",
+    body: "Your antivirus subscription payment failed. Call this number immediately to cancel the charge.",
+  },
+  {
+    id: "en-malformed-eml",
+    expected: "phishing",
+    locale: "en",
+    subject: "Mailbox verification required",
+    senderEmail: "security@notice.example.test",
+    body: "Your mailbox is blocked. Verify your password immediately to restore access.",
+    emlVariant: "unterminated_multipart",
   },
   {
     id: "en-promotion",
@@ -100,6 +126,31 @@ export const CROSS_INPUT_FIXTURES: CrossInputFixture[] = [
     },
   },
   {
+    id: "nl-bec-bankwijziging",
+    expected: "phishing",
+    locale: "nl",
+    subject: "Vertrouwelijke wijziging overschrijving",
+    senderEmail: "directeur@bedrijfs-finance.example",
+    body: "Ik ben de directeur. Gebruik vandaag onze nieuwe bankrekening voor de dringende overschrijving. Houd dit vertrouwelijk en bevestig na verzending.",
+  },
+  {
+    id: "nl-beveiligingscallback",
+    expected: "phishing",
+    locale: "nl",
+    subject: "Afschrijving antivirusverlenging",
+    senderEmail: "verlenging@security-billing.invalid",
+    body: "De betaling voor uw antivirusabonnement is mislukt. Bel dit nummer direct om de afschrijving te annuleren.",
+  },
+  {
+    id: "nl-beschadigde-eml",
+    expected: "phishing",
+    locale: "nl",
+    subject: "Mailboxbevestiging vereist",
+    senderEmail: "beveiliging@melding.example.test",
+    body: "Uw mailbox is geblokkeerd. Bevestig direct uw wachtwoord om de toegang te herstellen.",
+    emlVariant: "unterminated_multipart",
+  },
+  {
     id: "nl-aanbieding",
     expected: "legitimate",
     locale: "nl",
@@ -144,6 +195,19 @@ export function toChromeInput(fixture: CrossInputFixture): EmailAnalysisInput {
 }
 
 export function toRawEml(fixture: CrossInputFixture): string {
+  if (fixture.emlVariant === "unterminated_multipart") {
+    return [
+      `From: Synthetic sender <${fixture.senderEmail}>`,
+      `Subject: ${fixture.subject}`,
+      'Content-Type: multipart/alternative; boundary="synthetic-boundary"',
+      "",
+      "--synthetic-boundary",
+      "Content-Type: text/plain; charset=UTF-8",
+      "",
+      fixture.body,
+    ].join("\n");
+  }
+
   if (fixture.linkPair) {
     const bodyWithoutDisplayedUrl = fixture.body.replace(fixture.linkPair.displayedUrl, "").trim();
     return [
