@@ -350,6 +350,7 @@ function splitMultipartSections(
   const sections: string[] = [];
   const currentLines: string[] = [];
   let started = false;
+  let closed = false;
   let evidenceTruncated = false;
 
   for (const line of body.split(/\r?\n/)) {
@@ -365,6 +366,7 @@ function splitMultipartSections(
       }
 
       if (boundaryMatch[1] === "--") {
+        closed = true;
         break;
       }
 
@@ -387,6 +389,9 @@ function splitMultipartSections(
     if (section) {
       sections.push(section);
     }
+  }
+  if (started && !closed) {
+    evidenceTruncated = true;
   }
 
   return { sections, evidenceTruncated };

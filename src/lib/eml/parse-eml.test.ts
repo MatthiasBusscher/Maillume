@@ -200,6 +200,11 @@ Content-Transfer-Encoding: base64
 not valid base64 !!!`);
   assert.doesNotThrow(() => parseEml("not a valid message"));
   assert.equal(malformed.body, "not valid base64 !!!");
+  assert.equal(
+    malformed.evidenceTruncated,
+    true,
+    "an unterminated multipart message must preserve recovered text without claiming complete evidence",
+  );
 
   function nestedDepth(depth: number, level = 0): string {
     if (level === depth) {

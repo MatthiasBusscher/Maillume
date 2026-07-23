@@ -25,6 +25,15 @@ let screenshotPhishingNonLow = 0;
 
 for (const fixture of CROSS_INPUT_FIXTURES) {
   const parsedEml = parseEml(toRawEml(fixture));
+  const emlEnvelope = createAnalysisEnvelope({
+    locale: fixture.locale,
+    subject: parsedEml.subject,
+    senderEmail: parsedEml.senderEmail,
+    body: parsedEml.body,
+    links: parsedEml.links,
+    linkPairs: parsedEml.linkPairs,
+    evidenceTruncated: parsedEml.evidenceTruncated,
+  }, "eml");
   const variants: NamedResult[] = [
     {
       name: "paste",
@@ -40,14 +49,7 @@ for (const fixture of CROSS_INPUT_FIXTURES) {
     },
     {
       name: "eml",
-      result: analyzeEmailHeuristic(createAnalysisEnvelope({
-        locale: fixture.locale,
-        subject: parsedEml.subject,
-        senderEmail: parsedEml.senderEmail,
-        body: parsedEml.body,
-        links: parsedEml.links,
-        linkPairs: parsedEml.linkPairs,
-      }, "eml")),
+      result: analyzeEmailHeuristic(emlEnvelope),
     },
   ];
 
@@ -55,6 +57,13 @@ for (const fixture of CROSS_INPUT_FIXTURES) {
   const chrome = variants.find((variant) => variant.name === "chrome")?.result;
   const eml = variants.find((variant) => variant.name === "eml")?.result;
   assert.ok(chrome && eml, `${fixture.id}: Chrome and .eml variants are required`);
+  if (fixture.emlVariant === "unterminated_multipart") {
+    assert.equal(
+      emlEnvelope.availability.contentComplete,
+      false,
+      `${fixture.id}: malformed MIME must retain its incomplete-evidence boundary`,
+    );
+  }
 
   if (fixture.expected === "phishing") {
     screenshotPhishingCases += 1;
