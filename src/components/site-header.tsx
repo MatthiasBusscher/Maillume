@@ -12,11 +12,11 @@ export async function SiteHeader() {
   const copy = locale === "nl" ? {
     home: "Maillume-startpagina", mainNav: "Hoofdnavigatie", mobileNav: "Mobiele navigatie",
     menu: "Menu openen", signIn: "Inloggen", scan: "Controleer een e-mail", openScanner: "Scanner openen",
-    navigation: [["/platform", "Platform"], ["/self-hosted", "In eigen beheer"], ["/pricing", "Prijzen"]] as const,
+    navigation: [["/platform", "Platform"], ["/chrome-extension", "Chrome-extensie"], ["/self-hosted", "In eigen beheer"], ["/pricing", "Prijzen"]] as const,
   } : {
     home: "Maillume home", mainNav: "Main navigation", mobileNav: "Mobile navigation",
     menu: "Open menu", signIn: "Sign in", scan: "Check an email", openScanner: "Open scanner",
-    navigation: [["/platform", "Platform"], ["/self-hosted", "Self-hosted"], ["/pricing", "Pricing"]] as const,
+    navigation: [["/platform", "Platform"], ["/chrome-extension", "Chrome extension"], ["/self-hosted", "Self-hosted"], ["/pricing", "Pricing"]] as const,
   };
   const appHref = localizeHref(getAppHref(), locale);
   const signInHref = localizeHref(getAppRouteHref("/auth/sign-in"), locale);
@@ -30,7 +30,7 @@ export async function SiteHeader() {
           <BrandMark />
         </Link>
 
-        <nav className="hidden items-center gap-7 text-sm font-semibold text-[#434c43] md:flex" aria-label={copy.mainNav}>
+        <nav className="hidden items-center gap-5 text-sm font-semibold text-[#434c43] lg:flex" aria-label={copy.mainNav}>
           {navigation.map((item) => (
             <Link key={item.href} href={item.href} className="transition hover:text-[#087b72]">
               {item.label}
@@ -47,7 +47,7 @@ export async function SiteHeader() {
           </a>
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <SiteLanguageLinks locale={locale} pathname={pathname} />
           {accountsEnabled ? (
             <Link
@@ -67,7 +67,7 @@ export async function SiteHeader() {
           </a>
         </div>
 
-        <details className="group relative md:hidden">
+        <details className="group relative lg:hidden">
           <summary
             className="flex h-10 w-10 cursor-pointer list-none items-center justify-center border border-[#aeb6ac] bg-white text-[#111711] [&::-webkit-details-marker]:hidden"
             title={copy.menu}

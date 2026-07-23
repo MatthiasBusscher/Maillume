@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import {
   ArrowRight,
   Check,
-  Download,
   ExternalLink,
   KeyRound,
   MousePointerClick,
@@ -16,25 +14,25 @@ import { PageIntro } from "@/components/page-intro";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
-import { localizeHref, localizePath } from "@/lib/i18n/site-locale";
+import { localizeHref } from "@/lib/i18n/site-locale";
 import {
-  BROWSER_EXTENSION_DOWNLOAD_URL,
   BROWSER_EXTENSION_SOURCE_URL,
+  BROWSER_EXTENSION_STORE_URL,
   getAppRouteHref,
 } from "@/lib/site";
 
 const copy = {
   en: {
-    metadataDescription: "Install and use the Maillume Chrome extension manual beta with Gmail or Outlook.",
-    eyebrow: "Chrome extension · manual beta",
+    metadataDescription: "Add the official Maillume Chrome extension and check suspicious messages in Gmail or Outlook.",
+    eyebrow: "Chrome extension · available now",
     title: "Check suspicious email where you already read it.",
-    description: "Use Maillume from Gmail or Outlook without background mailbox scanning. The manual beta is available from source while Chrome Web Store publication is still pending.",
-    download: "Download source ZIP",
-    installJump: "Installation instructions",
+    description: "Add Maillume from the Chrome Web Store and check messages in Gmail or Outlook without background mailbox scanning. You choose what is captured and when the analysis starts.",
+    addToChrome: "Add to Chrome",
+    installJump: "How to get started",
     statusLabel: "Current status",
-    statusTitle: "Manual installation only",
-    statusText: "The extension is not yet available in the Chrome Web Store. Install it only from the official Maillume repository and expect to update it manually during the beta.",
-    storeStatus: "Chrome Web Store submission pending",
+    statusTitle: "Available in the Chrome Web Store",
+    statusText: "The official extension has been approved and published. Chrome installs updates automatically for Store-installed extensions.",
+    storeStatus: "Official listing",
     howEyebrow: "How it works",
     howTitle: "One explicit action for each message.",
     howDescription: "Maillume never watches your inbox. You decide when the extension may read the visible message and when its contents are sent for assessment.",
@@ -43,17 +41,16 @@ const copy = {
       { title: "Review the details", text: "Check the captured subject, sender, and message text in the side panel. You remain in control before anything is analyzed." },
       { title: "Analyze and act", text: "Start the analysis to receive the same explainable risk score, signals, and recommended next step as the web scanner." },
     ],
-    installEyebrow: "Manual installation",
-    installTitle: "Install the source beta in Chrome.",
+    installEyebrow: "Getting started",
+    installTitle: "Connect the extension in four steps.",
     requirementsTitle: "Before you start",
     requirements: ["Chrome 116 or newer", "A Maillume account", "A revocable Maillume API key", "A Gmail or Outlook webmail account for message capture"],
     accountCta: "Open your Maillume account",
     installSteps: [
+      { title: "Add Maillume to Chrome", text: "Open the official Chrome Web Store listing, choose Add to Chrome, and pin Maillume to the Chrome toolbar for easier access." },
       { title: "Create an API key", text: "Sign in to Maillume, open your account, and create a dedicated API key for the Chrome extension. Copy it when shown; Maillume displays the full key only once." },
-      { title: "Download and extract the source", text: "Download the official repository ZIP and extract it. During the manual beta, updates are not installed automatically." },
-      { title: "Open Chrome extensions", text: "Enter chrome://extensions in Chrome's address bar and switch on Developer mode." },
-      { title: "Load the extension", text: "Choose Load unpacked and select the extracted Maillume-main/integrations/browser-extension folder. Pin Maillume to the Chrome toolbar for easier access." },
-      { title: "Connect Maillume", text: "Open a message and click the Maillume icon. In Connection settings, keep https://app.maillume.io as the deployment and enter your API key. Leave Remember API key on this device enabled to keep it across restarts and updates, or disable it for session-only storage. Then choose Save connection." },
+      { title: "Open a message", text: "Open one message in Gmail or Outlook and click the Maillume icon to open the side panel." },
+      { title: "Connect Maillume", text: "In Connection settings, keep https://app.maillume.io as the deployment and enter your API key. Leave Remember API key on this device enabled to keep it across restarts and updates, or disable it for session-only storage. Then choose Save connection." },
     ],
     useEyebrow: "Using the extension",
     useTitle: "Review every message before analysis.",
@@ -73,29 +70,29 @@ const copy = {
       { title: "Deployment-specific permission", text: "Chrome asks for access only to the Maillume deployment you choose. Removing the connection also removes that access." },
     ],
     updatesEyebrow: "Updates and removal",
-    updatesTitle: "Manual beta means manual updates.",
-    updatesText: "Download a newer source ZIP, replace the extracted folder, then use Reload on chrome://extensions. To disconnect first, choose Remove connection in the side panel. You can remove the extension at any time from Chrome's extension settings.",
+    updatesTitle: "Chrome handles updates automatically.",
+    updatesText: "Store-installed extensions receive updates through Chrome. To disconnect, choose Remove connection in the side panel. You can remove the extension at any time from Chrome's extension settings, while the source remains public for inspection.",
     sourceCta: "Inspect the extension source",
     troubleshootingEyebrow: "Troubleshooting",
-    troubleshootingTitle: "Two common manual-beta messages.",
+    troubleshootingTitle: "Two common setup messages.",
     troubleshootingItems: [
-      { title: "Invalid analysis response", text: "Your unpacked extension may use an older analysis contract than the deployment. Download the latest source, replace the extension folder, and choose Reload on chrome://extensions." },
-      { title: "More than one message is expanded", text: "Update to the latest source first. If two messages are genuinely open, collapse the other message or select the exact text you want to assess before clicking Maillume again." },
+      { title: "Connection not configured", text: "Create a Maillume API key, open Connection settings, keep https://app.maillume.io as the deployment, paste the key, and save the connection." },
+      { title: "More than one message is expanded", text: "Collapse the other message or select the exact text you want to assess before clicking Maillume again." },
     ],
-    finalEyebrow: "Ready to test?",
-    finalTitle: "Create a separate API key, then install from the official source.",
+    finalEyebrow: "Ready to check a message?",
+    finalTitle: "Add Maillume to Chrome and keep suspicious email at arm's length.",
   },
   nl: {
-    metadataDescription: "Installeer en gebruik de handmatige bèta van de Maillume Chrome-extensie met Gmail of Outlook.",
-    eyebrow: "Chrome-extensie · handmatige bèta",
+    metadataDescription: "Voeg de officiële Maillume Chrome-extensie toe en controleer verdachte berichten in Gmail of Outlook.",
+    eyebrow: "Chrome-extensie · nu beschikbaar",
     title: "Controleer verdachte e-mail waar je die al leest.",
-    description: "Gebruik Maillume vanuit Gmail of Outlook zonder dat je mailbox op de achtergrond wordt gescand. De handmatige bèta is beschikbaar vanuit de broncode; publicatie in de Chrome Web Store moet nog plaatsvinden.",
-    download: "Download broncode als ZIP",
-    installJump: "Installatie-instructies",
+    description: "Voeg Maillume toe vanuit de Chrome Web Store en controleer berichten in Gmail of Outlook zonder scans op de achtergrond. Jij kiest wat wordt vastgelegd en wanneer de analyse start.",
+    addToChrome: "Toevoegen aan Chrome",
+    installJump: "Zo ga je aan de slag",
     statusLabel: "Huidige status",
-    statusTitle: "Alleen handmatig te installeren",
-    statusText: "De extensie is nog niet beschikbaar in de Chrome Web Store. Installeer haar alleen vanuit de officiële Maillume-repository en houd er tijdens de bèta rekening mee dat je updates handmatig uitvoert.",
-    storeStatus: "Inzending bij de Chrome Web Store moet nog plaatsvinden",
+    statusTitle: "Beschikbaar in de Chrome Web Store",
+    statusText: "De officiële extensie is goedgekeurd en gepubliceerd. Chrome installeert updates voor extensies uit de Store automatisch.",
+    storeStatus: "Officiële vermelding",
     howEyebrow: "Zo werkt het",
     howTitle: "Eén uitdrukkelijke handeling per bericht.",
     howDescription: "Maillume houdt je inbox nooit in de gaten. Jij bepaalt wanneer de extensie het zichtbare bericht mag lezen en wanneer de inhoud voor beoordeling wordt verstuurd.",
@@ -104,17 +101,16 @@ const copy = {
       { title: "Gegevens controleren", text: "Controleer het vastgelegde onderwerp, de afzender en de berichttekst in het zijpaneel. Jij houdt de controle voordat de analyse begint." },
       { title: "Analyseren en handelen", text: "Start de analyse voor dezelfde uitlegbare risicoscore, signalen en aanbevolen vervolgstap als in de webscanner." },
     ],
-    installEyebrow: "Handmatige installatie",
-    installTitle: "Installeer de broncodebèta in Chrome.",
+    installEyebrow: "Aan de slag",
+    installTitle: "Verbind de extensie in vier stappen.",
     requirementsTitle: "Dit heb je nodig",
     requirements: ["Chrome 116 of nieuwer", "Een Maillume-account", "Een intrekbare Maillume API-sleutel", "Een Gmail- of Outlook-webmailaccount om berichten vast te leggen"],
     accountCta: "Open je Maillume-account",
     installSteps: [
+      { title: "Voeg Maillume toe aan Chrome", text: "Open de officiële vermelding in de Chrome Web Store, kies Toevoegen aan Chrome en zet Maillume vast in de Chrome-werkbalk voor eenvoudige toegang." },
       { title: "Maak een API-sleutel", text: "Log in bij Maillume, open je account en maak een aparte API-sleutel voor de Chrome-extensie. Kopieer de sleutel wanneer deze verschijnt; Maillume toont de volledige sleutel maar één keer." },
-      { title: "Download en pak de broncode uit", text: "Download het officiële ZIP-bestand van de repository en pak het uit. Tijdens de handmatige bèta worden updates niet automatisch geïnstalleerd." },
-      { title: "Open Chrome-extensies", text: "Voer chrome://extensions in de adresbalk van Chrome in en schakel de Ontwikkelaarsmodus in." },
-      { title: "Laad de extensie", text: "Kies Uitgepakte extensie laden en selecteer de uitgepakte map Maillume-main/integrations/browser-extension. Zet Maillume vast in de Chrome-werkbalk voor eenvoudige toegang." },
-      { title: "Verbind Maillume", text: "Open een bericht en klik op het Maillume-pictogram. Laat bij Verbindingsinstellingen https://app.maillume.io als omgeving staan en voer je API-sleutel in. Laat API-sleutel op dit apparaat onthouden ingeschakeld voor behoud na herstarts en updates, of schakel het uit voor opslag alleen tijdens de sessie. Kies daarna Verbinding opslaan." },
+      { title: "Open een bericht", text: "Open één bericht in Gmail of Outlook en klik op het Maillume-pictogram om het zijpaneel te openen." },
+      { title: "Verbind Maillume", text: "Laat bij Verbindingsinstellingen https://app.maillume.io als omgeving staan en voer je API-sleutel in. Laat API-sleutel op dit apparaat onthouden ingeschakeld voor behoud na herstarts en updates, of schakel het uit voor opslag alleen tijdens de sessie. Kies daarna Verbinding opslaan." },
     ],
     useEyebrow: "De extensie gebruiken",
     useTitle: "Controleer elk bericht vóór de analyse.",
@@ -134,17 +130,17 @@ const copy = {
       { title: "Machtiging per omgeving", text: "Chrome vraagt alleen toegang tot de Maillume-omgeving die jij kiest. Als je de verbinding verwijdert, wordt die toegang ook verwijderd." },
     ],
     updatesEyebrow: "Bijwerken en verwijderen",
-    updatesTitle: "Een handmatige bèta heeft handmatige updates.",
-    updatesText: "Download een nieuwer ZIP-bestand, vervang de uitgepakte map en kies daarna Opnieuw laden op chrome://extensions. Kies eerst Verbinding verwijderen in het zijpaneel als je wilt ontkoppelen. Je kunt de extensie altijd verwijderen via de extensie-instellingen van Chrome.",
+    updatesTitle: "Chrome verwerkt updates automatisch.",
+    updatesText: "Extensies uit de Store ontvangen updates via Chrome. Kies Verbinding verwijderen in het zijpaneel als je wilt ontkoppelen. Je kunt de extensie altijd verwijderen via de extensie-instellingen van Chrome; de broncode blijft openbaar om te inspecteren.",
     sourceCta: "Bekijk de broncode van de extensie",
     troubleshootingEyebrow: "Problemen oplossen",
-    troubleshootingTitle: "Twee veelvoorkomende meldingen in de handmatige bèta.",
+    troubleshootingTitle: "Twee veelvoorkomende meldingen bij het instellen.",
     troubleshootingItems: [
-      { title: "Ongeldig analyseresultaat", text: "Je uitgepakte extensie gebruikt mogelijk een ouder analysecontract dan de Maillume-omgeving. Download de nieuwste broncode, vervang de extensiemap en kies Opnieuw laden op chrome://extensions." },
-      { title: "Er zijn meerdere berichten uitgeklapt", text: "Werk eerst bij naar de nieuwste broncode. Als er echt twee berichten openstaan, klap je het andere bericht in of selecteer je de exacte tekst die je wilt beoordelen voordat je opnieuw op Maillume klikt." },
+      { title: "Verbinding niet ingesteld", text: "Maak een Maillume API-sleutel, open Verbindingsinstellingen, laat https://app.maillume.io als omgeving staan, plak de sleutel en sla de verbinding op." },
+      { title: "Er zijn meerdere berichten uitgeklapt", text: "Klap het andere bericht in of selecteer de exacte tekst die je wilt beoordelen voordat je opnieuw op Maillume klikt." },
     ],
-    finalEyebrow: "Klaar om te testen?",
-    finalTitle: "Maak een aparte API-sleutel en installeer daarna vanuit de officiële broncode.",
+    finalEyebrow: "Klaar om een bericht te controleren?",
+    finalTitle: "Voeg Maillume toe aan Chrome en houd verdachte e-mail op afstand.",
   },
 } as const;
 
@@ -167,8 +163,8 @@ export default async function ChromeExtensionPage() {
         description={text.description}
         actions={
           <>
-            <a href={BROWSER_EXTENSION_DOWNLOAD_URL} className="inline-flex h-12 items-center gap-2 bg-[#dfff52] px-5 text-sm font-bold text-[#111711] hover:bg-white">
-              <Download className="h-4 w-4" aria-hidden="true" /> {text.download}
+            <a href={BROWSER_EXTENSION_STORE_URL} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center gap-2 bg-[#dfff52] px-5 text-sm font-bold text-[#111711] hover:bg-white">
+              {text.addToChrome} <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
             <a href="#install" className="inline-flex h-12 items-center gap-2 border border-white/35 px-5 text-sm font-semibold text-white hover:border-white hover:bg-white/10">
               {text.installJump} <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -177,14 +173,14 @@ export default async function ChromeExtensionPage() {
         }
       />
 
-      <section className="border-b border-[#cbd0c5] bg-[#fff0cf]">
+      <section className="border-b border-[#cbd0c5] bg-[#e5f4ed]">
         <div className="mx-auto grid max-w-[1440px] gap-5 px-5 py-7 sm:px-6 md:grid-cols-[150px_1fr_auto] md:items-center lg:px-8">
-          <p className="font-mono text-[10px] uppercase text-[#714812]">{text.statusLabel}</p>
+          <p className="font-mono text-[10px] uppercase text-[#087b72]">{text.statusLabel}</p>
           <div>
-            <h2 className="font-semibold text-[#342712]">{text.statusTitle}</h2>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-[#714812]">{text.statusText}</p>
+            <h2 className="font-semibold text-[#12483f]">{text.statusTitle}</h2>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-[#32665d]">{text.statusText}</p>
           </div>
-          <span className="w-fit border border-[#c78c32] bg-white/60 px-3 py-2 font-mono text-[9px] uppercase text-[#714812]">{text.storeStatus}</span>
+          <span className="w-fit border border-[#087b72] bg-white/60 px-3 py-2 font-mono text-[9px] uppercase text-[#087b72]">{text.storeStatus}</span>
         </div>
       </section>
 
@@ -227,9 +223,9 @@ export default async function ChromeExtensionPage() {
           <ol className="border-t border-[#111711]">
             {text.installSteps.map((step, index) => (
               <InstructionStep key={step.title} number={`0${index + 1}`} title={step.title} text={step.text}>
-                {index === 1 ? (
-                  <a href={BROWSER_EXTENSION_DOWNLOAD_URL} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#087b72] hover:text-[#111711]">
-                    <Download className="h-4 w-4" aria-hidden="true" /> {text.download}
+                {index === 0 ? (
+                  <a href={BROWSER_EXTENSION_STORE_URL} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#087b72] hover:text-[#111711]">
+                    {text.addToChrome} <ExternalLink className="h-4 w-4" aria-hidden="true" />
                   </a>
                 ) : null}
               </InstructionStep>
@@ -313,9 +309,9 @@ export default async function ChromeExtensionPage() {
             <p className="font-mono text-[10px] uppercase text-[#59655a]">{text.finalEyebrow}</p>
             <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-[#111711]">{text.finalTitle}</h2>
           </div>
-          <Link href={localizePath("/platform", locale)} className="inline-flex h-12 flex-none items-center justify-center gap-2 bg-[#111711] px-5 text-sm font-semibold text-white hover:bg-[#087b72]">
-            Platform <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
+          <a href={BROWSER_EXTENSION_STORE_URL} target="_blank" rel="noreferrer" className="inline-flex h-12 flex-none items-center justify-center gap-2 bg-[#111711] px-5 text-sm font-semibold text-white hover:bg-[#087b72]">
+            {text.addToChrome} <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          </a>
         </div>
       </section>
       <SiteFooter />

@@ -143,7 +143,7 @@ export const accountEn = {
   },
   apiKeys: {
     title: "Integration API keys",
-    description: "API keys authenticate integrations such as the Chrome source beta. The Maillume server stores only a hash, so this account page shows the full key only once.",
+    description: "API keys authenticate integrations such as the official Chrome extension. The Maillume server stores only a hash, so this account page shows the full key only once.",
     limitsNote: "Public-beta allowance: 25 requests per month shared by the account, with up to 5 active keys.",
     monthlyUsage: "Monthly API usage",
     usagePeriod: "Usage period",

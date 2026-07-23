@@ -1,6 +1,6 @@
 # Hosted Service Architecture
 
-Status: active architecture record. Optional email/Google authentication, TOTP MFA, feature-gated passkeys, hashed integration API keys, aggregate quotas, and the source-beta Chrome extension are implemented. A provider-neutral entitlement reconciliation model is implemented but inactive. Hosted AI, billing-provider adapters, paid-entitlement persistence, checkout, and payments are not implemented.
+Status: active architecture record. Optional email/Google authentication, TOTP MFA, feature-gated passkeys, hashed integration API keys, aggregate quotas, and the official Chrome Web Store extension are implemented. A provider-neutral entitlement reconciliation model is implemented but inactive. Hosted AI, billing-provider adapters, paid-entitlement persistence, checkout, and payments are not implemented.
 
 ## Decision Summary
 
@@ -207,7 +207,7 @@ No dual-license or enterprise license program exists. Adding one later may requi
 - **Go:** public anonymous heuristic launch.
 - **Go:** free self-hosting and bring-your-own-key AI.
 - **Go:** privacy-preserving, non-content feedback design as a separate issue.
-- **Go:** explicit-action Chrome source-beta integration using minimum practical permissions.
+- **Go:** official explicit-action Chrome extension using minimum practical permissions.
 - **Go:** optional authentication and quota-limited heuristic integration API.
 - **Hold:** maintainer-funded hosted AI.
 - **Hold:** payment implementation.

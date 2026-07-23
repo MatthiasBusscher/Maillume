@@ -56,9 +56,9 @@
 - [x] Public pull requests prove required-check enforcement; the public release workflow publishes immutable image provenance.
 - [x] Protected tag `v0.1.0-beta` points to the deployed commit and its public prerelease discloses integration status, known limitations, and founder waivers.
 
-## Chrome Manual Beta
+## Chrome Web Store
 
 - Automated readiness is green for the reviewed v0.3.3 artifact: `maillume-browser-extension.zip` has SHA-256 `dbeb52ecc7a130012e8c5aa98e336c676ffacb8870ae692ab31200f541907b4f`. Automated checks cover capture, fallback, restricted pages, real versus nested multiple-message ambiguity, Outlook panel continuity with stale-capture clearing, Unicode and size boundaries, handoff, in-panel recapture, remembered-key visibility, analysis-version mismatch guidance, permission denial, revoked-key and quota response handling, the manifest, privacy invariants, and the API contract.
-- Status: not cleared for Chrome distribution. The public web beta may remain live, but do not claim Chrome Web Store or generally available extension support until both gates below are checked.
-- [ ] The unpacked extension passes the production-key Gmail/Outlook matrix with synthetic messages, including revocation and quota handling (#39).
-- [ ] Chrome Web Store validation and the published privacy disclosure pass before claiming store availability (#39).
+- Status: approved and published on 23 July 2026 at the [official Chrome Web Store listing](https://chromewebstore.google.com/detail/maillume/bjiiailjalkfjimkjdikoockjlnjolle).
+- [x] The unpacked extension passes the production-key Gmail/Outlook matrix with synthetic messages, including revocation and quota handling (#39).
+- [x] Chrome Web Store validation and the published privacy disclosure pass before claiming store availability (#39).
