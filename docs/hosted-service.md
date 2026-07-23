@@ -1,6 +1,6 @@
 # Hosted Service Architecture
 
-Status: active architecture record. Optional email/Google authentication, TOTP MFA, feature-gated passkeys, hashed integration API keys, aggregate quotas, and the source-beta Chrome extension are implemented. Hosted AI, paid entitlements, and payments are not implemented.
+Status: active architecture record. Optional email/Google authentication, TOTP MFA, feature-gated passkeys, hashed integration API keys, aggregate quotas, and the source-beta Chrome extension are implemented. A provider-neutral entitlement reconciliation model is implemented but inactive. Hosted AI, billing-provider adapters, paid-entitlement persistence, checkout, and payments are not implemented.
 
 ## Decision Summary
 
@@ -147,6 +147,8 @@ The Plus price is a validation target, not final public copy. Launch pricing req
 ### Billing Provider Decision
 
 Use Moneybird Subscriptions as the initial source of truth for checkout, recurring payments, invoices, and customer self-service. Verified Moneybird webhooks may update a minimal entitlement record in Supabase; they must never carry scan content. Keep billing behind a server-only adapter so Stripe or another provider can be added later without changing plan or quota logic. Do not connect Moneybird to the scanner until webhook signature verification, idempotency, entitlement reconciliation, refunds/cancellations, and account deletion behavior have automated tests.
+
+The inactive provider-neutral contract and persistence requirements are documented in [`docs/billing-entitlements.md`](billing-entitlements.md). It maps fetched provider price references to server-owned plans, rejects stale/divergent snapshots, caps failed-payment grace at three days, and keeps hosted AI behind entitlement, opt-in, runtime, and global-budget gates. This foundation does not make paid features available.
 
 ## Account And Failure Behavior
 
