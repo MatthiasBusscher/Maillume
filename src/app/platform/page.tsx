@@ -14,8 +14,7 @@ import { localizePath } from "@/lib/i18n/site-locale";
 export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: "Platform", description: locale === "nl" ? "Bekijk wat beschikbaar is in de publieke Maillume-webbèta en wat later volgt." : "See what is available in the Maillume public web beta and what follows later." }; }
 
 const roadmap = [
-  { status: "Manual beta", title: "Chrome extension", description: "Install it locally in Chrome with your Maillume API key. It is not yet available in the Chrome Web Store.", guide: true },
-  { status: "Next", title: "Chrome Web Store", description: "Submission and review are still pending. Until approval, install only the manual source beta.", guide: false },
+  { status: "Available", title: "Chrome extension", description: "Install the official extension from the Chrome Web Store and connect it with a revocable Maillume API key.", guide: true },
   { status: "Later", title: "Hosted AI and paid plans", description: "Managed AI and paid plans remain unavailable until costs, privacy, abuse controls, billing, and real demand have been validated.", guide: false },
 ];
 
@@ -67,7 +66,7 @@ export default async function PlatformPage() {
               <BetaBoundary label="Analysis" value={locale === "nl" ? "Ingebouwde controles" : "Built-in checks"} />
               <BetaBoundary label="Retention" value={locale === "nl" ? "Geen scangeschiedenis" : "No scan history"} />
               <BetaBoundary label="Accounts and API" value={locale === "nl" ? "Optioneel" : "Optional"} />
-              <BetaBoundary label="Chrome extension" value={locale === "nl" ? "Handmatige bèta" : "Manual beta"} />
+              <BetaBoundary label="Chrome extension" value="Chrome Web Store" />
             </dl>
           </div>
         </div>
@@ -88,7 +87,7 @@ export default async function PlatformPage() {
           <div className="mt-14 grid border-y border-white/35 md:grid-cols-3 md:divide-x md:divide-white/25">
             <Principle icon={MailCheck} title="User initiated" description="No background mailbox harvesting or silent scanning." />
             <Principle icon={ShieldCheck} title="Explicit boundary" description="The public service accepts only the current web request and stores no scan history." />
-            <Principle icon={PlugZap} title="Manual Chrome beta" description="Install the extension locally after creating a revocable Maillume API key. Store review follows later." />
+            <Principle icon={PlugZap} title="Official Chrome extension" description="Install it from the Chrome Web Store, then connect it with a revocable Maillume API key." />
           </div>
         </div>
       </section>

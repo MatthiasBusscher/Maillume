@@ -31,20 +31,27 @@ test("launch copy reflects optional accounts without advertising hosted AI", () 
   assert.doesNotMatch(translations, /Account, API, and managed AI features remain disabled/);
 });
 
-test("Chrome extension instructions cover both languages and the manual-beta boundary", () => {
+test("Chrome extension instructions cover both languages and the Store release boundary", () => {
   const instructions = read("src/app/chrome-extension/page.tsx");
   const platform = read("src/app/platform/page.tsx");
+  const header = read("src/components/site-header.tsx");
+  const site = read("src/lib/site.ts");
 
-  assert.match(instructions, /Manual installation only/);
-  assert.match(instructions, /Alleen handmatig te installeren/);
-  assert.match(instructions, /chrome:\/\/extensions/);
-  assert.match(instructions, /Maillume-main\/integrations\/browser-extension/);
+  assert.match(site, /bjiiailjalkfjimkjdikoockjlnjolle/);
+  assert.match(instructions, /Available in the Chrome Web Store/);
+  assert.match(instructions, /Beschikbaar in de Chrome Web Store/);
+  assert.match(instructions, /Add to Chrome/);
+  assert.match(instructions, /Toevoegen aan Chrome/);
+  assert.doesNotMatch(instructions, /manual beta|handmatige bèta|chrome:\/\/extensions|Load unpacked|Uitgepakte extensie/i);
   assert.match(instructions, /No background scanning/);
   assert.match(instructions, /Geen scans op de achtergrond/);
-  assert.match(instructions, /Invalid analysis response/);
-  assert.match(instructions, /Ongeldig analyseresultaat/);
+  assert.match(instructions, /Connection not configured/);
+  assert.match(instructions, /Verbinding niet ingesteld/);
+  assert.match(header, /\["\/chrome-extension", "Chrome extension"\]/);
+  assert.match(header, /\["\/chrome-extension", "Chrome-extensie"\]/);
   assert.match(platform, /Installation guide/);
   assert.match(platform, /Chrome Web Store/);
+  assert.doesNotMatch(platform, /Manual beta|review follows later|not yet available/i);
 });
 
 test("API-key controls make one-time copy and lost-key replacement visible", () => {

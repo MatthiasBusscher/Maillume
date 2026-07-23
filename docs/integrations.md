@@ -27,7 +27,7 @@ Stored API metadata is limited to key owner, name, prefix, hash, quota, creation
 
 ## Browser Extension
 
-`integrations/browser-extension` is an unpacked Manifest V3 extension for Chrome 116+.
+The official Manifest V3 extension for Chrome 116+ is available in the [Chrome Web Store](https://chromewebstore.google.com/detail/maillume/bjiiailjalkfjimkjdikoockjlnjolle). Its source lives in `integrations/browser-extension`.
 
 - A toolbar click grants temporary `activeTab` and `scripting` access. Maillume first captures a text selection and otherwise captures the visibly open message in a supported webmail client when the page is accessible.
 - There are no persistent Gmail or Outlook host permissions and no content script.
@@ -35,4 +35,4 @@ Stored API metadata is limited to key owner, name, prefix, hash, quota, creation
 - The endpoint is stored locally. The API key can be kept in trusted extension-local storage when the user explicitly chooses to remember it across restarts and updates, or in Chrome session storage otherwise. Captured text crosses to the tab-specific panel through a one-time in-memory handoff and message content and results are never written to extension storage.
 - Chrome requests identify their canonical source as `chrome`, preserving the difference between DOM-derived link metadata and manually pasted text without changing the server-derived scoring rules.
 
-Chrome Web Store publication requires final icons, operator identity, privacy-policy URLs, test accounts, validation, and review. Those release operations must be completed before claiming store availability.
+Chrome Web Store validation and review completed on 23 July 2026. The published listing is the supported installation path; the repository remains the source of truth for permissions, privacy boundaries, and release validation.

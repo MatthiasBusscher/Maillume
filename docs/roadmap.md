@@ -1,6 +1,6 @@
 # Maillume GitHub Issue Roadmap
 
-Implementation status: the scanner, optional accounts, TOTP, account-scoped API, and Chrome extension are implemented in source. Authentication recovery and the English/Dutch editorial pass are accepted. Public-beta security evidence, the trademark decision, and repository release controls remain open. GitHub milestones and issues are the source of truth.
+Implementation status: the scanner, optional accounts, TOTP, account-scoped API, and official Chrome Web Store extension are live. Authentication recovery and the English/Dutch editorial pass are accepted. GitHub milestones and issues are the source of truth.
 
 ## Release And Post-Launch Order
 
@@ -8,7 +8,7 @@ Implementation status: the scanner, optional accounts, TOTP, account-scoped API,
 2. Issue #49: complete trademark evidence and record the founder filing/risk decision.
 3. Issue #93: make the repository public and apply contribution protections in the same release session.
 4. Issue #40: run the trusted-tester period, tag `v0.1.0-beta`, and publish the release.
-5. Issue #39: validate and publish the Chrome extension after the web beta.
+5. Issue #39 (completed): validate and publish the Chrome extension after the web beta.
 6. Issues #51, #56, #64, and #66: post-beta detection, billing, team, and custom-auth-domain work.
 
 The public heuristic scanner and self-hosted bring-your-own-key mode remain the launch product. See `docs/hosted-service.md` for the approved hosted-service planning baseline.
@@ -218,6 +218,7 @@ Definition of Done:
 Definition of Done:
 
 - Browser extension is packaged and reviewed against Chrome Web Store privacy requirements.
+- Official Chrome extension is approved and published in the Chrome Web Store.
 - Production OAuth, API quotas, monitoring, DDoS controls, and zero-retention checks pass.
 - Mobile/desktop responsive screenshots show no clipped content.
 - Release documentation lists requested permissions and exact data flow.

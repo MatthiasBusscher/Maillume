@@ -38,7 +38,7 @@ Paste an email, add a screenshot, or open an exported `.eml` file. Maillume show
 
 ## Project Status
 
-Maillume is preparing for public beta. Anonymous scanning and optional account/API-key features are running in production. A manual Chrome beta is available from source; Chrome Web Store publication remains a separate gate.
+Maillume is in public beta. Anonymous scanning and optional account/API-key features are running in production. The official Chrome extension is available in the [Chrome Web Store](https://chromewebstore.google.com/detail/maillume/bjiiailjalkfjimkjdikoockjlnjolle).
 
 | Capability | Status |
 | --- | --- |
@@ -47,10 +47,10 @@ Maillume is preparing for public beta. Anonymous scanning and optional account/A
 | Local heuristic assessment | Available |
 | Self-hosted AI with an operator-owned key | Available from source |
 | Email/Google accounts, TOTP 2FA, and hosted API keys | Available; account optional |
-| Chrome extension | Manual beta from source; Chrome Web Store review pending |
+| Chrome extension | Available in the Chrome Web Store |
 | Maintainer-hosted AI and payments | Not implemented |
 
-Follow the [web-beta release checklist](https://github.com/MatthiasBusscher/Maillume/issues/40), [security verification](https://github.com/MatthiasBusscher/Maillume/issues/47), and [Chrome publication](https://github.com/MatthiasBusscher/Maillume/issues/39) on GitHub.
+Follow the [web-beta release checklist](https://github.com/MatthiasBusscher/Maillume/issues/40), [security verification](https://github.com/MatthiasBusscher/Maillume/issues/47), and completed [Chrome publication](https://github.com/MatthiasBusscher/Maillume/issues/39) work on GitHub.
 
 ## Quick Start
 
@@ -76,7 +76,7 @@ Self-hosted AI mode sends normalized scan text to the provider selected by the o
 
 ## Integrations
 
-The Chrome extension is Maillume's only planned inbox integration. It is available for source testing but must not be presented as Chrome Web Store-ready until publication checks pass.
+The Chrome extension is Maillume's only planned inbox integration. Install the official release from the [Chrome Web Store](https://chromewebstore.google.com/detail/maillume/bjiiailjalkfjimkjdikoockjlnjolle), or review its source and permissions in this repository.
 
 | Surface | Access boundary | Local verification |
 | --- | --- | --- |
@@ -88,7 +88,7 @@ Build the Chrome Web Store candidate and checksum with:
 npm run package:integrations
 ```
 
-The release packaging command produces the Chrome artifact. Chrome Web Store acceptance is tracked in the [publication packet](docs/integration-publication.md).
+The release packaging command produces the Chrome artifact used for release validation. Chrome Web Store publication evidence is tracked in the [publication packet](docs/integration-publication.md).
 
 ## How It Works
 
