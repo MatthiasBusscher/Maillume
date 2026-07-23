@@ -53,6 +53,8 @@
     "src/lib/feedback/validation.ts",
     "src/lib/accounts/config.ts",
     "src/lib/accounts/config.test.ts",
+    "src/lib/billing/entitlements.ts",
+    "src/lib/billing/entitlements.test.ts",
     "src/lib/operator.ts",
     "src/lib/operator.test.ts",
     "src/lib/security/privacy-review.test.ts",
