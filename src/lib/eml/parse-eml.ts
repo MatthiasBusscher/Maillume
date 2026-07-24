@@ -3,6 +3,8 @@ import {
   type AttachmentRiskType,
   type EmailLinkPair,
 } from "../types";
+import type { EmailAuthenticationSummary } from "../types";
+import { summarizeEmailAuthentication } from "./email-authentication";
 
 const HEADER_BODY_SEPARATOR = /\r?\n\r?\n/;
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
@@ -62,11 +64,13 @@ export type ParsedEml = {
   linkPairs: EmailLinkPair[];
   attachmentNames: string[];
   attachmentRiskTypes: AttachmentRiskType[];
+  emailAuthentication?: EmailAuthenticationSummary;
   evidenceTruncated: boolean;
 };
 
 type MimePart = {
   headers: Map<string, string>;
+  rawHeaders: string;
   body: string;
   headersTruncated: boolean;
 };
@@ -86,6 +90,13 @@ export function parseEml(raw: string): ParsedEml {
   const root = splitMimePart(raw);
   const subject = decodeHeader(root.headers.get("subject"));
   const from = decodeHeader(root.headers.get("from"));
+  const senderEmail = extractEmail(from);
+  const emailAuthentication = summarizeEmailAuthentication({
+    rawHeaders: root.rawHeaders,
+    senderEmail,
+    replyTo: extractEmail(decodeHeader(root.headers.get("reply-to"))),
+    returnPath: extractEmail(decodeHeader(root.headers.get("return-path"))),
+  });
   const state: ParseState = {
     textParts: [],
     htmlParts: [],
@@ -115,12 +126,13 @@ export function parseEml(raw: string): ParsedEml {
 
   return {
     subject,
-    senderEmail: extractEmail(from),
+    senderEmail,
     body,
     links: allLinks.slice(0, MAX_EML_LINKS),
     linkPairs: allLinkPairs.slice(0, MAX_EML_LINKS),
     attachmentNames: state.attachmentNames,
     attachmentRiskTypes: state.attachmentRiskTypes.sort(),
+    ...(emailAuthentication ? { emailAuthentication } : {}),
     evidenceTruncated: state.evidenceTruncated,
   };
 }
@@ -290,16 +302,20 @@ function splitMimePart(source: string): MimePart {
   const separator = HEADER_BODY_SEPARATOR.exec(source);
 
   if (!separator || separator.index === undefined) {
+    const boundedHeaders = source.slice(0, MAX_EML_HEADER_CHARACTERS);
     return {
-      headers: parseHeaders(source.slice(0, MAX_EML_HEADER_CHARACTERS)),
+      headers: parseHeaders(boundedHeaders),
+      rawHeaders: boundedHeaders,
       body: "",
       headersTruncated: source.length > MAX_EML_HEADER_CHARACTERS,
     };
   }
 
   const rawHeaders = source.slice(0, separator.index);
+  const boundedHeaders = rawHeaders.slice(0, MAX_EML_HEADER_CHARACTERS);
   return {
-    headers: parseHeaders(rawHeaders.slice(0, MAX_EML_HEADER_CHARACTERS)),
+    headers: parseHeaders(boundedHeaders),
+    rawHeaders: boundedHeaders,
     body: source.slice(separator.index + separator[0].length),
     headersTruncated: rawHeaders.length > MAX_EML_HEADER_CHARACTERS,
   };

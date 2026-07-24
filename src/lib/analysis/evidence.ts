@@ -38,6 +38,10 @@ export const EVIDENCE_IDS = [
   "sender_destination_mismatch",
   "unexpected_conversation",
   "brand_lookalike_sender",
+  "sender_authentication_failed",
+  "sender_authentication_weak",
+  "reply_to_mismatch",
+  "return_path_mismatch",
   "little_context",
   "executive_impersonation",
   "payroll_or_tax_request",
@@ -48,6 +52,25 @@ export const EVIDENCE_IDS = [
 ] as const;
 
 export type EvidenceId = (typeof EVIDENCE_IDS)[number];
+
+/**
+ * Evidence derived only from structured input Maillume computes itself. An AI provider
+ * receives normalized message text, never authentication headers, so it cannot support
+ * these IDs and is not offered them.
+ */
+export const DERIVED_EVIDENCE_IDS = [
+  "sender_authentication_failed",
+  "sender_authentication_weak",
+  "reply_to_mismatch",
+  "return_path_mismatch",
+] as const satisfies readonly EvidenceId[];
+
+export type DerivedEvidenceId = (typeof DERIVED_EVIDENCE_IDS)[number];
+export type ModelEvidenceId = Exclude<EvidenceId, DerivedEvidenceId>;
+
+export const MODEL_EVIDENCE_IDS = EVIDENCE_IDS.filter(
+  (id): id is ModelEvidenceId => !(DERIVED_EVIDENCE_IDS as readonly string[]).includes(id),
+);
 
 type EvidenceDefinition = {
   family: EvidenceFamily;
@@ -87,6 +110,10 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   sender_destination_mismatch: evidence("destination", 10, "A hosted sender points to an unrelated destination domain.", "Een gehost afzenderdomein verwijst naar een niet-gerelateerd bestemmingsdomein.", true),
   unexpected_conversation: evidence("identity", 10, "Claims you replied to or joined an existing support conversation.", "Beweert dat u hebt gereageerd op of bent toegevoegd aan een bestaand supportgesprek."),
   brand_lookalike_sender: evidence("identity", 25, "The sender appears to imitate a known brand domain.", "De afzender lijkt een bekend merkdomein na te bootsen.", true),
+  sender_authentication_failed: evidence("identity", 25, "The receiving mail provider could not confirm the sender domain.", "De ontvangende mailprovider kon het afzenderdomein niet bevestigen.", true),
+  sender_authentication_weak: evidence("identity", 10, "Sender authentication did not fully validate.", "De afzenderverificatie is niet volledig geslaagd."),
+  reply_to_mismatch: evidence("identity", 10, "Replies would go to a different domain than the sender.", "Antwoorden gaan naar een ander domein dan de afzender.", true),
+  return_path_mismatch: evidence("identity", 4, "The message was delivered on behalf of another domain.", "Het bericht is namens een ander domein bezorgd."),
   little_context: evidence("style", 4, "The message provides very little context.", "Het bericht bevat erg weinig context."),
   executive_impersonation: evidence("identity", 20, "Claims to be an executive or internal authority.", "Doet zich voor als leidinggevende of interne autoriteit.", true),
   payroll_or_tax_request: evidence("intent", 20, "Requests payroll, tax, or employee-account changes.", "Vraagt om wijzigingen in salaris-, belasting- of personeelsgegevens.", true),
@@ -171,6 +198,11 @@ export function buildAnalysisResult(
 
 export function isEvidenceId(value: unknown): value is EvidenceId {
   return typeof value === "string" && (EVIDENCE_IDS as readonly string[]).includes(value);
+}
+
+export function isModelEvidenceId(value: unknown): value is ModelEvidenceId {
+  return typeof value === "string"
+    && (MODEL_EVIDENCE_IDS as readonly string[]).includes(value);
 }
 
 export function getRegistrableDomain(value: string): string | null {

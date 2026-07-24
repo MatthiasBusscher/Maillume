@@ -319,6 +319,43 @@ ignored`);
     assert.deepEqual(ordinaryAttachment.attachmentRiskTypes, [], `${filename} must remain a hard negative`);
   }
 
+  const authenticated = parseEml(`Authentication-Results: mx.example.test;
+       dkim=fail header.i=@bank.test;
+       spf=fail (example.test: domain of alerts@bank.test does not designate 198.51.100.7)
+       smtp.mailfrom=alerts@bank.test;
+       dmarc=fail (p=REJECT sp=REJECT dis=NONE) header.from=bank.test
+Return-Path: <bounce@delivery-platform.test>
+Reply-To: Recovery Desk <recovery@bank-secure-desk.test>
+From: Bank Alerts <alerts@bank.test>
+Subject: Synthetic account warning
+Content-Type: text/plain; charset=UTF-8
+
+Your account needs attention. This is synthetic test data.`);
+  assert.deepEqual(authenticated.emailAuthentication, {
+    spf: "fail",
+    dkim: "fail",
+    dmarc: "fail",
+    replyToMismatch: true,
+    returnPathMismatch: true,
+  });
+
+  const withoutHeaders = parseEml(`From: Bank Alerts <alerts@bank.test>
+Subject: Synthetic notice
+Content-Type: text/plain; charset=UTF-8
+
+This is synthetic test data.`);
+  assert.equal(withoutHeaders.emailAuthentication, undefined);
+
+  // Authentication headers belong to the message, not to a MIME part that quotes them.
+  const quotedInBody = parseEml(`From: Bank Alerts <alerts@bank.test>
+Subject: Synthetic forwarded notice
+Content-Type: text/plain; charset=UTF-8
+
+Authentication-Results: mx.example.test; dmarc=fail header.from=bank.test
+
+This is synthetic test data.`);
+  assert.equal(quotedInBody.emailAuthentication, undefined);
+
   console.log("Checked .eml parsing regressions.");
 }
 

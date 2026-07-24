@@ -344,4 +344,77 @@ for (const result of [dutchResult, dutchRenewalFraud, strongSingleFamilySpam, sa
   );
 }
 
+const authenticationBaseInput = {
+  source: "eml" as const,
+  senderEmail: "alerts@bank.test",
+  subject: "Synthetic statement notice",
+  body: "Your monthly statement is ready. Sign in to the bank portal when convenient to review it. This is synthetic test data used for regression checks.",
+};
+
+function authenticationFactorIds(emailAuthentication: Record<string, unknown>) {
+  return analyzeEmailHeuristic({ ...authenticationBaseInput, emailAuthentication })
+    .score_factors.map((factor) => factor.id);
+}
+
+// A passing result is never scored as reassurance, and never lowers the score.
+const passingAuthentication = analyzeEmailHeuristic({
+  ...authenticationBaseInput,
+  emailAuthentication: { spf: "pass", dkim: "pass", dmarc: "pass" },
+});
+const withoutAuthentication = analyzeEmailHeuristic(authenticationBaseInput);
+assert.equal(passingAuthentication.risk_score, withoutAuthentication.risk_score);
+assert.ok(
+  !passingAuthentication.score_factors.some((factor) => factor.id.startsWith("sender_authentication")),
+  "a passing authentication result must not appear as evidence",
+);
+
+assert.ok(authenticationFactorIds({ dmarc: "fail" }).includes("sender_authentication_failed"));
+assert.ok(authenticationFactorIds({ spf: "fail" }).includes("sender_authentication_failed"));
+
+// Forwarded and mailing-list mail routinely fails SPF while DMARC still passes.
+assert.deepEqual(
+  authenticationFactorIds({ spf: "fail", dkim: "pass", dmarc: "pass" })
+    .filter((id) => id.startsWith("sender_authentication")),
+  [],
+  "a DMARC pass explains a failed SPF check on forwarded mail",
+);
+
+assert.ok(authenticationFactorIds({ dkim: "fail" }).includes("sender_authentication_weak"));
+assert.ok(authenticationFactorIds({ spf: "softfail" }).includes("sender_authentication_weak"));
+assert.ok(
+  !authenticationFactorIds({ dkim: "fail", dmarc: "pass" }).includes("sender_authentication_weak"),
+);
+
+// Business email compromise is usually sent from a domain that passes its own checks,
+// so reply routing is reported independently of the authentication verdicts.
+assert.ok(
+  authenticationFactorIds({ dmarc: "pass", replyToMismatch: true }).includes("reply_to_mismatch"),
+);
+assert.ok(!authenticationFactorIds({ replyToMismatch: false }).includes("reply_to_mismatch"));
+
+assert.ok(authenticationFactorIds({ returnPathMismatch: true }).includes("return_path_mismatch"));
+assert.ok(
+  !authenticationFactorIds({ returnPathMismatch: true, dmarc: "pass" }).includes("return_path_mismatch"),
+);
+
+// The strongest identity evidence survives the family cap.
+const cappedIdentity = analyzeEmailHeuristic({
+  ...authenticationBaseInput,
+  emailAuthentication: { dmarc: "fail", replyToMismatch: true, returnPathMismatch: true },
+});
+assert.ok(cappedIdentity.score_factors.some((factor) => factor.id === "sender_authentication_failed"));
+assert.equal(
+  cappedIdentity.score_factors.reduce((total, factor) => total + factor.contribution, 0),
+  cappedIdentity.risk_score,
+);
+
+// An authentication failure alone stays short of a phishing verdict.
+assert.notEqual(
+  analyzeEmailHeuristic({
+    ...authenticationBaseInput,
+    emailAuthentication: { dmarc: "fail" },
+  }).classification,
+  "likely_phishing",
+);
+
 console.log(`Checked ${heuristicCalibrationFixtures.length} heuristic calibration fixtures.`);

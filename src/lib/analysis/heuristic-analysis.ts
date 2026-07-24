@@ -1,4 +1,9 @@
-import type { AnalysisEnvelope, EmailAnalysisInput, EmailLinkPair } from "../types";
+import type {
+  AnalysisEnvelope,
+  EmailAnalysisInput,
+  EmailAuthenticationSummary,
+  EmailLinkPair,
+} from "../types";
 import { ensureAnalysisEnvelope } from "./analysis-envelope";
 import {
   buildAnalysisResult,
@@ -239,6 +244,9 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput | AnalysisEnv
   if (linkPairs.some(hasMismatchedLinkPair)) evidence.add("link_mismatch");
 
   if (envelope.senderEmail) addSenderEvidence(envelope.senderEmail, links, evidence);
+  if (envelope.emailAuthentication) {
+    addAuthenticationEvidence(envelope.emailAuthentication, evidence);
+  }
 
   return { evidence: Array.from(evidence), links, locale };
 }
@@ -318,6 +326,33 @@ function addSenderEvidence(sender: string, links: string[], evidence: Set<Eviden
       evidence.add("sender_destination_mismatch");
     }
   }
+}
+
+/**
+ * Authentication verdicts only ever add evidence. A passing result is never scored as
+ * reassurance: an attacker sending from a lookalike domain they control passes SPF,
+ * DKIM, and DMARC on that domain.
+ */
+function addAuthenticationEvidence(
+  authentication: EmailAuthenticationSummary,
+  evidence: Set<EvidenceId>,
+) {
+  const { spf, dkim, dmarc, replyToMismatch, returnPathMismatch } = authentication;
+  // DMARC passing means the provider tied the message to the sender domain, which is the
+  // ordinary explanation for a failed SPF check on forwarded or mailing-list mail. It
+  // suppresses the weaker signals below rather than lowering the score.
+  const alignedByDmarc = dmarc === "pass";
+
+  if (dmarc === "fail" || (spf === "fail" && !alignedByDmarc)) {
+    evidence.add("sender_authentication_failed");
+  } else if (!alignedByDmarc && (dkim === "fail" || spf === "softfail")) {
+    evidence.add("sender_authentication_weak");
+  }
+
+  // Reply routing is deliberately not gated on DMARC. Business-email-compromise messages
+  // are usually sent from a domain that passes its own authentication.
+  if (replyToMismatch) evidence.add("reply_to_mismatch");
+  if (returnPathMismatch && !alignedByDmarc) evidence.add("return_path_mismatch");
 }
 
 function hasMismatchedLinkPair(pair: EmailLinkPair): boolean {

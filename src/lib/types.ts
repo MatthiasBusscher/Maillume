@@ -15,7 +15,7 @@ export const ANALYSIS_DISCLAIMERS = {
   nl: "Dit is een geautomatiseerde risicobeoordeling en geen garantie.",
 } as const satisfies Record<AnalysisLocale, string>;
 export const ANALYSIS_DISCLAIMER = ANALYSIS_DISCLAIMERS.en;
-export const ANALYSIS_PIPELINE_VERSION = "analysis-v6";
+export const ANALYSIS_PIPELINE_VERSION = "analysis-v7";
 export const ANALYSIS_ENVELOPE_VERSION = "analysis-envelope-v2";
 
 export const MAX_SCAN_BODY_LENGTH = 20_000;
@@ -30,6 +30,35 @@ export type EmailLinkPair = {
 
 export type AttachmentRiskType = "executable" | "macro_enabled" | "double_extension";
 
+export const EMAIL_AUTHENTICATION_VERDICTS = [
+  "pass",
+  "fail",
+  "softfail",
+  "neutral",
+  "none",
+  "temperror",
+  "permerror",
+] as const;
+
+export type EmailAuthenticationVerdict = (typeof EMAIL_AUTHENTICATION_VERDICTS)[number];
+
+/**
+ * Verdicts recorded by the receiving provider, reduced to enums in the browser.
+ * Header text never leaves the client.
+ */
+export type EmailAuthenticationSummary = {
+  spf?: EmailAuthenticationVerdict;
+  dkim?: EmailAuthenticationVerdict;
+  dmarc?: EmailAuthenticationVerdict;
+  replyToMismatch?: boolean;
+  returnPathMismatch?: boolean;
+};
+
+export function isEmailAuthenticationVerdict(value: unknown): value is EmailAuthenticationVerdict {
+  return typeof value === "string"
+    && (EMAIL_AUTHENTICATION_VERDICTS as readonly string[]).includes(value);
+}
+
 export type EmailAnalysisInput = {
   subject?: string;
   senderEmail?: string;
@@ -38,6 +67,7 @@ export type EmailAnalysisInput = {
   links?: string[];
   linkPairs?: EmailLinkPair[];
   attachmentRiskTypes?: AttachmentRiskType[];
+  emailAuthentication?: EmailAuthenticationSummary;
   evidenceTruncated?: boolean;
 };
 
@@ -65,6 +95,7 @@ export type AnalysisEnvelope = {
   links: string[];
   linkPairs: EmailLinkPair[];
   attachmentRiskTypes: AttachmentRiskType[];
+  emailAuthentication?: EmailAuthenticationSummary;
   availability: AnalysisEvidenceAvailability;
 };
 
