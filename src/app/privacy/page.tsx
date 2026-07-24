@@ -24,6 +24,7 @@ export default async function PrivacyPage() {
         <p>{sections.assessments.intro}</p>
         <TrustList items={[...sections.assessments.items]} />
       </TrustSection>
+      <TrustSection title={sections.usageCounts.title}>{sections.usageCounts.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</TrustSection>
       <TrustSection title={sections.feedback.title}>{sections.feedback.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</TrustSection>
       <TrustSection title={sections.accounts.title}>{sections.accounts.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</TrustSection>
       <TrustSection title={sections.integrations.title}>{sections.integrations.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</TrustSection>

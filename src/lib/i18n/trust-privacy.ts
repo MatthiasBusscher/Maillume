@@ -24,6 +24,13 @@ export const trustPrivacyCopy = {
           "Hosting, network, and security infrastructure still process request data transiently to deliver and protect the service. Their operational processing is separate from Maillume saving scan content or results in application storage.",
         ],
       },
+      usageCounts: {
+        title: "Usage counts",
+        paragraphs: [
+          "Maillume counts how many assessments are completed each day, split only by input mode: pasted text, screenshot, .eml file, or Chrome extension. This is how the project can tell whether the scanner is used at all.",
+          "A count is a single number for one day and one input mode. It records nothing about the message, the assessment, or you. No account, session, IP address, request identifier, score, result, or time of day is stored, so a count cannot be traced back to a person or to a specific scan. Maillume uses no third-party analytics, advertising, or tracking service.",
+        ],
+      },
       feedback: {
         title: "Optional feedback",
         paragraphs: [
@@ -90,6 +97,13 @@ export const trustPrivacyCopy = {
           "Analyse- en feedbackroutes sturen antwoorden met Cache-Control: no-store; de applicatiecode logt geen aanvraaginhoud.",
           "De publieke beta gebruikt de ingebouwde heuristische controles van Maillume en stuurt scantekst niet naar een aanbieder van AI-modellen. Genormaliseerde scantekst wordt alleen voor de gevraagde beoordeling naar Maillume verstuurd.",
           "Hosting-, netwerk- en beveiligingsinfrastructuur verwerkt aanvraaggegevens wel tijdelijk om de dienst te leveren en beveiligen. Die operationele verwerking staat los van het bewaren van scaninhoud of resultaten door Maillume in applicatieopslag.",
+        ],
+      },
+      usageCounts: {
+        title: "Gebruikstellingen",
+        paragraphs: [
+          "Maillume telt hoeveel beoordelingen er per dag worden afgerond, alleen uitgesplitst naar invoermethode: geplakte tekst, screenshot, .eml-bestand of Chrome-extensie. Zo kan het project zien of de scanner überhaupt wordt gebruikt.",
+          "Een telling is één getal voor één dag en één invoermethode. Er wordt niets vastgelegd over het bericht, de beoordeling of jou. Er wordt geen account, sessie, IP-adres, aanvraagkenmerk, score, resultaat of tijdstip opgeslagen, waardoor een telling niet te herleiden is naar een persoon of naar een specifieke scan. Maillume gebruikt geen analytics-, advertentie- of trackingdiensten van derden.",
         ],
       },
       feedback: {
