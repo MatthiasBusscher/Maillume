@@ -89,6 +89,8 @@ test("privacy and authentication copy describe the real data flow", () => {
 
   assert.match(privacy, /Normalized scan text is sent to Maillume only for the requested assessment/);
   assert.match(privacy, /Genormaliseerde scantekst wordt alleen voor de gevraagde beoordeling naar Maillume verstuurd/);
+  assert.match(privacy, /does not sell extension data, use it for advertising or credit decisions/);
+  assert.match(privacy, /verkoopt extensiegegevens niet, gebruikt ze niet voor advertenties of kredietbeslissingen/);
   assert.match(accountEn, /password is sent directly to Supabase/);
   assert.match(accountNl, /wachtwoord wordt rechtstreeks naar Supabase gestuurd/);
   assert.match(accountEn, /Sign in or create an account/);
