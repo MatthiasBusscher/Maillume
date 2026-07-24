@@ -10,6 +10,7 @@ import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
 import { getAnalysisMaxRequestBytes } from "@/lib/analysis/request-limits";
 import { hashApiKey, isApiKeyFormat } from "@/lib/api-keys";
 import { areAccountsEnabled } from "@/lib/accounts/config";
+import { countScan } from "@/lib/scan-counters/storage";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { readBoundedRequestBody } from "@/lib/security/account-request";
 import {
@@ -91,6 +92,10 @@ export async function POST(request: Request) {
     );
     if (!finalized) throw new QuotaFinalizationError("API quota finalization failed.");
     reservationId = undefined;
+
+    // Counted only once quota was finalized, and never awaited. The aggregate carries
+    // the input mode only; per-account totals stay in the quota tables.
+    countScan(validation.input.source);
 
     return NextResponse.json<AnalyzeResponse>({
       result: analysis.result,

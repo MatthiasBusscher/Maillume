@@ -19,6 +19,34 @@ Initial thresholds:
 - 5xx response rate above 2% for five minutes.
 - Analysis `429` volume above the normal beta baseline.
 
+## Reading Scan Counts
+
+Set `SCAN_COUNTERS=supabase` to record one integer per UTC day and input mode. Counting is
+best-effort: a failure is swallowed so a scan never fails, slows, or changes because the
+counter was unavailable. Leaving the variable unset disables counting entirely.
+
+Daily totals and the split by input mode:
+
+```sql
+select period_start, sum(scan_count) as scans
+from public.scan_counters
+group by period_start
+order by period_start desc
+limit 30;
+
+select input_mode, sum(scan_count) as scans
+from public.scan_counters
+group by input_mode
+order by scans desc;
+```
+
+These counts cover both the anonymous web scanner and the hosted API. Per-account and
+per-key totals stay in `api_account_usage_monthly` and `api_usage_monthly`; the two cannot
+be joined, which is intentional.
+
+No retention job is scheduled. A row holds a day, an input mode, and a count, so there is
+nothing to expire — and the series is only useful over time.
+
 ## Routine Maintenance
 
 - Weekly: review container health, Cloudflare security events, Hostinger resource graphs, and backup completion.

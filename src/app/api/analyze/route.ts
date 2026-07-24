@@ -8,6 +8,7 @@ import { AiProviderRequestError } from "@/lib/analysis/providers";
 import { AnalysisCapacityError, withAnalysisCapacity } from "@/lib/analysis/concurrency";
 import { enforceAiRateLimit, enforceRequestRateLimit, RateLimitError } from "@/lib/analysis/rate-limit";
 import { getAnalysisMaxRequestBytes } from "@/lib/analysis/request-limits";
+import { countScan } from "@/lib/scan-counters/storage";
 import { readBoundedRequestBody } from "@/lib/security/account-request";
 import {
   ANALYSIS_DISCLAIMERS,
@@ -100,6 +101,9 @@ export async function POST(request: Request) {
 
     return jsonError("Analysis failed unexpectedly.", 500);
   }
+
+  // Counted only once the assessment succeeded, and never awaited.
+  countScan(validation.input.source);
 
   return NextResponse.json<AnalyzeResponse>(
     {

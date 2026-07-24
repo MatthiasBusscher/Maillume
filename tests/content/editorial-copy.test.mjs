@@ -91,6 +91,12 @@ test("privacy and authentication copy describe the real data flow", () => {
   assert.match(privacy, /Genormaliseerde scantekst wordt alleen voor de gevraagde beoordeling naar Maillume verstuurd/);
   assert.match(privacy, /does not sell extension data, use it for advertising or credit decisions/);
   assert.match(privacy, /verkoopt extensiegegevens niet, gebruikt ze niet voor advertenties of kredietbeslissingen/);
+  assert.match(privacy, /Maillume counts how many assessments are completed each day/);
+  assert.match(privacy, /Maillume telt hoeveel beoordelingen er per dag worden afgerond/);
+  assert.match(privacy, /cannot be traced back to a person or to a specific scan/);
+  assert.match(privacy, /niet te herleiden is naar een persoon of naar een specifieke scan/);
+  assert.match(privacy, /uses no third-party analytics, advertising, or tracking service/);
+  assert.match(privacy, /geen analytics-, advertentie- of trackingdiensten van derden/);
   assert.match(accountEn, /password is sent directly to Supabase/);
   assert.match(accountNl, /wachtwoord wordt rechtstreeks naar Supabase gestuurd/);
   assert.match(accountEn, /Sign in or create an account/);
