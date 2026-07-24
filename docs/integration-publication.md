@@ -18,6 +18,40 @@ Terms: `https://maillume.io/terms`
 
 Package: `dist/maillume-browser-extension.zip`, produced by `npm run package:integrations`. The command builds only the Chrome release candidate.
 
+### Store listing
+
+**Category:** Tools
+
+**Detailed description:**
+
+> Maillume gives you an explainable risk assessment for an email you choose in Gmail or Outlook.
+>
+> Open a message, select text or use the visibly open message, review the captured subject, sender, and text, then press Analyze message. Maillume returns a risk score, suspicious signals, an explanation, and a recommended next step. The assessment is automated and is not a guarantee.
+>
+> The extension acts only after you invoke it. It has no persistent Gmail or Outlook host access, background mailbox scanning, scan history, advertising, or analytics. Message content and results stay in memory and are not written to extension storage.
+>
+> The selected content is sent over HTTPS to the Maillume deployment shown in the panel only after you press Analyze message. The official service processes it for that response and does not store the message or assessment. A revocable Maillume API key is required. You can keep the key for the browser session or explicitly remember it in this Chrome profile.
+>
+> Supported webmail clients: Gmail and Outlook on the web. English and Dutch interfaces are included.
+
+Localize the listing in Dutch using the same claims and boundaries before submission. Do not add ranking, accuracy, or Chrome Web Store endorsement claims.
+
+### Privacy practices answers
+
+**Single purpose:** Assess one email selected by the user in supported webmail and return an explainable risk report.
+
+Declare these handled data types:
+
+- `Authentication information`: the dedicated Maillume API key, stored locally only when the user chooses that option and sent to the selected deployment to authenticate an assessment.
+- `Personal communications`: the reviewed email subject, sender, and text sent only for the requested assessment.
+- `Website content`: the explicitly selected or visibly open supported-webmail content and available displayed/destination link metadata needed for the assessment.
+
+Do not declare browsing history, background user activity, location, financial data, health data, or analytics; the extension does not collect them. If the dashboard wording or extension behavior changes, re-evaluate these selections instead of copying this list mechanically.
+
+Certify that data use is limited to the extension's single purpose; data is not sold, used for advertising or creditworthiness, or transferred for unrelated purposes; and people do not read message content except with specific support consent or for the security/legal exceptions in the published privacy notice.
+
+Privacy policy: `https://maillume.io/privacy`
+
 Permission justifications:
 
 - `activeTab`: temporary access after the toolbar action so the extension can read text selected by the user or the visibly open message in a supported webmail client.
@@ -32,9 +66,22 @@ The package declares no content scripts, persistent webmail host access, tabs pe
 
 Before submission:
 
-- Capture 1280x800 screenshots using synthetic messages and invented identities.
-- Complete Chrome Web Store data-use declarations from the production privacy notice.
+- Capture at least one full-bleed 1280x800 screenshot using synthetic messages and invented identities.
+- Provide a full-bleed 440x280 small promotional image with little or no text.
+- Confirm the packaged 128px icon contains the centered 96px square mark with 16px transparent padding.
+- Complete the Chrome Web Store privacy fields exactly from the production behavior and privacy notice.
 - Test unpacked installation, permission grant/denial, key revocation, quota exhaustion, and update packaging.
+
+### Reviewer instructions
+
+1. Use Chrome 116 or newer and a dedicated reviewer API key supplied through the private reviewer-instructions field. Never place a key in listing copy, screenshots, GitHub, or issue comments.
+2. Open one synthetic message in Gmail or Outlook on the web and click the Maillume toolbar icon.
+3. Under **Connection settings**, keep `https://app.maillume.io`, enter the reviewer key, choose the desired key-storage option, and select **Save connection**. Approve the host permission for that deployment.
+4. Confirm the captured subject, sender, and text, then select **Analyze message**.
+5. The expected result is a score, risk level, explanation, observed signals, and a recommended action. Results vary with the synthetic message and are not guarantees.
+6. Select **Remove connection** after review to clear the endpoint and key and revoke the optional host permission.
+
+Record the reviewer key's creation and expiry in the private operator record. Revoke it after review or at its planned expiry.
 
 ## Manual Chrome Stable Acceptance
 

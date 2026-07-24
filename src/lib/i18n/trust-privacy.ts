@@ -44,6 +44,7 @@ export const trustPrivacyCopy = {
         paragraphs: [
           "The Chrome extension captures text you explicitly select or, when supported and unambiguous, the visibly open webmail message after you start the action. It sends those fields to the Maillume deployment displayed in the extension for that assessment.",
           "The extension does not perform background mailbox scanning and does not persist message content or results. Its endpoint preference is stored locally. You can explicitly remember a dedicated API key in trusted extension-local storage across restarts and updates, or keep it only for the browser session.",
+          "Chrome extension data is used only to provide and secure the email-risk assessment you request. Maillume does not sell extension data, use it for advertising or credit decisions, transfer it for unrelated purposes, or allow people to read message content except when you give specific support consent or when access is required for security or legal obligations.",
         ],
       },
       providers: {
@@ -110,6 +111,7 @@ export const trustPrivacyCopy = {
         paragraphs: [
           "De Chrome-extensie legt tekst vast die je uitdrukkelijk selecteert of, wanneer dit wordt ondersteund en ondubbelzinnig is, het zichtbaar geopende webmailbericht nadat je de actie start. De extensie stuurt die velden voor de beoordeling naar de Maillume-omgeving die in de extensie wordt getoond.",
           "De extensie scant postvakken niet op de achtergrond en bewaart geen berichtinhoud of resultaten. De voorkeur voor het endpoint wordt lokaal opgeslagen. Je kunt er uitdrukkelijk voor kiezen een aparte API-sleutel in vertrouwde lokale extensieopslag te bewaren voor herstarts en updates, of de sleutel alleen tijdens de browsersessie bewaren.",
+          "Gegevens uit de Chrome-extensie worden alleen gebruikt om de door jou gevraagde e-mailrisicobeoordeling te leveren en beveiligen. Maillume verkoopt extensiegegevens niet, gebruikt ze niet voor advertenties of kredietbeslissingen, draagt ze niet over voor ongerelateerde doeleinden en laat mensen geen berichtinhoud lezen, behalve wanneer je daarvoor uitdrukkelijk toestemming geeft bij ondersteuning of wanneer toegang nodig is voor beveiligings- of wettelijke verplichtingen.",
         ],
       },
       providers: {

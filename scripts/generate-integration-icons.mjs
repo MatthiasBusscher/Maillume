@@ -12,7 +12,7 @@ const targets = new Map([
   [48, ["integrations/browser-extension/icons/icon-48.png"]],
   [64, ["public/integration-icons/icon-64.png"]],
   [80, ["public/integration-icons/icon-80.png"]],
-  [128, ["public/integration-icons/icon-128.png", "integrations/browser-extension/icons/icon-128.png"]],
+  [128, ["public/integration-icons/icon-128.png"]],
 ]);
 
 function glyph(size) {
@@ -71,6 +71,19 @@ function glyph(size) {
   h("path", { d: "M12 3v1M12 20v1M3 12h1M20 12h1M18.364 5.636l-.707.707M6.343 17.657l-.707.707M5.636 5.636l.707.707M17.657 17.657l.707.707" }))));
 }
 
+function storeIcon() {
+  return h("div", {
+    style: {
+      alignItems: "center",
+      background: "transparent",
+      display: "flex",
+      height: 128,
+      justifyContent: "center",
+      width: 128,
+    },
+  }, glyph(96));
+}
+
 for (const [size, outputs] of targets) {
   const response = new ImageResponse(glyph(size), { height: size, width: size });
   const image = Buffer.from(await response.arrayBuffer());
@@ -80,5 +93,10 @@ for (const [size, outputs] of targets) {
     await writeFile(destination, image);
   }
 }
+
+const storeIconDestination = path.join(root, "integrations/browser-extension/icons/icon-128.png");
+const storeIconResponse = new ImageResponse(storeIcon(), { height: 128, width: 128 });
+await mkdir(path.dirname(storeIconDestination), { recursive: true });
+await writeFile(storeIconDestination, Buffer.from(await storeIconResponse.arrayBuffer()));
 
 console.log("Generated Maillume integration icons.");

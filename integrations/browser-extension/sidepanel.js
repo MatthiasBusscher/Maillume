@@ -14,7 +14,10 @@ let captureRetryCount = 0;
 let capturePending = false;
 let capturedLinks = [];
 let capturedLinkPairs = [];
-const ANALYSIS_PIPELINE_VERSION = "analysis-v6";
+// The result contract is additive: newer pipelines add evidence IDs inside the same
+// score_factors shape. Accepting a range keeps installed panels working while a server
+// deploy and a Chrome Web Store review land at different times.
+const SUPPORTED_ANALYSIS_VERSIONS = ["analysis-v6", "analysis-v7"];
 
 const dynamicCopy = {
   en: {
@@ -429,7 +432,7 @@ elements.analyze.addEventListener("click", async () => {
     } catch {
       throw new Error(copy.invalidResult);
     }
-    if (payload?.analysis_version !== ANALYSIS_PIPELINE_VERSION) throw new Error(copy.incompatibleResult);
+    if (!SUPPORTED_ANALYSIS_VERSIONS.includes(payload?.analysis_version)) throw new Error(copy.incompatibleResult);
     if (!isAnalysisResponse(payload)) throw new Error(copy.invalidResult);
     renderResult(payload.result);
     setStatus(copy.complete);
@@ -586,7 +589,7 @@ function isAnalysisResponse(payload) {
     && isAnalysisResult(payload.result)
     && ["heuristic", "ai"].includes(payload.analysis_mode)
     && providers.includes(payload.analysis_provider)
-    && payload.analysis_version === ANALYSIS_PIPELINE_VERSION
+    && SUPPORTED_ANALYSIS_VERSIONS.includes(payload.analysis_version)
     && typeof payload.disclaimer === "string"
     && privacy
     && typeof privacy === "object"
