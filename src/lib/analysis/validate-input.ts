@@ -1,7 +1,9 @@
 import {
   MAX_SCAN_BODY_LENGTH,
+  isEmailAuthenticationVerdict,
   type AttachmentRiskType,
   type AnalysisLocale,
+  type EmailAuthenticationSummary,
   type EmailLinkPair,
   type NormalizedScanInput,
   type ScanSource,
@@ -34,7 +36,7 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
 
   const data = payload as Record<string, unknown>;
   const unsupportedFields = Object.keys(data).filter(
-    (field) => !["source", "subject", "senderEmail", "body", "locale", "links", "linkPairs", "attachmentRiskTypes", "evidenceTruncated"].includes(field),
+    (field) => !["source", "subject", "senderEmail", "body", "locale", "links", "linkPairs", "attachmentRiskTypes", "emailAuthentication", "evidenceTruncated"].includes(field),
   );
   if (unsupportedFields.length > 0) {
     return { ok: false, error: "Request contains unsupported fields." };
@@ -47,6 +49,7 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
   const links = normalizeLinks(data.links);
   const linkPairs = normalizeLinkPairs(data.linkPairs);
   const attachmentRiskTypes = normalizeAttachmentRiskTypes(data.attachmentRiskTypes);
+  const emailAuthentication = normalizeEmailAuthentication(data.emailAuthentication);
   const evidenceTruncated = data.evidenceTruncated;
   const fieldErrors: Partial<Record<keyof NormalizedScanInput, string>> = {};
 
@@ -84,6 +87,14 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
     fieldErrors.attachmentRiskTypes = "Attachment risk metadata is invalid.";
   }
 
+  if (data.emailAuthentication !== undefined && !emailAuthentication) {
+    fieldErrors.emailAuthentication = "Authentication metadata is invalid.";
+  } else if (emailAuthentication && source !== "eml") {
+    // Only an exported message carries provider authentication headers. Pasted text,
+    // screenshots, and the extension cannot produce them.
+    fieldErrors.emailAuthentication = "Authentication metadata requires an .eml scan.";
+  }
+
   if (evidenceTruncated !== undefined && typeof evidenceTruncated !== "boolean") {
     fieldErrors.evidenceTruncated = "Evidence completeness metadata is invalid.";
   }
@@ -107,9 +118,41 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
       links: links ?? undefined,
       linkPairs: linkPairs ?? undefined,
       attachmentRiskTypes: attachmentRiskTypes ?? undefined,
+      emailAuthentication: emailAuthentication ?? undefined,
       evidenceTruncated: evidenceTruncated === true,
     },
   };
+}
+
+function normalizeEmailAuthentication(
+  value: unknown,
+): EmailAuthenticationSummary | null | undefined {
+  if (value === undefined) return undefined;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+
+  const record = value as Record<string, unknown>;
+  const verdictFields = ["spf", "dkim", "dmarc"] as const;
+  const booleanFields = ["replyToMismatch", "returnPathMismatch"] as const;
+  const allowed = new Set<string>([...verdictFields, ...booleanFields]);
+  if (Object.keys(record).some((key) => !allowed.has(key))) return null;
+
+  const summary: EmailAuthenticationSummary = {};
+
+  for (const field of verdictFields) {
+    const verdict = record[field];
+    if (verdict === undefined) continue;
+    if (!isEmailAuthenticationVerdict(verdict)) return null;
+    summary[field] = verdict;
+  }
+
+  for (const field of booleanFields) {
+    const flag = record[field];
+    if (flag === undefined) continue;
+    if (typeof flag !== "boolean") return null;
+    summary[field] = flag;
+  }
+
+  return summary;
 }
 
 function normalizeAttachmentRiskTypes(value: unknown): AttachmentRiskType[] | null {

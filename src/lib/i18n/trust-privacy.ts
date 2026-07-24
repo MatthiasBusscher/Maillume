@@ -18,6 +18,7 @@ export const trustPrivacyCopy = {
         items: [
           "Maillume does not save email text, sender details, screenshots, .eml files, detected links, or completed results to scan history or application storage.",
           "Screenshot OCR and .eml parsing run in the browser before normalized text is submitted.",
+          "For .eml scans the browser also reads the sender-authentication headers your mail provider added and sends only their outcomes, such as whether SPF, DKIM, or DMARC passed and whether replies would go to a different domain. The header text itself is never sent.",
           "Analysis and feedback routes send Cache-Control: no-store responses, and application code does not log request bodies.",
           "The public beta uses Maillume's built-in heuristic checks and does not send scan text to an AI model provider. Normalized scan text is sent to Maillume only for the requested assessment.",
           "Hosting, network, and security infrastructure still process request data transiently to deliver and protect the service. Their operational processing is separate from Maillume saving scan content or results in application storage.",
@@ -85,6 +86,7 @@ export const trustPrivacyCopy = {
         items: [
           "Maillume bewaart e-mailtekst, afzendergegevens, screenshots, .eml-bestanden, gevonden links en voltooide resultaten niet in scangeschiedenis of applicatieopslag.",
           "OCR van screenshots en verwerking van .eml-bestanden vinden in de browser plaats voordat genormaliseerde tekst wordt verstuurd.",
+          "Bij .eml-scans leest de browser ook de afzenderverificatiekoppen die je mailprovider heeft toegevoegd en stuurt alleen de uitkomsten daarvan, zoals of SPF, DKIM of DMARC is geslaagd en of antwoorden naar een ander domein zouden gaan. De koptekst zelf wordt nooit verstuurd.",
           "Analyse- en feedbackroutes sturen antwoorden met Cache-Control: no-store; de applicatiecode logt geen aanvraaginhoud.",
           "De publieke beta gebruikt de ingebouwde heuristische controles van Maillume en stuurt scantekst niet naar een aanbieder van AI-modellen. Genormaliseerde scantekst wordt alleen voor de gevraagde beoordeling naar Maillume verstuurd.",
           "Hosting-, netwerk- en beveiligingsinfrastructuur verwerkt aanvraaggegevens wel tijdelijk om de dienst te leveren en beveiligen. Die operationele verwerking staat los van het bewaren van scaninhoud of resultaten door Maillume in applicatieopslag.",

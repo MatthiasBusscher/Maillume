@@ -93,4 +93,44 @@ assert.equal(validateAnalyzeRequest({
   attachmentNames: ["private-name.pdf.exe"],
 }).ok, false);
 
+const emailAuthentication = validateAnalyzeRequest({
+  source: "eml",
+  body: "Synthetic message",
+  emailAuthentication: { spf: "fail", dkim: "pass", dmarc: "fail", replyToMismatch: true },
+});
+assert.equal(emailAuthentication.ok, true);
+if (emailAuthentication.ok) {
+  assert.deepEqual(emailAuthentication.input.emailAuthentication, {
+    spf: "fail",
+    dkim: "pass",
+    dmarc: "fail",
+    replyToMismatch: true,
+  });
+}
+
+// Only an exported message carries provider authentication headers.
+for (const source of ["paste", "screenshot", "chrome"]) {
+  assert.equal(validateAnalyzeRequest({
+    source,
+    body: "Synthetic message",
+    emailAuthentication: { dmarc: "fail" },
+  }).ok, false, `${source} must not supply authentication verdicts`);
+}
+
+for (const invalid of [
+  { spf: "spoofed" },
+  { dmarc: true },
+  { replyToMismatch: "yes" },
+  { headerText: "Authentication-Results: mx.example.test; dmarc=fail" },
+  ["dmarc=fail"],
+  "dmarc=fail",
+  null,
+]) {
+  assert.equal(validateAnalyzeRequest({
+    source: "eml",
+    body: "Synthetic message",
+    emailAuthentication: invalid,
+  }).ok, false, `rejected: ${JSON.stringify(invalid)}`);
+}
+
 console.log("Checked hosted analysis request validation.");

@@ -71,4 +71,28 @@ assert.equal(chrome.source, "chrome");
 assert.equal(chrome.availability.textExtraction, "direct");
 assert.equal(chrome.availability.linkDestinations, true);
 
+const withoutAuthentication = createAnalysisEnvelope({ body: "Synthetic message." }, "eml");
+assert.equal(withoutAuthentication.availability.authenticationHeaders, false);
+assert.equal(withoutAuthentication.emailAuthentication, undefined);
+
+const withAuthentication = createAnalysisEnvelope({
+  body: "Synthetic message.",
+  emailAuthentication: { dmarc: "fail", replyToMismatch: true },
+}, "eml");
+assert.equal(withAuthentication.availability.authenticationHeaders, true);
+assert.deepEqual(withAuthentication.emailAuthentication, { dmarc: "fail", replyToMismatch: true });
+
+// Unrecognized verdicts are dropped rather than carried into scoring.
+const partiallyValid = createAnalysisEnvelope({
+  body: "Synthetic message.",
+  emailAuthentication: { dmarc: "bogus" as never, spf: "fail" },
+}, "eml");
+assert.deepEqual(partiallyValid.emailAuthentication, { spf: "fail" });
+
+const emptyAuthentication = createAnalysisEnvelope({
+  body: "Synthetic message.",
+  emailAuthentication: {},
+}, "eml");
+assert.equal(emptyAuthentication.availability.authenticationHeaders, false);
+
 console.log("Checked canonical analysis-envelope normalization and evidence availability.");

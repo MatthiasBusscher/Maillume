@@ -1,9 +1,11 @@
 import {
   ANALYSIS_ENVELOPE_VERSION,
+  isEmailAuthenticationVerdict,
   type AnalysisEnvelope,
   type AnalysisLocale,
   type AttachmentRiskType,
   type EmailAnalysisInput,
+  type EmailAuthenticationSummary,
   type EmailLinkPair,
   type ScanSource,
 } from "../types";
@@ -24,6 +26,7 @@ export function createAnalysisEnvelope(
   ]);
   const linkPairs = normalizeLinkPairs(input.linkPairs ?? []);
   const attachmentRiskTypes = normalizeAttachmentRiskTypes(input.attachmentRiskTypes ?? []);
+  const emailAuthentication = normalizeEmailAuthentication(input.emailAuthentication);
 
   return {
     version: ANALYSIS_ENVELOPE_VERSION,
@@ -35,11 +38,12 @@ export function createAnalysisEnvelope(
     links,
     linkPairs,
     attachmentRiskTypes,
+    ...(emailAuthentication ? { emailAuthentication } : {}),
     availability: {
       subject: Boolean(subject),
       sender: Boolean(senderEmail),
       linkDestinations: source !== "screenshot" || links.length > 0,
-      authenticationHeaders: false,
+      authenticationHeaders: Boolean(emailAuthentication),
       textExtraction: source === "screenshot" ? "ocr" : source === "eml" ? "parsed" : "direct",
       contentComplete: input.evidenceTruncated !== true,
     },
@@ -68,6 +72,23 @@ export function isAnalysisEnvelope(value: unknown): value is AnalysisEnvelope {
     && Array.isArray(candidate.linkPairs)
     && Array.isArray(candidate.attachmentRiskTypes)
     && Boolean(candidate.availability);
+}
+
+function normalizeEmailAuthentication(
+  summary: EmailAuthenticationSummary | undefined,
+): EmailAuthenticationSummary | undefined {
+  if (!summary) return undefined;
+
+  const normalized: EmailAuthenticationSummary = {};
+  for (const method of ["spf", "dkim", "dmarc"] as const) {
+    const verdict = summary[method];
+    if (isEmailAuthenticationVerdict(verdict)) normalized[method] = verdict;
+  }
+  for (const flag of ["replyToMismatch", "returnPathMismatch"] as const) {
+    if (typeof summary[flag] === "boolean") normalized[flag] = summary[flag];
+  }
+
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
 }
 
 function normalizeAttachmentRiskTypes(types: AttachmentRiskType[]): AttachmentRiskType[] {

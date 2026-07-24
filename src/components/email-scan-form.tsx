@@ -20,6 +20,7 @@ import {
   type AnalyzeResponse,
   type AttachmentRiskType,
   type EmailAnalysisResult,
+  type EmailAuthenticationSummary,
   type EmailLinkPair,
   MAX_SCAN_BODY_LENGTH,
   type WebScanSource,
@@ -89,6 +90,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   const [links, setLinks] = useState<string[]>([]);
   const [linkPairs, setLinkPairs] = useState<EmailLinkPair[]>([]);
   const [attachmentRiskTypes, setAttachmentRiskTypes] = useState<AttachmentRiskType[]>([]);
+  const [emailAuthentication, setEmailAuthentication] = useState<EmailAuthenticationSummary>();
   const [evidenceTruncated, setEvidenceTruncated] = useState(false);
   const [result, setResult] = useState<EmailAnalysisResult | null>(null);
   const [analysisVersion, setAnalysisVersion] = useState("");
@@ -98,8 +100,21 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   const [fileName, setFileName] = useState("");
   const [fileStatus, setFileStatus] = useState("");
   const requestPayload = useMemo(
-    () => ({ source: activeMode, subject, senderEmail, body, locale, links, linkPairs, attachmentRiskTypes, evidenceTruncated }),
-    [activeMode, attachmentRiskTypes, body, evidenceTruncated, linkPairs, links, locale, senderEmail, subject],
+    () => ({
+      source: activeMode,
+      subject,
+      senderEmail,
+      body,
+      locale,
+      links,
+      linkPairs,
+      attachmentRiskTypes,
+      // Only an .eml scan may carry authentication verdicts, so stale state from a
+      // previous file can never travel with a pasted or screenshot message.
+      ...(activeMode === "eml" && emailAuthentication ? { emailAuthentication } : {}),
+      evidenceTruncated,
+    }),
+    [activeMode, attachmentRiskTypes, body, emailAuthentication, evidenceTruncated, linkPairs, links, locale, senderEmail, subject],
   );
   const requestSize = getSerializedRequestSize(requestPayload);
   const bodyIsTooLong = body.length > MAX_SCAN_BODY_LENGTH;
@@ -161,6 +176,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setLinks([]);
     setLinkPairs([]);
     setAttachmentRiskTypes([]);
+    setEmailAuthentication(undefined);
     setEvidenceTruncated(false);
     setResult(null);
     setError("");
@@ -176,6 +192,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setLinks([]);
     setLinkPairs([]);
     setAttachmentRiskTypes([]);
+    setEmailAuthentication(undefined);
     setEvidenceTruncated(false);
     setResult(null);
     setError("");
@@ -199,6 +216,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setLinks([]);
     setLinkPairs([]);
     setAttachmentRiskTypes([]);
+    setEmailAuthentication(undefined);
     setEvidenceTruncated(false);
     setResult(null);
     setError("");
@@ -242,6 +260,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
       setLinks(qrLinks);
       setLinkPairs([]);
       setAttachmentRiskTypes([]);
+      setEmailAuthentication(undefined);
       setEvidenceTruncated(false);
       setFileStatus(dictionary.form.extractedTextReady);
     } catch {
@@ -268,6 +287,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     setLinks([]);
     setLinkPairs([]);
     setAttachmentRiskTypes([]);
+    setEmailAuthentication(undefined);
     setEvidenceTruncated(false);
     setResult(null);
     setError("");
@@ -303,6 +323,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
       setLinks(parsed.links);
       setLinkPairs(parsed.linkPairs);
       setAttachmentRiskTypes(parsed.attachmentRiskTypes);
+      setEmailAuthentication(parsed.emailAuthentication);
       setEvidenceTruncated(parsed.evidenceTruncated);
       setFileStatus(dictionary.form.parsedEmlReady);
     } catch {
