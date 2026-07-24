@@ -50,7 +50,7 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
 4. Input Processing Layer
    - Paste mode uses subject, sender email, and body text.
    - Screenshot mode extracts visible text with client-side OCR, then discards the uploaded image.
-   - `.eml` mode parses headers, sender, subject, text/html bodies, detected links, and attachment metadata in the browser, then discards the uploaded file.
+   - `.eml` mode parses headers, sender, subject, text/html bodies, detected links, attachment metadata, and sender-authentication outcomes in the browser, then discards the uploaded file.
    - Upload type and size limits are centralized in `src/lib/scan-limits.ts`.
    - [ADR 0001](adr/0001-eml-parser.md) records the temporary bounded-parser decision and its required review date.
    - Processing should happen in memory or temporary runtime storage only.
@@ -259,7 +259,17 @@ See `docs/deployment.md` and `docs/cost-controls.md` for deployment and cost-con
 
 ## Canonical Analysis Envelope
 
-Every input adapter produces the same `analysis-envelope-v2` structure before scoring. Paste and Chrome capture provide direct text, screenshot OCR can separate explicitly labelled subject and sender fields and decode an HTTP(S) QR destination without fetching it, and `.eml` parsing provides normalized text plus any parsed sender, link, displayed-link/destination, and coarse attachment-risk evidence.
+Every input adapter produces the same `analysis-envelope-v2` structure before scoring. Paste and Chrome capture provide direct text, screenshot OCR can separate explicitly labelled subject and sender fields and decode an HTTP(S) QR destination without fetching it, and `.eml` parsing provides normalized text plus any parsed sender, link, displayed-link/destination, coarse attachment-risk, and sender-authentication evidence.
+
+Sender-authentication evidence is reduced to verdict enums (`spf`, `dkim`, `dmarc`) and two
+routing booleans in the browser; header text is never transmitted. Only `.eml` scans may
+supply it, and the API rejects it from any other source. Scoring is deliberately asymmetric:
+a failure adds evidence, while a pass is never scored as reassurance because an attacker
+authenticates successfully on a lookalike domain they own. A DMARC pass suppresses the weaker
+SPF and DKIM signals, which is the ordinary explanation for forwarded and mailing-list mail.
+
+These IDs are derived, not observed in text, so they are excluded from the vocabulary offered
+to an optional AI provider and rejected if a provider returns one.
 
 The envelope applies Unicode NFKC normalization, stable whitespace and line endings, normalized HTTP(S) URLs without fragments, and deterministic link, link-pair, and attachment-risk ordering. Attachment filenames remain browser-local metadata; only `executable`, `macro_enabled`, or `double_extension` categories can cross the API boundary.
 
@@ -274,7 +284,7 @@ type AnalyzeResponse = {
   result: EmailAnalysisResult;
   analysis_mode: "heuristic" | "ai";
   analysis_provider: "heuristic" | "openai" | "anthropic" | "openai-compatible";
-  analysis_version: "analysis-v6";
+  analysis_version: "analysis-v7";
   disclaimer: string;
   privacy: {
     stored: false;

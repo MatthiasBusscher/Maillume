@@ -30,6 +30,7 @@ Paste an email, add a screenshot, or open an exported `.eml` file. Maillume show
 - **Explainable results:** risk score, risk level, suspicious signals, detected links, and a practical next action.
 - **Versioned risk index:** the score is a capped, explainable index of observed evidence, not a probability that a message is malicious.
 - **Three input paths:** pasted text, browser-side screenshot OCR, and browser-side `.eml` parsing.
+- **Sender authentication:** `.eml` scans read the SPF, DKIM, and DMARC outcomes your provider recorded, plus reply and return-path routing. A failure is evidence; a pass is never scored as reassurance.
 - **No scan history:** email content and completed assessments are not written to a scan database.
 - **Useful without an account:** anonymous heuristic scanning is the permanent free core.
 - **Self-hostable:** run the complete scanner in Docker and optionally connect your own AI provider.
@@ -68,7 +69,7 @@ Open `http://localhost:3000/app`. Heuristic mode needs no account, database, or 
 
 ## Privacy Model
 
-Screenshot OCR, QR decoding, and `.eml` parsing run in the browser. The source file is not uploaded. The normalized text, HTTP(S) QR destination when present, and coarse attachment-risk categories needed for the current assessment are sent to the selected Maillume deployment and discarded when the request ends. Attachment filenames and contents are never sent.
+Screenshot OCR, QR decoding, and `.eml` parsing run in the browser. The source file is not uploaded. The normalized text, HTTP(S) QR destination when present, coarse attachment-risk categories, and — for `.eml` scans — sender-authentication outcomes needed for the current assessment are sent to the selected Maillume deployment and discarded when the request ends. Attachment filenames and contents are never sent, and authentication headers are reduced to verdict enums in the browser rather than transmitted as header text.
 
 Maillume does not create scan history and does not use ordinary scans as training data. It does not write email bodies, sender details, subjects, links, screenshots, `.eml` files, prompts, or completed results to Supabase.
 
@@ -124,7 +125,7 @@ type EmailAnalysisResult = {
 };
 ```
 
-The current source contract uses `analysis_version: "analysis-v6"`. Applied factor contributions always sum to `risk_score`. Maillume derives classification, level, links, and score server-side; optional AI providers return stable evidence IDs instead of choosing a number.
+The current source contract uses `analysis_version: "analysis-v7"`. Applied factor contributions always sum to `risk_score`. Maillume derives classification, level, links, and score server-side; optional AI providers return stable evidence IDs instead of choosing a number.
 
 ## Self-Hosting and AI
 

@@ -86,6 +86,33 @@
               "type": "string",
               "enum": ["executable", "macro_enabled", "double_extension"]
             }
+          },
+          "emailAuthentication": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Authentication verdicts recorded by the receiving mail provider, reduced to enums by the client. Accepted only when source is \"eml\". Header text is never sent, and a passing verdict is not scored as reassurance.",
+            "properties": {
+              "spf": {
+                "type": "string",
+                "enum": ["pass", "fail", "softfail", "neutral", "none", "temperror", "permerror"]
+              },
+              "dkim": {
+                "type": "string",
+                "enum": ["pass", "fail", "softfail", "neutral", "none", "temperror", "permerror"]
+              },
+              "dmarc": {
+                "type": "string",
+                "enum": ["pass", "fail", "softfail", "neutral", "none", "temperror", "permerror"]
+              },
+              "replyToMismatch": {
+                "type": "boolean",
+                "description": "The Reply-To registrable domain differs from the sender's."
+              },
+              "returnPathMismatch": {
+                "type": "boolean",
+                "description": "The Return-Path registrable domain differs from the sender's."
+              }
+            }
           }
         }
       },
@@ -124,7 +151,7 @@
           "result": { "$ref": "#/components/schemas/AnalysisResult" },
           "analysis_mode": { "type": "string", "enum": ["heuristic", "ai"] },
           "analysis_provider": { "type": "string", "enum": ["heuristic", "openai", "anthropic", "openai-compatible"] },
-          "analysis_version": { "const": "analysis-v6" },
+          "analysis_version": { "const": "analysis-v7" },
           "disclaimer": { "type": "string" },
           "privacy": {
             "type": "object",

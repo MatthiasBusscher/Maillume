@@ -82,7 +82,7 @@ test("Dutch routes render server-side and persist across navigation", async ({ p
   expect(await apiResponse.json()).toEqual({
     status: "ok",
     revision: "development",
-    analysis_version: "analysis-v6",
+    analysis_version: "analysis-v7",
   });
 });
 
@@ -402,7 +402,7 @@ test("risk meter color follows the evidence-derived level instead of fixed score
         },
         analysis_mode: "heuristic",
         analysis_provider: "heuristic",
-        analysis_version: "analysis-v6",
+        analysis_version: "analysis-v7",
         disclaimer: "Automated assessment.",
         privacy: { stored: false, retention: "not_stored", message: "Not stored." },
       },
@@ -511,7 +511,7 @@ test("optional feedback sends labels without scan content", async ({ page }) => 
     feedbackKind: "false_positive",
     locale: "en",
     source: "paste",
-    analyzerVersion: "analysis-v6",
+    analyzerVersion: "analysis-v7",
     scoreBand: "high",
     signalCategories: ["urgency"],
   });
@@ -531,7 +531,7 @@ test("feedback controls work from the keyboard and reject content fields", async
       feedbackKind: "false_positive",
       locale: "en",
       source: "paste",
-      analyzerVersion: "analysis-v6",
+      analyzerVersion: "analysis-v7",
       scoreBand: "high",
       signalCategories: [],
       body: "must never be accepted",
@@ -765,7 +765,7 @@ test("health endpoint exposes no dependency or secret details", async ({ request
   expect(await response.json()).toEqual({
     status: "ok",
     revision: "development",
-    analysis_version: "analysis-v6",
+    analysis_version: "analysis-v7",
   });
 });
 
@@ -906,7 +906,7 @@ test("hosted API publishes its machine-readable contract", async ({ request }) =
   expect(specification.openapi).toBe("3.1.0");
   expect(specification.paths["/api/v1/analyze"].post.security).toEqual([{ apiKey: [] }]);
   expect(specification.components.schemas.AnalysisResult.required).toEqual(expect.arrayContaining(["classification", "score_factors"]));
-  expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v6");
+  expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v7");
 });
 
 test("primary public pages have no serious accessibility violations", async ({ page }) => {

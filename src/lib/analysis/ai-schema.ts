@@ -1,4 +1,4 @@
-import { EVIDENCE_IDS, isEvidenceId, type EvidenceId } from "./evidence";
+import { MODEL_EVIDENCE_IDS, isModelEvidenceId, type ModelEvidenceId } from "./evidence";
 
 export const AI_ANALYSIS_SCHEMA = {
   type: "object",
@@ -11,7 +11,7 @@ export const AI_ANALYSIS_SCHEMA = {
       maxItems: 20,
       items: {
         type: "string",
-        enum: EVIDENCE_IDS,
+        enum: MODEL_EVIDENCE_IDS,
       },
     },
   },
@@ -25,7 +25,7 @@ export class AiResponseValidationError extends Error {
   }
 }
 
-export function parseAiAnalysisJson(rawContent: string): EvidenceId[] {
+export function parseAiAnalysisJson(rawContent: string): ModelEvidenceId[] {
   let parsed: unknown;
 
   try {
@@ -37,7 +37,7 @@ export function parseAiAnalysisJson(rawContent: string): EvidenceId[] {
   return normalizeAiAnalysisResult(parsed);
 }
 
-export function normalizeAiAnalysisResult(value: unknown): EvidenceId[] {
+export function normalizeAiAnalysisResult(value: unknown): ModelEvidenceId[] {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new AiResponseValidationError();
   }
@@ -51,7 +51,9 @@ export function normalizeAiAnalysisResult(value: unknown): EvidenceId[] {
   }
 
   const evidenceIds = Array.from(new Set(record.evidence_ids));
-  if (!evidenceIds.every(isEvidenceId)) {
+  // Derived IDs are rejected here, not filtered out: a provider claiming one is
+  // reporting evidence it was never given and cannot be trusted for the rest.
+  if (!evidenceIds.every(isModelEvidenceId)) {
     throw new AiResponseValidationError("AI provider returned an unknown evidence ID.");
   }
 
