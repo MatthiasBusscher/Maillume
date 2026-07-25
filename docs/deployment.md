@@ -93,6 +93,15 @@ CLOUDFLARE_TUNNEL_TOKEN=<server-only-token>
 MAILLUME_IMAGE=ghcr.io/matthiasbusscher/maillume:sha-<full-commit>
 ```
 
+GHCR lists runnable images and registry-backed provenance attachments on the same
+versions page. A `sha-<full-commit>` tag is the runnable commit image.
+`sha256-<image-digest>` is the Sigstore/SLSA attachment created for that image and
+must not be used as `MAILLUME_IMAGE`, even when GHCR labels it as the latest package
+version or displays a generated `docker pull` command. For immutable deployment, use
+the resolved application form
+`ghcr.io/matthiasbusscher/maillume@sha256:<image-digest>`. The protected deployment
+workflow resolves and passes this digest automatically.
+
 Do not configure AI provider keys on the official public service. Build-time `NEXT_PUBLIC_` values are embedded in the image; the release workflow builds the official image with canonical defaults. Self-hosters needing different public values should build their own image.
 
 `ACCOUNTS_ENABLED` is server-only and defaults to `false`. The account-enabled public beta uses the exact value `true`; setting it to `false` returns the deployment to anonymous-only mode without disabling the scanner. Keep account acceptance evidence current in [authentication.md](authentication.md) and issue #79.
