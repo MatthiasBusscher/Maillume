@@ -162,7 +162,52 @@ Client IP trust depends on the deployment topology:
 Do not enable both trust modes. Missing, malformed, multi-value, or ambiguously configured
 headers fail safely into the shared bucket instead of creating attacker-controlled buckets.
 
-For a production-style local container:
+### Test a published container image
+
+The GHCR versions page lists runnable images and provenance attachments together:
+
+- `sha-<full-commit>` is a runnable image tag for one reviewed commit.
+- `sha256-<image-digest>` is a Sigstore/SLSA provenance attachment, not an
+  application image. GHCR may label this attachment as the latest package version;
+  do not use its generated `docker pull` command to run Maillume.
+- `@sha256:<image-digest>` selects the runnable image immutably and is preferred for
+  deployment and reproducible testing.
+
+Official images currently target `linux/amd64`. On Apple Silicon, keep the explicit
+platform so Docker Desktop uses AMD64 emulation. Replace `REPLACE_WITH_IMAGE_DIGEST`
+with the 64 hexadecimal characters from the verified image digest:
+
+```bash
+IMAGE=ghcr.io/matthiasbusscher/maillume@sha256:REPLACE_WITH_IMAGE_DIGEST
+
+docker pull --platform linux/amd64 "$IMAGE"
+
+docker run --rm --name maillume-local \
+  --platform linux/amd64 \
+  -p 127.0.0.1:3000:3000 \
+  -e ANALYSIS_MODE=heuristic \
+  -e ACCOUNTS_ENABLED=false \
+  "$IMAGE"
+```
+
+In a second terminal, verify the immutable revision and analyzer contract:
+
+```bash
+curl --fail --silent --show-error http://127.0.0.1:3000/api/health
+
+curl --fail --silent --show-error \
+  --request POST http://127.0.0.1:3000/api/analyze \
+  --header 'Content-Type: application/json' \
+  --data '{"source":"paste","subject":"Synthetic account notice","senderEmail":"alerts@example.test","body":"This is a synthetic local test message. Review the example at https://example.test."}'
+```
+
+Open `http://127.0.0.1:3000/app` directly to exercise the scanner UI. The published
+image contains Maillume's canonical public build-time URLs, so the marketing page's
+**Check an email** link intentionally opens `app.maillume.io` even when the container
+runs locally. Build from source when you need local public URLs or different branding.
+Stop the foreground container with <kbd>Ctrl</kbd>+<kbd>C</kbd>; `--rm` removes it.
+
+To build a production-style local container from the checked-out source instead:
 
 ```bash
 docker build \
