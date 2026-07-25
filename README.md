@@ -201,10 +201,11 @@ curl --fail --silent --show-error \
   --data '{"source":"paste","subject":"Synthetic account notice","senderEmail":"alerts@example.test","body":"This is a synthetic local test message. Review the example at https://example.test."}'
 ```
 
-Open `http://127.0.0.1:3000/app` to exercise the scanner UI. The published image
-contains Maillume's canonical public build-time URLs, so build from source when you
-need different public URLs or branding. Stop the foreground container with
-<kbd>Ctrl</kbd>+<kbd>C</kbd>; `--rm` removes it.
+Open `http://127.0.0.1:3000/app` directly to exercise the scanner UI. The published
+image contains Maillume's canonical public build-time URLs, so the marketing page's
+**Check an email** link intentionally opens `app.maillume.io` even when the container
+runs locally. Build from source when you need local public URLs or different branding.
+Stop the foreground container with <kbd>Ctrl</kbd>+<kbd>C</kbd>; `--rm` removes it.
 
 To build a production-style local container from the checked-out source instead:
 
