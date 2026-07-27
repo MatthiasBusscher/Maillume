@@ -2,7 +2,12 @@ import Link from "next/link";
 import { Github, Scale } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
-import { getAppHref, LICENSE_URL, SOURCE_REPOSITORY_URL } from "@/lib/site";
+import {
+  getAppHref,
+  GITHUB_SPONSORS_URL,
+  LICENSE_URL,
+  SOURCE_REPOSITORY_URL,
+} from "@/lib/site";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizePath } from "@/lib/i18n/site-locale";
 import { getOperatorProfile } from "@/lib/operator";
@@ -40,6 +45,7 @@ export async function SiteFooter() {
           links={[
             { href: page("/self-hosted"), label: nl ? "In eigen beheer" : "Self-hosted" },
             { href: SOURCE_REPOSITORY_URL, label: "GitHub", external: true, newTab: true },
+            { href: GITHUB_SPONSORS_URL, label: nl ? "Steun Maillume" : "Sponsor Maillume", external: true, newTab: true },
             { href: LICENSE_URL, label: "AGPL-3.0", external: true, newTab: true },
           ]}
         />

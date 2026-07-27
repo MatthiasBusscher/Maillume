@@ -7,6 +7,7 @@ import {
   Database,
   ExternalLink,
   Github,
+  Heart,
   LogIn,
   Menu,
   Scale,
@@ -27,7 +28,11 @@ import {
   localizePath,
   SITE_LOCALE_COOKIE,
 } from "@/lib/i18n/site-locale";
-import { LICENSE_URL, SOURCE_REPOSITORY_URL } from "@/lib/project-links";
+import {
+  GITHUB_SPONSORS_URL,
+  LICENSE_URL,
+  SOURCE_REPOSITORY_URL,
+} from "@/lib/project-links";
 import { getMarketingRouteHref } from "@/lib/site";
 
 export function ScannerPage({
@@ -171,7 +176,16 @@ export function ScannerPage({
               {dictionary.legal.copyright}
             </p>
           </div>
-          <nav className="flex items-center gap-4" aria-label={dictionary.legal.license}>
+          <nav className="flex items-center gap-4" aria-label={dictionary.legal.links}>
+            <a
+              href={GITHUB_SPONSORS_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 font-semibold text-[#26313b] hover:text-[#087b72]"
+            >
+              <Heart className="h-4 w-4" aria-hidden="true" />
+              {dictionary.legal.sponsor}
+            </a>
             <a
               href={SOURCE_REPOSITORY_URL}
               target="_blank"
