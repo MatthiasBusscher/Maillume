@@ -73,6 +73,24 @@ See `docs/feedback.md` for the API allowlist, retention behavior, and synthetic-
 
 ```bash
 npm run test:analysis
+npm run eval:heuristic
+npm run bench:heuristic
 ```
 
 This validates corpus shape and split isolation, applies the locked gates, reports cross-input classification, median/p95 score deltas, and format-enriched factor agreement, checks factor sums and URL/domain regressions, and verifies AI evidence normalization with synthetic outputs.
+
+`npm run eval:heuristic` emits an aggregate human-readable report across all
+repository evaluation sets. Add `-- --format json --output
+heuristic-evaluation.json` for a machine-readable artifact. The report records the
+analysis version, a SHA-256 corpus revision, confusion matrices, both case and
+scenario counts, and breakdowns by dataset, language, source, evidence completeness,
+and attack category.
+
+`npm run bench:heuristic` measures representative short, long, link-heavy, and
+maximum-size normalized inputs. It measures the heuristic engine rather than API
+transport, parsing, OCR, or browser capture. It is diagnostic and deliberately does
+not enforce an absolute CI timing threshold.
+
+See [the heuristic evaluation baseline](heuristic-evaluation.md) for the initial
+`analysis-v7` results, interpretation limits, performance measurements, and the
+comparison protocol for future scanner changes.
