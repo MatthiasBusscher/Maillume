@@ -31,7 +31,9 @@ export const dictionaries = {
       label: "Language",
     },
     legal: {
+      links: "Project links",
       source: "Source code",
+      sponsor: "Sponsor",
       license: "License",
       notice:
         "AGPL-3.0 free software. You may share and modify it under the license. Provided without warranty.",
@@ -188,7 +190,9 @@ export const dictionaries = {
       label: "Taal",
     },
     legal: {
+      links: "Projectlinks",
       source: "Broncode",
+      sponsor: "Steunen",
       license: "Licentie",
       notice:
         "Vrije software onder AGPL-3.0. Je mag deze delen en aanpassen volgens de licentie. Zonder garantie geleverd.",

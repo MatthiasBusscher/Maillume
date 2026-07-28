@@ -16,6 +16,25 @@ test("the homepage leads with the Maillume promise without explaining the name",
   assert.match(homepage, /never guarantees that a message is safe or malicious/);
 });
 
+test("GitHub Sponsors is available without cluttering the main navigation", () => {
+  const funding = read(".github/FUNDING.yml");
+  const site = read("src/lib/site.ts");
+  const header = read("src/components/site-header.tsx");
+  const footer = read("src/components/site-footer.tsx");
+  const scanner = read("src/components/home-page.tsx");
+  const dictionary = read("src/lib/i18n/dictionary.ts");
+
+  assert.match(funding, /github:\s*\n\s*-\s*MatthiasBusscher/);
+  assert.match(site, /https:\/\/github\.com\/sponsors\/MatthiasBusscher/);
+  assert.match(footer, /GITHUB_SPONSORS_URL/);
+  assert.match(footer, /Sponsor Maillume/);
+  assert.match(footer, /Steun Maillume/);
+  assert.match(scanner, /dictionary\.legal\.sponsor/);
+  assert.match(dictionary, /sponsor: "Sponsor"/);
+  assert.match(dictionary, /sponsor: "Steunen"/);
+  assert.doesNotMatch(header, /GITHUB_SPONSORS_URL/);
+});
+
 test("launch copy reflects optional accounts without advertising hosted AI", () => {
   const platform = read("src/app/platform/page.tsx");
   const pricing = read("src/app/pricing/page.tsx");

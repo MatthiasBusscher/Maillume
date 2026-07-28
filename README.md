@@ -6,7 +6,7 @@
 
 Maillume makes it easier to see suspicious signals before you click, reply, share information, or pay.
 
-[Try Maillume](https://app.maillume.io) · [Website](https://maillume.io) · [Documentation](docs/architecture.md) · [Roadmap](docs/roadmap.md) · [Contributing](CONTRIBUTING.md)
+[Try Maillume](https://app.maillume.io) · [Website](https://maillume.io) · [Documentation](docs/architecture.md) · [Roadmap](docs/roadmap.md) · [Contributing](CONTRIBUTING.md) · [Sponsor](https://github.com/sponsors/MatthiasBusscher)
 
 [![CI](https://github.com/MatthiasBusscher/Maillume/actions/workflows/ci.yml/badge.svg?event=pull_request)](https://github.com/MatthiasBusscher/Maillume/actions/workflows/ci.yml?query=event%3Apull_request)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-087b72.svg)](LICENSE)
@@ -247,6 +247,7 @@ Useful guides: [architecture](docs/architecture.md), [authentication](docs/authe
 - Read [GOVERNANCE.md](GOVERNANCE.md) for project decisions and maintainer responsibilities.
 - Follow the [Code of Conduct](CODE_OF_CONDUCT.md) in all project spaces.
 - Use [SUPPORT.md](SUPPORT.md) to choose a safe support channel.
+- Support continued development through [GitHub Sponsors](https://github.com/sponsors/MatthiasBusscher).
 - Use [GitHub Issues](https://github.com/MatthiasBusscher/Maillume/issues) for reproducible bugs and product proposals.
 - Keep all examples synthetic and free of private inbox data.
 - Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
