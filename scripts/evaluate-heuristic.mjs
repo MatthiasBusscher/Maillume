@@ -8,6 +8,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const corpusFiles = [
   "src/lib/evaluation/cross-input-fixtures.ts",
   "src/lib/evaluation/email-fixtures.ts",
+  "src/lib/evaluation/independent-corpus-types.ts",
+  "src/lib/evaluation/independent-corpus.ts",
+  "src/lib/evaluation/independent-development.ts",
+  "src/lib/evaluation/independent-validation.ts",
+  "src/lib/evaluation/independent-holdout.ts",
   "src/lib/evaluation/public-advisory-holdout.ts",
   "src/lib/evaluation/scenario-metadata.ts",
   "src/lib/evaluation/synthetic-corpus.ts",

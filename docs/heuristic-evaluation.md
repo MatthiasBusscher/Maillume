@@ -96,6 +96,24 @@ Use the full command output or JSON artifact for all attack-category and source
 breakdowns. Do not compare percentages without also comparing corpus revisions and
 scenario counts.
 
+## Expanded independent baseline
+
+Phase 1 adds 60 genuinely distinct scenarios split into development, validation,
+and locked holdout modules. Each split contains eight phishing, four spam, and
+eight legitimate cases, with equal English and Dutch representation across the
+full corpus. All four supported scan sources and both complete and incomplete
+evidence are represented.
+
+The pre-tuning `analysis-v7` baseline detects only 5/24 independent phishing
+cases above low risk and 1/12 independent spam cases above low risk. One of 24
+legitimate hard negatives reaches medium risk; none reaches high risk. This is
+the intended honest baseline: it shows that the repeated synthetic variants
+were strong regression tests but weak evidence of generalization.
+
+See [the independent corpus review](independent-corpus-review.md) for the frozen
+corpus revision, review checklist, split protocol, metrics, and documented
+failure inventory.
+
 ## Performance baseline
 
 Run the diagnostic benchmark:

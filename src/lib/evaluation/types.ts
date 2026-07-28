@@ -20,6 +20,9 @@ export type EvaluationPrediction = (typeof EVALUATION_PREDICTIONS)[number];
 export const EVALUATION_DATASETS = [
   "calibration",
   "public-advisory-holdout",
+  "independent-development",
+  "independent-validation",
+  "independent-locked",
   "synthetic-development",
   "synthetic-locked",
   "cross-input",

@@ -4,6 +4,11 @@ import { ANALYSIS_PIPELINE_VERSION } from "../types";
 import { CROSS_INPUT_FIXTURES } from "./cross-input-fixtures";
 import { emailEvaluationFixtures } from "./email-fixtures";
 import {
+  INDEPENDENT_DEVELOPMENT,
+  INDEPENDENT_HOLDOUT,
+  INDEPENDENT_VALIDATION,
+} from "./independent-corpus";
+import {
   buildEvaluationObservations,
   buildHeuristicEvaluationReport,
   EVALUATION_REPORT_SCHEMA_VERSION,
@@ -26,8 +31,8 @@ assert.equal(report.schemaVersion, EVALUATION_REPORT_SCHEMA_VERSION);
 assert.equal(report.generatedAt, generatedAt);
 assert.equal(report.analysisVersion, ANALYSIS_PIPELINE_VERSION);
 assert.equal(report.corpusRevision, "sha256:test-corpus");
-assert.equal(report.inventory.cases, 396);
-assert.equal(report.inventory.scenarios, 72);
+assert.equal(report.inventory.cases, 456);
+assert.equal(report.inventory.scenarios, 132);
 assert.deepEqual(
   Object.fromEntries(
     Object.entries(report.datasets).map(([dataset, summary]) => [
@@ -38,27 +43,30 @@ assert.deepEqual(
   {
     calibration: [12, 12],
     "public-advisory-holdout": [12, 12],
+    "independent-development": [20, 20],
+    "independent-validation": [20, 20],
+    "independent-locked": [20, 20],
     "synthetic-development": [200, 20],
     "synthetic-locked": [100, 10],
     "cross-input": [72, 18],
   },
 );
-assert.equal(report.breakdowns.source.paste.cases, 342);
-assert.equal(report.breakdowns.source.screenshot.cases, 18);
-assert.equal(report.breakdowns.source.chrome.cases, 18);
-assert.equal(report.breakdowns.source.eml.cases, 18);
-assert.equal(report.breakdowns.language.en.cases, 199);
-assert.equal(report.breakdowns.language.nl.cases, 197);
+assert.equal(report.breakdowns.source.paste.cases, 356);
+assert.equal(report.breakdowns.source.screenshot.cases, 33);
+assert.equal(report.breakdowns.source.chrome.cases, 33);
+assert.equal(report.breakdowns.source.eml.cases, 34);
+assert.equal(report.breakdowns.language.en.cases, 229);
+assert.equal(report.breakdowns.language.nl.cases, 227);
 
 const observations = buildEvaluationObservations();
 assert.equal(observations.length, report.inventory.cases);
 assert.equal(
   observations.filter((item) => item.evidenceCompleteness === "incomplete").length,
-  20,
+  35,
 );
 assert.equal(
   observations.filter((item) => item.evidenceCompleteness === "complete").length,
-  376,
+  421,
 );
 for (const observation of observations) {
   assert.equal(
@@ -97,6 +105,9 @@ function assertScenarioMetadataCoverage() {
   const expectedIds = {
     calibration: emailEvaluationFixtures.map((item) => item.id),
     "public-advisory-holdout": PUBLIC_ADVISORY_HOLDOUT.map((item) => item.id),
+    "independent-development": INDEPENDENT_DEVELOPMENT.map((item) => item.id),
+    "independent-validation": INDEPENDENT_VALIDATION.map((item) => item.id),
+    "independent-locked": INDEPENDENT_HOLDOUT.map((item) => item.id),
     "cross-input": CROSS_INPUT_FIXTURES.map((item) => item.id),
   } as const;
 

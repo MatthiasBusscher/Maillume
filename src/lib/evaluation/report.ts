@@ -18,6 +18,7 @@ import {
 import {
   PUBLIC_ADVISORY_HOLDOUT,
 } from "./public-advisory-holdout";
+import { INDEPENDENT_CORPUS } from "./independent-corpus";
 import { getScenarioCategory } from "./scenario-metadata";
 import { syntheticCorpus } from "./synthetic-corpus";
 import {
@@ -109,6 +110,17 @@ export function buildEvaluationObservations(): EvaluationObservation[] {
         scenarioId: item.id,
         expected: item.expected,
         envelope: createAnalysisEnvelope(item.input, "paste"),
+      }),
+    ),
+    ...INDEPENDENT_CORPUS.map((item) =>
+      observation({
+        dataset: item.split === "locked"
+          ? "independent-locked"
+          : `independent-${item.split}`,
+        caseId: item.id,
+        scenarioId: item.id,
+        expected: item.classification,
+        envelope: createAnalysisEnvelope(item.input, item.source),
       }),
     ),
     ...syntheticCorpus.map((item) => {

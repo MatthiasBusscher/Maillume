@@ -1,6 +1,6 @@
 # Maillume Heuristic Scanner Improvement Plan
 
-_Created: 2026-07-27 · Status: proposed · Scope: heuristic accuracy, evaluation, and explainability_
+_Created: 2026-07-27 · Status: in progress (Phases 0–1 complete) · Scope: heuristic accuracy, evaluation, and explainability_
 
 ## 1. Goal
 
@@ -180,6 +180,10 @@ Exit criteria:
 
 **Objective:** cover realistic messages that were not written to match the rules.
 
+**Status:** Completed on 28 July 2026 without changing detection rules, weights,
+thresholds, or `analysis-v7`. The frozen baseline and failure inventory are in
+`docs/independent-corpus-review.md`.
+
 Add distinct cases for:
 
 - credential phishing without urgency;
@@ -218,9 +222,9 @@ Likely files:
 
 Exit criteria:
 
-- At least 60 distinct independent cases meet the balance requirements.
-- The baseline report includes category, language, source, and evidence-coverage breakdowns.
-- Failures are documented before scoring is changed.
+- [x] At least 60 distinct independent cases meet the balance requirements.
+- [x] The baseline report includes category, language, source, and evidence-coverage breakdowns.
+- [x] Failures are documented before scoring is changed.
 
 ### Phase 2 — Strengthen deterministic URL and domain analysis
 
@@ -480,8 +484,8 @@ act as a holdout.
 
 ## 8. Definition of done
 
-- [ ] Evaluation reporting distinguishes distinct scenarios from generated variants.
-- [ ] At least 60 independent cases satisfy the corpus requirements.
+- [x] Evaluation reporting distinguishes distinct scenarios from generated variants.
+- [x] At least 60 independent cases satisfy the corpus requirements.
 - [ ] Provisional release metrics are confirmed or replaced with justified thresholds.
 - [ ] URL and domain analysis covers the approved structural signals without network access.
 - [ ] Context handling covers the approved hard-negative categories.

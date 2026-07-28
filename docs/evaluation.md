@@ -49,6 +49,20 @@ The frozen advisory holdout currently contains 12 independently written phishing
 
 This is deliberately not a production database of known phishing emails. Maillume does not retain user scans or perform exact-message lookup. Campaign text and infrastructure change too quickly for signatures to be a sufficient detector; advisory-derived phishing fixtures must be paired with similar legitimate hard negatives so a new rule cannot improve recall by silently degrading precision.
 
+## Independent Development, Validation, and Holdout Corpus
+
+The heuristic improvement project adds 60 distinct, independently written
+scenarios: 24 phishing, 12 spam, and 24 legitimate hard negatives. Development,
+validation, and locked holdout cases live in separate modules and are counted
+once each; there are no generated reference-number or language variants in this
+set.
+
+The corpus covers English and Dutch, paste, Chrome, screenshot/OCR, and `.eml`
+sources, plus different levels of sender, link, authentication, attachment, and
+content completeness. Its first baseline was captured before detection tuning.
+See [the independent corpus review](independent-corpus-review.md) for the review
+checklist, frozen revision, and documented failures.
+
 ## Cross-Input Consistency
 
 Eighteen paired English and Dutch scenarios exercise paste, OCR-shaped screenshot text, Chrome capture payloads, and parsed `.eml` adapters after canonical normalization. The matrix includes credential, payment-change, delivery, MFA/OAuth, business-email-compromise, callback-fraud, malformed-MIME, promotion, and legitimate invoice cases. The adapters mirror the real evidence boundary: screenshots can recover explicitly labelled subject and sender fields from OCR and can decode an HTTP(S) destination embedded in a QR code, but cannot reveal ordinary button destinations; Chrome and `.eml` can preserve richer sender, subject, and destination evidence.

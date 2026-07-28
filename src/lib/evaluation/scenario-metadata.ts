@@ -2,6 +2,11 @@ import {
   type EvaluationDataset,
   type EvaluationScenarioCategory,
 } from "./types";
+import {
+  INDEPENDENT_DEVELOPMENT,
+  INDEPENDENT_HOLDOUT,
+  INDEPENDENT_VALIDATION,
+} from "./independent-corpus";
 
 type ScenarioMetadata = Record<string, EvaluationScenarioCategory>;
 
@@ -89,9 +94,24 @@ const CROSS_INPUT: ScenarioMetadata = {
   "nl-legitieme-factuur": "invoice-payment",
 };
 
+function metadataFromIndependentCases(
+  cases: typeof INDEPENDENT_DEVELOPMENT,
+): ScenarioMetadata {
+  return Object.fromEntries(
+    cases.map((item) => [item.id, item.scenarioCategory]),
+  );
+}
+
 const DATASET_METADATA: Record<EvaluationDataset, ScenarioMetadata> = {
   calibration: CALIBRATION,
   "public-advisory-holdout": PUBLIC_ADVISORY_HOLDOUT,
+  "independent-development": metadataFromIndependentCases(
+    INDEPENDENT_DEVELOPMENT,
+  ),
+  "independent-validation": metadataFromIndependentCases(
+    INDEPENDENT_VALIDATION,
+  ),
+  "independent-locked": metadataFromIndependentCases(INDEPENDENT_HOLDOUT),
   "synthetic-development": SYNTHETIC,
   "synthetic-locked": SYNTHETIC,
   "cross-input": CROSS_INPUT,
