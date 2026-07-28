@@ -231,6 +231,7 @@ npm run lint
 npm run test:analysis
 npm run eval:heuristic
 npm run bench:heuristic
+npm run report:feedback -- --days 30 --min-samples 10
 npm run test:security
 npm run test:integrations
 npm run test:extension
@@ -240,7 +241,7 @@ npm run build
 
 Reusable scoring fixtures must be synthetic or fully sanitized. The CI corpus contains 300 English/Dutch synthetic cases split by scenario into development and locked sets. It is a regression benchmark, not evidence of real-world accuracy. Never commit real private email content, inbox screenshots, raw `.eml` files, private headers, or credentials.
 
-Useful guides: [architecture](docs/architecture.md), [authentication](docs/authentication.md), [Google sign-in identity](docs/google-oauth-branding.md), [evaluation](docs/evaluation.md), [heuristic baseline](docs/heuristic-evaluation.md), [operations](docs/operations.md), [launch checklist](docs/launch-checklist.md), and [roadmap](docs/roadmap.md).
+Useful guides: [architecture](docs/architecture.md), [authentication](docs/authentication.md), [Google sign-in identity](docs/google-oauth-branding.md), [evaluation](docs/evaluation.md), [privacy-safe feedback](docs/feedback.md), [heuristic baseline](docs/heuristic-evaluation.md), [operations](docs/operations.md), [launch checklist](docs/launch-checklist.md), and [roadmap](docs/roadmap.md).
 
 ## Community and Security
 

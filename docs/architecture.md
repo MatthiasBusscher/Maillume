@@ -60,6 +60,7 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Ordinary scans never become training or evaluation data.
    - Optional feedback uses a separate strict schema containing labels and high-level categories only.
    - Production feedback storage uses a server-only Supabase service-role key, Row Level Security, and automatic expiry. The scanner remains available when feedback is disabled.
+   - Maintainer calibration uses a security-definer aggregate function that suppresses small cells, caps identical hourly signatures, filters test versions, and never returns raw feedback rows.
    - Optional accounts store identity, session, and authentication-factor metadata in Supabase Auth. Hashed integration-key metadata and aggregate quotas are implemented; future preferences, paid entitlements, and billing references may be added, but not scan history or assessment content.
 
 6. Deployment
@@ -152,6 +153,7 @@ docs/
 supabase/
   migrations/
     20260710150000_create_detection_feedback.sql
+    20260728110000_create_feedback_summary.sql
 ```
 
 The implementation includes the Maillume marketing and trust pages, `/app` scanner workspace, optional Supabase email/Google authentication with TOTP MFA and gated passkeys, scan form, risk meter, no-storage analysis route, English/Dutch UI foundation, screenshot OCR input, `.eml` parsing input, shared synthetic evaluation fixtures, and optional self-hosted AI provider calls behind server environment variables.

@@ -68,6 +68,21 @@ async function main() {
     }).ok,
     false,
   );
+  for (const analyzerVersion of [
+    "analysis-v0",
+    "analysis-v1000",
+    "analysis-test-v10",
+    "custom-version",
+  ]) {
+    assert.equal(
+      validateFeedbackSubmission({
+        ...validFeedback,
+        analyzerVersion,
+      }).ok,
+      false,
+      `${analyzerVersion} must not become an arbitrary feedback label`,
+    );
+  }
 
   assert.deepEqual(getFeedbackConfig({}), { mode: "disabled" });
   assert.deepEqual(getFeedbackConfig({ FEEDBACK_STORAGE: "memory", NODE_ENV: "test" }), {

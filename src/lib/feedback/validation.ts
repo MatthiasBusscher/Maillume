@@ -26,7 +26,7 @@ const SIGNAL_CATEGORIES = new Set<string>(feedbackSignalCategories);
 const LOCALES = new Set(["en", "nl"]);
 const SOURCES = new Set(["paste", "screenshot", "eml"]);
 const SCORE_BANDS = new Set(["low", "medium", "high"]);
-const ANALYZER_VERSION_PATTERN = /^[a-z0-9][a-z0-9._:-]{0,63}$/i;
+const ANALYZER_VERSION_PATTERN = /^analysis-v[1-9]\d{0,2}$/;
 
 type FeedbackValidationResult =
   | { ok: true; input: DetectionFeedbackSubmission }

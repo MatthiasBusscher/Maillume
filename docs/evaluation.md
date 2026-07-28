@@ -82,6 +82,8 @@ Feedback must not include message text, sender addresses, subjects, links, attac
 Accepting real or auto-redacted messages requires a separate approved research-data design and is not part of the current roadmap.
 
 See `docs/feedback.md` for the API allowlist, retention behavior, and synthetic-fixture workflow.
+Maintainers can use `npm run report:feedback` to retrieve only thresholded, content-free
+aggregate cells; the command cannot retrieve raw feedback rows.
 
 ## Running Checks
 

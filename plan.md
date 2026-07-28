@@ -1,6 +1,6 @@
 # Maillume Heuristic Scanner Improvement Plan
 
-_Created: 2026-07-27 · Status: in progress (Phases 0–5 complete) · Scope: heuristic accuracy, evaluation, and explainability_
+_Created: 2026-07-27 · Status: in progress (Phases 0–6 complete) · Scope: heuristic accuracy, evaluation, and explainability_
 
 ## 1. Goal
 
@@ -423,17 +423,21 @@ Exit criteria:
 
 **Objective:** let real users identify weak areas without collecting their email.
 
+**Status:** Completed on 28 July 2026 at the implementation level. The server-only
+thresholded report, abuse/duplicate boundaries, calibration workflow, and deliberately
+separate redacted-example design are documented in `docs/feedback.md`. The database
+migration is applied during the Phase 7 release workflow.
+
 Tasks:
 
-- Aggregate feedback by analysis version, source, locale, score band, expected classification,
+- [x] Aggregate feedback by analysis version, source, locale, score band, expected classification,
   feedback kind, and coarse signal category.
-- Add a maintainer-only, content-free evaluation query/report.
-- Define minimum sample sizes before treating feedback rates as meaningful.
-- Exclude obvious abuse, duplicates, tests, and unsupported conclusions.
-- Use recurring feedback patterns to choose new independently written fixtures.
-- Optionally add the existing feedback flow to the Chrome extension after a separate privacy
-  and abuse review.
-- Document a separate opt-in route for contributing a manually redacted example; do not add
+- [x] Add a maintainer-only, content-free evaluation query/report.
+- [x] Define minimum sample sizes before treating feedback rates as meaningful.
+- [x] Exclude obvious abuse, duplicates, tests, and unsupported conclusions.
+- [x] Use recurring feedback patterns to choose new independently written fixtures.
+- [x] Defer extension feedback until it receives a separate privacy and abuse review.
+- [x] Document a separate opt-in route for contributing a manually redacted example; do not add
   raw content fields to the existing feedback table.
 
 Rules:
@@ -452,9 +456,10 @@ Likely files:
 
 Exit criteria:
 
-- The maintainer can identify recurring false-positive/false-negative categories without
+- [x] The maintainer can identify recurring false-positive/false-negative categories without
   access to scanned content.
-- Feedback-derived changes still pass the independent locked holdout.
+- [x] Feedback-derived changes still pass the independent locked holdout. No feedback-derived
+  scoring change is made automatically; any future change must pass the existing locked gate.
 
 ### Phase 7 — Release, documentation, and monitoring
 
@@ -507,7 +512,7 @@ act as a holdout.
 - [x] Context handling covers the approved hard-negative categories.
 - [x] Every result clearly reports evidence coverage.
 - [x] New attack chains are independently justified and visibly explainable.
-- [ ] Privacy-safe feedback can guide fixture priorities without exposing scan content.
+- [x] Privacy-safe feedback can guide fixture priorities without exposing scan content.
 - [x] Runtime remains deterministic, bounded, and within the reviewed regression budget.
 - [x] English and Dutch behavior remains within the language-parity gate.
 - [x] Web, API, and extension contracts are compatible and tested.

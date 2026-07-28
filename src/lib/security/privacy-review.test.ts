@@ -67,6 +67,11 @@ function main() {
   const feedbackMigration = readProjectFile(
     "supabase/migrations/20260710150000_create_detection_feedback.sql",
   );
+  const feedbackSummaryMigration = readProjectFile(
+    "supabase/migrations/20260728110000_create_feedback_summary.sql",
+  );
+  const feedbackReportContent = readProjectFile("src/lib/feedback/report.ts");
+  const feedbackReportScript = readProjectFile("scripts/report-feedback.mjs");
   const licenseContent = readProjectFile("LICENSE");
   const packageMetadata = JSON.parse(readProjectFile("package.json")) as {
     license?: string;
@@ -141,6 +146,27 @@ function main() {
   );
   assert.match(feedbackMigration, /enable row level security/i);
   assert.match(feedbackMigration, /purge_expired_detection_feedback/);
+  assert.match(feedbackSummaryMigration, /security definer/i);
+  assert.match(feedbackSummaryMigration, /having sum\(dimensions\.bounded_count\) >= p_min_samples/i);
+  assert.match(feedbackSummaryMigration, /least\(count\(\*\), p_hourly_signature_cap::bigint\)/i);
+  assert.match(feedbackSummaryMigration, /analyzer_version !~\*/i);
+  assert.match(
+    feedbackSummaryMigration,
+    /revoke all on function public\.detection_feedback_summary[\s\S]*from public, anon, authenticated/i,
+  );
+  assert.match(
+    feedbackSummaryMigration,
+    /grant execute on function public\.detection_feedback_summary[\s\S]*to service_role/i,
+  );
+  assert.match(
+    feedbackReportContent,
+    /rest\/v1\/rpc\/detection_feedback_summary/,
+  );
+  assert.doesNotMatch(
+    feedbackReportContent,
+    /rest\/v1\/detection_feedback(?:\?|`)/,
+  );
+  assert.doesNotMatch(feedbackReportScript, /console\./);
   assert.match(authCallbackContent, /getSafeOAuthRedirectUrl/);
   assert.match(authRedirectContent, /decodeURIComponent\(candidate\)/);
   assert.match(authRedirectContent, /UNSAFE_REDIRECT_CHARACTERS/);
@@ -273,6 +299,11 @@ function main() {
       feedbackMigration,
       new RegExp(`^\\s*${forbiddenColumn}\\s+`, "im"),
       `feedback storage must not define ${forbiddenColumn}`,
+    );
+    assert.doesNotMatch(
+      feedbackSummaryMigration,
+      new RegExp(`^\\s*${forbiddenColumn}\\s+`, "im"),
+      `feedback summary output must not define ${forbiddenColumn}`,
     );
   }
   assert.match(nextConfigContent, /X-Content-Type-Options/);

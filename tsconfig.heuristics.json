@@ -75,6 +75,8 @@
     "src/lib/evaluation/scenario-metadata.ts",
     "src/lib/evaluation/types.ts",
     "src/lib/feedback/config.ts",
+    "src/lib/feedback/report.test.ts",
+    "src/lib/feedback/report.ts",
     "src/lib/feedback/feedback.test.ts",
     "src/lib/feedback/rate-limit.ts",
     "src/lib/feedback/storage.ts",
