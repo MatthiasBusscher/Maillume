@@ -53,6 +53,8 @@ jobs:
           ANALYSIS_MODE: heuristic
       - run: npm run test:smoke
       - run: npm run package:integrations
+        env:
+          BUILD_REVISION: ${{ github.sha }}
       - name: Stop local database
         if: always()
         run: supabase stop --no-backup

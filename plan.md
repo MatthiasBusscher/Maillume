@@ -467,16 +467,16 @@ Exit criteria:
 
 Tasks:
 
-- Produce a before/after evaluation report.
-- Review every score and classification threshold change.
-- Bump `ANALYSIS_PIPELINE_VERSION` when behavior changes.
-- Update English and Dutch result copy.
-- Update the OpenAPI contract and extension compatibility range.
-- Run typecheck, lint, analysis, security, integration, extension, build, and browser suites.
+- [x] Produce a before/after evaluation report.
+- [x] Review every score and classification threshold change.
+- [x] Bump `ANALYSIS_PIPELINE_VERSION` when behavior changes.
+- [x] Update English and Dutch result copy.
+- [x] Update the OpenAPI contract and extension compatibility range.
+- [x] Run typecheck, lint, analysis, security, integration, extension, build, and browser suites.
 - Build and scan the production container.
-- Test the web app and packaged extension against the same revision.
-- Add release notes explaining improved categories and known limitations.
-- Monitor only aggregate, content-free feedback and quota/availability counters.
+- [x] Test the web app and packaged extension against the same revision.
+- [x] Add release notes explaining improved categories and known limitations.
+- [x] Monitor only aggregate, content-free feedback and quota/availability counters.
 
 Exit criteria:
 
@@ -518,7 +518,7 @@ act as a holdout.
 - [x] Web, API, and extension contracts are compatible and tested.
 - [x] The analysis version is bumped and documented for behavioral changes.
 - [ ] All CI, security, browser, extension, and production-image checks pass.
-- [ ] No hosted AI, external lookup, mailbox access, or scan-history dependency is introduced.
+- [x] No hosted AI, external lookup, mailbox access, or scan-history dependency is introduced.
 
 ## 9. First implementation task
 
