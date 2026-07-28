@@ -8,6 +8,7 @@ import type {
   EvidenceFamily,
   RiskLevel,
 } from "../types";
+import { hasDecisiveAttackChain } from "./attack-chains";
 import { hasMaterialEvidenceCoverage } from "./evidence-coverage";
 
 export const EVIDENCE_IDS = [
@@ -59,6 +60,9 @@ export const EVIDENCE_IDS = [
   "qr_lure",
   "callback_lure",
   "delivery_lure",
+  "secrecy_pressure",
+  "shared_document_lure",
+  "repeated_approval_pressure",
 ] as const;
 
 export type EvidenceId = (typeof EVIDENCE_IDS)[number];
@@ -109,7 +113,7 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   brand_mention: evidence("identity", 4, "References a familiar brand or authority.", "Verwijst naar een bekend merk of een bekende instantie."),
   prize_promotion: spamEvidence("intent", 30, "Uses prize, giveaway, or promotional language.", "Gebruikt taal over prijzen, winacties of aanbiedingen."),
   account_threat: evidence("intent", 20, "Threatens account blocking or subscription expiry.", "Dreigt met accountblokkering of het verlopen van een abonnement.", true),
-  fake_security: evidence("identity", 20, "Uses suspicious security or antivirus subscription claims.", "Gebruikt verdachte claims over beveiliging of antivirusabonnementen.", true),
+  fake_security: evidence("identity", 20, "Uses suspicious security, fraud-alert, backup, or software-subscription claims.", "Gebruikt verdachte claims over beveiliging, fraudemeldingen, back-ups of softwareabonnementen.", true),
   link_call_to_action: evidence("destination", 10, "Pushes the recipient toward a link or button.", "Stuurt de ontvanger naar een link of knop.", true),
   unsolicited_sales: spamEvidence("intent", 30, "Looks like unsolicited sales or lead-generation outreach.", "Lijkt op ongevraagde verkoop- of acquisitiemail."),
   investment_pitch: spamEvidence("intent", 30, "Contains a high-return investment or loan pitch.", "Bevat een aanbod voor hoge beleggingsopbrengsten of een lening."),
@@ -146,6 +150,9 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   qr_lure: evidence("delivery", 10, "Directs the recipient to scan a QR code.", "Stuurt de ontvanger naar een QR-code.", true),
   callback_lure: evidence("delivery", 20, "Pushes the recipient to call an unverified number.", "Stuurt de ontvanger naar een onbevestigd telefoonnummer.", true),
   delivery_lure: evidence("delivery", 20, "Combines a delivery problem with a fee and return pressure.", "Combineert een bezorgprobleem met kosten en druk rond terugzending.", true),
+  secrecy_pressure: evidence("style", 10, "Pressures the recipient to keep the request secret.", "Zet de ontvanger onder druk om het verzoek geheim te houden.", true),
+  shared_document_lure: evidence("delivery", 10, "Uses shared content as a reason to grant access or sign in.", "Gebruikt gedeelde inhoud als reden om toegang te geven of in te loggen.", true),
+  repeated_approval_pressure: evidence("style", 10, "Pushes the recipient to approve repeated sign-in prompts.", "Zet de ontvanger aan om herhaalde inlogmeldingen goed te keuren.", true),
 };
 
 const FAMILY_CAPS: Record<EvidenceFamily, number> = {
@@ -268,24 +275,12 @@ function getRiskLevel(
   const strongFamilies = Object.values(familyScores).filter((value) => value >= 15).length;
   const hasStrongEvidence = ids.some((id) => EVIDENCE[id].contribution >= 20);
 
-  if (score >= 50 && hasDecisiveEvidenceChain(ids)) return "high";
+  if (hasDecisiveAttackChain(ids, score)) return "high";
   if (score >= 70 && strongFamilies >= 2) return "high";
   if (hasStrongEvidence && score >= 30) return "medium";
   if (hasStrongEvidence && representedFamilies >= 2 && score >= 25) return "medium";
   if (score >= 35) return "medium";
   return "low";
-}
-
-function hasDecisiveEvidenceChain(ids: EvidenceId[]): boolean {
-  const found = new Set(ids);
-  const has = (...required: EvidenceId[]) => required.every((id) => found.has(id));
-
-  return has("account_threat", "credential_request", "urgency_pressure")
-    || has("changed_payment_details", "payment_request")
-    || has("mfa_or_oauth_request", "urgency_pressure")
-    || has("executive_impersonation", "payment_request")
-    || has("fake_security", "account_threat", "payment_request")
-    || has("prize_promotion", "payment_request", "urgency_pressure");
 }
 
 function getClassification(
@@ -327,6 +322,7 @@ const PHISHING_SPECIFIC_EVIDENCE = new Set<EvidenceId>([
   "qr_lure",
   "callback_lure",
   "delivery_lure",
+  "shared_document_lure",
 ]);
 
 function getRecommendedAction(

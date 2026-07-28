@@ -65,7 +65,23 @@ const MFA_REQUEST_PATTERNS = [
   /(?:kies|selecteer|tik).{0,16}(?:goedkeuren|toestaan).{0,32}(?:verzoek|melding|aanmelding)/i,
   /(?:kies|selecteer|tik).{0,24}(?:goedkeuren|toestaan)\b/i,
 ];
-const MFA_NEGATION_PATTERN = /(?:never|do not|nooit|niet).{0,24}(?:approve|goedkeur|keur).{0,18}(?:mfa|login|inlog)/i;
+const MFA_NEGATION_PATTERNS = [
+  /(?:never|do not|don't|nooit|niet).{0,24}(?:approve|goedkeur|keur).{0,18}(?:mfa|login|inlog)/i,
+  /(?:never|do not|don't).{0,32}(?:grant|allow|authorize|approve).{0,36}(?:app|application|oauth|permission)/i,
+  /(?:nooit|niet).{0,32}(?:geef|verleen|sta toe|machtig|keur goed).{0,36}(?:app|applicatie|oauth|toegang|rechten)/i,
+];
+const REPEATED_APPROVAL_PATTERNS = [
+  /\b(?:several|multiple|repeated).{0,48}(?:verification|mfa|sign-in|login) (?:prompts?|requests?|notifications?).{0,48}(?:approve|allow) (?:each|every|all)\b/i,
+  /\b(?:approve|allow) (?:each|every|all).{0,48}(?:verification|mfa|sign-in|login) (?:prompts?|requests?|notifications?)\b/i,
+  /\b(?:enkele|meerdere|herhaalde).{0,48}(?:verificatie|mfa|inlog|aanmeld)(?:meldingen|verzoeken|prompts?).{0,48}(?:kies|keur).{0,16}(?:telkens|alle|iedere).{0,16}(?:goedkeuren|goed)\b/i,
+  /\b(?:kies|keur).{0,16}(?:telkens|alle|iedere).{0,16}(?:goedkeuren|goed).{0,48}(?:verificatie|mfa|inlog|aanmeld)(?:meldingen|verzoeken|prompts?)\b/i,
+];
+const REPEATED_APPROVAL_SUPPRESSIONS = [
+  /\b(?:never|do not|don't).{0,48}(?:approve|allow).{0,48}(?:repeated|multiple|unexpected)\b/i,
+  /\b(?:repeated|multiple|unexpected).{0,48}(?:do not|don't|never).{0,32}(?:approve|allow)\b/i,
+  /\b(?:nooit|niet).{0,48}(?:goedkeur|toestaan).{0,48}(?:herhaalde|meerdere|onverwachte)\b/i,
+  /\b(?:herhaalde|meerdere|onverwachte).{0,48}(?:niet|nooit).{0,32}(?:goedkeur|toestaan)\b/i,
+];
 const IDENTITY_REQUEST_PATTERNS = [
   /\b(?:re-?identify|re-?identification|re-?verify|re-?verification)\b.{0,32}\b(?:your )?(?:account|identity|personal (?:details|information))\b/i,
   /\b(?:account|identity|personal (?:details|information))\b.{0,32}\b(?:re-?identify|re-?identification|re-?verify|re-?verification)\b/i,
@@ -92,6 +108,8 @@ const PAYMENT_REQUEST_PATTERNS = [
   /betaal.{0,40}(?:kosten|toeslag).{0,24}(?:bezorg|lever)/i,
   /betaal.{0,40}(?:bezorg|lever|herbezorg).{0,20}(?:kosten|toeslag|tarief)/i,
   /\b(?:betaal|voldoe|maak over|stuur).{0,36}(?:factuur|kosten|bedrag|€|rekening)\b/i,
+  /\b(?:betaal|voldoe|maak over|stuur).{0,36}(?:€|\$)/i,
+  /\b(?:gebruik|verwerk).{0,48}(?:kosten|factuur|betaling|overschrijving).{0,48}(?:rekening|rekeningnummer)\b/i,
   /niet betaald/i,
   /achterstallige factuur/i,
   /terugbetaling/i,
@@ -104,6 +122,8 @@ const PAYMENT_REQUEST_SUPPRESSIONS = [
   /\bno (?:payment|fee|further action) is required\b/i,
   /\b(?:betaling|overschrijving).{0,32}(?:ontvangen|afgerond|voltooid|bewijs)\b/i,
   /\b(?:geen betaling|geen extra kosten|u hoeft niets meer te doen)\b/i,
+  /\b(?:never|do not|don't).{0,32}(?:buy|pay|settle|transfer|send).{0,32}(?:gift cards?|invoice|fee|funds?|money)\b/i,
+  /\b(?:nooit|niet).{0,32}(?:koop|betaal|voldoe|maak over|stuur).{0,32}(?:cadeaukaarten?|factuur|kosten|geld|bedrag)\b/i,
 ];
 const CHANGED_PAYMENT_PATTERNS = [
   /new (?:bank|payment|remittance) (?:account|details)/i,
@@ -140,6 +160,19 @@ const ATTACHMENT_LURE_SUPPRESSIONS = [
   /\b(?:besproken|goedgekeurd|aangevraagd|afgesproken).{0,48}(?:rapport|bijlage|document|factuur)\b/i,
   /\b(?:rapport|bijlage|document|factuur).{0,48}(?:besproken|goedgekeurd|aangevraagd|afgesproken)\b/i,
 ];
+const SHARED_DOCUMENT_LURE_PATTERNS = [
+  /\b(?:a |the )?(?:document|file|folder|photo album|album) (?:was |has been )?shared with you\b/i,
+  /\bshared (?:a |the )?(?:document|file|folder|photo album|album)\b/i,
+  /\b(?:open|view|review).{0,36}\bshared (?:document|file|folder|album)\b/i,
+  /\b(?:een |het )?(?:document|bestand|map|fotoalbum|album) (?:is |werd )?met (?:u|je) gedeeld\b/i,
+  /\bgedeeld(?:e)? (?:document|bestand|map|fotoalbum|album)\b/i,
+];
+const SHARED_DOCUMENT_LURE_SUPPRESSIONS = [
+  /\b(?:requested|expected|discussed|approved).{0,48}(?:shared )?(?:document|file|folder|album)\b/i,
+  /\b(?:shared )?(?:document|file|folder|album).{0,48}(?:requested|expected|discussed|approved)\b/i,
+  /\b(?:aangevraagd|verwacht|besproken|goedgekeurd).{0,48}(?:gedeeld )?(?:document|bestand|map|album)\b/i,
+  /\b(?:gedeeld )?(?:document|bestand|map|album).{0,48}(?:aangevraagd|verwacht|besproken|goedgekeurd)\b/i,
+];
 const ACCOUNT_THREAT_SUPPRESSIONS = [
   /\b(?:renews?|renewal).{0,64}(?:current agreement|no action|next month|unchanged)\b/i,
   /\b(?:current agreement|no action|unchanged).{0,64}(?:renews?|renewal)\b/i,
@@ -156,6 +189,25 @@ const CALLBACK_LURE_SUPPRESSIONS = [
   /\b(?:company directory|signed-in account|official website)\b/i,
   /\b(?:officieel|gepubliceerd|bekend).{0,32}(?:nummer|bedrijfsgids|contactkanaal)\b/i,
   /\b(?:ingelogde account|officiële website|bedrijfsgids)\b/i,
+];
+const SECRECY_PRESSURE_PATTERNS = [
+  /\b(?:keep|treat) (?:this|the request|it) (?:strictly )?(?:private|secret|confidential)\b/i,
+  /\b(?:do not|don't).{0,32}(?:tell|discuss|share|copy|mention).{0,32}(?:anyone|the team|colleagues?)\b/i,
+  /\b(?:privately|confidentially).{0,32}(?:before|without).{0,32}(?:anyone|others?|the team)\b/i,
+  /\b(?:houd|behandel) (?:dit|het verzoek) (?:strikt )?(?:privé|geheim|vertrouwelijk)\b/i,
+  /\b(?:bespreek|deel|meld|vertel).{0,24}(?:dit|de wijziging|het verzoek).{0,16}(?:niet|met niemand)\b/i,
+];
+const SECRECY_PRESSURE_SUPPRESSIONS = [
+  /\b(?:not confidential|may be shared|can be shared)\b/i,
+  /\b(?:do not|don't|never).{0,24}\bkeep.{0,24}(?:private|secret|confidential)\b/i,
+  /\b(?:niet vertrouwelijk|mag worden gedeeld|kan worden gedeeld)\b/i,
+  /\b(?:niet|nooit).{0,24}\b(?:houd|behandel).{0,24}(?:privé|geheim|vertrouwelijk)\b/i,
+];
+const QR_LURE_SUPPRESSIONS = [
+  /\b(?:do not|don't|never).{0,24}\bscan (?:the )?qr\b/i,
+  /\bscan (?:the )?qr.{0,24}\b(?:not required|optional)\b/i,
+  /\b(?:scan|lees).{0,24}\bqr.{0,24}\b(?:niet|nooit)\b/i,
+  /\bqr-code.{0,24}\b(?:niet scannen|optioneel)\b/i,
 ];
 const SUBSCRIBED_PROMOTION_PATTERNS = [
   /\b(?:you subscribed|thanks for subscribing|opted in|existing subscribers?|manage (?:subscription )?preferences|unsubscribe)\b/i,
@@ -259,8 +311,15 @@ const PATTERN_GROUPS: PatternGroup[] = [
     patterns: [
       /antivirus subscription/i, /security (?:plan|subscription|protection).*(?:expired|renew|payment)/i,
       /internet security.*(expired|renew)/i, /virus protection.*expired/i,
+      /(?:cloud )?backup renewal.{0,48}(?:processed|payment|charge|\$|€)/i,
+      /(?:backup|software) subscription.{0,48}(?:renewal|payment|charge|\$|€)/i,
+      /(?:unknown|unrecognized|suspicious).{0,32}(?:payment|transaction).{0,32}(?:blocked|detected)/i,
       /antivirusabonnement/i, /beveiligingsabonnement/i, /voortdurende beveiliging/i,
       /virusbescherming.*verlopen/i, /beveiligingssoftware.*verleng/i,
+      /beveiligingspakket.{0,48}(?:jaarbetaling|betaling|afgeschreven|verleng|€)/i,
+      /(?:jaarbetaling|betaling|afschrijving|€).{0,48}beveiligingspakket/i,
+      /(?:back-up|software)abonnement.{0,48}(?:verlenging|betaling|afschrijving|€)/i,
+      /(?:onbekende|niet-herkende|verdachte).{0,32}(?:betaling|transactie).{0,32}(?:geblokkeerd|gedetecteerd)/i,
     ],
   },
   {
@@ -285,7 +344,7 @@ const PATTERN_GROUPS: PatternGroup[] = [
   },
   {
     id: "executive_impersonation",
-    patterns: [/(i am|this is) (the )?(ceo|cfo|director|owner)/i, /on behalf of (the )?(ceo|cfo|director)/i, /ik ben (de )?(directeur|eigenaar)/i, /namens (de )?(directeur|eigenaar)/i],
+    patterns: [/(i am|this is) (the )?(ceo|cfo|director|owner)/i, /on behalf of (the )?(ceo|cfo|director)/i, /\b(?:i am|i'm).{0,24}(?:board|leadership|executive) meeting\b/i, /ik ben (de )?(directeur|eigenaar)/i, /namens (de )?(directeur|eigenaar)/i, /\bik (?:zit|ben).{0,24}(?:bestuurs|directie)vergadering\b/i],
   },
   {
     id: "payroll_or_tax_request",
@@ -296,12 +355,24 @@ const PATTERN_GROUPS: PatternGroup[] = [
     patterns: MFA_REQUEST_PATTERNS,
   },
   {
+    id: "repeated_approval_pressure",
+    patterns: REPEATED_APPROVAL_PATTERNS,
+  },
+  {
     id: "qr_lure",
     patterns: [/scan (the )?qr( code)?/i, /qr-code scannen/i, /scan de qr/i],
   },
   {
     id: "callback_lure",
     patterns: CALLBACK_LURE_PATTERNS,
+  },
+  {
+    id: "secrecy_pressure",
+    patterns: SECRECY_PRESSURE_PATTERNS,
+  },
+  {
+    id: "shared_document_lure",
+    patterns: SHARED_DOCUMENT_LURE_PATTERNS,
   },
   {
     id: "unexpected_conversation",
@@ -328,6 +399,10 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput | AnalysisEnv
   }
   if (evidence.has("identity_reverification")) evidence.delete("credential_request");
   if (hasDeliveryFeeLure(messageContent)) evidence.add("delivery_lure");
+  if (hasQrIdentityThreatLure(messageContent, evidence)) {
+    evidence.add("identity_reverification");
+    evidence.add("account_threat");
+  }
   if (
     evidence.has("prize_promotion")
     && hasCooccurringContext(
@@ -409,7 +484,36 @@ function hasActionableCredentialRequest(content: string): boolean {
 }
 
 function hasActionableMfaRequest(content: string): boolean {
-  return hasActionableMatch(content, MFA_REQUEST_PATTERNS, [MFA_NEGATION_PATTERN]);
+  return hasActionableMatch(content, MFA_REQUEST_PATTERNS, MFA_NEGATION_PATTERNS);
+}
+
+function hasQrIdentityThreatLure(
+  content: string,
+  evidence: Set<EvidenceId>,
+): boolean {
+  if (!evidence.has("qr_lure")) return false;
+  return hasCooccurringContext(
+    content,
+    [
+      [
+        /(?:connect|confirm|verify|enrol|link).{0,32}(?:identity|payroll|benefits?|account|profile)/i,
+        /(?:koppel|bevestig|verifieer|meld aan).{0,32}(?:identiteit|salaris|personeel|account|profiel)/i,
+      ],
+      [
+        /(?:keep|remain).{0,32}(?:benefits?|account|access).{0,16}active/i,
+        /(?:avoid|prevent).{0,32}(?:losing|expiry|deactivation)/i,
+        /(?:behoud|houd).{0,32}(?:voordelen|account|toegang).{0,16}actief/i,
+        /(?:voorkom|vermijd).{0,32}(?:verlies|verval|deactivatie)/i,
+      ],
+    ],
+    {
+      suppressions: [
+        /\b(?:no identity verification|no action is required|benefits remain active)\b/i,
+        /\b(?:geen identiteitscontrole|geen actie nodig|voordelen blijven actief)\b/i,
+      ],
+      windowSize: 2,
+    },
+  );
 }
 
 function hasDeliveryFeeLure(content: string): boolean {
@@ -441,6 +545,19 @@ function matchesPatternGroup(group: PatternGroup, content: string): boolean {
   if (group.id === "mfa_or_oauth_request") {
     return hasActionableMfaRequest(content);
   }
+  if (group.id === "repeated_approval_pressure") {
+    return hasCooccurringContext(
+      content,
+      [group.patterns],
+      {
+        suppressions: REPEATED_APPROVAL_SUPPRESSIONS,
+        windowSize: 2,
+      },
+    );
+  }
+  if (group.id === "qr_lure") {
+    return hasActionableMatch(content, group.patterns, QR_LURE_SUPPRESSIONS);
+  }
   if (group.id === "identity_reverification") {
     return hasActionableMatch(
       content,
@@ -469,6 +586,13 @@ function matchesPatternGroup(group: PatternGroup, content: string): boolean {
       ATTACHMENT_LURE_SUPPRESSIONS,
     );
   }
+  if (group.id === "shared_document_lure") {
+    return hasActionableMatch(
+      content,
+      group.patterns,
+      SHARED_DOCUMENT_LURE_SUPPRESSIONS,
+    );
+  }
   if (group.id === "account_threat") {
     return hasActionableMatch(
       content,
@@ -481,6 +605,13 @@ function matchesPatternGroup(group: PatternGroup, content: string): boolean {
       content,
       group.patterns,
       CALLBACK_LURE_SUPPRESSIONS,
+    );
+  }
+  if (group.id === "secrecy_pressure") {
+    return hasActionableMatch(
+      content,
+      group.patterns,
+      SECRECY_PRESSURE_SUPPRESSIONS,
     );
   }
   return group.patterns.some((pattern) => pattern.test(content));

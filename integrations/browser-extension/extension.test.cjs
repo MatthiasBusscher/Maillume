@@ -461,7 +461,7 @@ async function testPanelSendsCapturedLinkMetadata() {
     },
     analysis_mode: "heuristic",
     analysis_provider: "heuristic",
-    analysis_version: "analysis-v9",
+    analysis_version: "analysis-v10",
     disclaimer: "This is an automated risk assessment.",
     privacy: {
       stored: false,
@@ -560,6 +560,14 @@ async function testPanelSendsCapturedLinkMetadata() {
       evidence_coverage: undefined,
     },
   }), true, "the new panel must remain compatible with a pre-coverage analysis-v8 deployment");
+  assert.equal(context.isAnalysisResponse({
+    ...validResponse,
+    analysis_version: "analysis-v9",
+    result: {
+      ...validResponse.result,
+      evidence_coverage: undefined,
+    },
+  }), false, "coverage must remain required for analysis-v9");
   for (const invalidResponse of [
     { ...validResponse, analysis_version: "analysis-v2.0" },
     { ...validResponse, privacy: { ...validResponse.privacy, stored: true } },

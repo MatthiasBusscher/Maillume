@@ -1,6 +1,6 @@
 # Maillume Heuristic Scanner Improvement Plan
 
-_Created: 2026-07-27 · Status: in progress (Phases 0–4 complete) · Scope: heuristic accuracy, evaluation, and explainability_
+_Created: 2026-07-27 · Status: in progress (Phases 0–5 complete) · Scope: heuristic accuracy, evaluation, and explainability_
 
 ## 1. Goal
 
@@ -385,6 +385,10 @@ Exit criteria:
 
 **Objective:** recognize combinations that are more meaningful together than separately.
 
+**Status:** Completed on 28 July 2026 as `analysis-v10`. Supported and deferred
+combinations, context boundaries, before/after metrics, locked-holdout limitations, and
+runtime results are recorded in `docs/attack-chain-evidence.md`.
+
 Evaluate explicit chains such as:
 
 - brand lookalike + credential request + destination mismatch;
@@ -412,8 +416,8 @@ Likely files:
 
 Exit criteria:
 
-- Each new chain has positive, incomplete, negated, and legitimate regression cases.
-- Weight and threshold changes include before/after metrics.
+- [x] Each new chain has positive, incomplete, negated, and legitimate regression cases.
+- [x] Weight and threshold changes include before/after metrics.
 
 ### Phase 6 — Use privacy-safe feedback for calibration
 
@@ -502,7 +506,7 @@ act as a holdout.
 - [x] URL and domain analysis covers the approved structural signals without network access.
 - [x] Context handling covers the approved hard-negative categories.
 - [x] Every result clearly reports evidence coverage.
-- [ ] New attack chains are independently justified and visibly explainable.
+- [x] New attack chains are independently justified and visibly explainable.
 - [ ] Privacy-safe feedback can guide fixture priorities without exposing scan content.
 - [x] Runtime remains deterministic, bounded, and within the reviewed regression budget.
 - [x] English and Dutch behavior remains within the language-parity gate.

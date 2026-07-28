@@ -295,7 +295,7 @@ type AnalyzeResponse = {
   result: EmailAnalysisResult;
   analysis_mode: "heuristic" | "ai";
   analysis_provider: "heuristic" | "openai" | "anthropic" | "openai-compatible";
-  analysis_version: "analysis-v9";
+  analysis_version: "analysis-v10";
   disclaimer: string;
   privacy: {
     stored: false;

@@ -59,16 +59,17 @@ The web client, extension, OpenAPI contract, and public-deployment verifier vali
 coverage shape. Missing fields, non-boolean availability values, or an unknown extraction
 type are rejected instead of being rendered as a partial result.
 
-The Chrome extension rollout is staged:
+The extension first introduced coverage support in version `0.3.7`. The current staged
+rollout is:
 
-1. Publish extension `0.3.7`. It accepts existing `analysis-v6` through `analysis-v8`
-   responses and accepts `analysis-v9` only when valid evidence coverage is present.
-2. Deploy the `analysis-v9` server after the compatible extension is available.
-3. Older extensions reject the unknown `analysis-v9` version safely and ask the user to
-   update. They do not silently render an incompatible result.
+1. Publish extension `0.3.8`. It accepts `analysis-v6` through `analysis-v10`, with
+   coverage required for v9 and v10.
+2. Deploy the `analysis-v10` server after the compatible extension is available.
+3. Extension `0.3.7` rejects the unknown v10 version safely and asks the user to update.
+   It does not silently render an incompatible result.
 
 This compatibility rule is intentionally version-specific. Coverage is optional only for
-the older v6–v8 contracts and required for v9.
+the older v6–v8 contracts and required from v9 onward.
 
 ## Privacy
 

@@ -65,7 +65,7 @@ assert.equal(isAnalyzeResponse({
 }), false);
 assert.equal(isAnalyzeResponse({
   ...response,
-  analysis_version: "analysis-v8",
+  analysis_version: "analysis-v9",
 }), false);
 assert.equal(isAnalyzeErrorResponse({
   error: "Invalid request.",

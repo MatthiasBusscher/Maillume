@@ -18,7 +18,7 @@ let capturedContentComplete = false;
 // The result contract is additive: newer pipelines add evidence IDs inside the same
 // score_factors shape. Accepting a range keeps installed panels working while a server
 // deploy and a Chrome Web Store review land at different times.
-const SUPPORTED_ANALYSIS_VERSIONS = ["analysis-v6", "analysis-v7", "analysis-v8", "analysis-v9"];
+const SUPPORTED_ANALYSIS_VERSIONS = ["analysis-v6", "analysis-v7", "analysis-v8", "analysis-v9", "analysis-v10"];
 
 const dynamicCopy = {
   en: {
@@ -603,7 +603,8 @@ function isAnalysisResult(result, analysisVersion) {
   const classifications = ["likely_phishing", "likely_spam", "likely_legitimate", "uncertain"];
   const families = ["identity", "destination", "intent", "delivery", "style"];
   const coverageIsPresent = result?.evidence_coverage !== undefined;
-  const coverageIsRequired = analysisVersion === "analysis-v9";
+  const coverageIsRequired = analysisVersion === "analysis-v9"
+    || analysisVersion === "analysis-v10";
   const factorsAreValid = Array.isArray(result?.score_factors)
     && result.score_factors.every((factor) => factor
       && typeof factor.id === "string"

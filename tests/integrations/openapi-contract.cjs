@@ -41,7 +41,7 @@ assert.deepEqual(coverage.required, [
 ]);
 assert.equal(coverage.additionalProperties, false);
 assert.deepEqual(coverage.properties.extraction_type.enum, ["direct", "ocr", "parsed"]);
-assert.equal(response.properties.analysis_version.const, "analysis-v9");
+assert.equal(response.properties.analysis_version.const, "analysis-v10");
 assert.equal(response.properties.privacy.properties.stored.const, false);
 
 console.log("OpenAPI integration request limits and analysis privacy envelope passed.");
