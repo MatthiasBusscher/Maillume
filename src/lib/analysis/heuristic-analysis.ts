@@ -10,6 +10,11 @@ import {
   getRegistrableDomain,
   type EvidenceId,
 } from "./evidence";
+import {
+  collectUrlEvidence,
+  getClaimedBrands,
+  looksLikeBrandDomainImpersonation,
+} from "./url-evidence";
 
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 const HTML_LINK_PATTERN = /<a\b[^>]*\bhref\s*=\s*(?:"(https?:\/\/[^"\s>]+)"|'(https?:\/\/[^'\s>]+)'|(https?:\/\/[^\s"'=<>`]+))[^>]*>([\s\S]*?)<\/a>/gi;
@@ -46,30 +51,22 @@ const MFA_REQUEST_PATTERNS = [
   /(?:app|applicatie|oauth).{0,24}(?:toegang|machtiging|rechten).{0,24}(?:geven|verlenen|toestaan|machtigen|goedkeuren)/i,
 ];
 const MFA_NEGATION_PATTERN = /(?:never|do not|nooit|niet).{0,24}(?:approve|goedkeur|keur).{0,18}(?:mfa|login|inlog)/i;
-const SHORT_LINK_DOMAINS = new Set(["bit.ly", "tinyurl.com", "t.co", "rebrand.ly", "is.gd", "ow.ly"]);
 const RISKY_TLDS = new Set(["zip", "mov", "click", "top", "xyz", "ru"]);
 const HOSTED_SENDER_DOMAINS = new Set(["firebaseapp.com", "web.app", "pages.dev", "netlify.app", "vercel.app"]);
-const BRAND_DOMAINS: Record<string, string[]> = {
-  amazon: ["amazon.com"],
-  apple: ["apple.com"],
-  belastingdienst: ["belastingdienst.nl"],
-  dhl: ["dhl.com"],
-  facebook: ["facebook.com", "meta.com"],
-  fedex: ["fedex.com"],
-  google: ["google.com"],
-  ing: ["ing.nl"],
-  ics: ["icsbusiness.nl", "icscards.nl"],
-  instagram: ["instagram.com", "meta.com"],
-  mcafee: ["mcafee.com"],
-  microsoft: ["microsoft.com", "office.com", "outlook.com"],
-  netflix: ["netflix.com"],
-  norton: ["norton.com"],
-  paypal: ["paypal.com"],
-  postnl: ["postnl.nl"],
-  rabobank: ["rabobank.nl"],
-  ups: ["ups.com"],
-  uwv: ["uwv.nl"],
-};
+const SENSITIVE_URL_CONTEXT_EVIDENCE = new Set<EvidenceId>([
+  "credential_request",
+  "identity_reverification",
+  "payment_request",
+  "changed_payment_details",
+  "account_threat",
+  "fake_security",
+  "executive_impersonation",
+  "payroll_or_tax_request",
+  "mfa_or_oauth_request",
+  "qr_lure",
+  "callback_lure",
+  "delivery_lure",
+]);
 
 const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   {
@@ -237,11 +234,19 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput | AnalysisEnv
   }
 
   const links = mergeHttpLinks(envelope.links, extractHttpLinks(messageContent));
-  if (links.some(isShortUrl)) evidence.add("short_url");
-  if (links.some(hasRiskyTld)) evidence.add("risky_link_domain");
-
   const linkPairs = [...extractHtmlLinkPairs(envelope.body), ...envelope.linkPairs];
-  if (linkPairs.some(hasMismatchedLinkPair)) evidence.add("link_mismatch");
+  const sensitiveRequest = Array.from(evidence).some((id) =>
+    SENSITIVE_URL_CONTEXT_EVIDENCE.has(id)
+  );
+  for (const id of collectUrlEvidence({
+    links,
+    linkPairs,
+    messageContent,
+    senderEmail: envelope.senderEmail,
+    sensitiveRequest,
+  })) {
+    evidence.add(id);
+  }
 
   if (envelope.senderEmail) addSenderEvidence(envelope.senderEmail, links, evidence);
   if (envelope.emailAuthentication) {
@@ -355,32 +360,6 @@ function addAuthenticationEvidence(
   if (returnPathMismatch && !alignedByDmarc) evidence.add("return_path_mismatch");
 }
 
-function hasMismatchedLinkPair(pair: EmailLinkPair): boolean {
-  const displayed = getRegistrableDomain(pair.displayedUrl);
-  const destination = getRegistrableDomain(pair.destinationUrl);
-  return Boolean(displayed && destination && displayed !== destination);
-}
-
-function isShortUrl(link: string): boolean {
-  try {
-    const hostname = new URL(link).hostname.toLowerCase();
-    return Array.from(SHORT_LINK_DOMAINS).some(
-      (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
-    );
-  } catch {
-    return false;
-  }
-}
-
-function hasRiskyTld(link: string): boolean {
-  try {
-    const tld = new URL(link).hostname.split(".").at(-1)?.toLowerCase();
-    return Boolean(tld && RISKY_TLDS.has(tld));
-  } catch {
-    return false;
-  }
-}
-
 function getSenderDomain(sender: string): string | null {
   const angleAddress = sender.match(/<([^>]+)>/)?.[1] ?? sender;
   const match = angleAddress.trim().toLowerCase().match(/^[^\s@]+@([^\s@]+)$/);
@@ -396,31 +375,11 @@ function hasSuspiciousDomainShape(domain: string): boolean {
 }
 
 function looksLikeBrandImpersonation(senderDomain: string): boolean {
-  const registrable = getRegistrableDomain(senderDomain);
-  if (!registrable) return false;
-  const tokens = registrable.split(/[^a-z0-9]+/i);
-
-  return Object.entries(BRAND_DOMAINS).some(([brand, officialDomains]) =>
-    tokens.some((token) => isBrandTokenLookalike(token, brand))
-    && !officialDomains.includes(registrable),
-  );
-}
-
-function isBrandTokenLookalike(token: string, brand: string): boolean {
-  if (token === brand) return true;
-  if (brand.length < 5) return false;
-
-  return token
-    .replace(/0/g, "o")
-    .replace(/1/g, "l")
-    .replace(/3/g, "e")
-    .replace(/4/g, "a")
-    .replace(/5/g, "s")
-    .replace(/7/g, "t") === brand;
+  return looksLikeBrandDomainImpersonation(senderDomain);
 }
 
 function mentionsKnownBrand(content: string): boolean {
-  return Object.keys(BRAND_DOMAINS).some((brand) => new RegExp(`\\b${brand}\\b`, "i").test(content));
+  return getClaimedBrands(content).length > 0;
 }
 
 function hasExcessiveFormattingPressure(content: string): boolean {

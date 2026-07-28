@@ -17,7 +17,7 @@ let capturedLinkPairs = [];
 // The result contract is additive: newer pipelines add evidence IDs inside the same
 // score_factors shape. Accepting a range keeps installed panels working while a server
 // deploy and a Chrome Web Store review land at different times.
-const SUPPORTED_ANALYSIS_VERSIONS = ["analysis-v6", "analysis-v7"];
+const SUPPORTED_ANALYSIS_VERSIONS = ["analysis-v6", "analysis-v7", "analysis-v8"];
 
 const dynamicCopy = {
   en: {

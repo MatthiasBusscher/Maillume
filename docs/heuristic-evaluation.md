@@ -114,6 +114,10 @@ See [the independent corpus review](independent-corpus-review.md) for the frozen
 corpus revision, review checklist, split protocol, metrics, and documented
 failure inventory.
 
+The first scoring change is documented separately in
+[deterministic URL evidence](url-evidence.md), including the same-corpus
+before/after comparison and runtime review for `analysis-v8`.
+
 ## Performance baseline
 
 Run the diagnostic benchmark:

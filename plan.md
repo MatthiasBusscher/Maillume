@@ -1,6 +1,6 @@
 # Maillume Heuristic Scanner Improvement Plan
 
-_Created: 2026-07-27 · Status: in progress (Phases 0–1 complete) · Scope: heuristic accuracy, evaluation, and explainability_
+_Created: 2026-07-27 · Status: in progress (Phases 0–2 complete) · Scope: heuristic accuracy, evaluation, and explainability_
 
 ## 1. Goal
 
@@ -230,6 +230,10 @@ Exit criteria:
 
 **Objective:** detect deceptive URL structure without visiting a destination.
 
+**Status:** Completed on 28 July 2026 as the first `analysis-v8` behavior
+change. Design, bounds, regressions, before/after metrics, and the runtime review
+are recorded in `docs/url-evidence.md`.
+
 Candidate evidence:
 
 - IP-literal destination;
@@ -275,9 +279,9 @@ Required regressions:
 
 Exit criteria:
 
-- New evidence improves independent-corpus results.
-- Legitimate hard-negative rates stay within their gates.
-- No URL is fetched or opened.
+- [x] New evidence improves independent-corpus results.
+- [x] Legitimate hard-negative rates stay within their gates.
+- [x] No URL is fetched or opened.
 
 ### Phase 3 — Improve context, action, and negation handling
 
@@ -487,15 +491,15 @@ act as a holdout.
 - [x] Evaluation reporting distinguishes distinct scenarios from generated variants.
 - [x] At least 60 independent cases satisfy the corpus requirements.
 - [ ] Provisional release metrics are confirmed or replaced with justified thresholds.
-- [ ] URL and domain analysis covers the approved structural signals without network access.
+- [x] URL and domain analysis covers the approved structural signals without network access.
 - [ ] Context handling covers the approved hard-negative categories.
 - [ ] Every result clearly reports evidence coverage.
 - [ ] New attack chains are independently justified and visibly explainable.
 - [ ] Privacy-safe feedback can guide fixture priorities without exposing scan content.
-- [ ] Runtime remains deterministic, bounded, and within the reviewed regression budget.
+- [x] Runtime remains deterministic, bounded, and within the reviewed regression budget.
 - [ ] English and Dutch behavior remains within the language-parity gate.
-- [ ] Web, API, and extension contracts are compatible and tested.
-- [ ] The analysis version is bumped and documented for behavioral changes.
+- [x] Web, API, and extension contracts are compatible and tested.
+- [x] The analysis version is bumped and documented for behavioral changes.
 - [ ] All CI, security, browser, extension, and production-image checks pass.
 - [ ] No hosted AI, external lookup, mailbox access, or scan-history dependency is introduced.
 

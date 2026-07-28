@@ -18,14 +18,14 @@ test("waits until the public route serves the approved revision", async (t) => {
       response.end(JSON.stringify({
         status: "ok",
         revision: healthRequests === 1 ? "0".repeat(40) : revision,
-        analysis_version: "analysis-v7",
+        analysis_version: "analysis-v8",
       }));
       return;
     }
     if (request.url === "/api/analyze") {
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Content-Type", "application/json");
-      response.end(JSON.stringify({ analysis_version: "analysis-v7", result: { risk_score: 0 } }));
+      response.end(JSON.stringify({ analysis_version: "analysis-v8", result: { risk_score: 0 } }));
       return;
     }
     response.end("ok");
@@ -52,7 +52,7 @@ test("rejects unexpected public health fields", async (t) => {
     response.end(JSON.stringify({
       status: "ok",
       revision,
-      analysis_version: "analysis-v7",
+      analysis_version: "analysis-v8",
       database: "connected",
     }));
   });
@@ -78,13 +78,13 @@ test("rejects Cloudflare email obfuscation on the marketing page", async (t) => 
     if (request.url?.startsWith("/api/health")) {
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Content-Type", "application/json");
-      response.end(JSON.stringify({ status: "ok", revision, analysis_version: "analysis-v7" }));
+      response.end(JSON.stringify({ status: "ok", revision, analysis_version: "analysis-v8" }));
       return;
     }
     if (request.url === "/api/analyze") {
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Content-Type", "application/json");
-      response.end(JSON.stringify({ analysis_version: "analysis-v7", result: { risk_score: 0 } }));
+      response.end(JSON.stringify({ analysis_version: "analysis-v8", result: { risk_score: 0 } }));
       return;
     }
     if (request.url === "/") {

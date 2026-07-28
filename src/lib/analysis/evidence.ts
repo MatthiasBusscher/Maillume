@@ -29,6 +29,14 @@ export const EVIDENCE_IDS = [
   "short_url",
   "risky_link_domain",
   "link_mismatch",
+  "ip_literal_url",
+  "non_standard_port_url",
+  "url_userinfo",
+  "punycode_hostname",
+  "nested_url",
+  "brand_lookalike_destination",
+  "brand_destination_mismatch",
+  "hosted_destination",
   "format_pressure",
   "obfuscation",
   "invalid_sender",
@@ -54,15 +62,22 @@ export const EVIDENCE_IDS = [
 export type EvidenceId = (typeof EVIDENCE_IDS)[number];
 
 /**
- * Evidence derived only from structured input Maillume computes itself. An AI provider
- * receives normalized message text, never authentication headers, so it cannot support
- * these IDs and is not offered them.
+ * Evidence derived from structured input Maillume computes itself. An AI provider does
+ * not author these deterministic authentication and URL-structure conclusions.
  */
 export const DERIVED_EVIDENCE_IDS = [
   "sender_authentication_failed",
   "sender_authentication_weak",
   "reply_to_mismatch",
   "return_path_mismatch",
+  "ip_literal_url",
+  "non_standard_port_url",
+  "url_userinfo",
+  "punycode_hostname",
+  "nested_url",
+  "brand_lookalike_destination",
+  "brand_destination_mismatch",
+  "hosted_destination",
 ] as const satisfies readonly EvidenceId[];
 
 export type DerivedEvidenceId = (typeof DERIVED_EVIDENCE_IDS)[number];
@@ -101,6 +116,14 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   short_url: evidence("destination", 10, "Uses a shortened URL that hides the destination.", "Gebruikt een verkorte URL die de bestemming verbergt.", true),
   risky_link_domain: evidence("destination", 10, "Uses a link domain pattern often abused in campaigns.", "Gebruikt een linkdomein dat vaak in campagnes wordt misbruikt.", true),
   link_mismatch: evidence("destination", 30, "Displays one domain but links to another.", "Toont één domein maar linkt naar een ander domein.", true),
+  ip_literal_url: evidence("destination", 20, "Uses an IP address instead of a named destination.", "Gebruikt een IP-adres in plaats van een herkenbare bestemming.", true),
+  non_standard_port_url: evidence("destination", 10, "Uses an unusual network port in a destination.", "Gebruikt een ongebruikelijke netwerkpoort in een bestemming.", true),
+  url_userinfo: evidence("destination", 20, "Uses URL user information that can disguise the real host.", "Gebruikt URL-gebruikersinformatie die de echte host kan verhullen.", true),
+  punycode_hostname: evidence("destination", 10, "Uses an internationalized hostname that needs careful review.", "Gebruikt een geïnternationaliseerde hostnaam die extra controle vraagt."),
+  nested_url: evidence("destination", 10, "Hides another destination inside a redirect parameter.", "Verbergt een andere bestemming in een omleidingsparameter.", true),
+  brand_lookalike_destination: evidence("destination", 25, "The destination appears to imitate a known brand domain.", "De bestemming lijkt een bekend merkdomein na te bootsen.", true),
+  brand_destination_mismatch: evidence("destination", 20, "The claimed organization does not match the sender or destination.", "De genoemde organisatie komt niet overeen met de afzender of bestemming.", true),
+  hosted_destination: evidence("destination", 10, "Uses a hosted-page destination for a sensitive request.", "Gebruikt een gehoste paginabestemming voor een gevoelig verzoek.", true),
   format_pressure: evidence("style", 4, "Uses excessive capitalization or punctuation.", "Gebruikt overmatig hoofdletters of leestekens."),
   obfuscation: evidence("style", 10, "Obfuscates words to evade filtering.", "Verhult woorden om filtering te ontwijken.", true),
   invalid_sender: evidence("identity", 20, "The sender address is invalid or incomplete.", "Het afzenderadres is ongeldig of onvolledig.", true),
@@ -287,6 +310,12 @@ const PHISHING_SPECIFIC_EVIDENCE = new Set<EvidenceId>([
   "account_threat",
   "fake_security",
   "link_mismatch",
+  "ip_literal_url",
+  "url_userinfo",
+  "nested_url",
+  "brand_lookalike_destination",
+  "brand_destination_mismatch",
+  "hosted_destination",
   "brand_lookalike_sender",
   "executive_impersonation",
   "payroll_or_tax_request",

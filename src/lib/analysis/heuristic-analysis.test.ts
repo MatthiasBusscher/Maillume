@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 
-import { analyzeEmailHeuristic } from "./heuristic-analysis";
+import {
+  analyzeEmailHeuristic,
+  collectHeuristicEvidence,
+} from "./heuristic-analysis";
 import { heuristicCalibrationFixtures } from "./heuristic-fixtures";
 
 const CERTAINTY_PATTERN = /\b(100%|always|guaranteed|guarantee|definitely|certainly)\b/i;
@@ -127,6 +130,59 @@ const structuralUrlRegression = analyzeEmailHeuristic({
 });
 assert.ok(!structuralUrlRegression.score_factors.some((factor) => factor.id === "short_url"));
 assert.ok(!structuralUrlRegression.score_factors.some((factor) => factor.id === "risky_link_domain"));
+
+const ipLiteralCredentialDestination = analyzeEmailHeuristic({
+  senderEmail: "preferences@workspace-review.invalid",
+  body: "Enter your work password to keep the forwarding preference.",
+  links: ["http://203.0.113.42/preferences"],
+});
+assert.ok(
+  ipLiteralCredentialDestination.score_factors.some(
+    (factor) => factor.id === "ip_literal_url",
+  ),
+);
+assert.notEqual(ipLiteralCredentialDestination.risk_level, "low");
+
+const nestedBrandRedirect = analyzeEmailHeuristic({
+  senderEmail: "sharing@document-notice.invalid",
+  body: "Verify your Microsoft account to open the document.",
+  links: [
+    "https://redirector.example/out?next=https%253A%252F%252Fmicros0ft-login.invalid%252Fsession",
+  ],
+});
+assert.ok(
+  collectHeuristicEvidence({
+    senderEmail: "sharing@document-notice.invalid",
+    body: "Verify your Microsoft account to open the document.",
+    links: [
+      "https://redirector.example/out?next=https%253A%252F%252Fmicros0ft-login.invalid%252Fsession",
+    ],
+  }).evidence.includes("nested_url"),
+);
+assert.ok(
+  nestedBrandRedirect.score_factors.some(
+    (factor) => factor.id === "brand_lookalike_destination",
+  ),
+);
+
+const internationalizedDomainCaution = analyzeEmailHeuristic({
+  senderEmail: "events@munich-club.example",
+  body: "The international chapter schedule is available at https://münich.example/events.",
+});
+assert.ok(
+  internationalizedDomainCaution.score_factors.some(
+    (factor) => factor.id === "punycode_hostname",
+  ),
+);
+assert.equal(internationalizedDomainCaution.risk_level, "low");
+
+const atSignPathRegression = analyzeEmailHeuristic({
+  senderEmail: "files@vendor.example",
+  body: "The requested file is at https://files.vendor.example/team/alex@example/report.",
+});
+assert.ok(
+  !atSignPathRegression.score_factors.some((factor) => factor.id === "url_userinfo"),
+);
 
 const brandSubstringRegression = analyzeEmailHeuristic({
   senderEmail: "orders@applecart.example",
@@ -337,7 +393,7 @@ for (const result of maillumeFirstPartyMessages) {
   assert.ok(!result.score_factors.some((factor) => factor.id === "external_link"));
 }
 
-for (const result of [dutchResult, dutchRenewalFraud, strongSingleFamilySpam, sameFamilyAttackChain, weakSignalsRemainLow, supportTicketBackscatter, hostedStorageLure, structuralUrlRegression, brandSubstringRegression, redirectRegression, bareDomainMismatch, unquotedHrefMismatch, changedPaymentDetails, ...deliveryFeeLures, legitimateDeliveryUpdate, ...oauthConsentLures, ...hiddenUnicodeCredentialLures, ...credentialMentionHardNegatives, uwvConfirmationWithoutButton, ...digitSubstitutionLookalikes, insufficientContext, noWarningSignals, dangerousAttachment, macroOnlyAttachment, ...maillumeFirstPartyMessages]) {
+for (const result of [dutchResult, dutchRenewalFraud, strongSingleFamilySpam, sameFamilyAttackChain, weakSignalsRemainLow, supportTicketBackscatter, hostedStorageLure, structuralUrlRegression, ipLiteralCredentialDestination, nestedBrandRedirect, internationalizedDomainCaution, atSignPathRegression, brandSubstringRegression, redirectRegression, bareDomainMismatch, unquotedHrefMismatch, changedPaymentDetails, ...deliveryFeeLures, legitimateDeliveryUpdate, ...oauthConsentLures, ...hiddenUnicodeCredentialLures, ...credentialMentionHardNegatives, uwvConfirmationWithoutButton, ...digitSubstitutionLookalikes, insufficientContext, noWarningSignals, dangerousAttachment, macroOnlyAttachment, ...maillumeFirstPartyMessages]) {
   assert.equal(
     result.score_factors.reduce((total, factor) => total + factor.contribution, 0),
     result.risk_score,

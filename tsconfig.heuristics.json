@@ -12,6 +12,8 @@
   },
   "include": [
     "src/lib/analysis/heuristic-analysis.test.ts",
+    "src/lib/analysis/url-evidence.test.ts",
+    "src/lib/analysis/url-evidence.ts",
     "src/lib/analysis/analysis-envelope.test.ts",
     "src/lib/analysis/analysis-envelope.ts",
     "src/lib/analysis/heuristic-fixtures.ts",
