@@ -122,10 +122,11 @@ type EmailAnalysisResult = {
   detected_links: string[];
   recommended_action: string;
   short_explanation: string;
+  evidence_coverage: EvidenceCoverage;
 };
 ```
 
-The current source contract uses `analysis_version: "analysis-v8"`. Applied factor contributions always sum to `risk_score`. Maillume derives classification, level, links, and score server-side; optional AI providers return stable evidence IDs instead of choosing a number.
+The current source contract uses `analysis_version: "analysis-v9"`. Applied factor contributions always sum to `risk_score`, and every result reports which message evidence was available. Maillume derives classification, level, links, coverage, and score server-side; optional AI providers return stable evidence IDs instead of choosing a number. See [evidence coverage](docs/evidence-coverage.md) for the field semantics and staged extension compatibility.
 
 ## Self-Hosting and AI
 

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 
+import { isEvidenceCoverage } from "../analysis/evidence-coverage";
 import { analyzeEmailHeuristic } from "../analysis/heuristic-analysis";
 import { summarizeEvaluation } from "./metrics";
 import { getScenarioCategory } from "./scenario-metadata";
@@ -38,6 +39,11 @@ for (const { item, result } of lockedResults) {
     `${item.id} factors must sum to its risk index`,
   );
   assert.ok(result.risk_score >= 0 && result.risk_score <= 100);
+  assert.equal(
+    isEvidenceCoverage(result.evidence_coverage),
+    true,
+    `${item.id} must report valid evidence coverage`,
+  );
 }
 
 const lockedObservations = lockedResults.map(({ item, result }) =>

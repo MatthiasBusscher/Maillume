@@ -1,6 +1,7 @@
 import { ANALYSIS_PIPELINE_VERSION, type AnalysisEnvelope } from "../types";
 import { createAnalysisEnvelope } from "../analysis/analysis-envelope";
 import { analyzeEmailHeuristic } from "../analysis/heuristic-analysis";
+import { hasMaterialEvidenceCoverage } from "../analysis/evidence-coverage";
 import { parseEml } from "../eml/parse-eml";
 import {
   CROSS_INPUT_FIXTURES,
@@ -211,17 +212,11 @@ function observation(input: {
     expected: input.expected,
     language: input.envelope.locale,
     source: input.envelope.source,
-    evidenceCompleteness: hasMaterialEvidence(input.envelope)
+    evidenceCompleteness: hasMaterialEvidenceCoverage(result.evidence_coverage)
       ? "complete"
       : "incomplete",
     result,
   };
-}
-
-function hasMaterialEvidence(envelope: AnalysisEnvelope): boolean {
-  return envelope.availability.sender
-    && envelope.availability.linkDestinations
-    && envelope.availability.contentComplete;
 }
 
 function buildCrossInputEnvelopes(

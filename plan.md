@@ -1,6 +1,6 @@
 # Maillume Heuristic Scanner Improvement Plan
 
-_Created: 2026-07-27 · Status: in progress (Phases 0–3 complete) · Scope: heuristic accuracy, evaluation, and explainability_
+_Created: 2026-07-27 · Status: in progress (Phases 0–4 complete) · Scope: heuristic accuracy, evaluation, and explainability_
 
 ## 1. Goal
 
@@ -333,6 +333,10 @@ Exit criteria:
 **Objective:** explain how complete the assessment was without presenting a misleading
 confidence percentage.
 
+**Status:** Completed on 28 July 2026 as `analysis-v9`. The result contract, derivation,
+classification boundary, staged extension compatibility, privacy properties, and verification
+are recorded in `docs/evidence-coverage.md`.
+
 Add an `evidence_coverage` object to the result contract with fields derived from the existing
 analysis envelope, for example:
 
@@ -373,9 +377,9 @@ Likely files:
 
 Exit criteria:
 
-- Every result identifies its evidence coverage.
-- English and Dutch UI and accessibility tests pass.
-- No existing client accepts a malformed coverage object.
+- [x] Every result identifies its evidence coverage.
+- [x] English and Dutch UI and accessibility tests pass.
+- [x] No existing client accepts a malformed coverage object.
 
 ### Phase 5 — Expand decisive attack-chain scoring
 
@@ -497,7 +501,7 @@ act as a holdout.
 - [ ] Provisional release metrics are confirmed or replaced with justified thresholds.
 - [x] URL and domain analysis covers the approved structural signals without network access.
 - [x] Context handling covers the approved hard-negative categories.
-- [ ] Every result clearly reports evidence coverage.
+- [x] Every result clearly reports evidence coverage.
 - [ ] New attack chains are independently justified and visibly explainable.
 - [ ] Privacy-safe feedback can guide fixture priorities without exposing scan content.
 - [x] Runtime remains deterministic, bounded, and within the reviewed regression budget.

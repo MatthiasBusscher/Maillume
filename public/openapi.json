@@ -119,7 +119,7 @@
       "AnalysisResult": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["classification", "risk_level", "risk_score", "score_factors", "suspicious_signals", "detected_links", "recommended_action", "short_explanation"],
+        "required": ["classification", "risk_level", "risk_score", "score_factors", "suspicious_signals", "detected_links", "recommended_action", "short_explanation", "evidence_coverage"],
         "properties": {
           "classification": { "type": "string", "enum": ["likely_phishing", "likely_spam", "likely_legitimate", "uncertain"] },
           "risk_level": { "type": "string", "enum": ["low", "medium", "high"] },
@@ -141,7 +141,30 @@
           "suspicious_signals": { "type": "array", "items": { "type": "string" } },
           "detected_links": { "type": "array", "items": { "type": "string", "format": "uri" } },
           "recommended_action": { "type": "string" },
-          "short_explanation": { "type": "string" }
+          "short_explanation": { "type": "string" },
+          "evidence_coverage": { "$ref": "#/components/schemas/EvidenceCoverage" }
+        }
+      },
+      "EvidenceCoverage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subject_available",
+          "sender_available",
+          "full_content_available",
+          "link_destinations_available",
+          "authentication_results_available",
+          "attachment_evidence_available",
+          "extraction_type"
+        ],
+        "properties": {
+          "subject_available": { "type": "boolean" },
+          "sender_available": { "type": "boolean" },
+          "full_content_available": { "type": "boolean" },
+          "link_destinations_available": { "type": "boolean" },
+          "authentication_results_available": { "type": "boolean" },
+          "attachment_evidence_available": { "type": "boolean" },
+          "extraction_type": { "type": "string", "enum": ["direct", "ocr", "parsed"] }
         }
       },
       "AnalyzeResponse": {
@@ -151,7 +174,7 @@
           "result": { "$ref": "#/components/schemas/AnalysisResult" },
           "analysis_mode": { "type": "string", "enum": ["heuristic", "ai"] },
           "analysis_provider": { "type": "string", "enum": ["heuristic", "openai", "anthropic", "openai-compatible"] },
-          "analysis_version": { "const": "analysis-v8" },
+          "analysis_version": { "const": "analysis-v9" },
           "disclaimer": { "type": "string" },
           "privacy": {
             "type": "object",

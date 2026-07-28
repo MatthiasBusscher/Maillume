@@ -4,9 +4,11 @@ import type {
   AnalysisLocale,
   AssessmentClassification,
   EmailAnalysisResult,
+  EvidenceCoverage,
   EvidenceFamily,
   RiskLevel,
 } from "../types";
+import { hasMaterialEvidenceCoverage } from "./evidence-coverage";
 
 export const EVIDENCE_IDS = [
   "urgency_pressure",
@@ -158,7 +160,7 @@ export function buildAnalysisResult(
   evidenceIds: Iterable<EvidenceId>,
   detectedLinks: string[],
   locale: AnalysisLocale,
-  options: { incompleteEvidence?: boolean } = {},
+  options: { evidenceCoverage: EvidenceCoverage },
 ): EmailAnalysisResult {
   const unique = Array.from(new Set(evidenceIds));
   const familyScores: Record<EvidenceFamily, number> = {
@@ -204,7 +206,7 @@ export function buildAnalysisResult(
     unique,
     riskLevel,
     riskScore,
-    options.incompleteEvidence ?? false,
+    !hasMaterialEvidenceCoverage(options.evidenceCoverage),
   );
 
   return {
@@ -216,6 +218,7 @@ export function buildAnalysisResult(
     detected_links: normalizeLinks(detectedLinks),
     recommended_action: getRecommendedAction(classification, riskLevel, locale),
     short_explanation: getExplanation(classification, riskLevel, scoreFactors.length, locale),
+    evidence_coverage: options.evidenceCoverage,
   };
 }
 

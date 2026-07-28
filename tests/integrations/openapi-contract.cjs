@@ -6,6 +6,8 @@ const path = require("node:path");
 const specification = JSON.parse(fs.readFileSync(path.resolve("public/openapi.json"), "utf8"));
 const request = specification.components.schemas.AnalyzeRequest;
 const response = specification.components.schemas.AnalyzeResponse;
+const result = specification.components.schemas.AnalysisResult;
+const coverage = specification.components.schemas.EvidenceCoverage;
 
 assert.equal(request.properties.body.maxLength, 20_000);
 assert.equal(request.properties.evidenceTruncated.type, "boolean");
@@ -26,7 +28,20 @@ assert.deepEqual(response.required, [
   "disclaimer",
   "privacy",
 ]);
-assert.equal(response.properties.analysis_version.const, "analysis-v8");
+assert.ok(result.required.includes("evidence_coverage"));
+assert.equal(result.properties.evidence_coverage.$ref, "#/components/schemas/EvidenceCoverage");
+assert.deepEqual(coverage.required, [
+  "subject_available",
+  "sender_available",
+  "full_content_available",
+  "link_destinations_available",
+  "authentication_results_available",
+  "attachment_evidence_available",
+  "extraction_type",
+]);
+assert.equal(coverage.additionalProperties, false);
+assert.deepEqual(coverage.properties.extraction_type.enum, ["direct", "ocr", "parsed"]);
+assert.equal(response.properties.analysis_version.const, "analysis-v9");
 assert.equal(response.properties.privacy.properties.stored.const, false);
 
 console.log("OpenAPI integration request limits and analysis privacy envelope passed.");

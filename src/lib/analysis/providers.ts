@@ -14,6 +14,7 @@ import {
 import { AI_ANALYSIS_SYSTEM_PROMPT, buildAiAnalysisUserPrompt } from "./ai-prompt";
 import { AI_ANALYSIS_SCHEMA, AiResponseValidationError, parseAiAnalysisJson } from "./ai-schema";
 import { buildAnalysisResult, type EvidenceId } from "./evidence";
+import { createEvidenceCoverage } from "./evidence-coverage";
 import { analyzeEmailHeuristic, collectHeuristicEvidence } from "./heuristic-analysis";
 
 type Fetcher = typeof fetch;
@@ -232,9 +233,7 @@ function finalizeAiAnalysis(aiEvidence: EvidenceId[], input: AnalysisEnvelope): 
   const evidence = [...deterministic.evidence, ...aiEvidence];
 
   return buildAnalysisResult(evidence, deterministic.links, input.locale, {
-    incompleteEvidence: !input.availability.sender
-      || !input.availability.linkDestinations
-      || !input.availability.contentComplete,
+    evidenceCoverage: createEvidenceCoverage(input),
   });
 }
 

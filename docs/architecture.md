@@ -197,6 +197,15 @@ type EmailAnalysisResult = {
   detected_links: string[];
   recommended_action: string;
   short_explanation: string;
+  evidence_coverage: {
+    subject_available: boolean;
+    sender_available: boolean;
+    full_content_available: boolean;
+    link_destinations_available: boolean;
+    authentication_results_available: boolean;
+    attachment_evidence_available: boolean;
+    extraction_type: "direct" | "ocr" | "parsed";
+  };
 };
 ```
 
@@ -206,6 +215,8 @@ Server-side validation should enforce:
 - Evidence is grouped into capped identity, destination, intent, delivery, and style families.
 - Weak evidence cannot produce medium risk by itself. High risk requires either strong evidence from multiple families or a decisive attack chain such as account lockout plus credential capture; family boundaries are not an evasion gate.
 - Missing evidence can produce `uncertain` and must not be presented as reassurance.
+- Evidence coverage is derived from the canonical analysis envelope and never from an AI
+  provider.
 - `risk_level` and `classification` are derived by Maillume, not trusted from a provider response.
 - Arrays are present even when empty.
 - The response does not claim certainty.
@@ -284,7 +295,7 @@ type AnalyzeResponse = {
   result: EmailAnalysisResult;
   analysis_mode: "heuristic" | "ai";
   analysis_provider: "heuristic" | "openai" | "anthropic" | "openai-compatible";
-  analysis_version: "analysis-v8";
+  analysis_version: "analysis-v9";
   disclaimer: string;
   privacy: {
     stored: false;

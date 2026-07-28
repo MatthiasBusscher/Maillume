@@ -115,6 +115,33 @@ export const dictionaries = {
       scoreBasisTitle: "How this score works",
       scoreBasisBody:
         "This is a versioned risk index, not the probability that the email is malicious. Contributions are capped by independent evidence family so repeated wording cannot inflate the result without limit.",
+      coverageTitle: "Evidence coverage",
+      coverageComplete:
+        "Maillume received the main message evidence needed for this assessment.",
+      coverageLimited:
+        "Some message evidence was unavailable. Missing details can change the assessment, so verify the message through a known channel.",
+      coveragePartial:
+        "This assessment uses selected or incomplete text. Content outside the captured text can change the result.",
+      coverageOcr:
+        "This assessment uses OCR-extracted text. Missed text and hidden link destinations can change the result.",
+      coverageLabels: {
+        subject: "Subject",
+        sender: "Sender",
+        fullContent: "Full content",
+        linkDestinations: "Link destinations",
+        authentication: "Authentication results",
+        attachments: "Attachment evidence",
+        extraction: "Text extraction",
+      },
+      coverageStates: {
+        available: "Available",
+        unavailable: "Unavailable",
+      },
+      extractionTypes: {
+        direct: "Direct text",
+        ocr: "OCR",
+        parsed: "Parsed .eml",
+      },
       points: "points",
       suspiciousSignals: "Suspicious signals",
       noSignals: "No clear suspicious signals were found in the evidence Maillume could inspect. This does not confirm that the message is safe.",
@@ -274,6 +301,33 @@ export const dictionaries = {
       scoreBasisTitle: "Hoe deze score werkt",
       scoreBasisBody:
         "Dit is een versiegebonden risico-index, niet de kans dat de e-mail kwaadaardig is. Bijdragen zijn begrensd per onafhankelijke signaalgroep, zodat herhaalde woorden de uitkomst niet onbeperkt verhogen.",
+      coverageTitle: "Beschikbare bewijslast",
+      coverageComplete:
+        "Maillume ontving de belangrijkste berichtgegevens voor deze beoordeling.",
+      coverageLimited:
+        "Sommige berichtgegevens waren niet beschikbaar. Ontbrekende details kunnen de beoordeling veranderen; controleer het bericht daarom via een bekend kanaal.",
+      coveragePartial:
+        "Deze beoordeling gebruikt geselecteerde of onvolledige tekst. Inhoud buiten de vastgelegde tekst kan het resultaat veranderen.",
+      coverageOcr:
+        "Deze beoordeling gebruikt tekst uit OCR. Gemiste tekst en verborgen linkbestemmingen kunnen het resultaat veranderen.",
+      coverageLabels: {
+        subject: "Onderwerp",
+        sender: "Afzender",
+        fullContent: "Volledige inhoud",
+        linkDestinations: "Linkbestemmingen",
+        authentication: "Authenticatieresultaten",
+        attachments: "Bijlagegegevens",
+        extraction: "Tekstextractie",
+      },
+      coverageStates: {
+        available: "Beschikbaar",
+        unavailable: "Niet beschikbaar",
+      },
+      extractionTypes: {
+        direct: "Directe tekst",
+        ocr: "OCR",
+        parsed: "Verwerkt .eml-bestand",
+      },
       points: "punten",
       suspiciousSignals: "Verdachte signalen",
       noSignals: "In de onderzochte gegevens zijn geen duidelijke verdachte signalen gevonden. Dit bevestigt niet dat het bericht veilig is.",

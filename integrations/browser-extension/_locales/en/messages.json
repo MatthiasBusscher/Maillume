@@ -1,5 +1,5 @@
 {
   "extensionName": { "message": "Maillume" },
-  "extensionDescription": { "message": "Analyze selected text or the currently open message in Gmail and Outlook." },
+  "extensionDescription": { "message": "Analyze selected text or the currently open message in Gmail and Outlook with explainable evidence coverage." },
   "actionTitle": { "message": "Capture open email with Maillume" }
 }

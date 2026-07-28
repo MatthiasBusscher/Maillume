@@ -1,6 +1,6 @@
 # Synthetic Evaluation
 
-Maillume uses repository-only synthetic and sanitized public-advisory corpora to calibrate `analysis-v8` without retaining or collecting users' email.
+Maillume uses repository-only synthetic and sanitized public-advisory corpora to calibrate `analysis-v9` without retaining or collecting users' email.
 
 The risk score is a versioned, capped index of observed evidence. It is not the probability that a message is malicious and these synthetic checks are not a claim of real-world accuracy.
 
@@ -108,3 +108,7 @@ not enforce an absolute CI timing threshold.
 See [the heuristic evaluation baseline](heuristic-evaluation.md) for the initial
 `analysis-v8` results, interpretation limits, performance measurements, and the
 comparison protocol for future scanner changes.
+
+The current `analysis-v9` result also reports the evidence boundary used for each
+observation. See [evidence coverage](evidence-coverage.md) for its derivation,
+classification rule, compatibility plan, and validation coverage.

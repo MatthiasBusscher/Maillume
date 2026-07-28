@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
 
-const EXPECTED_ANALYSIS_VERSION = "analysis-v8";
+const EXPECTED_ANALYSIS_VERSION = "analysis-v9";
 
 export async function verifyPublicDeployment({
   appUrl = "https://app.maillume.io",
@@ -93,9 +93,27 @@ async function verifyAnalysis(fetchImpl, url) {
     throw new Error("Public analysis endpoint is missing Cache-Control: no-store.");
   }
   const body = await response.json();
-  if (body.analysis_version !== EXPECTED_ANALYSIS_VERSION || !body.result) {
+  if (
+    body.analysis_version !== EXPECTED_ANALYSIS_VERSION
+    || !body.result
+    || !isEvidenceCoverage(body.result.evidence_coverage)
+  ) {
     throw new Error("Public analysis endpoint returned an unexpected contract.");
   }
+}
+
+function isEvidenceCoverage(value) {
+  return Boolean(
+    value
+    && typeof value === "object"
+    && typeof value.subject_available === "boolean"
+    && typeof value.sender_available === "boolean"
+    && typeof value.full_content_available === "boolean"
+    && typeof value.link_destinations_available === "boolean"
+    && typeof value.authentication_results_available === "boolean"
+    && typeof value.attachment_evidence_available === "boolean"
+    && ["direct", "ocr", "parsed"].includes(value.extraction_type)
+  );
 }
 
 async function retry(operation, { attempts, delayMs }) {

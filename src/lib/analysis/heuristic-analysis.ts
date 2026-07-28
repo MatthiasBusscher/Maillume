@@ -14,6 +14,7 @@ import {
   getRegistrableDomain,
   type EvidenceId,
 } from "./evidence";
+import { createEvidenceCoverage } from "./evidence-coverage";
 import {
   collectUrlEvidence,
   getClaimedBrands,
@@ -312,9 +313,7 @@ export function analyzeEmailHeuristic(input: EmailAnalysisInput | AnalysisEnvelo
   const envelope = ensureAnalysisEnvelope(input);
   const { evidence, links } = collectHeuristicEvidence(envelope);
   return buildAnalysisResult(evidence, links, envelope.locale, {
-    incompleteEvidence: !envelope.availability.sender
-      || !envelope.availability.linkDestinations
-      || !envelope.availability.contentComplete,
+    evidenceCoverage: createEvidenceCoverage(envelope),
   });
 }
 
