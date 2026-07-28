@@ -88,7 +88,9 @@ The production workflow:
 3. builds the web image with the same SHA and verifies it through `/api/health`;
 4. blocks high or critical container vulnerabilities;
 5. publishes the image by immutable digest and records provenance;
-6. deploys only the previously verified main-branch image.
+6. refuses deployment until Google's public update service serves extension
+   `0.3.8` and the operator confirms the feedback-summary migration is applied;
+7. deploys only the previously verified main-branch image.
 
 The previous immutable container digest remains the rollback target. The feedback
 summary migration must be applied with the release and can be verified through the

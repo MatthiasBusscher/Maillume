@@ -435,6 +435,11 @@ function main() {
   assert.match(releaseWorkflow, /fetch-depth: 0/);
   assert.match(releaseWorkflow, /needs: \[verify, secrets\]/);
   assert.match(releaseWorkflow, /name: Resolve verified image/);
+  assert.match(releaseWorkflow, /name: Verify deployment prerequisites/);
+  assert.match(releaseWorkflow, /feedback_summary_migration_applied/);
+  assert.match(releaseWorkflow, /FEEDBACK_SUMMARY_MIGRATION_APPLIED/);
+  assert.match(releaseWorkflow, /needs: preflight/);
+  assert.match(releaseWorkflow, /node scripts\/verify-chrome-extension-release\.mjs/);
   assert.match(releaseWorkflow, /IMAGE_TAG: ghcr\.io\/matthiasbusscher\/maillume:sha-\$\{\{ github\.sha \}\}/);
   assert.match(releaseWorkflow, /needs: resolve/);
   assert.match(releaseWorkflow, /needs\.resolve\.outputs\.image/);

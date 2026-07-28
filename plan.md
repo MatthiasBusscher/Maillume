@@ -496,6 +496,8 @@ Tasks:
 - [x] Test the web app and packaged extension against the same revision.
 - [x] Add release notes explaining improved categories and known limitations.
 - [x] Monitor only aggregate, content-free feedback and quota/availability counters.
+- [x] Enforce the extension-first rollout and production migration confirmation in the
+  deployment workflow.
 
 Exit criteria:
 
