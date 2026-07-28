@@ -6,6 +6,10 @@ import type {
 } from "../types";
 import { ensureAnalysisEnvelope } from "./analysis-envelope";
 import {
+  hasActionableMatch,
+  hasCooccurringContext,
+} from "./context";
+import {
   buildAnalysisResult,
   getRegistrableDomain,
   type EvidenceId,
@@ -20,8 +24,8 @@ const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 const HTML_LINK_PATTERN = /<a\b[^>]*\bhref\s*=\s*(?:"(https?:\/\/[^"\s>]+)"|'(https?:\/\/[^'\s>]+)'|(https?:\/\/[^\s"'=<>`]+))[^>]*>([\s\S]*?)<\/a>/gi;
 const DISPLAYED_DOMAIN_PATTERN = /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}(?:\/[^\s<>"']*)?/i;
 const CREDENTIAL_REQUEST_PATTERNS = [
-  /\b(?:enter|provide|submit|send|share|confirm|verify|update|re-?enter|type|reset|change)\b.{0,32}\b(?:password|credentials?|login details?|sign-in details?)\b/i,
-  /\b(?:password|credentials?|login details?|sign-in details?)\b.{0,24}\b(?:required|needed|enter|provide|submit|confirm|verify|update|reset|change)\b/i,
+  /\b(?:enter|provide|submit|send|share|confirm|verify|update|re-?enter|type|reset|change)\b.{0,32}\b(?:password|credentials?|(?:employee |work )?login(?: details?)?|sign-in details?)\b/i,
+  /\b(?:password|credentials?|(?:employee |work )?login(?: details?)?|sign-in details?)\b.{0,24}\b(?:required|needed|enter|provide|submit|confirm|verify|update|reset|change)\b/i,
   /verify (your )?(?:[a-z-]+ )?(account|identity)/i,
   /sign in (below|here|now)/i,
   /\b(?:voer|vul|verstrek|deel|stuur|bevestig|verifieer|controleer|wijzig|reset)\b.{0,32}\b(?:wachtwoord|inloggegevens)\b/i,
@@ -39,6 +43,11 @@ const CREDENTIAL_NEGATION_PATTERNS = [
   /\b(?:nooit|niet|mag niet)\b.{0,48}\b(?:voer|vul|verstrek|deel|stuur|bevestig|verifieer|controleer)\b.{0,32}\b(?:wachtwoord|inloggegevens)\b/i,
   /\b(?:voer|vul|verstrek|deel|stuur|bevestig|verifieer|controleer)\b.{0,32}\b(?:wachtwoord|inloggegevens)\b.{0,16}\b(?:nooit|niet)\b/i,
   /\bgeen\b.{0,16}\b(?:wachtwoord|inloggegevens)\b.{0,16}\b(?:vereist|nodig)\b/i,
+  /\b(?:share|send|provide|deel|stuur|verstrek)\b.{0,12}\b(?:never|nooit|not|niet)\b.{0,20}\b(?:password|credentials?|wachtwoord|inloggegevens)\b/i,
+  /\b(?:(?:you|your) requested|requested from your signed-in account)\b.{0,32}\bpassword reset\b/i,
+  /\bpassword reset\b.{0,40}\b(?:you requested|no action|password is unchanged)\b/i,
+  /\b(?:u hebt|je hebt)\b.{0,32}\bwachtwoordherstel aangevraagd\b/i,
+  /\bwachtwoordherstel\b.{0,40}\b(?:aangevraagd|geen actie|ongewijzigd)\b/i,
 ];
 const MFA_REQUEST_PATTERNS = [
   /approve (?:the )?(?:mfa|login|sign-in)(?: login)? (?:request|prompt)/i,
@@ -49,8 +58,127 @@ const MFA_REQUEST_PATTERNS = [
   /(?:app|application|oauth).{0,24}(?:access|permission).{0,24}(?:grant|allow|authorize|approve)/i,
   /(?:geef|verleen|sta toe|machtig).{0,24}(?:app|applicatie|oauth).{0,24}(?:toegang|machtiging|rechten)/i,
   /(?:app|applicatie|oauth).{0,24}(?:toegang|machtiging|rechten).{0,24}(?:geven|verlenen|toestaan|machtigen|goedkeuren)/i,
+  /(?:grant|allow|authorize).{0,36}permission.{0,36}(?:profile|files?|contacts?|mailbox)/i,
+  /(?:choose|select|tap).{0,16}(?:approve|allow).{0,32}(?:request|prompt|sign-in|login)/i,
+  /(?:choose|select|tap).{0,16}(?:approve|allow)\b/i,
+  /(?:kies|selecteer|tik).{0,16}(?:goedkeuren|toestaan).{0,32}(?:verzoek|melding|aanmelding)/i,
+  /(?:kies|selecteer|tik).{0,24}(?:goedkeuren|toestaan)\b/i,
 ];
 const MFA_NEGATION_PATTERN = /(?:never|do not|nooit|niet).{0,24}(?:approve|goedkeur|keur).{0,18}(?:mfa|login|inlog)/i;
+const IDENTITY_REQUEST_PATTERNS = [
+  /\b(?:re-?identify|re-?identification|re-?verify|re-?verification)\b.{0,32}\b(?:your )?(?:account|identity|personal (?:details|information))\b/i,
+  /\b(?:account|identity|personal (?:details|information))\b.{0,32}\b(?:re-?identify|re-?identification|re-?verify|re-?verification)\b/i,
+  /\b(?:confirm|verify|update|review)\b.{0,48}\b(?:identity|personal details|date of birth|tax number|bank account)\b/i,
+  /\b(?:opnieuw\s+|her)(?:identificeren|identificatie|verifiëren|verificatie)\b/i,
+  /\b(?:account|identiteit|persoonsgegevens)\b.{0,32}\b(?:opnieuw\s+|her)(?:identificeren|identificatie|verifiëren|verificatie)\b/i,
+  /\b(?:bevestig(?:t|en)?|controleer(?:t|en)?|actualiseer(?:t|en)?|werk(?:t|en)? bij)\b.{0,48}\b(?:identiteit|identiteitsgegevens|persoonsgegevens|geboortedatum|bsn|bankrekening|klantprofiel)\b/i,
+  /\b(?:identiteit|identiteitsgegevens|persoonsgegevens|geboortedatum|bsn|bankrekening|klantprofiel)\b.{0,48}\b(?:bevestig(?:t|en)?|controleer(?:t|en)?|actualiseer(?:t|en)?|bijwerk(?:t|en)?)\b/i,
+];
+const IDENTITY_REQUEST_SUPPRESSIONS = [
+  /\b(?:in person|at the office|at your appointment|bring your identity document)\b/i,
+  /\b(?:op kantoor|tijdens uw afspraak|neem uw identiteitsbewijs mee|fysieke afspraak)\b/i,
+];
+const PAYMENT_REQUEST_PATTERNS = [
+  /wire transfer/i,
+  /gift card/i,
+  /payment (?:required|overdue|failed)/i,
+  /invoice (?:overdue|unpaid)/i,
+  /pay.{0,32}(?:redelivery|delivery|shipping) (?:fee|charge|cost)/i,
+  /\b(?:buy|purchase|send).{0,36}gift cards?\b/i,
+  /\b(?:pay|settle|transfer|send).{0,32}(?:invoice|fee|charge|funds?|money|€|\$)/i,
+  /betaal(?:methode|gegevens)/i,
+  /betaling.*(?:mislukt|vereist|achterstallig)/i,
+  /betaal.{0,40}(?:kosten|toeslag).{0,24}(?:bezorg|lever)/i,
+  /betaal.{0,40}(?:bezorg|lever|herbezorg).{0,20}(?:kosten|toeslag|tarief)/i,
+  /\b(?:betaal|voldoe|maak over|stuur).{0,36}(?:factuur|kosten|bedrag|€|rekening)\b/i,
+  /niet betaald/i,
+  /achterstallige factuur/i,
+  /terugbetaling/i,
+  /overschrijving/i,
+  /incasso/i,
+];
+const PAYMENT_REQUEST_SUPPRESSIONS = [
+  /\b(?:payment|transfer).{0,32}(?:received|completed|complete|receipt|already processed)\b/i,
+  /\b(?:received|completed|processed).{0,24}(?:payment|transfer)\b/i,
+  /\bno (?:payment|fee|further action) is required\b/i,
+  /\b(?:betaling|overschrijving).{0,32}(?:ontvangen|afgerond|voltooid|bewijs)\b/i,
+  /\b(?:geen betaling|geen extra kosten|u hoeft niets meer te doen)\b/i,
+];
+const CHANGED_PAYMENT_PATTERNS = [
+  /new (?:bank|payment|remittance) (?:account|details)/i,
+  /changed? (?:our )?(?:bank|payment|remittance) details/i,
+  /updated? (?:bank|payment|remittance) details/i,
+  /\b(?:use|send to).{0,32}(?:new|replacement).{0,20}(?:account|beneficiary)\b/i,
+  /\b(?:bank migration|update the beneficiary|remittance account changed)\b/i,
+  /nieuw(?:e)? (?:bankrekening|rekeningnummer|betaalgegevens)/i,
+  /gewijzigd(?:e)? (?:bankrekening|rekeningnummer|betaalgegevens)/i,
+  /\bgebruik.{0,32}(?:voortaan|vanaf nu).{0,24}(?:rekening|rekeningnummer)\b/i,
+  /\b(?:bankmigratie|pas de gegevens aan|nieuwe rekening voor)\b/i,
+];
+const CHANGED_PAYMENT_SUPPRESSIONS = [
+  /\b(?:unchanged|already recorded|usual|existing).{0,32}(?:bank|payment|remittance|supplier) (?:account|details)\b/i,
+  /\b(?:bank|payment|remittance|supplier) (?:account|details).{0,32}(?:unchanged|already recorded|usual|existing)\b/i,
+  /\b(?:ongewijzigd|al geregistreerd|gebruikelijk|bestaand).{0,32}(?:bank|betaal|rekening|leveranciersgegevens)\b/i,
+  /\b(?:bank|betaal|rekening|leveranciersgegevens).{0,32}(?:ongewijzigd|al geregistreerd|gebruikelijk|bestaand)\b/i,
+];
+const ATTACHMENT_LURE_PATTERNS = [
+  /open (?:the )?attachment/i,
+  /open (?:the )?attached (?:form|document|file)/i,
+  /download (?:the )?(?:document|invoice|file)/i,
+  /shared document/i,
+  /docusign/i,
+  /enable (?:editing|content|macros?)/i,
+  /open de bijlage/i,
+  /document (?:openen|downloaden|gedeeld)/i,
+  /gedeeld(?:e)? document.{0,12}(?:openen|bekijken)/i,
+  /schakel (?:bewerken|inhoud|macro'?s) in/i,
+];
+const ATTACHMENT_LURE_SUPPRESSIONS = [
+  /\b(?:discussed|approved|requested|agreed).{0,48}(?:report|attachment|document|invoice)\b/i,
+  /\b(?:report|attachment|document|invoice).{0,48}(?:discussed|approved|requested|agreed)\b/i,
+  /\b(?:besproken|goedgekeurd|aangevraagd|afgesproken).{0,48}(?:rapport|bijlage|document|factuur)\b/i,
+  /\b(?:rapport|bijlage|document|factuur).{0,48}(?:besproken|goedgekeurd|aangevraagd|afgesproken)\b/i,
+];
+const ACCOUNT_THREAT_SUPPRESSIONS = [
+  /\b(?:renews?|renewal).{0,64}(?:current agreement|no action|next month|unchanged)\b/i,
+  /\b(?:current agreement|no action|unchanged).{0,64}(?:renews?|renewal)\b/i,
+  /\b(?:verlengd|verlenging).{0,64}(?:huidige overeenkomst|geen actie|volgende maand|ongewijzigd)\b/i,
+];
+const CALLBACK_LURE_PATTERNS = [
+  /call (?:us|this number|support) (?:now|immediately|to cancel)/i,
+  /\bcall\b.{0,64}(?:\+?\d[\d\s().-]{6,}|fraud desk|to dispute|to cancel|stop the payment)\b/i,
+  /bel (?:ons|dit nummer|de helpdesk).*(?:direct|annuleren)/i,
+  /\bbel\b.{0,64}(?:\d[\d\s().-]{6,}|fraudeafdeling|betaling tegen te houden|annuleren)\b/i,
+];
+const CALLBACK_LURE_SUPPRESSIONS = [
+  /\b(?:official|published|known).{0,32}(?:number|directory|contact channel)\b/i,
+  /\b(?:company directory|signed-in account|official website)\b/i,
+  /\b(?:officieel|gepubliceerd|bekend).{0,32}(?:nummer|bedrijfsgids|contactkanaal)\b/i,
+  /\b(?:ingelogde account|officiële website|bedrijfsgids)\b/i,
+];
+const SUBSCRIBED_PROMOTION_PATTERNS = [
+  /\b(?:you subscribed|thanks for subscribing|opted in|existing subscribers?|manage (?:subscription )?preferences|unsubscribe)\b/i,
+  /\b(?:u hebt zich aangemeld|bedankt voor uw aanmelding|ingeschreven|bestaande abonnees?|abonnementsvoorkeuren|uitschrijven)\b/i,
+];
+const PROMOTION_PATTERNS = [
+  /congratulations/i,
+  /\bwinner\b/i,
+  /claim (?:your )?(?:prize|reward|gift|bonus)/i,
+  /exclusive offer/i,
+  /limited[ -]time (?:offer|discount|deal)/i,
+  /\b\d{1,2}% (?:off|discount|saving)s?\b/i,
+  /loyalty discount/i,
+  /renewal discount/i,
+  /winnaar/i,
+  /claim (?:uw|je) prijs/i,
+  /loyaliteitskorting/i,
+  /\b\d{1,2}% (?:korting|besparing)\b/i,
+  /korting van \d{1,2}%/i,
+  /(?:tijdelijke|speciale) aanbieding/i,
+  /verlengingskorting/i,
+  /offer expires soon/i,
+  /only \$?\d+(?:[.,]\d{2})?\s*\/\s*(?:year|month)/i,
+];
 const RISKY_TLDS = new Set(["zip", "mov", "click", "top", "xyz", "ru"]);
 const HOSTED_SENDER_DOMAINS = new Set(["firebaseapp.com", "web.app", "pages.dev", "netlify.app", "vercel.app"]);
 const SENSITIVE_URL_CONTEXT_EVIDENCE = new Set<EvidenceId>([
@@ -68,7 +196,9 @@ const SENSITIVE_URL_CONTEXT_EVIDENCE = new Set<EvidenceId>([
   "delivery_lure",
 ]);
 
-const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
+type PatternGroup = { id: EvidenceId; patterns: RegExp[] };
+
+const PATTERN_GROUPS: PatternGroup[] = [
   {
     id: "urgency_pressure",
     patterns: [
@@ -86,36 +216,23 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   },
   {
     id: "identity_reverification",
-    patterns: [
-      /\b(?:re-?identify|re-?identification|re-?verify|re-?verification)\b.{0,32}\b(?:your )?(?:account|identity|personal (?:details|information))\b/i,
-      /\b(?:account|identity|personal (?:details|information))\b.{0,32}\b(?:re-?identify|re-?identification|re-?verify|re-?verification)\b/i,
-      /\b(?:opnieuw\s+|her)(?:identificeren|identificatie|verifiëren|verificatie)\b/i,
-      /\b(?:account|identiteit|persoonsgegevens)\b.{0,32}\b(?:opnieuw\s+|her)(?:identificeren|identificatie|verifiëren|verificatie)\b/i,
-    ],
+    patterns: IDENTITY_REQUEST_PATTERNS,
   },
   {
     id: "payment_request",
-    patterns: [/wire transfer/i, /gift card/i, /payment (required|overdue|failed)/i, /invoice (overdue|unpaid)/i, /pay.{0,32}(?:redelivery|delivery|shipping) (?:fee|charge|cost)/i, /betaal(methode|gegevens)/i, /betaling.*(mislukt|vereist|achterstallig)/i, /betaal.{0,40}(?:kosten|toeslag).{0,24}(?:bezorg|lever)/i, /betaal.{0,40}(?:bezorg|lever|herbezorg).{0,20}(?:kosten|toeslag|tarief)/i, /niet betaald/i, /achterstallige factuur/i, /terugbetaling/i, /overschrijving/i, /incasso/i],
+    patterns: PAYMENT_REQUEST_PATTERNS,
   },
   {
     id: "changed_payment_details",
-    patterns: [/new (bank|payment) (account|details)/i, /changed? (our )?(bank|payment) details/i, /updated? (bank|payment) details/i, /nieuw(e)? (bankrekening|rekeningnummer|betaalgegevens)/i, /gewijzigd(e)? (bankrekening|rekeningnummer|betaalgegevens)/i],
+    patterns: CHANGED_PAYMENT_PATTERNS,
   },
   {
     id: "attachment_lure",
-    patterns: [/open (the )?attachment/i, /download (the )?(document|invoice|file)/i, /shared document/i, /docusign/i, /open de bijlage/i, /document (openen|downloaden|gedeeld)/i, /gedeeld(?:e)? document.{0,12}(?:openen|bekijken)/i],
+    patterns: ATTACHMENT_LURE_PATTERNS,
   },
   {
     id: "prize_promotion",
-    patterns: [
-      /congratulations/i, /\bwinner\b/i, /claim (your )?(prize|reward|gift|bonus)/i,
-      /exclusive offer/i, /limited[ -]time (?:offer|discount|deal)/i,
-      /\b\d{1,2}% (?:off|discount|saving)s?\b/i, /loyalty discount/i, /renewal discount/i,
-      /winnaar/i, /claim (uw|je) prijs/i, /loyaliteitskorting/i,
-      /\b\d{1,2}% (?:korting|besparing)\b/i, /korting van \d{1,2}%/i,
-      /(?:tijdelijke|speciale) aanbieding/i, /verlengingskorting/i,
-      /offer expires soon/i, /only \$?\d+(?:[.,]\d{2})?\s*\/\s*(?:year|month)/i,
-    ],
+    patterns: PROMOTION_PATTERNS,
   },
   {
     id: "account_threat",
@@ -183,7 +300,7 @@ const PATTERN_GROUPS: Array<{ id: EvidenceId; patterns: RegExp[] }> = [
   },
   {
     id: "callback_lure",
-    patterns: [/call (us|this number|support) (now|immediately|to cancel)/i, /bel (ons|dit nummer|de helpdesk).*(direct|annuleren)/i],
+    patterns: CALLBACK_LURE_PATTERNS,
   },
   {
     id: "unexpected_conversation",
@@ -208,16 +325,18 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput | AnalysisEnv
   const evidence = new Set<EvidenceId>();
 
   for (const group of PATTERN_GROUPS) {
-    const matches = group.id === "mfa_or_oauth_request"
-      ? hasActionableMfaRequest(messageContent)
-      : group.id === "credential_request"
-        ? hasActionableCredentialRequest(messageContent)
-        : group.patterns.some((pattern) => pattern.test(messageContent));
-    if (matches) evidence.add(group.id);
+    if (matchesPatternGroup(group, messageContent)) evidence.add(group.id);
   }
   if (evidence.has("identity_reverification")) evidence.delete("credential_request");
   if (hasDeliveryFeeLure(messageContent)) evidence.add("delivery_lure");
-  if (/(?:you subscribed|opted in|subscription preferences|aangemeld voor|abonnementsvoorkeuren)/i.test(messageContent)) {
+  if (
+    evidence.has("prize_promotion")
+    && hasCooccurringContext(
+      messageContent,
+      [PROMOTION_PATTERNS, SUBSCRIBED_PROMOTION_PATTERNS],
+      { windowSize: 2 },
+    )
+  ) {
     evidence.delete("prize_promotion");
   }
 
@@ -283,28 +402,89 @@ export function extractHtmlLinkPairs(content: string): EmailLinkPair[] {
 }
 
 function hasActionableCredentialRequest(content: string): boolean {
-  return content
-    .split(/(?:[.!?]+\s+|\n+)/)
-    .some((segment) =>
-      CREDENTIAL_REQUEST_PATTERNS.some((pattern) => pattern.test(segment))
-      && !CREDENTIAL_NEGATION_PATTERNS.some((pattern) => pattern.test(segment)),
-    );
+  return hasActionableMatch(
+    content,
+    CREDENTIAL_REQUEST_PATTERNS,
+    CREDENTIAL_NEGATION_PATTERNS,
+  );
 }
 
 function hasActionableMfaRequest(content: string): boolean {
-  return content
-    .split(/(?:[.!?]+\s+|\n+)/)
-    .some((segment) =>
-      MFA_REQUEST_PATTERNS.some((pattern) => pattern.test(segment))
-      && !MFA_NEGATION_PATTERN.test(segment),
-    );
+  return hasActionableMatch(content, MFA_REQUEST_PATTERNS, [MFA_NEGATION_PATTERN]);
 }
 
 function hasDeliveryFeeLure(content: string): boolean {
-  const deliveryProblem = /(?:parcel|package|shipment|delivery)[\s\S]{0,60}(?:could not be delivered|failed|held|on hold|returned|return to sender)|(?:could not be delivered|delivery failed)[\s\S]{0,60}(?:parcel|package|shipment)|(?:pakket|zending|bezorging|levering)[\s\S]{0,60}(?:niet bezorgd|kon niet worden bezorgd|mislukt|vastgehouden|teruggestuurd|retour)|(?:niet bezorgd|kon niet worden bezorgd)[\s\S]{0,60}(?:pakket|zending)/i.test(content);
-  const feeRequest = /(?:pay|payment|fee|charge|cost|€|\$)|(?:betaal|betaling|kosten|toeslag|tarief)/i.test(content);
-  const pressure = /(?:today|immediately|prevent|return(?:ed)? to sender|within \d{1,2} hours?)|(?:vandaag|direct|voorkom|terugzending|retour|binnen \d{1,2} (?:uur|uren))/i.test(content);
-  return deliveryProblem && feeRequest && pressure;
+  return hasCooccurringContext(
+    content,
+    [
+      [
+        /(?:parcel|package|shipment|delivery|address)[\s\S]{0,72}(?:could not be delivered|failed|held|on hold|address error|did not match|storage|returned|return to sender)/i,
+        /(?:could not be delivered|delivery failed|address error)[\s\S]{0,72}(?:parcel|package|shipment|delivery)/i,
+        /(?:pakket|zending|bezorging|levering|adres|postcode)[\s\S]{0,72}(?:niet bezorgd|kon niet worden bezorgd|mislukt|vastgehouden|in de wacht|adresfout|kwam niet overeen|opslag|teruggestuurd|retour)/i,
+      ],
+      [/(?:pay|payment|fee|charge|cost|€|\$)|(?:betaal|betaling|voldoe|kosten|toeslag|tarief)/i],
+      [/(?:today|immediately|prevent|storage|return(?:ed)? to sender|within \d{1,2} (?:hours?|days?))|(?:vandaag|direct|voorkom|opslag|terugzending|retour|binnen|maximaal \w+ (?:uur|dagen))/i],
+    ],
+    {
+      suppressions: [
+        /\b(?:delivered|shipped|bestelling is verzonden|bezorgd).{0,64}(?:no payment|no extra fee|geen betaling|geen extra kosten)\b/i,
+        /\b(?:no payment|no extra fee|geen betaling|geen extra kosten).{0,64}(?:delivered|shipped|verzonden|bezorgd)\b/i,
+      ],
+      windowSize: 2,
+    },
+  );
+}
+
+function matchesPatternGroup(group: PatternGroup, content: string): boolean {
+  if (group.id === "credential_request") {
+    return hasActionableCredentialRequest(content);
+  }
+  if (group.id === "mfa_or_oauth_request") {
+    return hasActionableMfaRequest(content);
+  }
+  if (group.id === "identity_reverification") {
+    return hasActionableMatch(
+      content,
+      group.patterns,
+      IDENTITY_REQUEST_SUPPRESSIONS,
+    );
+  }
+  if (group.id === "payment_request") {
+    return hasActionableMatch(
+      content,
+      group.patterns,
+      PAYMENT_REQUEST_SUPPRESSIONS,
+    );
+  }
+  if (group.id === "changed_payment_details") {
+    return hasActionableMatch(
+      content,
+      group.patterns,
+      CHANGED_PAYMENT_SUPPRESSIONS,
+    );
+  }
+  if (group.id === "attachment_lure") {
+    return hasActionableMatch(
+      content,
+      group.patterns,
+      ATTACHMENT_LURE_SUPPRESSIONS,
+    );
+  }
+  if (group.id === "account_threat") {
+    return hasActionableMatch(
+      content,
+      group.patterns,
+      ACCOUNT_THREAT_SUPPRESSIONS,
+    );
+  }
+  if (group.id === "callback_lure") {
+    return hasActionableMatch(
+      content,
+      group.patterns,
+      CALLBACK_LURE_SUPPRESSIONS,
+    );
+  }
+  return group.patterns.some((pattern) => pattern.test(content));
 }
 
 function addSenderEvidence(sender: string, links: string[], evidence: Set<EvidenceId>) {

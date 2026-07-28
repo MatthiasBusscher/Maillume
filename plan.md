@@ -1,6 +1,6 @@
 # Maillume Heuristic Scanner Improvement Plan
 
-_Created: 2026-07-27 · Status: in progress (Phases 0–2 complete) · Scope: heuristic accuracy, evaluation, and explainability_
+_Created: 2026-07-27 · Status: in progress (Phases 0–3 complete) · Scope: heuristic accuracy, evaluation, and explainability_
 
 ## 1. Goal
 
@@ -288,6 +288,10 @@ Exit criteria:
 **Objective:** distinguish instructions to perform a risky action from warnings, receipts,
 completed events, and user-requested actions.
 
+**Status:** Completed on 28 July 2026 within `analysis-v8`. The context model,
+approved hard negatives, mixed-message regressions, before/after evaluation,
+and performance review are recorded in `docs/context-evidence.md`.
+
 Extend contextual handling beyond credentials and MFA:
 
 - payment requested versus payment received;
@@ -320,8 +324,8 @@ Likely files:
 
 Exit criteria:
 
-- Hard-negative performance improves without hiding real attack instructions.
-- Mixed messages containing both safety advice and a malicious instruction retain the
+- [x] Hard-negative performance improves without hiding real attack instructions.
+- [x] Mixed messages containing both safety advice and a malicious instruction retain the
   malicious evidence.
 
 ### Phase 4 — Add evidence-coverage output
@@ -492,12 +496,12 @@ act as a holdout.
 - [x] At least 60 independent cases satisfy the corpus requirements.
 - [ ] Provisional release metrics are confirmed or replaced with justified thresholds.
 - [x] URL and domain analysis covers the approved structural signals without network access.
-- [ ] Context handling covers the approved hard-negative categories.
+- [x] Context handling covers the approved hard-negative categories.
 - [ ] Every result clearly reports evidence coverage.
 - [ ] New attack chains are independently justified and visibly explainable.
 - [ ] Privacy-safe feedback can guide fixture priorities without exposing scan content.
 - [x] Runtime remains deterministic, bounded, and within the reviewed regression budget.
-- [ ] English and Dutch behavior remains within the language-parity gate.
+- [x] English and Dutch behavior remains within the language-parity gate.
 - [x] Web, API, and extension contracts are compatible and tested.
 - [x] The analysis version is bumped and documented for behavioral changes.
 - [ ] All CI, security, browser, extension, and production-image checks pass.

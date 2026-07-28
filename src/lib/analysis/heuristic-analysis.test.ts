@@ -223,6 +223,168 @@ assert.ok(
   "A warning sentence must not suppress an actionable MFA request elsewhere",
 );
 
+const contextHardNegatives = [
+  {
+    id: "requested-password-reset",
+    absentFactor: "credential_request",
+    result: analyzeEmailHeuristic({
+      subject: "Your requested password reset",
+      senderEmail: "security@service.example",
+      body: "You requested a password reset from your signed-in account. No action is needed and your password is unchanged.",
+    }),
+  },
+  {
+    id: "completed-wire-transfer",
+    absentFactor: "payment_request",
+    result: analyzeEmailHeuristic({
+      senderEmail: "receipts@bank.example",
+      body: "Your wire transfer was received and completed. This receipt confirms it was already processed.",
+    }),
+  },
+  {
+    id: "unchanged-bank-details",
+    absentFactor: "changed_payment_details",
+    result: analyzeEmailHeuristic({
+      senderEmail: "billing@supplier.example",
+      body: "Our unchanged bank details are already recorded in your supplier account.",
+    }),
+  },
+  {
+    id: "ordinary-subscription-renewal",
+    absentFactor: "account_threat",
+    result: analyzeEmailHeuristic({
+      senderEmail: "accounts@service.example",
+      body: "Your subscription renews next month under the current agreement. No action is required and the price is unchanged.",
+    }),
+  },
+  {
+    id: "subscribed-newsletter-promotion",
+    absentFactor: "prize_promotion",
+    result: analyzeEmailHeuristic({
+      senderEmail: "newsletter@shop.example",
+      body: "Thanks for subscribing to our weekly newsletter. Existing subscribers receive 10% discount; manage subscription preferences at any time.",
+    }),
+  },
+  {
+    id: "previously-discussed-attachment",
+    absentFactor: "attachment_lure",
+    result: analyzeEmailHeuristic({
+      senderEmail: "colleague@company.example",
+      body: "Open the attachment containing the report we discussed and approved during yesterday's meeting.",
+    }),
+  },
+  {
+    id: "in-person-identity-check",
+    absentFactor: "identity_reverification",
+    result: analyzeEmailHeuristic({
+      senderEmail: "appointments@municipality.example",
+      body: "At your appointment, bring your identity document so we can verify your identity in person at the office.",
+    }),
+  },
+  {
+    id: "published-support-number",
+    absentFactor: "callback_lure",
+    result: analyzeEmailHeuristic({
+      senderEmail: "support@bank.example",
+      body: "Call support at 020 123 4567 using the published number in the company directory or official website.",
+    }),
+  },
+] as const;
+
+for (const fixture of contextHardNegatives) {
+  assert.ok(
+    !fixture.result.score_factors.some(
+      (factor) => factor.id === fixture.absentFactor,
+    ),
+    `${fixture.id}: routine context must suppress ${fixture.absentFactor}`,
+  );
+  assert.notEqual(
+    fixture.result.risk_level,
+    "high",
+    `${fixture.id}: a routine message must not become high risk`,
+  );
+}
+
+const mixedCredentialMessage = analyzeEmailHeuristic({
+  senderEmail: "notice@account-review.invalid",
+  body: "Never share a password with an unexpected caller. Enter your password in the attached account form now to avoid suspension.",
+});
+assert.ok(
+  mixedCredentialMessage.score_factors.some(
+    (factor) => factor.id === "credential_request",
+  ),
+  "Credential safety advice must not suppress a malicious instruction in another sentence",
+);
+
+const mixedPaymentMessage = analyzeEmailHeuristic({
+  senderEmail: "billing@supplier-change.invalid",
+  body: "Your previous wire transfer was received and completed. Transfer the outstanding invoice to our new bank account today.",
+});
+assert.ok(
+  mixedPaymentMessage.score_factors.some(
+    (factor) => factor.id === "payment_request",
+  ),
+  "A completed-payment notice must not suppress a new payment request elsewhere",
+);
+assert.ok(
+  mixedPaymentMessage.score_factors.some(
+    (factor) => factor.id === "changed_payment_details",
+  ),
+  "A completed-payment notice must not suppress changed bank details elsewhere",
+);
+
+const mixedCallbackMessage = analyzeEmailHeuristic({
+  senderEmail: "alerts@payment-review.invalid",
+  body: "For ordinary questions, use the number on our official website. Call this number now at 010 000 0000 to stop the payment.",
+});
+assert.ok(
+  mixedCallbackMessage.score_factors.some(
+    (factor) => factor.id === "callback_lure",
+  ),
+  "Official-directory advice must not suppress an unverified callback instruction elsewhere",
+);
+
+const contextPositiveRegressions = [
+  {
+    id: "Dutch identity-verification demand",
+    factorIds: ["identity_reverification"],
+    result: analyzeEmailHeuristic({
+      locale: "nl",
+      body: "Uw aangifte kan niet worden verwerkt totdat u uw BSN, geboortedatum en bankrekening bevestigt in het verificatievenster.",
+      evidenceTruncated: true,
+    }),
+  },
+  {
+    id: "Dutch MFA-fatigue instruction",
+    factorIds: ["mfa_or_oauth_request"],
+    result: analyzeEmailHeuristic({
+      locale: "nl",
+      body: "U ontvangt enkele verificatiemeldingen door onze migratietest. Kies telkens Goedkeuren zodat de servicedesk uw account kan overzetten.",
+    }),
+  },
+  {
+    id: "Payroll attachment credential lure",
+    factorIds: ["attachment_lure", "credential_request"],
+    result: analyzeEmailHeuristic({
+      body: "The payroll portal rejected your tax form. Open the attached form, enter your employee login and resubmit it today.",
+      evidenceTruncated: true,
+    }),
+  },
+] as const;
+
+for (const fixture of contextPositiveRegressions) {
+  for (const factorId of fixture.factorIds) {
+    assert.ok(
+      fixture.result.score_factors.some((factor) => factor.id === factorId),
+      `${fixture.id}: expected ${factorId} evidence`,
+    );
+  }
+  assert.ok(
+    fixture.result.risk_score > 0,
+    `${fixture.id}: an actionable attack instruction must retain visible evidence`,
+  );
+}
+
 const changedPaymentDetails = analyzeEmailHeuristic({
   senderEmail: "director@company-finance.example",
   body: "This is the CEO. Use our new bank account for the urgent supplier transfer today.",
@@ -393,7 +555,7 @@ for (const result of maillumeFirstPartyMessages) {
   assert.ok(!result.score_factors.some((factor) => factor.id === "external_link"));
 }
 
-for (const result of [dutchResult, dutchRenewalFraud, strongSingleFamilySpam, sameFamilyAttackChain, weakSignalsRemainLow, supportTicketBackscatter, hostedStorageLure, structuralUrlRegression, ipLiteralCredentialDestination, nestedBrandRedirect, internationalizedDomainCaution, atSignPathRegression, brandSubstringRegression, redirectRegression, bareDomainMismatch, unquotedHrefMismatch, changedPaymentDetails, ...deliveryFeeLures, legitimateDeliveryUpdate, ...oauthConsentLures, ...hiddenUnicodeCredentialLures, ...credentialMentionHardNegatives, uwvConfirmationWithoutButton, ...digitSubstitutionLookalikes, insufficientContext, noWarningSignals, dangerousAttachment, macroOnlyAttachment, ...maillumeFirstPartyMessages]) {
+for (const result of [dutchResult, dutchRenewalFraud, strongSingleFamilySpam, sameFamilyAttackChain, weakSignalsRemainLow, supportTicketBackscatter, hostedStorageLure, structuralUrlRegression, ipLiteralCredentialDestination, nestedBrandRedirect, internationalizedDomainCaution, atSignPathRegression, brandSubstringRegression, redirectRegression, bareDomainMismatch, unquotedHrefMismatch, mfaNegationBypass, ...contextHardNegatives.map((fixture) => fixture.result), mixedCredentialMessage, mixedPaymentMessage, mixedCallbackMessage, ...contextPositiveRegressions.map((fixture) => fixture.result), changedPaymentDetails, ...deliveryFeeLures, legitimateDeliveryUpdate, ...oauthConsentLures, ...hiddenUnicodeCredentialLures, ...credentialMentionHardNegatives, uwvConfirmationWithoutButton, ...digitSubstitutionLookalikes, insufficientContext, noWarningSignals, dangerousAttachment, macroOnlyAttachment, ...maillumeFirstPartyMessages]) {
   assert.equal(
     result.score_factors.reduce((total, factor) => total + factor.contribution, 0),
     result.risk_score,
