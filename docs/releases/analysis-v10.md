@@ -43,6 +43,13 @@ Independent spam non-low remains 1/12 (8.3%). English/Dutch gaps remain below te
 percentage points. The maximum-size local benchmark p95 changed from 1.813 ms to
 2.090 ms, about 1.15× and below the reviewed 2× regression threshold.
 
+The provisional 90% phishing non-low, 75% phishing high, and 85% spam non-low
+percentages are retained as research targets rather than release gates. The small
+independent corpus cannot support threshold tuning against its sealed cases. This
+release instead requires no regression on the unchanged locked split, all existing
+synthetic and advisory gates, legitimate-message safety, language parity, factor-sum
+and determinism invariants, and the runtime budget.
+
 The general classification thresholds are unchanged:
 
 - high risk requires a score of at least 70 and two strong evidence families;

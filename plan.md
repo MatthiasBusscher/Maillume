@@ -122,6 +122,25 @@ Confirm or revise these thresholds after the expanded corpus produces a baseline
 Every reported metric must include the numerator, denominator, scenario count, language,
 source, and analysis version. Percentages without sample sizes are not sufficient.
 
+**Resolution after the expanded baseline:** the 90% phishing non-low, 75% phishing high,
+and 85% spam non-low percentages remain aspirational research targets, not release gates.
+The independent set contains only 24 phishing and 12 spam scenarios, and changing a
+threshold until the sealed split crosses a chosen percentage would tune against the
+holdout rather than demonstrate generalization.
+
+For this project, a behavior-changing release instead requires:
+
+- the frozen corpus revision to remain unchanged;
+- no independent locked-split regression from the preceding version;
+- the synthetic locked gates and public-advisory regressions to pass;
+- legitimate non-low/high and English/Dutch parity to remain within the limits above;
+- all attack-chain, visible-factor-sum, determinism, and missing-evidence invariants above
+  to pass;
+- the reviewed runtime budget to pass.
+
+The aspirational rates may become release gates only after a larger independently authored
+and re-frozen corpus can support them without tuning against its sealed cases.
+
 ### 5.3 Runtime budget
 
 The heuristic engine must remain local and inexpensive:
@@ -473,7 +492,7 @@ Tasks:
 - [x] Update English and Dutch result copy.
 - [x] Update the OpenAPI contract and extension compatibility range.
 - [x] Run typecheck, lint, analysis, security, integration, extension, build, and browser suites.
-- Build and scan the production container.
+- [x] Build and scan the production container.
 - [x] Test the web app and packaged extension against the same revision.
 - [x] Add release notes explaining improved categories and known limitations.
 - [x] Monitor only aggregate, content-free feedback and quota/availability counters.
@@ -507,7 +526,7 @@ act as a holdout.
 
 - [x] Evaluation reporting distinguishes distinct scenarios from generated variants.
 - [x] At least 60 independent cases satisfy the corpus requirements.
-- [ ] Provisional release metrics are confirmed or replaced with justified thresholds.
+- [x] Provisional release metrics are confirmed or replaced with justified thresholds.
 - [x] URL and domain analysis covers the approved structural signals without network access.
 - [x] Context handling covers the approved hard-negative categories.
 - [x] Every result clearly reports evidence coverage.
