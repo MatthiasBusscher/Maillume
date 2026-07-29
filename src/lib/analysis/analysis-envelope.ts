@@ -44,8 +44,9 @@ export function createAnalysisEnvelope(
       sender: Boolean(senderEmail),
       linkDestinations: source !== "screenshot" || links.length > 0,
       authenticationHeaders: Boolean(emailAuthentication),
+      attachmentEvidence: source === "eml" || attachmentRiskTypes.length > 0,
       textExtraction: source === "screenshot" ? "ocr" : source === "eml" ? "parsed" : "direct",
-      contentComplete: input.evidenceTruncated !== true,
+      contentComplete: input.evidenceTruncated !== true && source !== "screenshot",
     },
   };
 }

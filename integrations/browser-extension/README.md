@@ -16,7 +16,7 @@ The deployment URL is stored in extension-local storage. With **Remember API key
 
 Chrome 116 or newer is required for programmatic, tab-specific side-panel opening.
 
-The panel requires the `analysis-v7` classification and score-factor breakdown, verifies that factor contributions sum to the risk index, and rejects unsafe detected-link schemes.
+The panel accepts the versioned `analysis-v6` through `analysis-v10` classification and score-factor contracts, verifies that factor contributions sum to the risk index, requires valid evidence coverage from `analysis-v9` onward, and rejects unsafe detected-link schemes. Version 0.3.8 can be published before the `analysis-v10` server upgrade; older panels fail closed on the new pipeline version.
 
 ## Troubleshooting the manual beta
 

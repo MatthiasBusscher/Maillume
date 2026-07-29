@@ -15,7 +15,7 @@ export const ANALYSIS_DISCLAIMERS = {
   nl: "Dit is een geautomatiseerde risicobeoordeling en geen garantie.",
 } as const satisfies Record<AnalysisLocale, string>;
 export const ANALYSIS_DISCLAIMER = ANALYSIS_DISCLAIMERS.en;
-export const ANALYSIS_PIPELINE_VERSION = "analysis-v7";
+export const ANALYSIS_PIPELINE_VERSION = "analysis-v10";
 export const ANALYSIS_ENVELOPE_VERSION = "analysis-envelope-v2";
 
 export const MAX_SCAN_BODY_LENGTH = 20_000;
@@ -81,8 +81,19 @@ export type AnalysisEvidenceAvailability = {
   sender: boolean;
   linkDestinations: boolean;
   authenticationHeaders: boolean;
+  attachmentEvidence: boolean;
   textExtraction: "direct" | "ocr" | "parsed";
   contentComplete: boolean;
+};
+
+export type EvidenceCoverage = {
+  subject_available: boolean;
+  sender_available: boolean;
+  full_content_available: boolean;
+  link_destinations_available: boolean;
+  authentication_results_available: boolean;
+  attachment_evidence_available: boolean;
+  extraction_type: AnalysisEvidenceAvailability["textExtraction"];
 };
 
 export type AnalysisEnvelope = {
@@ -113,6 +124,7 @@ export type EmailAnalysisResult = {
   detected_links: string[];
   recommended_action: string;
   short_explanation: string;
+  evidence_coverage: EvidenceCoverage;
 };
 
 export type AnalyzeResponse = {

@@ -1,5 +1,5 @@
 const elements = Object.fromEntries(
-  ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"]
+  ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"]
     .map((id) => [id, document.getElementById(id)]),
 );
 let activeTabId;
@@ -14,10 +14,11 @@ let captureRetryCount = 0;
 let capturePending = false;
 let capturedLinks = [];
 let capturedLinkPairs = [];
+let capturedContentComplete = false;
 // The result contract is additive: newer pipelines add evidence IDs inside the same
 // score_factors shape. Accepting a range keeps installed panels working while a server
 // deploy and a Chrome Web Store review land at different times.
-const SUPPORTED_ANALYSIS_VERSIONS = ["analysis-v6", "analysis-v7"];
+const SUPPORTED_ANALYSIS_VERSIONS = ["analysis-v6", "analysis-v7", "analysis-v8", "analysis-v9", "analysis-v10"];
 
 const dynamicCopy = {
   en: {
@@ -65,6 +66,21 @@ const dynamicCopy = {
     initializationFailed: "The side panel could not initialize. Close it and use the toolbar action again.",
     levels: { low: "Low", medium: "Medium", high: "High" },
     classifications: { likely_phishing: "Likely phishing or fraud", likely_spam: "Likely spam", likely_legitimate: "Likely legitimate", uncertain: "Uncertain" },
+    coverageComplete: "Maillume received the main message evidence needed for this assessment.",
+    coverageLimited: "Some message evidence was unavailable. Missing details can change the assessment.",
+    coveragePartial: "This assessment uses selected or incomplete text. Content outside the captured text can change the result.",
+    coverageOcr: "This assessment uses OCR-extracted text. Missed text and hidden link destinations can change the result.",
+    coverageLabels: {
+      subject: "Subject",
+      sender: "Sender",
+      fullContent: "Full content",
+      linkDestinations: "Link destinations",
+      authentication: "Authentication results",
+      attachments: "Attachment evidence",
+      extraction: "Text extraction",
+    },
+    coverageStates: { available: "Available", unavailable: "Unavailable" },
+    extractionTypes: { direct: "Direct text", ocr: "OCR", parsed: "Parsed .eml" },
     points: "points",
     hideInstructions: "Hide instructions",
     showInstructions: "Show instructions",
@@ -116,6 +132,21 @@ const dynamicCopy = {
     initializationFailed: "Het zijpaneel kon niet worden gestart. Sluit het en gebruik de werkbalkknop opnieuw.",
     levels: { low: "Laag", medium: "Middel", high: "Hoog" },
     classifications: { likely_phishing: "Waarschijnlijk phishing of fraude", likely_spam: "Waarschijnlijk spam", likely_legitimate: "Waarschijnlijk legitiem", uncertain: "Onzeker" },
+    coverageComplete: "Maillume ontving de belangrijkste berichtgegevens voor deze beoordeling.",
+    coverageLimited: "Sommige berichtgegevens waren niet beschikbaar. Ontbrekende details kunnen de beoordeling veranderen.",
+    coveragePartial: "Deze beoordeling gebruikt geselecteerde of onvolledige tekst. Inhoud buiten de vastgelegde tekst kan het resultaat veranderen.",
+    coverageOcr: "Deze beoordeling gebruikt tekst uit OCR. Gemiste tekst en verborgen linkbestemmingen kunnen het resultaat veranderen.",
+    coverageLabels: {
+      subject: "Onderwerp",
+      sender: "Afzender",
+      fullContent: "Volledige inhoud",
+      linkDestinations: "Linkbestemmingen",
+      authentication: "Authenticatieresultaten",
+      attachments: "Bijlagegegevens",
+      extraction: "Tekstextractie",
+    },
+    coverageStates: { available: "Beschikbaar", unavailable: "Niet beschikbaar" },
+    extractionTypes: { direct: "Directe tekst", ocr: "OCR", parsed: "Verwerkt .eml-bestand" },
     points: "punten",
     hideInstructions: "Uitleg verbergen",
     showInstructions: "Uitleg tonen",
@@ -218,6 +249,7 @@ async function consumeCapture(tabId) {
     if (typeof capture.sender === "string") elements.sender.value = capture.sender.slice(0, 320);
     capturedLinks = Array.isArray(capture.links) ? capture.links : [];
     capturedLinkPairs = Array.isArray(capture.linkPairs) ? capture.linkPairs : [];
+    capturedContentComplete = capture.source === "open_message";
     lastAppliedCaptureId = capture.captureId || latestCaptureId;
     updateAnalyzeState();
     setStatus(capture.source === "open_message" ? copy.openMessageCaptured : copy.captured);
@@ -416,6 +448,7 @@ elements.analyze.addEventListener("click", async () => {
           locale: getLocale(),
           links: capturedLinks,
           linkPairs: capturedLinkPairs,
+          ...(!capturedContentComplete ? { evidenceTruncated: true } : {}),
         }),
       });
     } catch {
@@ -448,6 +481,7 @@ for (const id of ["body", "endpoint", "apiKey"]) {
     if (id === "body") {
       capturedLinks = [];
       capturedLinkPairs = [];
+      capturedContentComplete = false;
     }
     updateDestination();
     updateAnalyzeState();
@@ -551,9 +585,26 @@ function getDynamicCopy() {
   return dynamicCopy[getLocale()];
 }
 
-function isAnalysisResult(result) {
+function isEvidenceCoverage(coverage) {
+  return Boolean(
+    coverage
+    && typeof coverage === "object"
+    && typeof coverage.subject_available === "boolean"
+    && typeof coverage.sender_available === "boolean"
+    && typeof coverage.full_content_available === "boolean"
+    && typeof coverage.link_destinations_available === "boolean"
+    && typeof coverage.authentication_results_available === "boolean"
+    && typeof coverage.attachment_evidence_available === "boolean"
+    && ["direct", "ocr", "parsed"].includes(coverage.extraction_type)
+  );
+}
+
+function isAnalysisResult(result, analysisVersion) {
   const classifications = ["likely_phishing", "likely_spam", "likely_legitimate", "uncertain"];
   const families = ["identity", "destination", "intent", "delivery", "style"];
+  const coverageIsPresent = result?.evidence_coverage !== undefined;
+  const coverageIsRequired = analysisVersion === "analysis-v9"
+    || analysisVersion === "analysis-v10";
   const factorsAreValid = Array.isArray(result?.score_factors)
     && result.score_factors.every((factor) => factor
       && typeof factor.id === "string"
@@ -577,6 +628,11 @@ function isAnalysisResult(result) {
     && result.detected_links.every(isHttpUrl)
     && typeof result.short_explanation === "string"
     && typeof result.recommended_action === "string"
+    && (
+      coverageIsPresent
+        ? isEvidenceCoverage(result.evidence_coverage)
+        : !coverageIsRequired
+    )
   );
 }
 
@@ -586,7 +642,7 @@ function isAnalysisResponse(payload) {
   return Boolean(
     payload
     && typeof payload === "object"
-    && isAnalysisResult(payload.result)
+    && isAnalysisResult(payload.result, payload.analysis_version)
     && ["heuristic", "ai"].includes(payload.analysis_mode)
     && providers.includes(payload.analysis_provider)
     && SUPPORTED_ANALYSIS_VERSIONS.includes(payload.analysis_version)
@@ -625,6 +681,7 @@ function clearMessageData() {
   elements.body.value = "";
   capturedLinks = [];
   capturedLinkPairs = [];
+  capturedContentComplete = false;
   clearResult();
   elements.reviewStep.hidden = false;
   elements.analyze.hidden = false;
@@ -636,6 +693,10 @@ function clearResult() {
   elements.level.textContent = "";
   elements.classification.textContent = "";
   elements.explanation.textContent = "";
+  elements.coverageSummary.textContent = "";
+  elements.coverage.replaceChildren();
+  elements.coverageSection.hidden = true;
+  elements.coverageSection.dataset.limited = "";
   elements.factors.replaceChildren();
   elements.action.textContent = "";
   elements.signals.replaceChildren();
@@ -651,6 +712,7 @@ function renderResult(result) {
   elements.classification.textContent = copy.classifications[result.classification];
   elements.explanation.textContent = result.short_explanation;
   elements.action.textContent = result.recommended_action;
+  renderEvidenceCoverage(result.evidence_coverage);
   elements.factors.replaceChildren(...result.score_factors.map((factor) => {
     const item = document.createElement("li");
     item.textContent = `${factor.label}: +${factor.contribution} ${copy.points}`;
@@ -664,4 +726,47 @@ function renderResult(result) {
   elements.reviewStep.hidden = true;
   elements.analyze.hidden = true;
   elements.result.hidden = false;
+}
+
+function renderEvidenceCoverage(coverage) {
+  if (!coverage) {
+    elements.coverageSection.hidden = true;
+    return;
+  }
+
+  const copy = getDynamicCopy();
+  const materiallyLimited = !coverage.sender_available
+    || !coverage.full_content_available
+    || !coverage.link_destinations_available;
+  elements.coverageSection.dataset.limited = String(
+    materiallyLimited || coverage.extraction_type === "ocr",
+  );
+  elements.coverageSummary.textContent = coverage.extraction_type === "ocr"
+    ? copy.coverageOcr
+    : !coverage.full_content_available
+      ? copy.coveragePartial
+      : materiallyLimited
+        ? copy.coverageLimited
+        : copy.coverageComplete;
+
+  const rows = [
+    [copy.coverageLabels.subject, coverage.subject_available],
+    [copy.coverageLabels.sender, coverage.sender_available],
+    [copy.coverageLabels.fullContent, coverage.full_content_available],
+    [copy.coverageLabels.linkDestinations, coverage.link_destinations_available],
+    [copy.coverageLabels.authentication, coverage.authentication_results_available],
+    [copy.coverageLabels.attachments, coverage.attachment_evidence_available],
+  ].map(([label, available]) => {
+    const item = document.createElement("li");
+    item.textContent = `${label}: ${
+      available ? copy.coverageStates.available : copy.coverageStates.unavailable
+    }`;
+    return item;
+  });
+  const extraction = document.createElement("li");
+  extraction.textContent = `${copy.coverageLabels.extraction}: ${
+    copy.extractionTypes[coverage.extraction_type]
+  }`;
+  elements.coverage.replaceChildren(...rows, extraction);
+  elements.coverageSection.hidden = false;
 }

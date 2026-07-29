@@ -5,6 +5,15 @@ import test from "node:test";
 import { verifyPublicDeployment } from "../../scripts/verify-public-deployment.mjs";
 
 const revision = "1".repeat(40);
+const evidenceCoverage = {
+  subject_available: false,
+  sender_available: false,
+  full_content_available: true,
+  link_destinations_available: true,
+  authentication_results_available: false,
+  attachment_evidence_available: false,
+  extraction_type: "direct",
+};
 
 test("waits until the public route serves the approved revision", async (t) => {
   let healthRequests = 0;
@@ -18,14 +27,17 @@ test("waits until the public route serves the approved revision", async (t) => {
       response.end(JSON.stringify({
         status: "ok",
         revision: healthRequests === 1 ? "0".repeat(40) : revision,
-        analysis_version: "analysis-v7",
+        analysis_version: "analysis-v10",
       }));
       return;
     }
     if (request.url === "/api/analyze") {
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Content-Type", "application/json");
-      response.end(JSON.stringify({ analysis_version: "analysis-v7", result: { risk_score: 0 } }));
+      response.end(JSON.stringify({
+        analysis_version: "analysis-v10",
+        result: { risk_score: 0, evidence_coverage: evidenceCoverage },
+      }));
       return;
     }
     response.end("ok");
@@ -52,7 +64,7 @@ test("rejects unexpected public health fields", async (t) => {
     response.end(JSON.stringify({
       status: "ok",
       revision,
-      analysis_version: "analysis-v7",
+      analysis_version: "analysis-v10",
       database: "connected",
     }));
   });
@@ -78,13 +90,16 @@ test("rejects Cloudflare email obfuscation on the marketing page", async (t) => 
     if (request.url?.startsWith("/api/health")) {
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Content-Type", "application/json");
-      response.end(JSON.stringify({ status: "ok", revision, analysis_version: "analysis-v7" }));
+      response.end(JSON.stringify({ status: "ok", revision, analysis_version: "analysis-v10" }));
       return;
     }
     if (request.url === "/api/analyze") {
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Content-Type", "application/json");
-      response.end(JSON.stringify({ analysis_version: "analysis-v7", result: { risk_score: 0 } }));
+      response.end(JSON.stringify({
+        analysis_version: "analysis-v10",
+        result: { risk_score: 0, evidence_coverage: evidenceCoverage },
+      }));
       return;
     }
     if (request.url === "/") {
@@ -106,6 +121,53 @@ test("rejects Cloudflare email obfuscation on the marketing page", async (t) => 
     }),
     /Email Address Obfuscation markup that can break React hydration/,
   );
+});
+
+test("rejects missing or malformed public evidence coverage", async () => {
+  for (const malformedCoverage of [
+    undefined,
+    { ...evidenceCoverage, sender_available: "yes" },
+    { ...evidenceCoverage, extraction_type: "selected" },
+  ]) {
+    const server = await createServer((request, response) => {
+      response.setHeader("X-Content-Type-Options", "nosniff");
+      response.setHeader("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'");
+      if (request.url?.startsWith("/api/health")) {
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Content-Type", "application/json");
+        response.end(JSON.stringify({ status: "ok", revision, analysis_version: "analysis-v10" }));
+        return;
+      }
+      if (request.url === "/api/analyze") {
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Content-Type", "application/json");
+        response.end(JSON.stringify({
+          analysis_version: "analysis-v10",
+          result: {
+            risk_score: 0,
+            ...(malformedCoverage === undefined
+              ? {}
+              : { evidence_coverage: malformedCoverage }),
+          },
+        }));
+        return;
+      }
+      response.end("ok");
+    });
+
+    const origin = `http://127.0.0.1:${server.address().port}`;
+    await assert.rejects(
+      verifyPublicDeployment({
+        appUrl: origin,
+        marketingUrl: origin,
+        expectedRevision: revision,
+        attempts: 1,
+        delayMs: 0,
+      }),
+      /unexpected contract/,
+    );
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
 
 function createServer(handler) {

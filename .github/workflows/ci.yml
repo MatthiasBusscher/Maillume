@@ -66,6 +66,8 @@ jobs:
 
       - name: Package integration artifacts
         run: npm run package:integrations
+        env:
+          BUILD_REVISION: ${{ github.sha }}
 
       - name: Load browser extension
         run: npm run test:extension

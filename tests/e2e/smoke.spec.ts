@@ -15,6 +15,12 @@ test("paste analysis renders a structured result and disclaimer", async ({ page 
   await page.getByRole("button", { name: "Analyze email" }).click();
 
   await expect(page.getByText("Risk score")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Evidence coverage", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Maillume received the main message evidence needed for this assessment."),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Suspicious signals", exact: true })).toBeVisible();
   await expect(page.getByRole("meter")).toHaveAttribute("aria-valuenow", /\d+/);
   await expect(
@@ -33,6 +39,9 @@ test("language switching updates the scanner", async ({ page }) => {
   await expect(page.getByLabel("Onderwerp")).toHaveValue("Actie vereist: toegang tot mailbox verloopt");
   await expect(page.getByLabel("E-mailinhoud")).toHaveValue(/Je Microsoft 365-account wordt vandaag geblokkeerd/);
   await page.getByRole("button", { name: "E-mail analyseren" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Beschikbare bewijslast", exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Verdachte signalen", exact: true })).toBeVisible();
   await expect(page.getByText(/Klik niet, antwoord niet|Controleer de afzender|Er zijn weinig waarschuwingstekens/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Help de detectie verbeteren" })).toBeVisible();
@@ -82,7 +91,7 @@ test("Dutch routes render server-side and persist across navigation", async ({ p
   expect(await apiResponse.json()).toEqual({
     status: "ok",
     revision: "development",
-    analysis_version: "analysis-v7",
+    analysis_version: "analysis-v10",
   });
 });
 
@@ -376,6 +385,11 @@ test("rendered screenshot OCR keeps BEC and callback fraud above low risk", asyn
     await page.getByRole("button", { name: "Analyze email" }).click();
     const meter = page.getByRole("meter");
     await expect(meter).toBeVisible();
+    await expect(
+      page.getByText(
+        "This assessment uses OCR-extracted text. Missed text and hidden link destinations can change the result.",
+      ),
+    ).toBeVisible();
     expect(Number(await meter.getAttribute("aria-valuenow"))).toBeGreaterThan(0);
     await expect(meter).toHaveAttribute("data-risk-level", /^(medium|high)$/);
   }
@@ -399,10 +413,19 @@ test("risk meter color follows the evidence-derived level instead of fixed score
           detected_links: [],
           recommended_action: "Review before acting.",
           short_explanation: "Synthetic medium-risk result.",
+          evidence_coverage: {
+            subject_available: false,
+            sender_available: false,
+            full_content_available: true,
+            link_destinations_available: true,
+            authentication_results_available: false,
+            attachment_evidence_available: false,
+            extraction_type: "direct",
+          },
         },
         analysis_mode: "heuristic",
         analysis_provider: "heuristic",
-        analysis_version: "analysis-v7",
+        analysis_version: "analysis-v10",
         disclaimer: "Automated assessment.",
         privacy: { stored: false, retention: "not_stored", message: "Not stored." },
       },
@@ -417,6 +440,49 @@ test("risk meter color follows the evidence-derived level instead of fixed score
   await expect(meter).toHaveAttribute("data-risk-level", "medium");
   await expect(meter.getByTestId("risk-score-fill")).toHaveClass(/bg-\[#c38122\]/);
   await expect(meter.getByText("Medium", { exact: true }).last()).toHaveClass(/text-\[#714812\]/);
+});
+
+test("scanner rejects malformed evidence coverage instead of rendering a partial result", async ({ page }) => {
+  await page.route("**/api/analyze", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      json: {
+        result: {
+          classification: "uncertain",
+          risk_level: "low",
+          risk_score: 0,
+          score_factors: [],
+          suspicious_signals: [],
+          detected_links: [],
+          recommended_action: "Review before acting.",
+          short_explanation: "Synthetic malformed result.",
+          evidence_coverage: {
+            subject_available: false,
+            sender_available: "yes",
+            full_content_available: true,
+            link_destinations_available: true,
+            authentication_results_available: false,
+            attachment_evidence_available: false,
+            extraction_type: "direct",
+          },
+        },
+        analysis_mode: "heuristic",
+        analysis_provider: "heuristic",
+        analysis_version: "analysis-v10",
+        disclaimer: "Automated assessment.",
+        privacy: { stored: false, retention: "not_stored", message: "Not stored." },
+      },
+      status: 200,
+    });
+  });
+
+  await page.getByLabel("Email content").fill("Synthetic message body");
+  await page.getByRole("button", { name: "Analyze email" }).click();
+
+  await expect(page.locator("form [role='alert']")).toContainText(
+    "Analysis failed. Please try again.",
+  );
+  await expect(page.getByRole("meter")).toHaveCount(0);
 });
 
 async function renderSyntheticEmailScreenshot(page: Page, lines: string[]): Promise<Buffer> {
@@ -511,7 +577,7 @@ test("optional feedback sends labels without scan content", async ({ page }) => 
     feedbackKind: "false_positive",
     locale: "en",
     source: "paste",
-    analyzerVersion: "analysis-v7",
+    analyzerVersion: "analysis-v10",
     scoreBand: "high",
     signalCategories: ["urgency"],
   });
@@ -531,7 +597,7 @@ test("feedback controls work from the keyboard and reject content fields", async
       feedbackKind: "false_positive",
       locale: "en",
       source: "paste",
-      analyzerVersion: "analysis-v7",
+      analyzerVersion: "analysis-v10",
       scoreBand: "high",
       signalCategories: [],
       body: "must never be accepted",
@@ -765,7 +831,7 @@ test("health endpoint exposes no dependency or secret details", async ({ request
   expect(await response.json()).toEqual({
     status: "ok",
     revision: "development",
-    analysis_version: "analysis-v7",
+    analysis_version: "analysis-v10",
   });
 });
 
@@ -906,7 +972,8 @@ test("hosted API publishes its machine-readable contract", async ({ request }) =
   expect(specification.openapi).toBe("3.1.0");
   expect(specification.paths["/api/v1/analyze"].post.security).toEqual([{ apiKey: [] }]);
   expect(specification.components.schemas.AnalysisResult.required).toEqual(expect.arrayContaining(["classification", "score_factors"]));
-  expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v7");
+  expect(specification.components.schemas.AnalysisResult.required).toContain("evidence_coverage");
+  expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v10");
 });
 
 test("primary public pages have no serious accessibility violations", async ({ page }) => {

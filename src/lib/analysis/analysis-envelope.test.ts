@@ -38,6 +38,7 @@ assert.deepEqual(envelope.availability, {
   sender: true,
   linkDestinations: true,
   authenticationHeaders: false,
+  attachmentEvidence: true,
   textExtraction: "parsed",
   contentComplete: true,
 });
@@ -46,6 +47,8 @@ assert.equal(ensureAnalysisEnvelope(envelope), envelope);
 const screenshot = createAnalysisEnvelope({ body: "Ordinary project update." }, "screenshot");
 assert.equal(screenshot.availability.sender, false);
 assert.equal(screenshot.availability.linkDestinations, false);
+assert.equal(screenshot.availability.contentComplete, false);
+assert.equal(screenshot.availability.attachmentEvidence, false);
 assert.equal(screenshot.availability.textExtraction, "ocr");
 const screenshotWithQr = createAnalysisEnvelope({
   body: "Open the portal shown in the QR code.",
@@ -70,6 +73,7 @@ const chrome = createAnalysisEnvelope({ body: "Captured project update." }, "chr
 assert.equal(chrome.source, "chrome");
 assert.equal(chrome.availability.textExtraction, "direct");
 assert.equal(chrome.availability.linkDestinations, true);
+assert.equal(chrome.availability.attachmentEvidence, false);
 
 const withoutAuthentication = createAnalysisEnvelope({ body: "Synthetic message." }, "eml");
 assert.equal(withoutAuthentication.availability.authenticationHeaders, false);

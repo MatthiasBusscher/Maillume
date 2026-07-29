@@ -10,6 +10,11 @@ on:
         required: true
         default: false
         type: boolean
+      feedback_summary_migration_applied:
+        description: Confirm the production feedback-summary migration is applied
+        required: true
+        default: false
+        type: boolean
 
 permissions: {}
 
@@ -53,6 +58,8 @@ jobs:
           ANALYSIS_MODE: heuristic
       - run: npm run test:smoke
       - run: npm run package:integrations
+        env:
+          BUILD_REVISION: ${{ github.sha }}
       - name: Stop local database
         if: always()
         run: supabase stop --no-backup
@@ -215,8 +222,31 @@ jobs:
           subject-digest: ${{ steps.digest.outputs.digest }}
           push-to-registry: true
 
+  preflight:
+    name: Verify deployment prerequisites
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Require production migration confirmation
+        env:
+          FEEDBACK_SUMMARY_MIGRATION_APPLIED: ${{ inputs.feedback_summary_migration_applied }}
+        run: |
+          if [[ "$FEEDBACK_SUMMARY_MIGRATION_APPLIED" != "true" ]]; then
+            echo "Apply and verify the production feedback-summary migration before deployment." >&2
+            exit 1
+          fi
+      - name: Verify compatible Chrome extension is live
+        run: node scripts/verify-chrome-extension-release.mjs
+
   resolve:
     name: Resolve verified image
+    needs: preflight
     if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10

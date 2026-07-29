@@ -51,6 +51,12 @@ summary { cursor: pointer; font-size: 13px; font-weight: 700; }
 .level[data-level="medium"] { border: 1px solid #c38122; background: #fff0cf; color: #714812 !important; }
 .level[data-level="high"] { border: 1px solid #d94b3b; background: #ffe3df; color: #8f251b !important; }
 .classification { margin: 12px 0 0; color: #111711; font-weight: 700; }
+.coverage { border-left: 3px solid #087b72; margin-top: 16px; background: #eef8f6; padding: 10px 12px; }
+.coverage[data-limited="true"] { border-left-color: #c38122; background: #fff6e7; }
+.coverage h2 { margin: 0 0 6px; }
+.coverage p { margin-bottom: 8px; }
+.coverage ul { margin: 0; padding-left: 18px; }
+.coverage li { margin-bottom: 3px; }
 .factors { margin: 0; padding-left: 18px; }
 .result h2 { margin-top: 18px; }
 .result li { margin-bottom: 7px; color: #4f5b50; font-size: 12px; line-height: 1.45; }

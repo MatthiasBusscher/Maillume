@@ -135,6 +135,17 @@ Never prefix a Supabase server secret or AI provider key with `NEXT_PUBLIC_`.
 
 The `release.yml` workflow builds `ghcr.io/matthiasbusscher/maillume:sha-<full-commit>` and scans it with Trivy on every push to `main`. Pull requests are verified by `ci.yml`; that workflow does not run again after merge. Production deployment runs only through a manual workflow dispatch with the `deploy` input enabled. The dispatch resolves the already verified SHA image to its immutable digest instead of rebuilding it, then requires approval from the protected `production` environment before SSH access.
 
+The deployment dispatch also requires
+`feedback_summary_migration_applied=true`. Before resolving an image, its
+preflight calls Google's Chrome update service and requires the Store to serve
+the version in `integrations/browser-extension/manifest.json`. A dashboard
+submission or approval notice is not enough: the public update service must
+report the compatible version. This prevents a new analysis contract from
+reaching production before browser clients can consume it. Apply and verify
+`supabase/migrations/20260728110000_create_feedback_summary.sql` before enabling
+the migration confirmation; the application deployment does not apply managed
+Supabase migrations automatically.
+
 Create a protected GitHub environment named `production`, require reviewer approval, and add:
 
 - `PRODUCTION_HOST`: VPS SSH address.

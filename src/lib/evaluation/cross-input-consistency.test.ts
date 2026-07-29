@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 
 import { createAnalysisEnvelope } from "../analysis/analysis-envelope";
+import { isEvidenceCoverage } from "../analysis/evidence-coverage";
 import { analyzeEmailHeuristic } from "../analysis/heuristic-analysis";
 import { parseEml } from "../eml/parse-eml";
 import type { EmailAnalysisResult } from "../types";
@@ -54,15 +55,40 @@ for (const fixture of CROSS_INPUT_FIXTURES) {
   ];
 
   const screenshot = requiredVariant(variants, "screenshot", fixture.id);
+  const paste = requiredVariant(variants, "paste", fixture.id);
   const chrome = variants.find((variant) => variant.name === "chrome")?.result;
   const eml = variants.find((variant) => variant.name === "eml")?.result;
   assert.ok(chrome && eml, `${fixture.id}: Chrome and .eml variants are required`);
+  for (const variant of variants) {
+    assert.equal(
+      isEvidenceCoverage(variant.result.evidence_coverage),
+      true,
+      `${fixture.id}/${variant.name}: every result must report valid evidence coverage`,
+    );
+  }
+  assert.deepEqual(paste.evidence_coverage, {
+    subject_available: true,
+    sender_available: true,
+    full_content_available: true,
+    link_destinations_available: true,
+    authentication_results_available: false,
+    attachment_evidence_available: false,
+    extraction_type: "direct",
+  });
+  assert.deepEqual(chrome.evidence_coverage, paste.evidence_coverage);
+  assert.equal(screenshot.evidence_coverage.full_content_available, false);
+  assert.equal(screenshot.evidence_coverage.extraction_type, "ocr");
+  assert.equal(eml.evidence_coverage.extraction_type, "parsed");
+  assert.equal(eml.evidence_coverage.attachment_evidence_available, true);
   if (fixture.emlVariant === "unterminated_multipart") {
     assert.equal(
       emlEnvelope.availability.contentComplete,
       false,
       `${fixture.id}: malformed MIME must retain its incomplete-evidence boundary`,
     );
+    assert.equal(eml.evidence_coverage.full_content_available, false);
+  } else {
+    assert.equal(eml.evidence_coverage.full_content_available, true);
   }
 
   if (fixture.expected === "phishing") {

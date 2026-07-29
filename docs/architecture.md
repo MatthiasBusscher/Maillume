@@ -60,6 +60,7 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Ordinary scans never become training or evaluation data.
    - Optional feedback uses a separate strict schema containing labels and high-level categories only.
    - Production feedback storage uses a server-only Supabase service-role key, Row Level Security, and automatic expiry. The scanner remains available when feedback is disabled.
+   - Maintainer calibration uses a security-definer aggregate function that suppresses small cells, caps identical hourly signatures, filters test versions, and never returns raw feedback rows.
    - Optional accounts store identity, session, and authentication-factor metadata in Supabase Auth. Hashed integration-key metadata and aggregate quotas are implemented; future preferences, paid entitlements, and billing references may be added, but not scan history or assessment content.
 
 6. Deployment
@@ -152,6 +153,7 @@ docs/
 supabase/
   migrations/
     20260710150000_create_detection_feedback.sql
+    20260728110000_create_feedback_summary.sql
 ```
 
 The implementation includes the Maillume marketing and trust pages, `/app` scanner workspace, optional Supabase email/Google authentication with TOTP MFA and gated passkeys, scan form, risk meter, no-storage analysis route, English/Dutch UI foundation, screenshot OCR input, `.eml` parsing input, shared synthetic evaluation fixtures, and optional self-hosted AI provider calls behind server environment variables.
@@ -197,6 +199,15 @@ type EmailAnalysisResult = {
   detected_links: string[];
   recommended_action: string;
   short_explanation: string;
+  evidence_coverage: {
+    subject_available: boolean;
+    sender_available: boolean;
+    full_content_available: boolean;
+    link_destinations_available: boolean;
+    authentication_results_available: boolean;
+    attachment_evidence_available: boolean;
+    extraction_type: "direct" | "ocr" | "parsed";
+  };
 };
 ```
 
@@ -206,6 +217,8 @@ Server-side validation should enforce:
 - Evidence is grouped into capped identity, destination, intent, delivery, and style families.
 - Weak evidence cannot produce medium risk by itself. High risk requires either strong evidence from multiple families or a decisive attack chain such as account lockout plus credential capture; family boundaries are not an evasion gate.
 - Missing evidence can produce `uncertain` and must not be presented as reassurance.
+- Evidence coverage is derived from the canonical analysis envelope and never from an AI
+  provider.
 - `risk_level` and `classification` are derived by Maillume, not trusted from a provider response.
 - Arrays are present even when empty.
 - The response does not claim certainty.
@@ -284,7 +297,7 @@ type AnalyzeResponse = {
   result: EmailAnalysisResult;
   analysis_mode: "heuristic" | "ai";
   analysis_provider: "heuristic" | "openai" | "anthropic" | "openai-compatible";
-  analysis_version: "analysis-v7";
+  analysis_version: "analysis-v10";
   disclaimer: string;
   privacy: {
     stored: false;

@@ -47,7 +47,12 @@ Hosted Supabase projects should use the current `SUPABASE_SECRET_KEY`. Legacy an
 
 ## Database Setup
 
-Apply `supabase/migrations/20260710150000_create_detection_feedback.sql` with the Supabase CLI or your normal migration workflow. The migration:
+Apply both feedback migrations with the Supabase CLI or your normal migration workflow:
+
+- `supabase/migrations/20260710150000_create_detection_feedback.sql`
+- `supabase/migrations/20260728110000_create_feedback_summary.sql`
+
+The migrations:
 
 - creates `public.detection_feedback` with constrained enum-like fields;
 - enables Row Level Security without browser-facing policies;
@@ -55,6 +60,9 @@ Apply `supabase/migrations/20260710150000_create_detection_feedback.sql` with th
 - sets expiry to 89 days after creation;
 - enables Supabase Cron through `pg_cron`;
 - runs an hourly deletion function so records are removed before the 90-day limit.
+- add a server-only aggregate function that cannot return raw feedback rows.
+- remove any legacy feedback row whose analyzer label is not a canonical `analysis-vN`
+  value, then enforce that narrower database constraint.
 
 Verify the Cron job named `purge-expired-detection-feedback` in the Supabase Dashboard after deployment. Self-hosted Postgres installations must provide `pg_cron` or schedule `public.purge_expired_detection_feedback()` through an equivalent trusted scheduler.
 
@@ -67,12 +75,74 @@ buckets and rejects new client identities while all retained buckets remain acti
 
 The route uses `Cache-Control: no-store` and does not log request bodies. Operational logs and analytics must not add feedback payloads or scan content later.
 
+## Maintainer Aggregate Report
+
+The report command calls only the thresholded Supabase RPC; it never selects
+`detection_feedback` rows directly:
+
+```bash
+FEEDBACK_STORAGE=supabase \
+SUPABASE_URL=https://your-project.supabase.co \
+SUPABASE_SECRET_KEY=your-server-only-secret-key \
+npm run report:feedback -- --days 30 --min-samples 10
+```
+
+Use `--format json` for machine-readable output and `--output path.json` to write it to a
+local file. The default privacy controls are:
+
+- a 30-day window, with an allowed range of 1–89 days;
+- a minimum of 10 samples per published cell; values below 5 are rejected by both the
+  command and database;
+- a cap of 20 identical feedback signatures per hour before aggregation;
+- exclusion of analyzer versions that look like tests, local development, or dev builds;
+- acceptance of canonical `analysis-vN` version labels only, preventing a version field from
+  becoming an arbitrary-text channel;
+- no raw feedback rows, timestamps, UUIDs, account data, network identifiers, or message
+  fields in the RPC result.
+
+Rows are grouped by analyzer version and feedback kind, then independently broken down by
+source, locale, score band, expected classification, and coarse signal category. Each
+returned cell has independently met the minimum sample threshold. The function does not
+return a total that could be combined with omitted cells to infer a small count.
+
+These counts are voluntary feedback trends, not accuracy rates. They can be biased by who
+chooses to respond, repeated users, misunderstanding, or distributed abuse. The hourly
+signature cap limits obvious duplicate bursts without introducing a stable user identifier,
+but it cannot prove that every response comes from a different person. Do not publish the
+report or use it to make unsupported accuracy claims.
+
 ## Calibration Workflow
 
-1. Review aggregate label and category trends.
-2. Identify a missed pattern without retrieving the scanned message.
-3. Author a new synthetic email using invented identities and reserved domains.
-4. Add English and Dutch fixtures where the pattern applies.
-5. Run the complete analysis and security suites.
+1. Run the aggregate report with the default 30-day window and minimum sample size.
+2. Ignore cells that are absent, unstable across windows, or plausibly caused by abuse.
+3. Use recurring false-positive or false-negative categories only to prioritize a topic.
+4. Identify the abstract missed pattern without retrieving the scanned message.
+5. Author a new synthetic email using invented identities and reserved domains.
+6. Keep development, validation, and locked cases separate; do not relabel a tuned case as
+   holdout evidence.
+7. Add English and Dutch fixtures where the pattern applies.
+8. Run the complete analysis, security, integration, and browser suites.
 
 Feedback records are never copied directly into tests, GitHub issues, model prompts, or a training dataset.
+
+## Separate Redacted-Example Contribution Route
+
+The current feedback endpoint is not an email-submission endpoint and must never gain a
+subject, body, sender, link, attachment, screenshot, `.eml`, or free-text field.
+
+A future redacted-example contribution flow, if approved, must be a separate opt-in route,
+table, disclosure, and security/privacy review. It should:
+
+- require the contributor to manually remove names, addresses, account numbers, message IDs,
+  tracking parameters, signatures, and other personal or confidential information;
+- show the exact redacted text that would be submitted and require explicit confirmation;
+- avoid linking the example to feedback UUIDs, accounts, network identifiers, or scan
+  history;
+- use a separately documented purpose, access policy, retention period, deletion route, and
+  manual maintainer review;
+- never update production rules or weights automatically;
+- move only a newly written, synthetic abstraction into the repository test corpus.
+
+This route is deliberately not implemented in the current phase. Until a separate issue
+approves it, contributors should use public advisories or create invented examples with
+reserved domains rather than sending private email to Maillume.

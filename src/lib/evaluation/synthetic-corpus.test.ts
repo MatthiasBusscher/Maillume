@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 
+import { isEvidenceCoverage } from "../analysis/evidence-coverage";
 import { analyzeEmailHeuristic } from "../analysis/heuristic-analysis";
+import { summarizeEvaluation } from "./metrics";
+import { getScenarioCategory } from "./scenario-metadata";
 import { syntheticCorpus, type CorpusClassification, type SyntheticCorpusCase } from "./synthetic-corpus";
+import type { EvaluationObservation } from "./types";
 
 assert.equal(syntheticCorpus.length, 300);
 assert.equal(countByClass(syntheticCorpus, "phishing"), 100);
@@ -35,48 +39,71 @@ for (const { item, result } of lockedResults) {
     `${item.id} factors must sum to its risk index`,
   );
   assert.ok(result.risk_score >= 0 && result.risk_score <= 100);
+  assert.equal(
+    isEvidenceCoverage(result.evidence_coverage),
+    true,
+    `${item.id} must report valid evidence coverage`,
+  );
 }
 
-const overall = metrics(lockedResults);
-assert.ok(overall.phishingNonLow >= 0.95, report("phishing non-low recall", overall.phishingNonLow));
-assert.ok(overall.phishingHigh >= 0.8, report("phishing high recall", overall.phishingHigh));
-assert.ok(overall.legitimateHigh <= 0.02, report("legitimate high rate", overall.legitimateHigh));
-assert.ok(overall.legitimateNonLow <= 0.1, report("legitimate non-low rate", overall.legitimateNonLow));
-assert.ok(overall.spamNonLow >= 0.85, report("spam non-low recall", overall.spamNonLow));
+const lockedObservations = lockedResults.map(({ item, result }) =>
+  toObservation(item, result),
+);
+const overall = summarizeEvaluation(lockedObservations);
+assertRateAtLeast("phishing non-low recall", overall.rates.phishingNonLow.value, 0.95);
+assertRateAtLeast("phishing high recall", overall.rates.phishingHigh.value, 0.8);
+assertRateAtMost("legitimate high rate", overall.rates.legitimateHigh.value, 0.02);
+assertRateAtMost("legitimate non-low rate", overall.rates.legitimateNonLow.value, 0.1);
+assertRateAtLeast("spam non-low recall", overall.rates.spamNonLow.value, 0.85);
 
-const english = metrics(lockedResults.filter(({ item }) => item.locale === "en"));
-const dutch = metrics(lockedResults.filter(({ item }) => item.locale === "nl"));
+const english = summarizeEvaluation(
+  lockedObservations.filter((item) => item.language === "en"),
+).rates;
+const dutch = summarizeEvaluation(
+  lockedObservations.filter((item) => item.language === "nl"),
+).rates;
 for (const key of ["phishingNonLow", "phishingHigh", "legitimateHigh", "legitimateNonLow", "spamNonLow"] as const) {
+  assert.notEqual(english[key].value, null);
+  assert.notEqual(dutch[key].value, null);
   assert.ok(
-    Math.abs(english[key] - dutch[key]) <= 0.1,
+    Math.abs((english[key].value ?? 0) - (dutch[key].value ?? 0)) <= 0.1,
     `${key} language gap must remain within ten percentage points`,
   );
 }
 
-console.log("Synthetic corpus release gates passed.", JSON.stringify(overall));
+console.log("Synthetic corpus release gates passed.", JSON.stringify(overall.rates));
 
 function countByClass(items: SyntheticCorpusCase[], classification: CorpusClassification) {
   return items.filter((item) => item.classification === classification).length;
 }
 
-function metrics(results: Array<{ item: SyntheticCorpusCase; result: ReturnType<typeof analyzeEmailHeuristic> }>) {
-  const phishing = results.filter(({ item }) => item.classification === "phishing");
-  const spam = results.filter(({ item }) => item.classification === "spam");
-  const legitimate = results.filter(({ item }) => item.classification === "legitimate");
+function toObservation(
+  item: SyntheticCorpusCase,
+  result: ReturnType<typeof analyzeEmailHeuristic>,
+): EvaluationObservation {
   return {
-    phishingNonLow: rate(phishing, ({ result }) => result.risk_level !== "low"),
-    phishingHigh: rate(phishing, ({ result }) => result.risk_level === "high"),
-    legitimateHigh: rate(legitimate, ({ result }) => result.risk_level === "high"),
-    legitimateNonLow: rate(legitimate, ({ result }) => result.risk_level !== "low"),
-    spamNonLow: rate(spam, ({ result }) => result.risk_level !== "low"),
+    dataset: "synthetic-locked",
+    caseId: item.id,
+    scenarioId: item.scenarioId,
+    scenarioCategory: getScenarioCategory("synthetic-locked", item.scenarioId),
+    expected: item.classification,
+    language: item.locale,
+    source: "paste",
+    evidenceCompleteness: "complete",
+    result,
   };
 }
 
-function rate<T>(items: T[], predicate: (item: T) => boolean): number {
-  assert.ok(items.length > 0);
-  return items.filter(predicate).length / items.length;
+function assertRateAtLeast(label: string, value: number | null, minimum: number) {
+  assert.notEqual(value, null, `${label} must have a denominator`);
+  assert.ok((value ?? 0) >= minimum, report(label, value ?? 0));
 }
 
-function report(label: string, value: number): string {
+function assertRateAtMost(label: string, value: number | null, maximum: number) {
+  assert.notEqual(value, null, `${label} must have a denominator`);
+  assert.ok((value ?? 1) <= maximum, report(label, value ?? 1));
+}
+
+function report(label: string, value: number) {
   return `${label} was ${(value * 100).toFixed(1)}%`;
 }

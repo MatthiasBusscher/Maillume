@@ -26,6 +26,10 @@ import {
   type WebScanSource,
 } from "@/lib/types";
 import { parseEml } from "@/lib/eml/parse-eml";
+import {
+  isAnalyzeErrorResponse,
+  isAnalyzeResponse,
+} from "@/lib/analysis/result-schema";
 import type { Dictionary, Locale } from "@/lib/i18n/dictionary";
 import { extractTextFromImage } from "@/lib/ocr/extract-text";
 import { extractScreenshotEmailFields } from "@/lib/ocr/extract-email-fields";
@@ -570,7 +574,10 @@ async function readAnalyzeResponse(
   response: Response,
 ): Promise<AnalyzeResponse | AnalyzeErrorResponse | null> {
   try {
-    return (await response.json()) as AnalyzeResponse | AnalyzeErrorResponse;
+    const payload: unknown = await response.json();
+    return isAnalyzeResponse(payload) || isAnalyzeErrorResponse(payload)
+      ? payload
+      : null;
   } catch {
     return null;
   }
@@ -790,6 +797,8 @@ function AnalysisResult({
         }}
       />
 
+      <EvidenceCoverageSummary dictionary={dictionary} result={result} />
+
       <section className="border-b border-[#d5d9de] py-5">
         <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#26313b]">
           <ScanLine className="h-4 w-4 text-[#087b72]" aria-hidden="true" />
@@ -887,5 +896,89 @@ function AnalysisResult({
         {dictionary.result.disclaimer}
       </p>
     </div>
+  );
+}
+
+function EvidenceCoverageSummary({
+  dictionary,
+  result,
+}: {
+  dictionary: Dictionary;
+  result: EmailAnalysisResult;
+}) {
+  const coverage = result.evidence_coverage;
+  const materiallyLimited = !coverage.sender_available
+    || !coverage.full_content_available
+    || !coverage.link_destinations_available;
+  const summary = coverage.extraction_type === "ocr"
+    ? dictionary.result.coverageOcr
+    : !coverage.full_content_available
+      ? dictionary.result.coveragePartial
+      : materiallyLimited
+        ? dictionary.result.coverageLimited
+        : dictionary.result.coverageComplete;
+  const items = [
+    [dictionary.result.coverageLabels.subject, coverage.subject_available],
+    [dictionary.result.coverageLabels.sender, coverage.sender_available],
+    [dictionary.result.coverageLabels.fullContent, coverage.full_content_available],
+    [
+      dictionary.result.coverageLabels.linkDestinations,
+      coverage.link_destinations_available,
+    ],
+    [
+      dictionary.result.coverageLabels.authentication,
+      coverage.authentication_results_available,
+    ],
+    [
+      dictionary.result.coverageLabels.attachments,
+      coverage.attachment_evidence_available,
+    ],
+  ] as const;
+
+  return (
+    <section className="border-b border-[#d5d9de] py-5">
+      <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#26313b]">
+        <Info className="h-4 w-4 text-[#087b72]" aria-hidden="true" />
+        {dictionary.result.coverageTitle}
+      </h3>
+      <p
+        className={`border-l-4 px-3 py-3 text-sm leading-6 ${
+          materiallyLimited || coverage.extraction_type === "ocr"
+            ? "border-[#d76b16] bg-[#fff6e7] text-[#714812]"
+            : "border-[#087b72] bg-[#eaf6f5] text-[#204e51]"
+        }`}
+      >
+        {summary}
+      </p>
+      <dl className="mt-3 grid gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
+        {items.map(([label, available]) => (
+          <div
+            key={label}
+            className="flex items-center justify-between gap-3 border-b border-[#d5d9de] py-2"
+          >
+            <dt className="text-[#59646f]">{label}</dt>
+            <dd
+              className={
+                available
+                  ? "font-semibold text-[#087b72]"
+                  : "font-semibold text-[#8b5b17]"
+              }
+            >
+              {available
+                ? dictionary.result.coverageStates.available
+                : dictionary.result.coverageStates.unavailable}
+            </dd>
+          </div>
+        ))}
+        <div className="flex items-center justify-between gap-3 border-b border-[#d5d9de] py-2">
+          <dt className="text-[#59646f]">
+            {dictionary.result.coverageLabels.extraction}
+          </dt>
+          <dd className="font-semibold text-[#26313b]">
+            {dictionary.result.extractionTypes[coverage.extraction_type]}
+          </dd>
+        </div>
+      </dl>
+    </section>
   );
 }

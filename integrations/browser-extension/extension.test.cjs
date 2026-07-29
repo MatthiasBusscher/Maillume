@@ -407,14 +407,15 @@ function createPanelElement() {
     addEventListener(type, listener) { listeners.set(type, listener); },
     async dispatch(type) { return listeners.get(type)?.(); },
     getAttribute(name) { return attributes.get(name) ?? null; },
-    replaceChildren() {},
+    children: [],
+    replaceChildren(...children) { this.children = children; },
     setAttribute(name, value) { attributes.set(name, String(value)); },
   };
 }
 
 async function testPanelSendsCapturedLinkMetadata() {
   const runtime = event();
-  const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "factors", "signals", "action"];
+  const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"];
   const elements = new Map(ids.map((id) => [id, createPanelElement()]));
   const localStorage = { endpoint: "https://app.maillume.io" };
   const sessionStorage = { apiKey: `mlm_${"a".repeat(43)}` };
@@ -448,10 +449,19 @@ async function testPanelSendsCapturedLinkMetadata() {
       detected_links: [],
       recommended_action: "Review the message.",
       short_explanation: "No strong signal.",
+      evidence_coverage: {
+        subject_available: true,
+        sender_available: true,
+        full_content_available: true,
+        link_destinations_available: true,
+        authentication_results_available: false,
+        attachment_evidence_available: false,
+        extraction_type: "direct",
+      },
     },
     analysis_mode: "heuristic",
     analysis_provider: "heuristic",
-    analysis_version: "analysis-v7",
+    analysis_version: "analysis-v10",
     disclaimer: "This is an automated risk assessment.",
     privacy: {
       stored: false,
@@ -534,13 +544,52 @@ async function testPanelSendsCapturedLinkMetadata() {
   assert.equal(elements.get("analyze").hidden, true, "successful analysis must replace the analyze action with the result");
   assert.equal(elements.get("result").hidden, false);
   assert.equal(elements.get("level").dataset.level, "low");
+  assert.equal(elements.get("coverageSection").hidden, false);
+  assert.equal(
+    elements.get("coverageSummary").textContent,
+    "Maillume received the main message evidence needed for this assessment.",
+  );
+  assert.equal(elements.get("coverage").children.length, 7);
 
   assert.equal(context.isAnalysisResponse(validResponse), true);
+  assert.equal(context.isAnalysisResponse({
+    ...validResponse,
+    analysis_version: "analysis-v8",
+    result: {
+      ...validResponse.result,
+      evidence_coverage: undefined,
+    },
+  }), true, "the new panel must remain compatible with a pre-coverage analysis-v8 deployment");
+  assert.equal(context.isAnalysisResponse({
+    ...validResponse,
+    analysis_version: "analysis-v9",
+    result: {
+      ...validResponse.result,
+      evidence_coverage: undefined,
+    },
+  }), false, "coverage must remain required for analysis-v9");
   for (const invalidResponse of [
     { ...validResponse, analysis_version: "analysis-v2.0" },
     { ...validResponse, privacy: { ...validResponse.privacy, stored: true } },
     { ...validResponse, privacy: { ...validResponse.privacy, retention: "temporary" } },
     { ...validResponse, analysis_provider: "unknown" },
+    {
+      ...validResponse,
+      result: {
+        ...validResponse.result,
+        evidence_coverage: undefined,
+      },
+    },
+    {
+      ...validResponse,
+      result: {
+        ...validResponse.result,
+        evidence_coverage: {
+          ...validResponse.result.evidence_coverage,
+          full_content_available: "yes",
+        },
+      },
+    },
   ]) {
     assert.equal(context.isAnalysisResponse(invalidResponse), false);
   }
@@ -557,7 +606,7 @@ async function testPanelSendsCapturedLinkMetadata() {
   responses.push({
     status: "success",
     text: "Freshly captured message",
-    source: "open_message",
+    source: "selection",
     subject: "Fresh capture",
     sender: "fresh@notice.example",
     captureId: "capture-8",
@@ -573,6 +622,11 @@ async function testPanelSendsCapturedLinkMetadata() {
   responsePayload = validResponse;
   responseStatus = 401;
   await elements.get("analyze").dispatch("click");
+  assert.equal(
+    requestPayload.evidenceTruncated,
+    true,
+    "selected text must be marked as incomplete evidence",
+  );
   assert.equal(elements.get("result").hidden, true, "a revoked key must not leave a stale result visible");
   assert.equal(elements.get("status").textContent, "The deployment rejected the API key.");
 

@@ -4,9 +4,12 @@ import type {
   AnalysisLocale,
   AssessmentClassification,
   EmailAnalysisResult,
+  EvidenceCoverage,
   EvidenceFamily,
   RiskLevel,
 } from "../types";
+import { hasDecisiveAttackChain } from "./attack-chains";
+import { hasMaterialEvidenceCoverage } from "./evidence-coverage";
 
 export const EVIDENCE_IDS = [
   "urgency_pressure",
@@ -29,6 +32,14 @@ export const EVIDENCE_IDS = [
   "short_url",
   "risky_link_domain",
   "link_mismatch",
+  "ip_literal_url",
+  "non_standard_port_url",
+  "url_userinfo",
+  "punycode_hostname",
+  "nested_url",
+  "brand_lookalike_destination",
+  "brand_destination_mismatch",
+  "hosted_destination",
   "format_pressure",
   "obfuscation",
   "invalid_sender",
@@ -49,20 +60,30 @@ export const EVIDENCE_IDS = [
   "qr_lure",
   "callback_lure",
   "delivery_lure",
+  "secrecy_pressure",
+  "shared_document_lure",
+  "repeated_approval_pressure",
 ] as const;
 
 export type EvidenceId = (typeof EVIDENCE_IDS)[number];
 
 /**
- * Evidence derived only from structured input Maillume computes itself. An AI provider
- * receives normalized message text, never authentication headers, so it cannot support
- * these IDs and is not offered them.
+ * Evidence derived from structured input Maillume computes itself. An AI provider does
+ * not author these deterministic authentication and URL-structure conclusions.
  */
 export const DERIVED_EVIDENCE_IDS = [
   "sender_authentication_failed",
   "sender_authentication_weak",
   "reply_to_mismatch",
   "return_path_mismatch",
+  "ip_literal_url",
+  "non_standard_port_url",
+  "url_userinfo",
+  "punycode_hostname",
+  "nested_url",
+  "brand_lookalike_destination",
+  "brand_destination_mismatch",
+  "hosted_destination",
 ] as const satisfies readonly EvidenceId[];
 
 export type DerivedEvidenceId = (typeof DERIVED_EVIDENCE_IDS)[number];
@@ -92,7 +113,7 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   brand_mention: evidence("identity", 4, "References a familiar brand or authority.", "Verwijst naar een bekend merk of een bekende instantie."),
   prize_promotion: spamEvidence("intent", 30, "Uses prize, giveaway, or promotional language.", "Gebruikt taal over prijzen, winacties of aanbiedingen."),
   account_threat: evidence("intent", 20, "Threatens account blocking or subscription expiry.", "Dreigt met accountblokkering of het verlopen van een abonnement.", true),
-  fake_security: evidence("identity", 20, "Uses suspicious security or antivirus subscription claims.", "Gebruikt verdachte claims over beveiliging of antivirusabonnementen.", true),
+  fake_security: evidence("identity", 20, "Uses suspicious security, fraud-alert, backup, or software-subscription claims.", "Gebruikt verdachte claims over beveiliging, fraudemeldingen, back-ups of softwareabonnementen.", true),
   link_call_to_action: evidence("destination", 10, "Pushes the recipient toward a link or button.", "Stuurt de ontvanger naar een link of knop.", true),
   unsolicited_sales: spamEvidence("intent", 30, "Looks like unsolicited sales or lead-generation outreach.", "Lijkt op ongevraagde verkoop- of acquisitiemail."),
   investment_pitch: spamEvidence("intent", 30, "Contains a high-return investment or loan pitch.", "Bevat een aanbod voor hoge beleggingsopbrengsten of een lening."),
@@ -101,6 +122,14 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   short_url: evidence("destination", 10, "Uses a shortened URL that hides the destination.", "Gebruikt een verkorte URL die de bestemming verbergt.", true),
   risky_link_domain: evidence("destination", 10, "Uses a link domain pattern often abused in campaigns.", "Gebruikt een linkdomein dat vaak in campagnes wordt misbruikt.", true),
   link_mismatch: evidence("destination", 30, "Displays one domain but links to another.", "Toont één domein maar linkt naar een ander domein.", true),
+  ip_literal_url: evidence("destination", 20, "Uses an IP address instead of a named destination.", "Gebruikt een IP-adres in plaats van een herkenbare bestemming.", true),
+  non_standard_port_url: evidence("destination", 10, "Uses an unusual network port in a destination.", "Gebruikt een ongebruikelijke netwerkpoort in een bestemming.", true),
+  url_userinfo: evidence("destination", 20, "Uses URL user information that can disguise the real host.", "Gebruikt URL-gebruikersinformatie die de echte host kan verhullen.", true),
+  punycode_hostname: evidence("destination", 10, "Uses an internationalized hostname that needs careful review.", "Gebruikt een geïnternationaliseerde hostnaam die extra controle vraagt."),
+  nested_url: evidence("destination", 10, "Hides another destination inside a redirect parameter.", "Verbergt een andere bestemming in een omleidingsparameter.", true),
+  brand_lookalike_destination: evidence("destination", 25, "The destination appears to imitate a known brand domain.", "De bestemming lijkt een bekend merkdomein na te bootsen.", true),
+  brand_destination_mismatch: evidence("destination", 20, "The claimed organization does not match the sender or destination.", "De genoemde organisatie komt niet overeen met de afzender of bestemming.", true),
+  hosted_destination: evidence("destination", 10, "Uses a hosted-page destination for a sensitive request.", "Gebruikt een gehoste paginabestemming voor een gevoelig verzoek.", true),
   format_pressure: evidence("style", 4, "Uses excessive capitalization or punctuation.", "Gebruikt overmatig hoofdletters of leestekens."),
   obfuscation: evidence("style", 10, "Obfuscates words to evade filtering.", "Verhult woorden om filtering te ontwijken.", true),
   invalid_sender: evidence("identity", 20, "The sender address is invalid or incomplete.", "Het afzenderadres is ongeldig of onvolledig.", true),
@@ -121,6 +150,9 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   qr_lure: evidence("delivery", 10, "Directs the recipient to scan a QR code.", "Stuurt de ontvanger naar een QR-code.", true),
   callback_lure: evidence("delivery", 20, "Pushes the recipient to call an unverified number.", "Stuurt de ontvanger naar een onbevestigd telefoonnummer.", true),
   delivery_lure: evidence("delivery", 20, "Combines a delivery problem with a fee and return pressure.", "Combineert een bezorgprobleem met kosten en druk rond terugzending.", true),
+  secrecy_pressure: evidence("style", 10, "Pressures the recipient to keep the request secret.", "Zet de ontvanger onder druk om het verzoek geheim te houden.", true),
+  shared_document_lure: evidence("delivery", 10, "Uses shared content as a reason to grant access or sign in.", "Gebruikt gedeelde inhoud als reden om toegang te geven of in te loggen.", true),
+  repeated_approval_pressure: evidence("style", 10, "Pushes the recipient to approve repeated sign-in prompts.", "Zet de ontvanger aan om herhaalde inlogmeldingen goed te keuren.", true),
 };
 
 const FAMILY_CAPS: Record<EvidenceFamily, number> = {
@@ -135,7 +167,7 @@ export function buildAnalysisResult(
   evidenceIds: Iterable<EvidenceId>,
   detectedLinks: string[],
   locale: AnalysisLocale,
-  options: { incompleteEvidence?: boolean } = {},
+  options: { evidenceCoverage: EvidenceCoverage },
 ): EmailAnalysisResult {
   const unique = Array.from(new Set(evidenceIds));
   const familyScores: Record<EvidenceFamily, number> = {
@@ -181,7 +213,7 @@ export function buildAnalysisResult(
     unique,
     riskLevel,
     riskScore,
-    options.incompleteEvidence ?? false,
+    !hasMaterialEvidenceCoverage(options.evidenceCoverage),
   );
 
   return {
@@ -193,6 +225,7 @@ export function buildAnalysisResult(
     detected_links: normalizeLinks(detectedLinks),
     recommended_action: getRecommendedAction(classification, riskLevel, locale),
     short_explanation: getExplanation(classification, riskLevel, scoreFactors.length, locale),
+    evidence_coverage: options.evidenceCoverage,
   };
 }
 
@@ -242,24 +275,12 @@ function getRiskLevel(
   const strongFamilies = Object.values(familyScores).filter((value) => value >= 15).length;
   const hasStrongEvidence = ids.some((id) => EVIDENCE[id].contribution >= 20);
 
-  if (score >= 50 && hasDecisiveEvidenceChain(ids)) return "high";
+  if (hasDecisiveAttackChain(ids, score)) return "high";
   if (score >= 70 && strongFamilies >= 2) return "high";
   if (hasStrongEvidence && score >= 30) return "medium";
   if (hasStrongEvidence && representedFamilies >= 2 && score >= 25) return "medium";
   if (score >= 35) return "medium";
   return "low";
-}
-
-function hasDecisiveEvidenceChain(ids: EvidenceId[]): boolean {
-  const found = new Set(ids);
-  const has = (...required: EvidenceId[]) => required.every((id) => found.has(id));
-
-  return has("account_threat", "credential_request", "urgency_pressure")
-    || has("changed_payment_details", "payment_request")
-    || has("mfa_or_oauth_request", "urgency_pressure")
-    || has("executive_impersonation", "payment_request")
-    || has("fake_security", "account_threat", "payment_request")
-    || has("prize_promotion", "payment_request", "urgency_pressure");
 }
 
 function getClassification(
@@ -287,6 +308,12 @@ const PHISHING_SPECIFIC_EVIDENCE = new Set<EvidenceId>([
   "account_threat",
   "fake_security",
   "link_mismatch",
+  "ip_literal_url",
+  "url_userinfo",
+  "nested_url",
+  "brand_lookalike_destination",
+  "brand_destination_mismatch",
+  "hosted_destination",
   "brand_lookalike_sender",
   "executive_impersonation",
   "payroll_or_tax_request",
@@ -295,6 +322,7 @@ const PHISHING_SPECIFIC_EVIDENCE = new Set<EvidenceId>([
   "qr_lure",
   "callback_lure",
   "delivery_lure",
+  "shared_document_lure",
 ]);
 
 function getRecommendedAction(
