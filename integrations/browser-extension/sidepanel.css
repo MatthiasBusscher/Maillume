@@ -39,6 +39,11 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 details { border-bottom: 1px solid #bfc5bc; padding: 16px 0; }
 summary { cursor: pointer; font-size: 13px; font-weight: 700; }
 .settings { padding-top: 14px; }
+.automatic-connection { border-left: 3px solid #087b72; background: #eaf6f5; padding: 12px; }
+.automatic-connection h2 { margin-bottom: 6px; }
+.automatic-connection p { margin-bottom: 10px; font-size: 11px; }
+.settings-divider { display: flex; align-items: center; gap: 8px; color: #687268; font: 9px ui-monospace, monospace; text-transform: uppercase; }
+.settings-divider::before, .settings-divider::after { height: 1px; flex: 1; background: #cbd0c5; content: ""; }
 .small { margin-bottom: 0; font-size: 11px; }
 .destination { margin: 14px 0; border-left: 3px solid #087b72; background: white; padding: 10px; color: #4f5b50; font-size: 11px; overflow-wrap: anywhere; }
 #status { margin: 10px 0; min-height: 20px; }

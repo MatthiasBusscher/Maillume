@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export type AccountMutationAction = "delete" | "language" | "sign-out";
+export type AccountMutationAction = "delete" | "extension-pairing" | "language" | "sign-out";
 
 export type AccountMutationTokenInput = {
   lastSignInAt?: string;

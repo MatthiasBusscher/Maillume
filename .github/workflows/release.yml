@@ -15,6 +15,11 @@ on:
         required: true
         default: false
         type: boolean
+      extension_pairing_migration_applied:
+        description: Confirm the production extension-pairing migration is applied
+        required: true
+        default: false
+        type: boolean
 
 permissions: {}
 
@@ -235,10 +240,15 @@ jobs:
           persist-credentials: false
       - name: Require production migration confirmation
         env:
+          EXTENSION_PAIRING_MIGRATION_APPLIED: ${{ inputs.extension_pairing_migration_applied }}
           FEEDBACK_SUMMARY_MIGRATION_APPLIED: ${{ inputs.feedback_summary_migration_applied }}
         run: |
           if [[ "$FEEDBACK_SUMMARY_MIGRATION_APPLIED" != "true" ]]; then
             echo "Apply and verify the production feedback-summary migration before deployment." >&2
+            exit 1
+          fi
+          if [[ "$EXTENSION_PAIRING_MIGRATION_APPLIED" != "true" ]]; then
+            echo "Apply and verify the production extension-pairing migration before deployment." >&2
             exit 1
           fi
       - name: Verify compatible Chrome extension is live

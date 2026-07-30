@@ -79,6 +79,30 @@ function main() {
   );
   assert.equal(limitedError.retryAfterSeconds, 1);
 
+  const namespacedStore = new Map() satisfies AiRateLimitStore;
+  enforceRequestRateLimit(requestFromIp("203.0.113.61"), {
+    bucketName: "extension-pairing-start",
+    maxRequests: 1,
+    windowMs: 1_000,
+    now: () => 0,
+    store: namespacedStore,
+  });
+  enforceRequestRateLimit(requestFromIp("203.0.113.61"), {
+    bucketName: "request",
+    maxRequests: 1,
+    windowMs: 1_000,
+    now: () => 0,
+    store: namespacedStore,
+  });
+  assert.deepEqual(
+    [...namespacedStore.keys()],
+    [
+      "extension-pairing-start:203.0.113.61",
+      "request:203.0.113.61",
+    ],
+    "pairing and analysis request limits must use independent buckets",
+  );
+
   enforceAiRateLimit(request, AI_CONFIG, { now: () => 1_001, store: aiStore });
 
   const secondClientStore = new Map() satisfies AiRateLimitStore;

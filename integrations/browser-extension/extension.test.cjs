@@ -415,7 +415,7 @@ function createPanelElement() {
 
 async function testPanelSendsCapturedLinkMetadata() {
   const runtime = event();
-  const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"];
+  const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "connect", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"];
   const elements = new Map(ids.map((id) => [id, createPanelElement()]));
   const localStorage = { endpoint: "https://app.maillume.io" };
   const sessionStorage = { apiKey: `mlm_${"a".repeat(43)}` };
@@ -472,16 +472,30 @@ async function testPanelSendsCapturedLinkMetadata() {
   let responsePayload = validResponse;
   let responseStatus = 200;
   let permissionGranted = true;
+  let requestHeaders;
+  let pairingMode = false;
+  let openedApprovalUrl;
+  const pairingId = "40000000-0000-4000-8000-000000000004";
+  const deviceCode = `mlp_${"d".repeat(43)}`;
+  const pairedKey = `mlm_${"p".repeat(43)}`;
   const context = {
     chrome: {
       i18n: { getUILanguage: () => "en-US" },
-      runtime: { onMessage: runtime, sendMessage: async () => responses.shift() },
+      runtime: {
+        id: "bjiiailjalkfjimkjdikoockjlnjolle",
+        getManifest: () => ({ version: "0.3.9" }),
+        onMessage: runtime,
+        sendMessage: async () => responses.shift(),
+      },
       storage: {
         local: { get: async (keys) => getStored(localStorage, keys), set: async (values) => setStored(localStorage, values), remove: async (keys) => removeStored(localStorage, keys) },
         session: { get: async (keys) => getStored(sessionStorage, keys), set: async (values) => setStored(sessionStorage, values), remove: async (keys) => removeStored(sessionStorage, keys) },
       },
       permissions: { request: async () => permissionGranted, remove: async () => true },
-      tabs: { query: async () => [{ id: 22 }] },
+      tabs: {
+        create: async ({ url }) => { openedApprovalUrl = url; return {}; },
+        query: async () => [{ id: 22 }],
+      },
     },
     document: {
       documentElement: { lang: "en" },
@@ -491,14 +505,72 @@ async function testPanelSendsCapturedLinkMetadata() {
     },
     clearTimeout,
     console,
-    fetch: async (_url, options) => {
+    fetch: async (url, options = {}) => {
+      if (pairingMode) {
+        const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString();
+        if (url.endsWith("/api/v1/capabilities")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              analysis_version: "analysis-v10",
+              api_version: "v1",
+              extension: {
+                id: "bjiiailjalkfjimkjdikoockjlnjolle",
+                latest_version: "0.3.9",
+                minimum_analysis_version: "0.3.8",
+                minimum_pairing_version: "0.3.9",
+                pairing_available: true,
+                supported_analysis_versions: ["analysis-v10"],
+              },
+            }),
+          };
+        }
+        if (options.method === "POST") {
+          requestHeaders = options.headers;
+          return {
+            ok: true,
+            status: 201,
+            json: async () => ({
+              device_code: deviceCode,
+              expires_at: expiresAt,
+              expires_in: 600,
+              interval: 1,
+              pairing_id: pairingId,
+              user_code: "2345-6789",
+              verification_uri_complete: `https://app.maillume.io/account/connect-extension/${pairingId}?code=2345-6789`,
+            }),
+          };
+        }
+        requestHeaders = options.headers;
+        return {
+          headers: { get: () => null },
+          ok: true,
+          status: 201,
+          json: async () => ({
+            key: {
+              created_at: new Date().toISOString(),
+              expires_at: new Date(Date.now() + 90 * 86_400_000).toISOString(),
+              id: "50000000-0000-4000-8000-000000000005",
+              key_prefix: pairedKey.slice(0, 12),
+              monthly_quota: 25,
+              name: "Chrome extension · macOS",
+              rotated_from_id: null,
+            },
+            plaintext: pairedKey,
+            status: "connected",
+          }),
+        };
+      }
       requestPayload = JSON.parse(options.body);
+      requestHeaders = options.headers;
       return {
         ok: responseStatus >= 200 && responseStatus < 300,
         status: responseStatus,
         json: async () => responsePayload,
       };
     },
+    navigator: { platform: "macOS" },
     setTimeout,
     URL,
   };
@@ -540,6 +612,9 @@ async function testPanelSendsCapturedLinkMetadata() {
       destinationUrl: "https://bit.ly/synthetic-review",
     }],
   });
+  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.3.9");
+  assert.equal(requestHeaders["X-Maillume-Extension-Id"], "bjiiailjalkfjimkjdikoockjlnjolle");
+  assert.equal(requestHeaders["X-Maillume-Analysis-Versions"].includes("analysis-v10"), true);
   assert.equal(elements.get("reviewStep").hidden, true, "successful analysis must collapse the captured-detail step");
   assert.equal(elements.get("analyze").hidden, true, "successful analysis must replace the analyze action with the result");
   assert.equal(elements.get("result").hidden, false);
@@ -634,6 +709,19 @@ async function testPanelSendsCapturedLinkMetadata() {
   await elements.get("analyze").dispatch("click");
   assert.equal(elements.get("result").hidden, true, "a quota response must not leave a stale result visible");
   assert.equal(elements.get("status").textContent, "This request was limited. Check account usage or wait before trying again.");
+
+  pairingMode = true;
+  elements.get("rememberApiKey").checked = true;
+  await elements.get("connect").dispatch("click");
+  assert.equal(
+    openedApprovalUrl,
+    `https://app.maillume.io/account/connect-extension/${pairingId}?code=2345-6789`,
+  );
+  assert.equal(localStorage.apiKey, pairedKey, "approved pairing must save the dedicated browser key");
+  assert.match(localStorage.apiKeyExpiresAt, /^\d{4}-\d{2}-\d{2}T/);
+  assert.equal(sessionStorage.extensionPairing, undefined, "completed pairing state must be removed");
+  assert.equal(elements.get("status").textContent, "This browser is connected. The dedicated API key is ready to use.");
+  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.3.9");
 }
 
 (async () => {
@@ -643,7 +731,7 @@ async function testPanelSendsCapturedLinkMetadata() {
   testOpenMessageExtractors();
   testInactiveInputSelectionFallback();
   await testPanelSendsCapturedLinkMetadata();
-  console.log("Browser extension capture, fallback, boundary, API-response, and handoff race checks passed.");
+  console.log("Browser extension capture, pairing, expiry, API-response, and handoff checks passed.");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

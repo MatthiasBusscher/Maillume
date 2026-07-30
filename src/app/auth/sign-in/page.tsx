@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LockKeyhole } from "lucide-react";
 
+import { getSafeOAuthRedirectUrl } from "@/app/auth/callback/redirect";
 import { BrandMark } from "@/components/brand-mark";
 import { AuthMethodPanel } from "@/components/auth-method-panel";
 import { SiteLanguageLinks } from "@/components/site-header";
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; mode?: string }>;
+  searchParams: Promise<{ error?: string; mode?: string; next?: string }>;
 }) {
   const locale = await getRequestSiteLocale();
   if (!areAccountsEnabled()) {
@@ -32,6 +33,11 @@ export default async function SignInPage({
   const configured = getPublicSupabaseConfig() !== null;
   const marketingHref = getMarketingHref();
   const resolvedSearchParams = await searchParams;
+  const safeNext = getSafeOAuthRedirectUrl(
+    resolvedSearchParams.next ?? localizePath("/account", locale),
+    "https://maillume.invalid",
+  );
+  const nextPath = `${safeNext.pathname}${safeNext.search}${safeNext.hash}`;
   const authError = resolvedSearchParams.error;
   const initialEmailMode = resolvedSearchParams.mode === "forgot" ? "forgot" : "sign-in";
   const authErrorMessage = authError === "oauth_callback_failed"
@@ -70,6 +76,7 @@ export default async function SignInPage({
             initialEmailMode={initialEmailMode}
             locale={locale}
             marketingHref={marketingHref}
+            nextPath={nextPath}
             passkeysEnabled={arePasskeysEnabled()}
             scannerHref={getAppHref()}
           />

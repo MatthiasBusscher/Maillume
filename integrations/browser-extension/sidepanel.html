@@ -66,6 +66,12 @@
         <summary data-nl="Verbindingsinstellingen">Connection settings</summary>
         <div class="settings fields">
           <label><span data-nl="Maillume-omgeving">Maillume deployment</span> <input id="endpoint" type="url" value="https://app.maillume.io" /></label>
+          <section class="automatic-connection">
+            <h2 data-nl="Veilig verbinden met je account">Connect securely with your account</h2>
+            <p data-nl="Maillume opent een korte goedkeuringspagina en maakt na jouw toestemming een eigen, intrekbare sleutel voor deze browser.">Maillume opens a short approval page and, after your permission, creates a dedicated revocable key for this browser.</p>
+            <button id="connect" type="button" data-nl="Deze browser verbinden">Connect this browser</button>
+          </section>
+          <div class="settings-divider"><span data-nl="of voer handmatig een sleutel in">or enter a key manually</span></div>
           <label><span data-nl="API-sleutel">API key</span>
             <span class="secret-field">
               <input id="apiKey" type="password" autocomplete="off" placeholder="mlm_..." />

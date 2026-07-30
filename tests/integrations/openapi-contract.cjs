@@ -8,6 +8,9 @@ const request = specification.components.schemas.AnalyzeRequest;
 const response = specification.components.schemas.AnalyzeResponse;
 const result = specification.components.schemas.AnalysisResult;
 const coverage = specification.components.schemas.EvidenceCoverage;
+const capabilities = specification.components.schemas.CapabilitiesResponse;
+const pairingStart = specification.components.schemas.ExtensionPairingStartRequest;
+const pairingRedeem = specification.components.schemas.ExtensionPairingRedeemResponse;
 
 assert.equal(request.properties.body.maxLength, 20_000);
 assert.equal(request.properties.evidenceTruncated.type, "boolean");
@@ -43,5 +46,12 @@ assert.equal(coverage.additionalProperties, false);
 assert.deepEqual(coverage.properties.extraction_type.enum, ["direct", "ocr", "parsed"]);
 assert.equal(response.properties.analysis_version.const, "analysis-v10");
 assert.equal(response.properties.privacy.properties.stored.const, false);
+assert.equal(capabilities.properties.extension.properties.latest_version.const, "0.3.9");
+assert.equal(capabilities.properties.extension.properties.minimum_pairing_version.const, "0.3.9");
+assert.deepEqual(pairingStart.properties.lifetimeDays.enum, [30, 90, 180]);
+assert.equal(pairingRedeem.properties.plaintext.pattern, "^mlm_[A-Za-z0-9_-]{43}$");
+assert.ok(specification.paths["/api/v1/capabilities"].get);
+assert.ok(specification.paths["/api/v1/extension-pairing"].post);
+assert.ok(specification.paths["/api/v1/extension-pairing"].put);
 
-console.log("OpenAPI integration request limits and analysis privacy envelope passed.");
+console.log("OpenAPI analysis, compatibility, and extension-pairing contracts passed.");
