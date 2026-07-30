@@ -16,6 +16,7 @@ const input = {
 const secret = "server-only-test-secret";
 const now = Date.parse("2026-07-18T08:00:00.000Z");
 const languageToken = createAccountMutationToken("language", input, secret, now);
+const extensionPairingToken = createAccountMutationToken("extension-pairing", input, secret, now);
 const redirectedMarketingRequest = new Request("https://app.maillume.io/account/language", {
   headers: {
     Origin: "https://maillume.io",
@@ -36,6 +37,14 @@ assert.equal(redirectedRequestIsSameOrigin, false);
 assert.equal(verifyAccountMutationToken("language", languageToken, input, secret, now), true);
 assert.equal(verifyAccountMutationToken("sign-out", languageToken, input, secret, now), false);
 assert.equal(verifyAccountMutationToken("delete", languageToken, input, secret, now), false);
+assert.equal(
+  verifyAccountMutationToken("extension-pairing", extensionPairingToken, input, secret, now),
+  true,
+);
+assert.equal(
+  verifyAccountMutationToken("extension-pairing", languageToken, input, secret, now),
+  false,
+);
 assert.equal(verifyAccountMutationToken("language", null, input, secret, now), false);
 assert.equal(verifyAccountMutationToken("language", "invalid", input, secret, now), false);
 assert.equal(

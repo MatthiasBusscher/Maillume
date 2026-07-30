@@ -106,6 +106,13 @@ function main() {
   );
   const hostedApiRoute = readProjectFile("src/app/api/v1/analyze/route.ts");
   const accountApiKeysRoute = readProjectFile("src/app/account/api-keys/route.ts");
+  const extensionPairingRoute = readProjectFile("src/app/api/v1/extension-pairing/route.ts");
+  const extensionPairingApprovalRoute = readProjectFile(
+    "src/app/account/connect-extension/[pairingId]/resolve/route.ts",
+  );
+  const extensionPairingMigration = readProjectFile(
+    "supabase/migrations/20260730110000_create_extension_pairings.sql",
+  );
   const operatorConfig = readProjectFile("src/lib/operator.ts");
   const clientIdentifier = readProjectFile("src/lib/security/client-identifier.ts");
   const scanLimits = readProjectFile("src/lib/scan-limits.ts");
@@ -409,13 +416,34 @@ function main() {
   assert.match(hostedApiRoute, /reservation_id/);
   assert.match(hostedApiRoute, /readBoundedRequestBody\(request, getAnalysisMaxRequestBytes\(\)\)/);
   assert.doesNotMatch(hostedApiRoute, /consume_api_quota|inspect_api_key_status/);
+  assert.match(extensionPairingMigration, /create table public\.extension_pairings/);
+  assert.match(extensionPairingMigration, /device_code_hash char\(64\)/);
+  assert.match(extensionPairingMigration, /expires_at timestamptz/);
+  assert.match(extensionPairingMigration, /set search_path = ''/g);
+  assert.match(extensionPairingMigration, /for update/g);
+  assert.match(extensionPairingMigration, /revoke all on table public\.extension_pairings from public, anon, authenticated, service_role/);
+  assert.match(extensionPairingMigration, /grant execute on function public\.redeem_extension_pairing\(uuid, text, text, text\) to service_role/);
+  assert.doesNotMatch(
+    extensionPairingMigration,
+    /^\s*(api_key|plaintext|body|subject|sender_email|message_text|links|result|session|ip_address)\s+/im,
+  );
+  assert.match(extensionPairingRoute, /EXTENSION_PAIRING_MAX_REQUEST_BYTES/);
+  assert.match(extensionPairingRoute, /hashExtensionPairingDeviceCode\(deviceCode\)/);
+  assert.match(extensionPairingRoute, /redeem_extension_pairing/);
+  assert.doesNotMatch(extensionPairingRoute, /console\.|writeFile|appendFile|createWriteStream/);
+  assert.match(extensionPairingApprovalRoute, /isStrictSameOriginMutation\(request, publicOrigin\)/);
+  assert.match(extensionPairingApprovalRoute, /getAuthenticatorAssuranceLevel\(\)/);
+  assert.match(extensionPairingApprovalRoute, /assurance\?\.currentLevel !== "aal2"/);
+  assert.match(extensionPairingApprovalRoute, /verifyAccountMutationToken\(\s*"extension-pairing"/);
   assert.match(extensionManifest, /"activeTab"/);
   assert.match(extensionManifest, /"minimum_chrome_version": "116"/);
   assert.doesNotMatch(extensionManifest, /"content_scripts"|"tabs"|mail\.google\.com|outlook\.office\.com/);
   assert.doesNotMatch(extensionPanel, /storage\.local\.set\([^)]*(?:body|result)[\s\S]*?\)/);
-  assert.match(extensionPanel, /storeApiKey\(apiKey, rememberApiKey\)/);
-  assert.match(extensionPanel, /storage\.local\.set\(\{ apiKey \}\)/);
-  assert.match(extensionPanel, /storage\.session\.set\(\{ apiKey \}\)/);
+  assert.match(extensionPanel, /storeApiKey\(apiKey, rememberApiKey, expiresAt\)/);
+  assert.match(extensionPanel, /storage\.local\.set\(\{ apiKey,/);
+  assert.match(extensionPanel, /storage\.session\.set\(\{ apiKey,/);
+  assert.match(extensionPanel, /storage\.session\.set\(\{ extensionPairing: pairing \}\)/);
+  assert.match(extensionPanel, /X-Maillume-Extension-Version/);
   assert.match(extensionPanel, /rememberApiKey/);
   assert.match(extensionWorker, /setAccessLevel\?\.\(\{ accessLevel: "TRUSTED_CONTEXTS" \}\)/);
   assertPinnedActions(ciWorkflow, ".github/workflows/ci.yml");
@@ -438,6 +466,8 @@ function main() {
   assert.match(releaseWorkflow, /name: Verify deployment prerequisites/);
   assert.match(releaseWorkflow, /feedback_summary_migration_applied/);
   assert.match(releaseWorkflow, /FEEDBACK_SUMMARY_MIGRATION_APPLIED/);
+  assert.match(releaseWorkflow, /extension_pairing_migration_applied/);
+  assert.match(releaseWorkflow, /EXTENSION_PAIRING_MIGRATION_APPLIED/);
   assert.match(releaseWorkflow, /needs: preflight/);
   assert.match(releaseWorkflow, /node scripts\/verify-chrome-extension-release\.mjs/);
   assert.match(releaseWorkflow, /IMAGE_TAG: ghcr\.io\/matthiasbusscher\/maillume:sha-\$\{\{ github\.sha \}\}/);

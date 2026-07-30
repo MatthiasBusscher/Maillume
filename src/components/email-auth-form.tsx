@@ -19,12 +19,14 @@ export function EmailAuthForm({
   initialMode = "sign-in",
   labels,
   locale,
+  nextPath,
   onEngagementChange,
 }: {
   configured: boolean;
   initialMode?: EmailAuthMode;
   labels: AccountDictionary["signIn"]["email"];
   locale: SiteLocale;
+  nextPath: string;
   onEngagementChange?: (engaged: boolean) => void;
 }) {
   const [mode, setMode] = useState<EmailAuthMode>(initialMode);
@@ -77,7 +79,7 @@ export function EmailAuthForm({
 
       if (mode === "sign-up") {
         const callback = new URL("/auth/callback", window.location.origin);
-        callback.searchParams.set("next", localizePath("/account", locale));
+        callback.searchParams.set("next", nextPath);
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
           password,
@@ -91,7 +93,7 @@ export function EmailAuthForm({
           return;
         }
         if (data.session) {
-          await continueAfterPrimarySignIn(supabase, locale);
+          await continueAfterPrimarySignIn(supabase, locale, nextPath);
           return;
         }
         setCanResendConfirmation(true);
@@ -101,7 +103,7 @@ export function EmailAuthForm({
 
       if (mode === "magic-link") {
         const callback = new URL("/auth/callback", window.location.origin);
-        callback.searchParams.set("next", localizePath("/account", locale));
+        callback.searchParams.set("next", nextPath);
         const { error: magicLinkError } = await supabase.auth.signInWithOtp({
           email: email.trim(),
           options: {
@@ -125,7 +127,7 @@ export function EmailAuthForm({
         setError(labels.invalidCredentials);
         return;
       }
-      await continueAfterPrimarySignIn(supabase, locale);
+      await continueAfterPrimarySignIn(supabase, locale, nextPath);
     } catch {
       setError(getEmailAuthFailureMessage(mode, labels));
     } finally {
@@ -144,7 +146,7 @@ export function EmailAuthForm({
     setError("");
     try {
       const callback = new URL("/auth/callback", window.location.origin);
-      callback.searchParams.set("next", localizePath("/account", locale));
+      callback.searchParams.set("next", nextPath);
       const { error: resendError } = await supabase.auth.resend({
         type: "signup",
         email: email.trim(),
@@ -273,17 +275,24 @@ export function EmailAuthForm({
 async function continueAfterPrimarySignIn(
   supabase: NonNullable<ReturnType<typeof createBrowserSupabaseClient>>,
   locale: SiteLocale,
+  nextPath: string,
 ) {
   const accountLocale = await resolveAuthenticatedLocale(supabase.auth, locale);
   persistBrowserSiteLocale(accountLocale);
   const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  const accountPath = localizePath("/account", accountLocale);
+  const accountPath = localizeDestination(nextPath, accountLocale);
   if (data?.currentLevel === "aal1" && data.nextLevel === "aal2") {
     const challengePath = localizePath("/auth/mfa", accountLocale);
     window.location.assign(`${challengePath}?next=${encodeURIComponent(accountPath)}`);
     return;
   }
   window.location.assign(accountPath);
+}
+
+function localizeDestination(destination: string, locale: SiteLocale) {
+  const parsed = new URL(destination, window.location.origin);
+  parsed.pathname = localizePath(parsed.pathname, locale);
+  return `${parsed.pathname}${parsed.search}${parsed.hash}`;
 }
 
 function ModeButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {

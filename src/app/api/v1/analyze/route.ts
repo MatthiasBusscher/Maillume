@@ -10,6 +10,13 @@ import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
 import { getAnalysisMaxRequestBytes } from "@/lib/analysis/request-limits";
 import { hashApiKey, isApiKeyFormat } from "@/lib/api-keys";
 import { areAccountsEnabled } from "@/lib/accounts/config";
+import {
+  evaluateExtensionCompatibility,
+  getExtensionResponseHeaders,
+  hasExtensionClientHeaders,
+  LATEST_BROWSER_EXTENSION_VERSION,
+  MINIMUM_ANALYSIS_EXTENSION_VERSION,
+} from "@/lib/extension-compatibility";
 import { countScan } from "@/lib/scan-counters/storage";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { readBoundedRequestBody } from "@/lib/security/account-request";
@@ -20,7 +27,10 @@ import {
   type AnalyzeResponse,
 } from "@/lib/types";
 
-const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store",
+  ...getExtensionResponseHeaders(),
+};
 const DEFAULT_REQUEST_LIMIT = 20;
 const DEFAULT_REQUEST_WINDOW_SECONDS = 60;
 
@@ -66,6 +76,24 @@ export async function POST(request: Request) {
 
   const validation = validateAnalyzeRequest(payload);
   if (!validation.ok) return NextResponse.json<AnalyzeErrorResponse>({ error: validation.error, fieldErrors: validation.fieldErrors }, { status: 400, headers: NO_STORE_HEADERS });
+  if (validation.input.source === "chrome" && hasExtensionClientHeaders(request.headers)) {
+    // The API key authenticates analysis requests. Keep unpacked/self-hosted
+    // development clients usable while reserving the official ID requirement
+    // for automatic account pairing.
+    const compatibility = evaluateExtensionCompatibility(request.headers, {
+      requireOfficialId: false,
+    });
+    if (!compatibility.compatible) {
+      return NextResponse.json({
+        error: "This Maillume extension must be updated before it can use the deployment.",
+        code: "extension_upgrade_required",
+        ...getExtensionCapabilitiesForError(),
+      }, {
+        status: 426,
+        headers: NO_STORE_HEADERS,
+      });
+    }
+  }
 
   const secretHash = hashApiKey(token);
   let quota: QuotaRow | undefined;
@@ -180,4 +208,12 @@ function apiKeyStatusError(status: string) {
 
 function jsonError(error: string, status: number, headers: HeadersInit = {}) {
   return NextResponse.json<AnalyzeErrorResponse>({ error }, { status, headers: { ...NO_STORE_HEADERS, ...headers } });
+}
+
+function getExtensionCapabilitiesForError() {
+  return {
+    analysis_version: ANALYSIS_PIPELINE_VERSION,
+    latest_extension_version: LATEST_BROWSER_EXTENSION_VERSION,
+    minimum_extension_version: MINIMUM_ANALYSIS_EXTENSION_VERSION,
+  };
 }

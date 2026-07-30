@@ -11,10 +11,12 @@ export function GoogleSignInButton({
   configured,
   labels,
   locale,
+  nextPath,
 }: {
   configured: boolean;
   labels: AccountDictionary["signIn"]["google"];
   locale: SiteLocale;
+  nextPath: string;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -32,6 +34,7 @@ export function GoogleSignInButton({
 
     const redirectTo = new URL("/auth/callback", window.location.origin);
     redirectTo.searchParams.set("locale", locale);
+    redirectTo.searchParams.set("next", nextPath);
 
     const { error: signInError } = await supabase.auth.signInWithOAuth({
       provider: "google",

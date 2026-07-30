@@ -11,6 +11,8 @@ Maillume hosted integration keys are revocable credentials for the Chrome browse
 - Reservations contain only account/key IDs, period, and timestamps. They are finalized before a successful response, become purgeable after 10 minutes, and are checked by a five-minute cleanup job; they never contain scan content, results, prompts, links, or IP addresses.
 - Rotation creates one replacement and revokes the previous key without resetting account usage.
 - Plaintext keys are returned once. Supabase stores only a SHA-256 verifier, and authenticated clients cannot select that column.
+- Extension `0.3.9` can create a dedicated key through a ten-minute approval exchange. The browser receives the plaintext once only after the signed-in account approves the exact request at AAL2.
+- Pairing records store only a hashed random device verifier and bounded connection metadata. They cannot expose a user session or API-key plaintext and are purged after expiry.
 - Account deletion cascades through limits, aggregate usage, keys, and rotation lineage.
 
 ## Browser mutation boundary
@@ -19,6 +21,23 @@ Maillume hosted integration keys are revocable credentials for the Chrome browse
 - API-key mutation bodies are limited to 4 KiB and account-deletion bodies to 1 KiB. Limits are enforced while streaming even when `Content-Length` is absent.
 - Permanent account deletion requires a Supabase `last_sign_in_at` no more than 15 minutes old. The user must sign out and authenticate again when that window has expired.
 - These controls supplement Supabase authentication and RLS. They must not be weakened to accommodate non-browser API clients; integration clients use hosted API keys through `/api/v1/analyze` instead.
+- Browser-pairing approval additionally requires exact same-origin submission and an action-bound HMAC token. Login, Google OAuth, passkey, confirmation, magic-link, and MFA flows preserve only a validated internal return path.
+
+## Pairing migration and rollout
+
+Apply `20260730110000_create_extension_pairings.sql` before deploying the image that exposes automatic connection. The migration is additive, so the current application and extension `0.3.8` continue to work while it is applied.
+
+After applying it:
+
+1. Run `supabase test db --linked supabase/tests/extension_pairing.sql` or the equivalent local rollback-only pgTAP suite.
+2. Confirm `service_role` can execute the five pairing RPCs but cannot select `extension_pairings`.
+3. Confirm `anon` and `authenticated` have neither table access nor RPC execution.
+4. Submit extension `0.3.9` and wait until Google's public update service reports it.
+5. Deploy the verified server image with both migration confirmations selected.
+6. Connect a synthetic browser, verify one named key appears with a 90-day expiry, perform one scan, and verify `last_used_at` changes.
+7. Revoke the synthetic key and confirm the extension receives an authentication failure without losing manual reconnection.
+
+The production workflow refuses deployment unless the operator explicitly confirms the extension-pairing migration. Rollback to the previous application image is safe because the migration only adds an isolated table and RPCs; leave the migration in place.
 
 ## Migration and verification
 

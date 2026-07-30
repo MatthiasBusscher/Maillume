@@ -17,6 +17,7 @@ export function AuthMethodPanel({
   initialEmailMode,
   locale,
   marketingHref,
+  nextPath,
   passkeysEnabled,
   scannerHref,
 }: {
@@ -26,6 +27,7 @@ export function AuthMethodPanel({
   initialEmailMode?: EmailAuthMode;
   locale: SiteLocale;
   marketingHref: string;
+  nextPath: string;
   passkeysEnabled: boolean;
   scannerHref: string;
 }) {
@@ -41,6 +43,7 @@ export function AuthMethodPanel({
           initialMode={initialEmailMode}
           labels={copy.email}
           locale={locale}
+          nextPath={nextPath}
           onEngagementChange={setEmailEngaged}
         />
       </div>
@@ -64,8 +67,8 @@ export function AuthMethodPanel({
             <span className="h-px flex-1 bg-[#cbd0c5]" />
           </div>
           <div>
-            <GoogleSignInButton configured={configured} labels={copy.google} locale={locale} />
-            <PasskeySignInButton enabled={configured && passkeysEnabled} labels={copy.passkey} locale={locale} />
+            <GoogleSignInButton configured={configured} labels={copy.google} locale={locale} nextPath={nextPath} />
+            <PasskeySignInButton enabled={configured && passkeysEnabled} labels={copy.passkey} locale={locale} nextPath={nextPath} />
           </div>
         </>
       ) : null}

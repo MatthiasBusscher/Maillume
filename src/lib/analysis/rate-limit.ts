@@ -11,6 +11,7 @@ export type AiRateLimitStore = Map<string, AiRateLimitBucket>;
 export const ANALYSIS_RATE_LIMIT_MAX_BUCKETS = 10_000;
 
 type AiRateLimitOptions = {
+  bucketName?: string;
   env?: Partial<Pick<NodeJS.ProcessEnv, "NODE_ENV" | "TRUST_CF_CONNECTING_IP" | "TRUSTED_PROXY_IP_HEADER">>;
   maxBuckets?: number;
   now?: () => number;
@@ -53,7 +54,10 @@ export function enforceRequestRateLimit(
 ): void {
   const now = options.now?.() ?? Date.now();
   const store = options.store ?? getGlobalRateLimitStore();
-  const key = `request:${getTrustedClientIdentifier(request.headers, options.env)}`;
+  const bucketName = /^[a-z0-9-]{1,40}$/.test(options.bucketName ?? "")
+    ? options.bucketName
+    : "request";
+  const key = `${bucketName}:${getTrustedClientIdentifier(request.headers, options.env)}`;
   enforceBucketLimit(store, key, options.maxRequests, options.windowMs, now, options.maxBuckets);
 }
 

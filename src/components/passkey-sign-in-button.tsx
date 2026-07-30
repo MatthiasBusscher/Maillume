@@ -13,10 +13,12 @@ export function PasskeySignInButton({
   enabled,
   labels,
   locale,
+  nextPath,
 }: {
   enabled: boolean;
   labels: AccountDictionary["signIn"]["passkey"];
   locale: SiteLocale;
+  nextPath: string;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,7 +42,7 @@ export function PasskeySignInButton({
     const accountLocale = await resolveAuthenticatedLocale(supabase.auth, locale);
     persistBrowserSiteLocale(accountLocale);
     const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    const accountPath = localizePath("/account", accountLocale);
+    const accountPath = localizeDestination(nextPath, accountLocale);
     if (data?.currentLevel === "aal1" && data.nextLevel === "aal2") {
       window.location.assign(`${localizePath("/auth/mfa", accountLocale)}?next=${encodeURIComponent(accountPath)}`);
       return;
@@ -63,4 +65,10 @@ export function PasskeySignInButton({
       {error ? <p className="mt-2 text-xs leading-5 text-[#b2382b]" role="alert">{error}</p> : null}
     </div>
   );
+}
+
+function localizeDestination(destination: string, locale: SiteLocale) {
+  const parsed = new URL(destination, window.location.origin);
+  parsed.pathname = localizePath(parsed.pathname, locale);
+  return `${parsed.pathname}${parsed.search}${parsed.hash}`;
 }

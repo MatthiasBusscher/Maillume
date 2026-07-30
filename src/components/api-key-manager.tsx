@@ -250,7 +250,12 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
         </div>
       ) : null}
       <div className="divide-y divide-[#d8dcd3]">
-        {keys.map((key) => (
+        {keys.map((key) => {
+          const daysUntilExpiry = getDaysUntilExpiry(key.expires_at);
+          const expiresSoon = key.status === "active"
+            && daysUntilExpiry !== null
+            && daysUntilExpiry <= 14;
+          return (
           <div key={key.id} className="grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
@@ -262,6 +267,14 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
               <p className="mt-2 font-mono text-[10px] leading-5 text-[#687268]">
                 {key.key_prefix}... · {labels.created} {formatDate(key.created_at, locale)} · {labels.expires} {formatDate(key.expires_at, locale)}
               </p>
+              <p className="mt-1 font-mono text-[10px] leading-5 text-[#687268]">
+                {labels.lastUsed} {key.last_used_at ? formatDateTime(key.last_used_at, locale) : labels.neverUsed}
+              </p>
+              {expiresSoon ? (
+                <p className="mt-2 inline-flex border-l-4 border-[#c38122] bg-[#fff6e7] px-3 py-2 text-xs font-semibold text-[#714812]">
+                  {labels.expiresSoon} {daysUntilExpiry} {daysUntilExpiry === 1 ? labels.day : labels.days}.
+                </p>
+              ) : null}
               {key.rotated_from_id ? <p className="mt-1 text-xs text-[#59655a]">{labels.rotatedReplacement}</p> : null}
             </div>
             {key.status === "active" ? (
@@ -290,7 +303,8 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
               </div>
             ) : null}
           </div>
-        ))}
+          );
+        })}
       </div>
       <p role="status" className="flex min-h-12 items-center gap-2 px-6 text-sm text-[#59655a]">
         {message}
@@ -315,6 +329,22 @@ function parseLifetime(value: string): ApiKeyLifetimeDays {
 function formatDate(value: string, locale: SiteLocale): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(locale);
+}
+
+function formatDateTime(value: string, locale: SiteLocale): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat(locale, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(date);
+}
+
+function getDaysUntilExpiry(value: string): number | null {
+  const expiresAt = Date.parse(value);
+  if (!Number.isFinite(expiresAt)) return null;
+  return Math.max(0, Math.ceil((expiresAt - Date.now()) / 86_400_000));
 }
 
 function formatPeriod(value: string, locale: SiteLocale): string {
