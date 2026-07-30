@@ -28,7 +28,7 @@ alter table public.api_keys
 
 create unique index api_keys_browser_connection_idx
   on public.api_keys(user_id, browser_connection_hash)
-  where credential_kind = 'browser';
+  where credential_kind = 'browser' and revoked_at is null;
 
 grant select (credential_kind, inactive_after)
   on public.api_keys to authenticated;
