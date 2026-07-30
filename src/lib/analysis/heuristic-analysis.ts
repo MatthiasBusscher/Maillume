@@ -26,9 +26,11 @@ const HTML_LINK_PATTERN = /<a\b[^>]*\bhref\s*=\s*(?:"(https?:\/\/[^"\s>]+)"|'(ht
 const DISPLAYED_DOMAIN_PATTERN = /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}(?:\/[^\s<>"']*)?/i;
 const CREDENTIAL_REQUEST_PATTERNS = [
   /\b(?:enter|provide|submit|send|share|confirm|verify|update|re-?enter|type|reset|change)\b.{0,32}\b(?:password|credentials?|(?:employee |work )?login(?: details?)?|sign-in details?)\b/i,
-  /\b(?:password|credentials?|(?:employee |work )?login(?: details?)?|sign-in details?)\b.{0,24}\b(?:required|needed|enter|provide|submit|confirm|verify|update|reset|change)\b/i,
+  /\b(?:password|credentials?|(?:employee |work )?login(?: details?)?|sign-in details?)\b.{0,24}\b(?:required|needed|enter|provide|submit|confirm|verify|update|reset|change|keep|retain|restore|mark)\b/i,
   /verify (your )?(?:[a-z-]+ )?(account|identity)/i,
   /sign in (below|here|now)/i,
+  /\bsign in with (?:your )?(?:work|company) account.{0,72}\b(?:confirm|keep|retain|restore|review|mark).{0,48}\b(?:access|files?|folders?|preferences|records?|account)\b/i,
+  /\blog in met (?:uw|je) (?:e-mailadres en )?wachtwoord.{0,64}\b(?:behoud|behouden|bevestig|behouden)\b/i,
   /\b(?:voer|vul|verstrek|deel|stuur|bevestig|verifieer|controleer|wijzig|reset)\b.{0,32}\b(?:wachtwoord|inloggegevens)\b/i,
   /\b(?:wachtwoord|inloggegevens)\b.{0,24}\b(?:invoeren|invullen|verstrekken|delen|sturen|bevestigen|verifiëren|controleren|wijzigen|resetten|vereist|nodig)\b/i,
   /\b(?:gegevens|identiteit)\b.{0,48}\b(?:controleren.{0,24})?(?:bevestigen|verifiëren)\b/i,
@@ -47,6 +49,8 @@ const CREDENTIAL_NEGATION_PATTERNS = [
   /\b(?:share|send|provide|deel|stuur|verstrek)\b.{0,12}\b(?:never|nooit|not|niet)\b.{0,20}\b(?:password|credentials?|wachtwoord|inloggegevens)\b/i,
   /\b(?:(?:you|your) requested|requested from your signed-in account)\b.{0,32}\bpassword reset\b/i,
   /\bpassword reset\b.{0,40}\b(?:you requested|no action|password is unchanged)\b/i,
+  /\b(?:received|confirm(?:ation)?)\b.{0,24}\bpassword reset request\b.{0,48}\b(?:you made|already use|ignore this confirmation)\b/i,
+  /\bpassword reset request\b.{0,48}\b(?:you made|already use|ignore this confirmation)\b/i,
   /\b(?:u hebt|je hebt)\b.{0,32}\bwachtwoordherstel aangevraagd\b/i,
   /\bwachtwoordherstel\b.{0,40}\b(?:aangevraagd|geen actie|ongewijzigd)\b/i,
 ];
@@ -60,6 +64,7 @@ const MFA_REQUEST_PATTERNS = [
   /(?:geef|verleen|sta toe|machtig).{0,24}(?:app|applicatie|oauth).{0,24}(?:toegang|machtiging|rechten)/i,
   /(?:app|applicatie|oauth).{0,24}(?:toegang|machtiging|rechten).{0,24}(?:geven|verlenen|toestaan|machtigen|goedkeuren)/i,
   /(?:grant|allow|authorize).{0,36}permission.{0,36}(?:profile|files?|contacts?|mailbox)/i,
+  /(?:grant|allow|authorize).{0,32}(?:reader|viewer|app|application).{0,48}(?:view|read|access).{0,32}(?:profile|files?|contacts?|mailbox)/i,
   /(?:choose|select|tap).{0,16}(?:approve|allow).{0,32}(?:request|prompt|sign-in|login)/i,
   /(?:choose|select|tap).{0,16}(?:approve|allow)\b/i,
   /(?:kies|selecteer|tik).{0,16}(?:goedkeuren|toestaan).{0,32}(?:verzoek|melding|aanmelding)/i,
@@ -68,6 +73,7 @@ const MFA_REQUEST_PATTERNS = [
 const MFA_NEGATION_PATTERNS = [
   /(?:never|do not|don't|nooit|niet).{0,24}(?:approve|goedkeur|keur).{0,18}(?:mfa|login|inlog)/i,
   /(?:never|do not|don't).{0,32}(?:grant|allow|authorize|approve).{0,36}(?:app|application|oauth|permission)/i,
+  /(?:never|do not|don't).{0,32}(?:grant|allow|authorize|approve).{0,36}(?:reader|viewer).{0,36}(?:profile|files?|contacts?|mailbox)/i,
   /(?:nooit|niet).{0,32}(?:geef|verleen|sta toe|machtig|keur goed).{0,36}(?:app|applicatie|oauth|toegang|rechten)/i,
 ];
 const REPEATED_APPROVAL_PATTERNS = [
@@ -90,6 +96,7 @@ const IDENTITY_REQUEST_PATTERNS = [
   /\b(?:account|identiteit|persoonsgegevens)\b.{0,32}\b(?:opnieuw\s+|her)(?:identificeren|identificatie|verifiëren|verificatie)\b/i,
   /\b(?:bevestig(?:t|en)?|controleer(?:t|en)?|actualiseer(?:t|en)?|werk(?:t|en)? bij)\b.{0,48}\b(?:identiteit|identiteitsgegevens|persoonsgegevens|geboortedatum|bsn|bankrekening|klantprofiel)\b/i,
   /\b(?:identiteit|identiteitsgegevens|persoonsgegevens|geboortedatum|bsn|bankrekening|klantprofiel)\b.{0,48}\b(?:bevestig(?:t|en)?|controleer(?:t|en)?|actualiseer(?:t|en)?|bijwerk(?:t|en)?)\b/i,
+  /\b(?:bsn|geboortedatum|rekeningnummer|burgerlijke staat)\b.{0,64}\b(?:bevestig(?:t|en)?|controleer(?:t|en)?|actualiseer(?:t|en)?|bijwerk(?:t|en)?|bij\s+te\s+werk(?:en)?)\b/i,
 ];
 const IDENTITY_REQUEST_SUPPRESSIONS = [
   /\b(?:in person|at the office|at your appointment|bring your identity document)\b/i,
@@ -248,6 +255,13 @@ const SENSITIVE_URL_CONTEXT_EVIDENCE = new Set<EvidenceId>([
   "callback_lure",
   "delivery_lure",
 ]);
+const SENSITIVE_ACCOUNT_ACTION_PATTERNS = [
+  /\bsign in with (?:your )?(?:work|company) account.{0,72}\b(?:confirm|keep|retain|restore|review|mark).{0,48}\b(?:access|files?|folders?|preferences|records?|account)\b/i,
+  /\b(?:password|credentials?)\b.{0,48}\b(?:keep|retain|restore|mark).{0,48}\b(?:access|files?|folders?|preferences|records?|available)\b/i,
+  /\blog in met (?:uw|je) (?:e-mailadres en )?wachtwoord.{0,64}\b(?:contactgegevens|toegang|account).{0,48}\b(?:behoud|behouden|bevestig)\b/i,
+  /(?:grant|allow|authorize).{0,32}(?:reader|viewer|app|application).{0,48}(?:view|read|access).{0,32}(?:profile|files?|contacts?|mailbox)/i,
+  /(?:geef|verleen|sta toe|machtig).{0,32}(?:app|applicatie).{0,48}(?:profiel|contacten|mailbox|bestanden)/i,
+];
 
 type PatternGroup = { id: EvidenceId; patterns: RegExp[] };
 
@@ -285,7 +299,14 @@ const PATTERN_GROUPS: PatternGroup[] = [
   },
   {
     id: "prize_promotion",
-    patterns: PROMOTION_PATTERNS,
+    patterns: [
+      ...PROMOTION_PATTERNS,
+      /partner deals?.{0,72}(?:claim|bundle)/i,
+      /magazijnopruiming.{0,80}(?:kortingscode|zakelijke korting)/i,
+      /prijzenclub.{0,80}(?:vakantie|geldprijs|welkomstpakket)/i,
+      /(?:reserve|claim).{0,48}(?:business|domain) bundle/i,
+      /zomeractie.{0,80}(?:tablet|reischeque|claim)/i,
+    ],
   },
   {
     id: "account_threat",
@@ -328,15 +349,40 @@ const PATTERN_GROUPS: PatternGroup[] = [
   },
   {
     id: "unsolicited_sales",
-    patterns: [/rank (higher|on google)/i, /increase (your )?(traffic|sales|leads)/i, /reduce your .{0,30}(?:energy|heating) costs/i, /qualified leads/i, /guest post/i, /backlink/i, /marketing service/i, /onze seo-diensten/i, /meer (leads|websiteverkeer)/i, /(?:verlaag|bespaar).{0,35}(?:stook|energie)kosten/i],
+    patterns: [
+      /rank (higher|on google)/i, /increase (your )?(traffic|sales|leads)/i,
+      /reduce your .{0,30}(?:energy|heating) costs/i, /qualified leads/i,
+      /guest post/i, /backlink/i, /marketing service/i, /onze seo-diensten/i,
+      /meer (leads|websiteverkeer)/i, /(?:verlaag|bespaar).{0,35}(?:stook|energie)kosten/i,
+      /(?:targeted attendee|webinar sponsors?|sponsor contacts?|qualified registrations?|qualified introduction).{0,64}(?:campaign|package|bundle|outreach|deliver|introduce)/i,
+      /(?:sell|purchase|deliver).{0,48}(?:verified )?(?:list|directory|database).{0,80}(?:candidates|contacts|managers|suppliers)/i,
+      /(?:copy team|product pages).{0,64}(?:conversion rate|free sample|pilot)/i,
+      /(?:energy bill|supplier savings).{0,64}(?:brokers?|no upfront cost)/i,
+      /remote bookkeepers?.{0,64}(?:half the usual rate|reconciliation)/i,
+      /product design team.{0,80}(?:day rates|recruitment costs)/i,
+      /(?:online ergonomieprogramma|ergonomie).{0,64}(?:reserveer|implementatiepakket)/i,
+      /zonnepanelen.{0,64}(?:gratis berekenen|thuisbatterij|extra voordeel)/i,
+    ],
   },
   {
     id: "investment_pitch",
-    patterns: [/investment opportunity/i, /guaranteed returns?/i, /passive income/i, /work from home/i, /make money/i, /\bforex\b/i, /crypto opportunity/i, /beleggingskans/i, /gegarandeerd rendement/i, /passief inkomen/i],
+    patterns: [
+      /investment opportunity/i, /guaranteed returns?/i, /passive income/i,
+      /work from home/i, /make money/i, /\bforex\b/i, /crypto opportunity/i,
+      /beleggingskans/i, /gegarandeerd rendement/i, /passief inkomen/i,
+      /(?:maandelijks|quarterly).{0,40}(?:rendement|yield)/i,
+      /(?:crypto\w*|tokens?)[\s\S]{0,80}(?:munten|tokens?|mining|cryptostroom|yield)/i,
+    ],
   },
   {
     id: "high_risk_spam",
-    patterns: [/\bviagra\b/i, /\bcialis\b/i, /weight loss/i, /\bcbd\b/i, /casino/i, /\bbetting\b/i, /online gokken/i, /gok(beloning|bonus)/i, /snel afvallen/i],
+    patterns: [
+      /\bviagra\b/i, /\bcialis\b/i, /weight loss/i, /\bcbd\b/i,
+      /casino/i, /\bbetting\b/i, /online gokken/i, /gok(beloning|bonus)/i,
+      /snel afvallen/i, /(?:gratis )?spins/i, /terugwinbonus/i,
+      /hormonen in balans/i, /wedstrijdtips/i,
+      /mining.{0,120}(?:cryptostroom|crypto stream|installatiehulp)/i,
+    ],
   },
   {
     id: "generic_greeting",
@@ -396,6 +442,15 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput | AnalysisEnv
 
   for (const group of PATTERN_GROUPS) {
     if (matchesPatternGroup(group, messageContent)) evidence.add(group.id);
+  }
+  if (
+    (evidence.has("credential_request") || evidence.has("mfa_or_oauth_request"))
+    && hasActionableMatch(messageContent, SENSITIVE_ACCOUNT_ACTION_PATTERNS, [
+      ...CREDENTIAL_NEGATION_PATTERNS,
+      ...MFA_NEGATION_PATTERNS,
+    ])
+  ) {
+    evidence.add("sensitive_account_action");
   }
   if (evidence.has("identity_reverification")) evidence.delete("credential_request");
   if (hasDeliveryFeeLure(messageContent)) evidence.add("delivery_lure");

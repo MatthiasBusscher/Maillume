@@ -14,6 +14,7 @@ import { hasMaterialEvidenceCoverage } from "./evidence-coverage";
 export const EVIDENCE_IDS = [
   "urgency_pressure",
   "credential_request",
+  "sensitive_account_action",
   "identity_reverification",
   "payment_request",
   "changed_payment_details",
@@ -104,6 +105,7 @@ type EvidenceDefinition = {
 const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   urgency_pressure: evidence("intent", 10, "Creates pressure to act quickly.", "Zet aan om snel te handelen.", true),
   credential_request: evidence("intent", 20, "Requests credentials or identity verification.", "Vraagt om inloggegevens of identiteitsverificatie.", true),
+  sensitive_account_action: evidence("intent", 10, "Pairs a sign-in or consent request with preserving or restoring sensitive access.", "Koppelt een inlog- of toestemmingsverzoek aan het behouden of herstellen van gevoelige toegang.", true),
   identity_reverification: evidence("intent", 30, "Requests renewed identity or account verification.", "Vraagt om hernieuwde identiteits- of accountverificatie.", true),
   payment_request: evidence("intent", 20, "Requests or pressures a payment or transfer.", "Vraagt om of dringt aan op een betaling of overschrijving.", true),
   changed_payment_details: evidence("intent", 30, "Changes trusted payment or bank details.", "Wijzigt vertrouwde betaal- of bankgegevens.", true),
@@ -302,6 +304,7 @@ function getClassification(
 
 const PHISHING_SPECIFIC_EVIDENCE = new Set<EvidenceId>([
   "credential_request",
+  "sensitive_account_action",
   "identity_reverification",
   "payment_request",
   "changed_payment_details",

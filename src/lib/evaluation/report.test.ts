@@ -31,8 +31,8 @@ assert.equal(report.schemaVersion, EVALUATION_REPORT_SCHEMA_VERSION);
 assert.equal(report.generatedAt, generatedAt);
 assert.equal(report.analysisVersion, ANALYSIS_PIPELINE_VERSION);
 assert.equal(report.corpusRevision, "sha256:test-corpus");
-assert.equal(report.inventory.cases, 456);
-assert.equal(report.inventory.scenarios, 132);
+assert.equal(report.inventory.cases, 504);
+assert.equal(report.inventory.scenarios, 180);
 assert.deepEqual(
   Object.fromEntries(
     Object.entries(report.datasets).map(([dataset, summary]) => [
@@ -43,30 +43,30 @@ assert.deepEqual(
   {
     calibration: [12, 12],
     "public-advisory-holdout": [12, 12],
-    "independent-development": [20, 20],
-    "independent-validation": [20, 20],
-    "independent-locked": [20, 20],
+    "independent-development": [36, 36],
+    "independent-validation": [36, 36],
+    "independent-locked": [36, 36],
     "synthetic-development": [200, 20],
     "synthetic-locked": [100, 10],
     "cross-input": [72, 18],
   },
 );
-assert.equal(report.breakdowns.source.paste.cases, 356);
-assert.equal(report.breakdowns.source.screenshot.cases, 33);
-assert.equal(report.breakdowns.source.chrome.cases, 33);
-assert.equal(report.breakdowns.source.eml.cases, 34);
-assert.equal(report.breakdowns.language.en.cases, 229);
-assert.equal(report.breakdowns.language.nl.cases, 227);
+assert.equal(report.breakdowns.source.paste.cases, 368);
+assert.equal(report.breakdowns.source.screenshot.cases, 45);
+assert.equal(report.breakdowns.source.chrome.cases, 45);
+assert.equal(report.breakdowns.source.eml.cases, 46);
+assert.equal(report.breakdowns.language.en.cases, 253);
+assert.equal(report.breakdowns.language.nl.cases, 251);
 
 const observations = buildEvaluationObservations();
 assert.equal(observations.length, report.inventory.cases);
 assert.equal(
   observations.filter((item) => item.evidenceCompleteness === "incomplete").length,
-  35,
+  47,
 );
 assert.equal(
   observations.filter((item) => item.evidenceCompleteness === "complete").length,
-  421,
+  457,
 );
 for (const observation of observations) {
   assert.equal(

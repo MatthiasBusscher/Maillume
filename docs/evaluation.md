@@ -1,6 +1,6 @@
 # Synthetic Evaluation
 
-Maillume uses repository-only synthetic and sanitized public-advisory corpora to calibrate `analysis-v10` without retaining or collecting users' email.
+Maillume uses repository-only synthetic and sanitized public-advisory corpora to calibrate `analysis-v11` without retaining or collecting users' email.
 
 The risk score is a versioned, capped index of observed evidence. It is not the probability that a message is malicious and these synthetic checks are not a claim of real-world accuracy.
 
@@ -51,11 +51,10 @@ This is deliberately not a production database of known phishing emails. Maillum
 
 ## Independent Development, Validation, and Holdout Corpus
 
-The heuristic improvement project adds 60 distinct, independently written
-scenarios: 24 phishing, 12 spam, and 24 legitimate hard negatives. Development,
-validation, and locked holdout cases live in separate modules and are counted
-once each; there are no generated reference-number or language variants in this
-set.
+The independent corpus contains 108 distinct, independently written scenarios,
+with 36 cases in each of the development, validation, and locked holdout splits.
+Cases live in separate modules and are counted once each; there are no generated
+reference-number or language variants in this set.
 
 The corpus covers English and Dutch, paste, Chrome, screenshot/OCR, and `.eml`
 sources, plus different levels of sender, link, authentication, attachment, and
