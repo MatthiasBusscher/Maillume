@@ -127,6 +127,19 @@ async function run() {
     assert.equal(await panelPage.locator("#result").isHidden(), true);
     assert.equal(await panelPage.locator("#capture").count(), 1);
     assert.equal(await panelPage.locator("#capture").textContent(), "Use current message");
+    assert.deepEqual(
+      await panelPage.locator("script[src]").evaluateAll((scripts) => scripts.map((script) => script.getAttribute("src"))),
+      [
+        "sidepanel-compatibility.js",
+        "sidepanel-copy.js",
+        "sidepanel-contract.js",
+        "sidepanel-render.js",
+        "sidepanel-capture.js",
+        "sidepanel-connection.js",
+        "sidepanel.js",
+      ],
+      "the panel must use only the ordered, packaged local modules",
+    );
     const recoveredBody = await waitForPanelBody(panelPage, "Window selection text");
     assert.equal(recoveredBody, "Window selection text");
 
@@ -165,9 +178,16 @@ async function run() {
     await panelPage.reload();
     await panelPage.getByText("Connection settings", { exact: true }).click();
     assert.equal(await panelPage.locator("#apiKey").inputValue(), "", "a managed key must remain outside the manual field after reopening the panel");
+    assert.equal(await panelPage.locator("#apiKeyVisibility").isDisabled(), true, "a managed key must disable the manual field visibility control");
+    await panelPage.locator("#apiKeyVisibility").evaluate((element) => element.click());
+    assert.equal(await panelPage.locator("#apiKey").getAttribute("type"), "password", "the managed credential visibility control must not switch field state");
+    assert.equal(await panelPage.locator("#apiKeyVisibility").getAttribute("aria-pressed"), "false");
     assert.equal(await panelPage.locator("#connectionState").textContent(), "Connected through your Maillume account.");
     assert.equal(await panelPage.locator("#connect").isHidden(), true, "a healthy stored browser connection must not offer another connection action");
     assert.equal(await panelPage.locator("#reset").isVisible(), true, "the connected state must retain a removal action");
+    await panelPage.locator("#reset").click();
+    assert.deepEqual(await panelPage.evaluate(async () => chrome.storage.local.get(["apiKey", "connectionKind"])), {}, "removing a browser connection must clear local credential state");
+    assert.equal(await panelPage.locator("#apiKeyVisibility").isDisabled(), false, "removing a browser connection must restore manual key visibility control");
 
     await panelPage.locator("#reviewStep").evaluate((element) => { element.hidden = true; });
     assert.equal(await panelPage.locator("#reviewStep").isHidden(), true, "the review step must collapse after analysis");

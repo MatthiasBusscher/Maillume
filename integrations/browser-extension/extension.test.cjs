@@ -6,6 +6,20 @@ const vm = require("node:vm");
 
 const extensionDir = __dirname;
 
+function loadPanelScripts(context) {
+  for (const file of [
+    "sidepanel-compatibility.js",
+    "sidepanel-copy.js",
+    "sidepanel-contract.js",
+    "sidepanel-render.js",
+    "sidepanel-capture.js",
+    "sidepanel-connection.js",
+    "sidepanel.js",
+  ]) {
+    vm.runInContext(fs.readFileSync(path.join(extensionDir, file), "utf8"), context, { filename: file });
+  }
+}
+
 function event() {
   return { listener: undefined, addListener(callback) { this.listener = callback; } };
 }
@@ -461,7 +475,7 @@ async function testPanelSendsCapturedLinkMetadata() {
     },
     analysis_mode: "heuristic",
     analysis_provider: "heuristic",
-    analysis_version: "analysis-v10",
+    analysis_version: "analysis-v11",
     disclaimer: "This is an automated risk assessment.",
     privacy: {
       stored: false,
@@ -517,7 +531,7 @@ async function testPanelSendsCapturedLinkMetadata() {
             ok: true,
             status: 200,
             json: async () => ({
-              analysis_version: "analysis-v10",
+              analysis_version: "analysis-v11",
               api_version: "v1",
               extension: {
                 id: "bjiiailjalkfjimkjdikoockjlnjolle",
@@ -525,7 +539,7 @@ async function testPanelSendsCapturedLinkMetadata() {
                 minimum_analysis_version: "0.3.8",
                 minimum_pairing_version: "0.3.9",
                 pairing_available: true,
-                supported_analysis_versions: ["analysis-v10"],
+                supported_analysis_versions: ["analysis-v11"],
               },
             }),
           };
@@ -586,7 +600,7 @@ async function testPanelSendsCapturedLinkMetadata() {
     URL,
   };
   vm.createContext(context);
-  vm.runInContext(fs.readFileSync(path.join(extensionDir, "sidepanel.js"), "utf8"), context);
+  loadPanelScripts(context);
   await new Promise((resolve) => setTimeout(resolve, 100));
   await flush();
   assert.equal(elements.get("body").value, "Captured once");
@@ -625,7 +639,7 @@ async function testPanelSendsCapturedLinkMetadata() {
   });
   assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.0");
   assert.equal(requestHeaders["X-Maillume-Extension-Id"], "bjiiailjalkfjimkjdikoockjlnjolle");
-  assert.equal(requestHeaders["X-Maillume-Analysis-Versions"].includes("analysis-v10"), true);
+  assert.equal(requestHeaders["X-Maillume-Analysis-Versions"].includes("analysis-v11"), true);
   assert.equal(elements.get("reviewStep").hidden, true, "successful analysis must collapse the captured-detail step");
   assert.equal(elements.get("analyze").hidden, true, "successful analysis must replace the analyze action with the result");
   assert.equal(elements.get("result").hidden, false);
@@ -753,8 +767,22 @@ async function testPanelSendsCapturedLinkMetadata() {
   assert.equal(localStorage.browserConnectionId, "mlb_12345678123441238123123456789abc");
   assert.equal(elements.get("connectionState").textContent, "Connected through your Maillume account.");
   assert.equal(elements.get("apiKey").value, "", "a managed browser credential must never be copied into the manual key field");
+  assert.equal(elements.get("apiKeyVisibility").disabled, true, "a managed browser credential must disable the manual key visibility control");
+  await elements.get("apiKeyVisibility").dispatch("click");
+  assert.equal(elements.get("apiKey").type, "password", "the disabled visibility control must not change the managed credential field state");
+  assert.equal(elements.get("apiKeyVisibility").getAttribute("aria-pressed"), "false");
+  assert.equal(elements.get("analyze").disabled, false, "a concealed managed credential must remain usable for analysis");
+  pairingMode = false;
+  responseStatus = 200;
+  responsePayload = validResponse;
+  await elements.get("analyze").dispatch("click");
+  assert.equal(requestHeaders.Authorization, `Bearer ${pairedKey}`, "analysis must use the managed credential held outside the manual field");
   assert.equal(elements.get("connect").hidden, true, "an active browser connection must not offer another connection action");
   assert.equal(elements.get("reset").hidden, false, "an active browser connection must retain an explicit removal action");
+  await elements.get("reset").dispatch("click");
+  assert.equal(localStorage.apiKey, undefined, "removing a browser connection must clear its stored credential");
+  assert.equal(localStorage.connectionKind, undefined, "removing a browser connection must clear its connection kind");
+  assert.equal(elements.get("apiKeyVisibility").disabled, false, "removing a browser connection must restore manual key visibility control");
   assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.0");
 }
 

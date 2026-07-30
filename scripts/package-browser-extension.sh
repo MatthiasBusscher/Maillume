@@ -2,6 +2,7 @@
 set -eu
 
 root_dir="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+node "$root_dir/scripts/generate-contract-artifacts.mjs" --check
 source_dir="$root_dir/integrations/browser-extension"
 output_dir="$root_dir/dist"
 output_file="$output_dir/maillume-browser-extension.zip"
@@ -14,9 +15,16 @@ rm -f "$output_file"
 
 cp -R \
   "$source_dir/manifest.json" \
+  "$source_dir/compatibility.json" \
   "$source_dir/service-worker.js" \
   "$source_dir/sidepanel.html" \
   "$source_dir/sidepanel.css" \
+  "$source_dir/sidepanel-compatibility.js" \
+  "$source_dir/sidepanel-copy.js" \
+  "$source_dir/sidepanel-contract.js" \
+  "$source_dir/sidepanel-render.js" \
+  "$source_dir/sidepanel-capture.js" \
+  "$source_dir/sidepanel-connection.js" \
   "$source_dir/sidepanel.js" \
   "$source_dir/icons" \
   "$source_dir/_locales" \
@@ -32,28 +40,21 @@ const [rootDirectory, stagingDirectory] = process.argv.slice(2);
 const manifest = JSON.parse(
   await readFile(path.join(rootDirectory, "integrations/browser-extension/manifest.json"), "utf8"),
 );
-const sidePanel = await readFile(
-  path.join(rootDirectory, "integrations/browser-extension/sidepanel.js"),
-  "utf8",
+const compatibility = JSON.parse(
+  await readFile(path.join(rootDirectory, "integrations/browser-extension/compatibility.json"), "utf8"),
 );
-const types = await readFile(path.join(rootDirectory, "src/lib/types.ts"), "utf8");
 const revision = process.env.BUILD_REVISION;
-const supportedMatch = sidePanel.match(
-  /const SUPPORTED_ANALYSIS_VERSIONS = (\[[^\n]+\]);/,
-);
-const currentMatch = types.match(
-  /ANALYSIS_PIPELINE_VERSION = "(analysis-v[1-9]\d*)"/,
-);
 
 if (!revision || (revision !== "development" && !/^[0-9a-f]{40}$/.test(revision))) {
   throw new Error("BUILD_REVISION must be development or a 40-character lowercase Git SHA.");
 }
-if (!supportedMatch || !currentMatch) {
-  throw new Error("Could not resolve the extension/server analysis compatibility contract.");
+if (compatibility.schema !== "maillume-extension-compatibility-v1") {
+  throw new Error("Extension compatibility metadata has an unsupported schema.");
 }
-
-const supportedAnalysisVersions = JSON.parse(supportedMatch[1]);
-if (!supportedAnalysisVersions.includes(currentMatch[1])) {
+if (manifest.version !== compatibility.extension_version) {
+  throw new Error("Extension manifest version does not match generated compatibility metadata.");
+}
+if (!compatibility.supported_analysis_versions.includes(compatibility.current_analysis_version)) {
   throw new Error("The extension does not support the current server analysis version.");
 }
 
@@ -61,8 +62,8 @@ const metadata = {
   schema: "maillume-extension-release-v1",
   extension_version: manifest.version,
   source_revision: revision,
-  current_analysis_version: currentMatch[1],
-  supported_analysis_versions: supportedAnalysisVersions,
+  current_analysis_version: compatibility.current_analysis_version,
+  supported_analysis_versions: compatibility.supported_analysis_versions,
 };
 
 await writeFile(

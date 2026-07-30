@@ -7,6 +7,7 @@ root_dir="$(cd "$(dirname "$0")/.." && pwd)"
 
 extension_entries="$(unzip -Z1 "$root_dir/dist/maillume-browser-extension.zip")"
 printf '%s\n' "$extension_entries" | grep -qx 'manifest.json'
+printf '%s\n' "$extension_entries" | grep -qx 'compatibility.json'
 printf '%s\n' "$extension_entries" | grep -qx '_locales/en/messages.json'
 printf '%s\n' "$extension_entries" | grep -qx '_locales/nl/messages.json'
 printf '%s\n' "$extension_entries" | grep -qx 'release-metadata.json'
