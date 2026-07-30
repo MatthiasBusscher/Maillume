@@ -8,6 +8,7 @@ import {
   verifyAccountMutationToken,
 } from "./account-mutation-token";
 import { isStrictSameOriginMutation } from "./account-request";
+import { getExtensionPairingMutationTokenInput } from "../extension-pairing";
 
 const input = {
   lastSignInAt: "2026-07-18T08:00:00.000Z",
@@ -16,7 +17,17 @@ const input = {
 const secret = "server-only-test-secret";
 const now = Date.parse("2026-07-18T08:00:00.000Z");
 const languageToken = createAccountMutationToken("language", input, secret, now);
-const extensionPairingToken = createAccountMutationToken("extension-pairing", input, secret, now);
+const extensionPairingInput = getExtensionPairingMutationTokenInput(
+  input.userId,
+  "10000000-0000-4000-8000-000000000001",
+  "ABCD-2345",
+);
+const extensionPairingToken = createAccountMutationToken(
+  "extension-pairing",
+  extensionPairingInput,
+  secret,
+  now,
+);
 const redirectedMarketingRequest = new Request("https://app.maillume.io/account/language", {
   headers: {
     Origin: "https://maillume.io",
@@ -38,11 +49,68 @@ assert.equal(verifyAccountMutationToken("language", languageToken, input, secret
 assert.equal(verifyAccountMutationToken("sign-out", languageToken, input, secret, now), false);
 assert.equal(verifyAccountMutationToken("delete", languageToken, input, secret, now), false);
 assert.equal(
-  verifyAccountMutationToken("extension-pairing", extensionPairingToken, input, secret, now),
+  verifyAccountMutationToken(
+    "extension-pairing",
+    extensionPairingToken,
+    extensionPairingInput,
+    secret,
+    now,
+  ),
   true,
 );
 assert.equal(
-  verifyAccountMutationToken("extension-pairing", languageToken, input, secret, now),
+  verifyAccountMutationToken(
+    "extension-pairing",
+    extensionPairingToken,
+    getExtensionPairingMutationTokenInput(
+      input.userId,
+      "10000000-0000-4000-8000-000000000001",
+      "EFGH-6789",
+    ),
+    secret,
+    now,
+  ),
+  false,
+  "a browser approval token cannot authorize another pairing request",
+);
+assert.equal(
+  verifyAccountMutationToken(
+    "extension-pairing",
+    extensionPairingToken,
+    getExtensionPairingMutationTokenInput(
+      input.userId,
+      "20000000-0000-4000-8000-000000000002",
+      "ABCD-2345",
+    ),
+    secret,
+    now,
+  ),
+  false,
+  "a browser approval token is bound to one pairing identifier",
+);
+assert.equal(
+  verifyAccountMutationToken(
+    "extension-pairing",
+    extensionPairingToken,
+    getExtensionPairingMutationTokenInput(
+      "20000000-0000-4000-8000-000000000002",
+      "10000000-0000-4000-8000-000000000001",
+      "ABCD-2345",
+    ),
+    secret,
+    now,
+  ),
+  false,
+  "a browser approval token cannot cross authenticated users",
+);
+assert.equal(
+  verifyAccountMutationToken(
+    "extension-pairing",
+    languageToken,
+    extensionPairingInput,
+    secret,
+    now,
+  ),
   false,
 );
 assert.equal(verifyAccountMutationToken("language", null, input, secret, now), false);

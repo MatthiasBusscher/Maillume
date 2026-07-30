@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export type AccountMutationAction = "delete" | "extension-pairing" | "language" | "sign-out";
 
 export type AccountMutationTokenInput = {
+  context?: string;
   lastSignInAt?: string;
   userId: string;
 };
@@ -72,8 +73,11 @@ export function isAuthorizedAccountMutation({
 
 function getTokenPayload(
   action: AccountMutationAction,
-  { lastSignInAt, userId }: AccountMutationTokenInput,
+  { context, lastSignInAt, userId }: AccountMutationTokenInput,
   expiresAt: number,
 ): string {
-  return `maillume-account-mutation-v2\n${action}\n${userId}\n${lastSignInAt ?? ""}\n${expiresAt}`;
+  const contextSuffix = context === undefined
+    ? ""
+    : `\ncontext:${Buffer.from(context).toString("base64url")}`;
+  return `maillume-account-mutation-v2\n${action}\n${userId}\n${lastSignInAt ?? ""}\n${expiresAt}${contextSuffix}`;
 }

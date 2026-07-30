@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getPublicAppOrigin } from "@/app/auth/callback/origin";
 import {
+  getExtensionPairingMutationTokenInput,
   isExtensionPairingId,
   normalizeExtensionPairingUserCode,
 } from "@/lib/extension-pairing";
@@ -88,7 +89,7 @@ export async function POST(
     || !verifyAccountMutationToken(
       "extension-pairing",
       formData.get("csrf"),
-      { userId: data.user.id, lastSignInAt: data.user.last_sign_in_at },
+      getExtensionPairingMutationTokenInput(data.user.id, pairingId, userCode),
       adminConfig.secretKey,
     )
   ) {

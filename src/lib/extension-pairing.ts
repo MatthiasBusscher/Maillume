@@ -73,6 +73,18 @@ export function getPairingVerificationPath(
   return `${prefix}/account/connect-extension/${encodeURIComponent(pairingId)}?code=${encodeURIComponent(userCode)}`;
 }
 
+export function getExtensionPairingMutationTokenInput(
+  userId: string,
+  pairingId: string,
+  userCode: string,
+) {
+  // Bind approval to the immutable request, not mutable authentication metadata.
+  return {
+    context: `extension-pairing\n${pairingId}\n${userCode}`,
+    userId,
+  };
+}
+
 function createUserCode(): string {
   const characters = Array.from(
     { length: 8 },

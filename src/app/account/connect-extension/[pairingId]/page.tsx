@@ -10,6 +10,7 @@ import { accountNl } from "@/lib/i18n/account-nl";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizePath } from "@/lib/i18n/site-locale";
 import {
+  getExtensionPairingMutationTokenInput,
   isExtensionPairingId,
   normalizeExtensionPairingUserCode,
 } from "@/lib/extension-pairing";
@@ -128,7 +129,7 @@ export default async function ConnectExtensionPage({
 
   const csrf = createAccountMutationToken(
     "extension-pairing",
-    { userId: data.user.id, lastSignInAt: data.user.last_sign_in_at },
+    getExtensionPairingMutationTokenInput(data.user.id, pairingId, userCode),
     adminConfig.secretKey,
   );
 
