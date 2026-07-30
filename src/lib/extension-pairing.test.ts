@@ -4,6 +4,7 @@ import {
   createExtensionPairingCredentials,
   EXTENSION_PAIRING_POLL_SECONDS,
   EXTENSION_PAIRING_TTL_SECONDS,
+  getExtensionPairingMutationTokenInput,
   getPairingExpiration,
   getPairingVerificationPath,
   hashExtensionPairingDeviceCode,
@@ -15,6 +16,8 @@ import {
 
 const first = createExtensionPairingCredentials();
 const second = createExtensionPairingCredentials();
+const pairingId = "10000000-0000-4000-8000-000000000001";
+const userId = "9d455f80-d850-40c4-9e05-b8885ab661f7";
 
 assert.match(first.deviceCode, /^mlp_[A-Za-z0-9_-]{43}$/);
 assert.match(first.deviceCodeHash, /^[a-f0-9]{64}$/);
@@ -24,7 +27,7 @@ assert.notEqual(first.deviceCode, second.deviceCode);
 assert.notEqual(first.userCode, second.userCode);
 assert.equal(isExtensionPairingDeviceCode(first.deviceCode), true);
 assert.equal(isExtensionPairingDeviceCode("mlp_short"), false);
-assert.equal(isExtensionPairingId("10000000-0000-4000-8000-000000000001"), true);
+assert.equal(isExtensionPairingId(pairingId), true);
 assert.equal(isExtensionPairingId("not-a-uuid"), false);
 assert.equal(normalizeExtensionPairingUserCode("abcd-2345"), "ABCD-2345");
 assert.equal(normalizeExtensionPairingUserCode("ABCD 2345"), "ABCD-2345");
@@ -51,11 +54,18 @@ assert.equal(
 );
 assert.equal(
   getPairingVerificationPath(
-    "10000000-0000-4000-8000-000000000001",
+    pairingId,
     "ABCD-2345",
     "nl",
   ),
   "/nl/account/connect-extension/10000000-0000-4000-8000-000000000001?code=ABCD-2345",
+);
+assert.deepEqual(
+  getExtensionPairingMutationTokenInput(userId, pairingId, "ABCD-2345"),
+  {
+    context: "extension-pairing\n10000000-0000-4000-8000-000000000001\nABCD-2345",
+    userId,
+  },
 );
 assert.equal(EXTENSION_PAIRING_TTL_SECONDS, 600);
 assert.equal(EXTENSION_PAIRING_POLL_SECONDS, 3);
