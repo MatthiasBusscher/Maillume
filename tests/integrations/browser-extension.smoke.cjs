@@ -143,6 +143,32 @@ async function run() {
     await panelPage.locator("#apiKeyVisibility").click();
     assert.equal(await panelPage.locator("#apiKey").getAttribute("type"), "text");
     assert.equal(await panelPage.locator("#apiKeyVisibility").getAttribute("aria-pressed"), "true");
+
+    const managedKey = `mlm_${"b".repeat(43)}`;
+    const managedExpiry = new Date(Date.now() + 90 * 86_400_000).toISOString();
+    const managedHardExpiry = new Date(Date.now() + 365 * 86_400_000).toISOString();
+    await panelPage.evaluate(async ({ apiKey, expiresAt, hardExpiresAt }) => {
+      await chrome.storage.local.set({
+        apiKey,
+        apiKeyExpiresAt: expiresAt,
+        apiKeyHardExpiresAt: hardExpiresAt,
+        connectionKind: "browser",
+        endpoint: "https://app.maillume.io",
+      });
+      await chrome.storage.session.remove([
+        "apiKey",
+        "apiKeyExpiresAt",
+        "apiKeyHardExpiresAt",
+        "connectionKind",
+      ]);
+    }, { apiKey: managedKey, expiresAt: managedExpiry, hardExpiresAt: managedHardExpiry });
+    await panelPage.reload();
+    await panelPage.getByText("Connection settings", { exact: true }).click();
+    assert.equal(await panelPage.locator("#apiKey").inputValue(), "", "a managed key must remain outside the manual field after reopening the panel");
+    assert.equal(await panelPage.locator("#connectionState").textContent(), "Connected through your Maillume account.");
+    assert.equal(await panelPage.locator("#connect").isHidden(), true, "a healthy stored browser connection must not offer another connection action");
+    assert.equal(await panelPage.locator("#reset").isVisible(), true, "the connected state must retain a removal action");
+
     await panelPage.locator("#reviewStep").evaluate((element) => { element.hidden = true; });
     assert.equal(await panelPage.locator("#reviewStep").isHidden(), true, "the review step must collapse after analysis");
 
