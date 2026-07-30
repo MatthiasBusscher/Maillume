@@ -45,6 +45,8 @@ function main() {
   }
 
   const routeContent = readProjectFile("src/app/api/analyze/route.ts");
+  const analysisHttp = readProjectFile("src/lib/analysis/http.ts");
+  const hostedAnalysis = readProjectFile("src/lib/analysis/hosted.ts");
   const feedbackRouteContent = readProjectFile("src/app/api/feedback/route.ts");
   const authCallbackContent = readProjectFile("src/app/auth/callback/route.ts");
   const authRedirectContent = readProjectFile("src/app/auth/callback/redirect.ts");
@@ -116,12 +118,21 @@ function main() {
   const operatorConfig = readProjectFile("src/lib/operator.ts");
   const clientIdentifier = readProjectFile("src/lib/security/client-identifier.ts");
   const scanLimits = readProjectFile("src/lib/scan-limits.ts");
+  const publicContract = readProjectFile("src/lib/contracts/public-contract.ts");
   const ocrExtractor = readProjectFile("src/lib/ocr/extract-text.ts");
   const emlParser = readProjectFile("src/lib/eml/parse-eml.ts");
   const extensionManifest = readProjectFile("integrations/browser-extension/manifest.json");
-  const extensionPanel = readProjectFile("integrations/browser-extension/sidepanel.js");
+  const extensionPanel = [
+    "sidepanel-capture.js",
+    "sidepanel-connection.js",
+    "sidepanel-contract.js",
+    "sidepanel-copy.js",
+    "sidepanel-render.js",
+    "sidepanel.js",
+  ].map((file) => readProjectFile(`integrations/browser-extension/${file}`)).join("\n");
   const extensionWorker = readProjectFile("integrations/browser-extension/service-worker.js");
   const ciWorkflow = readProjectFile(".github/workflows/ci.yml");
+  const reusableVerificationWorkflow = readProjectFile(".github/workflows/verify.yml");
   const releaseWorkflow = readProjectFile(".github/workflows/release.yml");
   const rollbackWorkflow = readProjectFile(".github/workflows/rollback-rehearsal.yml");
   const runtimeAuditWorkflow = readProjectFile(
@@ -140,11 +151,12 @@ function main() {
     "scripts/rehearse-production-tunnel-restart.sh",
   );
 
-  assert.match(routeContent, /"Cache-Control": "no-store"/);
+  assert.match(analysisHttp, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(routeContent, /console\./);
   assert.doesNotMatch(routeContent, /node:fs|writeFile|appendFile|createWriteStream/);
   assert.doesNotMatch(routeContent, /supabase|feedback\/storage/);
-  assert.match(routeContent, /readBoundedRequestBody\(request, getAnalysisMaxRequestBytes\(\)\)/);
+  assert.match(routeContent, /parseAnalysisRequest\(request\)/);
+  assert.match(analysisHttp, /readBody\(request, getMaxRequestBytes\(\)\)/);
   assert.match(feedbackRouteContent, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(feedbackRouteContent, /console\./);
   assert.match(
@@ -358,7 +370,7 @@ function main() {
   assert.match(apiQuotaFixMigration, /on conflict on constraint api_usage_monthly_pkey/);
   assert.doesNotMatch(apiQuotaFixMigration, /on conflict \(api_key_id,/);
   assert.match(quotaRefundMigration, /greatest\(0, request_count - 1\)/);
-  assert.match(hostedApiRoute, /refund_account_api_quota/);
+  assert.match(hostedAnalysis, /refund_account_api_quota/);
   assert.match(apiLifecycleMigration, /create table public\.api_account_limits/);
   assert.match(apiLifecycleMigration, /create table public\.api_account_usage_monthly/);
   assert.match(apiLifecycleMigration, /create table public\.api_quota_reservations/);
@@ -411,10 +423,11 @@ function main() {
   assert.doesNotMatch(apiAccessMigration, /^\s*(body|subject|sender_email|message_text|links|result|ip_address)\s+/im);
   assert.doesNotMatch(hostedApiRoute, /console\.|writeFile|appendFile|createWriteStream/);
   assert.match(hostedApiRoute, /hashApiKey\(token\)/);
-  assert.match(hostedApiRoute, /reserve_account_api_quota/);
-  assert.match(hostedApiRoute, /finalize_account_api_quota/);
-  assert.match(hostedApiRoute, /reservation_id/);
-  assert.match(hostedApiRoute, /readBoundedRequestBody\(request, getAnalysisMaxRequestBytes\(\)\)/);
+  assert.match(hostedApiRoute, /parseAnalysisRequest\(request\)/);
+  assert.match(hostedAnalysis, /reserve_account_api_quota/);
+  assert.match(hostedAnalysis, /finalize_account_api_quota/);
+  assert.match(hostedAnalysis, /p_reservation_id/);
+  assert.match(analysisHttp, /readBody\(request, getMaxRequestBytes\(\)\)/);
   assert.doesNotMatch(hostedApiRoute, /consume_api_quota|inspect_api_key_status/);
   assert.match(extensionPairingMigration, /create table public\.extension_pairings/);
   assert.match(extensionPairingMigration, /device_code_hash char\(64\)/);
@@ -447,8 +460,13 @@ function main() {
   assert.match(extensionPanel, /X-Maillume-Extension-Version/);
   assert.match(extensionPanel, /rememberApiKey/);
   assert.match(extensionWorker, /setAccessLevel\?\.\(\{ accessLevel: "TRUSTED_CONTEXTS" \}\)/);
-  assertPinnedActions(ciWorkflow, ".github/workflows/ci.yml");
-  assertPinnedActions(releaseWorkflow, ".github/workflows/release.yml");
+  const reusableWorkflowReference = "./.github/workflows/verify.yml";
+  assertPinnedActions(ciWorkflow, ".github/workflows/ci.yml", [reusableWorkflowReference]);
+  assertPinnedActions(
+    reusableVerificationWorkflow,
+    ".github/workflows/verify.yml",
+  );
+  assertPinnedActions(releaseWorkflow, ".github/workflows/release.yml", [reusableWorkflowReference]);
   assertPinnedActions(rollbackWorkflow, ".github/workflows/rollback-rehearsal.yml");
   assertPinnedActions(runtimeAuditWorkflow, ".github/workflows/production-runtime-audit.yml");
   assertPinnedActions(tunnelRestartWorkflow, ".github/workflows/tunnel-restart-rehearsal.yml");
@@ -458,11 +476,16 @@ function main() {
   assert.match(tunnelRestartScript, /compose restart cloudflared/);
   assert.doesNotMatch(tunnelRestartScript, /docker logs|printenv|\.env\.production\)/);
   assert.doesNotMatch(ciWorkflow, /push:\s*\n\s*branches:/);
-  assert.match(ciWorkflow, /fetch-depth: 0/);
-  assert.match(ciWorkflow, /gitleaks\/gitleaks-action@[0-9a-f]{40}/);
+  assert.match(ciWorkflow, /uses:\s*\.\/\.github\/workflows\/verify\.yml/);
+  assert.match(reusableVerificationWorkflow, /fetch-depth: 0/);
+  assert.match(reusableVerificationWorkflow, /gitleaks\/gitleaks-action@[0-9a-f]{40}/);
+  assert.match(reusableVerificationWorkflow, /supabase test db --local supabase\/tests/);
+  assert.match(reusableVerificationWorkflow, /npx playwright install --with-deps chromium/);
+  assert.match(reusableVerificationWorkflow, /npm run test:extension/);
   assert.equal((ciWorkflow.match(/pull-requests: read/g) ?? []).length, 1);
-  assert.match(releaseWorkflow, /fetch-depth: 0/);
-  assert.match(releaseWorkflow, /needs: \[verify, secrets\]/);
+  assert.equal((reusableVerificationWorkflow.match(/pull-requests: read/g) ?? []).length, 1);
+  assert.match(releaseWorkflow, /uses:\s*\.\/\.github\/workflows\/verify\.yml/);
+  assert.match(releaseWorkflow, /needs: verify/);
   assert.match(releaseWorkflow, /name: Resolve verified image/);
   assert.match(releaseWorkflow, /name: Verify deployment prerequisites/);
   assert.match(releaseWorkflow, /feedback_summary_migration_applied/);
@@ -474,7 +497,6 @@ function main() {
   assert.match(releaseWorkflow, /IMAGE_TAG: ghcr\.io\/matthiasbusscher\/maillume:sha-\$\{\{ github\.sha \}\}/);
   assert.match(releaseWorkflow, /needs: resolve/);
   assert.match(releaseWorkflow, /needs\.resolve\.outputs\.image/);
-  assert.match(releaseWorkflow, /npm run test:extension/);
   assert.match(releaseWorkflow, /image:\s*\$\{\{ steps\.digest\.outputs\.image \}\}/);
   assert.equal((releaseWorkflow.match(/packages: write/g) ?? []).length, 1);
   assert.equal((releaseWorkflow.match(/attestations: write/g) ?? []).length, 1);
@@ -529,7 +551,7 @@ function main() {
   assert.match(runtimeAuditWorkflow, /inputs\.confirm == 'AUDIT'/);
   assert.match(runtimeAuditWorkflow, /environment: production/);
   assert.match(runtimeAuditWorkflow, /envs: AUDIT_MARKER/);
-  assert.match(runtimeAuditWorkflow, /payload\.analysis_version !== "analysis-v10"/);
+  assert.match(runtimeAuditWorkflow, /payload\.analysis_version !== "analysis-v11"/);
   assert.match(runtimeAuditWorkflow, /payload\.result\?\.evidence_coverage/);
   assert.match(runtimeAuditScript, /ReadonlyRootfs/);
   assert.match(
@@ -541,8 +563,10 @@ function main() {
     runtimeAuditScript,
     /docker logs --since 20m "\$container" 2>&1 \| grep -Fq -- "\$audit_marker"/,
   );
-  assert.match(scanLimits, /MAX_SCREENSHOT_PIXELS = 20_000_000/);
-  assert.match(scanLimits, /MAX_SCREENSHOT_DIMENSION = 8_000/);
+  assert.match(scanLimits, /MAX_SCREENSHOT_PIXELS = PUBLIC_CONTRACT\.limits\.screenshotPixels/);
+  assert.match(scanLimits, /MAX_SCREENSHOT_DIMENSION = PUBLIC_CONTRACT\.limits\.screenshotDimension/);
+  assert.match(publicContract, /screenshotPixels: 20_000_000/);
+  assert.match(publicContract, /screenshotDimension: 8_000/);
   assert.match(scanLimits, /hasSupportedScreenshotSignature/);
   assert.match(scanLimits, /isWithinScreenshotDimensionLimit/);
   assert.match(ocrExtractor, /OCR_TIMEOUT_MS = 45_000/);
@@ -609,13 +633,18 @@ function getAnalyzeResponseType(): string {
   return typesContent.slice(start, end);
 }
 
-function assertPinnedActions(workflow: string, label: string) {
+function assertPinnedActions(
+  workflow: string,
+  label: string,
+  allowedLocalWorkflowReferences: readonly string[] = [],
+) {
   const actionReferences = [...workflow.matchAll(/uses:\s*([^\s#]+)/g)].map(
     (match) => match[1],
   );
   assert.ok(actionReferences.length > 0, `${label} should contain actions`);
 
   for (const actionReference of actionReferences) {
+    if (allowedLocalWorkflowReferences.includes(actionReference)) continue;
     assert.match(
       actionReference,
       /^[^@\s]+@[0-9a-f]{40}$/,
