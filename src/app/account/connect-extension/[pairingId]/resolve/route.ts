@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getPublicAppOrigin } from "@/app/auth/callback/origin";
 import {
   getExtensionPairingMutationTokenInput,
+  isExtensionPairingApprovalScope,
   isExtensionPairingId,
   normalizeExtensionPairingUserCode,
 } from "@/lib/extension-pairing";
@@ -44,9 +45,11 @@ export async function POST(
   const requestedLocale = formData.get("locale");
   const locale = isSiteLocale(requestedLocale) ? requestedLocale : "en";
   const decision = formData.get("decision");
+  const approvalScope = formData.get("scope");
   if (
     !isExtensionPairingId(pairingId)
     || !userCode
+    || !isExtensionPairingApprovalScope(approvalScope, pairingId, userCode)
     || (decision !== "approve" && decision !== "deny")
   ) {
     return privateResponse("Invalid browser connection request.", 400);
@@ -89,7 +92,7 @@ export async function POST(
     || !verifyAccountMutationToken(
       "extension-pairing",
       formData.get("csrf"),
-      getExtensionPairingMutationTokenInput(data.user.id, pairingId, userCode),
+      getExtensionPairingMutationTokenInput(data.user.id, approvalScope),
       adminConfig.secretKey,
     )
   ) {

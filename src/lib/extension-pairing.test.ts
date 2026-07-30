@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 
 import {
+  createExtensionPairingApprovalScope,
   createExtensionPairingCredentials,
   EXTENSION_PAIRING_POLL_SECONDS,
   EXTENSION_PAIRING_TTL_SECONDS,
@@ -8,6 +9,7 @@ import {
   getPairingExpiration,
   getPairingVerificationPath,
   hashExtensionPairingDeviceCode,
+  isExtensionPairingApprovalScope,
   isExtensionPairingDeviceCode,
   isExtensionPairingId,
   normalizeExtensionPairingRequest,
@@ -18,6 +20,7 @@ const first = createExtensionPairingCredentials();
 const second = createExtensionPairingCredentials();
 const pairingId = "10000000-0000-4000-8000-000000000001";
 const userId = "9d455f80-d850-40c4-9e05-b8885ab661f7";
+const approvalScope = createExtensionPairingApprovalScope(pairingId, "ABCD-2345");
 
 assert.match(first.deviceCode, /^mlp_[A-Za-z0-9_-]{43}$/);
 assert.match(first.deviceCodeHash, /^[a-f0-9]{64}$/);
@@ -60,10 +63,22 @@ assert.equal(
   ),
   "/nl/account/connect-extension/10000000-0000-4000-8000-000000000001?code=ABCD-2345",
 );
+assert.equal(isExtensionPairingApprovalScope(approvalScope, pairingId, "ABCD-2345"), true);
+assert.equal(
+  isExtensionPairingApprovalScope(
+    approvalScope,
+    "20000000-0000-4000-8000-000000000002",
+    "ABCD-2345",
+  ),
+  false,
+);
+assert.equal(isExtensionPairingApprovalScope(approvalScope, pairingId, "EFGH-6789"), false);
+assert.equal(isExtensionPairingApprovalScope(`${approvalScope}x`, pairingId, "ABCD-2345"), false);
+assert.equal(isExtensionPairingApprovalScope("mlps_invalid!", pairingId, "ABCD-2345"), false);
 assert.deepEqual(
-  getExtensionPairingMutationTokenInput(userId, pairingId, "ABCD-2345"),
+  getExtensionPairingMutationTokenInput(userId, approvalScope),
   {
-    context: "extension-pairing\n10000000-0000-4000-8000-000000000001\nABCD-2345",
+    context: approvalScope,
     userId,
   },
 );
