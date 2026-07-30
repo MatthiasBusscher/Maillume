@@ -432,9 +432,10 @@ function main() {
   assert.match(extensionPairingRoute, /redeem_extension_pairing/);
   assert.doesNotMatch(extensionPairingRoute, /console\.|writeFile|appendFile|createWriteStream/);
   assert.match(extensionPairingApprovalRoute, /isStrictSameOriginMutation\(request, publicOrigin\)/);
+  assert.match(extensionPairingApprovalRoute, /isAuthorizedAccountMutation/);
   assert.match(extensionPairingApprovalRoute, /getAuthenticatorAssuranceLevel\(\)/);
   assert.match(extensionPairingApprovalRoute, /assurance\?\.currentLevel !== "aal2"/);
-  assert.match(extensionPairingApprovalRoute, /verifyAccountMutationToken\(\s*"extension-pairing"/);
+  assert.match(extensionPairingApprovalRoute, /action: "extension-pairing"/);
   assert.match(extensionManifest, /"activeTab"/);
   assert.match(extensionManifest, /"minimum_chrome_version": "116"/);
   assert.doesNotMatch(extensionManifest, /"content_scripts"|"tabs"|mail\.google\.com|outlook\.office\.com/);

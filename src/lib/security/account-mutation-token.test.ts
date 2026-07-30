@@ -118,6 +118,25 @@ assert.equal(
   ),
   false,
 );
+assert.equal(isAuthorizedAccountMutation({
+  action: "extension-pairing",
+  input: extensionPairingInput,
+  now,
+  sameOrigin: false,
+  secret,
+  token: extensionPairingToken,
+}), true, "a signed pairing token survives a proxy-origin false negative");
+assert.equal(isAuthorizedAccountMutation({
+  action: "extension-pairing",
+  input: getExtensionPairingMutationTokenInput(
+    input.userId,
+    createExtensionPairingApprovalScope(pairingId, "EFGH-6789"),
+  ),
+  now,
+  sameOrigin: false,
+  secret,
+  token: extensionPairingToken,
+}), false, "a proxy-origin fallback remains bound to the exact pairing request");
 assert.equal(verifyAccountMutationToken("language", null, input, secret, now), false);
 assert.equal(verifyAccountMutationToken("language", "invalid", input, secret, now), false);
 assert.equal(
