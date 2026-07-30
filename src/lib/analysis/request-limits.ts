@@ -1,6 +1,5 @@
+import { PUBLIC_CONTRACT } from "../contracts/public-contract";
 import { DEFAULT_ANALYSIS_MAX_REQUEST_BYTES } from "../scan-limits";
-
-const MAX_CONFIGURED_REQUEST_BYTES = 256 * 1024;
 
 export function getAnalysisMaxRequestBytes(
   env: Partial<NodeJS.ProcessEnv> = process.env,
@@ -12,7 +11,7 @@ export function getAnalysisMaxRequestBytes(
   }
 
   const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 && parsed <= MAX_CONFIGURED_REQUEST_BYTES
+  return Number.isInteger(parsed) && parsed > 0 && parsed <= PUBLIC_CONTRACT.limits.maxConfiguredAnalysisRequestBytes
     ? parsed
     : DEFAULT_ANALYSIS_MAX_REQUEST_BYTES;
 }

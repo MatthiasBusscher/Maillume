@@ -299,7 +299,7 @@ type AnalyzeResponse = {
   result: EmailAnalysisResult;
   analysis_mode: "heuristic" | "ai";
   analysis_provider: "heuristic" | "openai" | "anthropic" | "openai-compatible";
-  analysis_version: "analysis-v10";
+  analysis_version: "analysis-v11";
   disclaimer: string;
   privacy: {
     stored: false;

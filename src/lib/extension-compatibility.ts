@@ -1,22 +1,13 @@
+import { PUBLIC_CONTRACT } from "./contracts/public-contract";
 import { ANALYSIS_PIPELINE_VERSION } from "./types";
 
-export const OFFICIAL_BROWSER_EXTENSION_ID = "bjiiailjalkfjimkjdikoockjlnjolle";
-export const LATEST_BROWSER_EXTENSION_VERSION = "0.4.0";
-export const MINIMUM_ANALYSIS_EXTENSION_VERSION = "0.3.8";
-export const MINIMUM_PAIRING_EXTENSION_VERSION = "0.3.9";
-export const SUPPORTED_EXTENSION_ANALYSIS_VERSIONS = [
-  "analysis-v6",
-  "analysis-v7",
-  "analysis-v8",
-  "analysis-v9",
-  "analysis-v10",
-] as const;
+export const OFFICIAL_BROWSER_EXTENSION_ID: string = PUBLIC_CONTRACT.extension.officialId;
+export const LATEST_BROWSER_EXTENSION_VERSION: string = PUBLIC_CONTRACT.extension.currentVersion;
+export const MINIMUM_ANALYSIS_EXTENSION_VERSION: string = PUBLIC_CONTRACT.extension.minimumAnalysisVersion;
+export const MINIMUM_PAIRING_EXTENSION_VERSION: string = PUBLIC_CONTRACT.extension.minimumPairingVersion;
+export const SUPPORTED_EXTENSION_ANALYSIS_VERSIONS = PUBLIC_CONTRACT.extension.supportedAnalysisVersions;
 
-export const EXTENSION_CLIENT_HEADERS = {
-  analysisVersions: "x-maillume-analysis-versions",
-  extensionId: "x-maillume-extension-id",
-  extensionVersion: "x-maillume-extension-version",
-} as const;
+export const EXTENSION_CLIENT_HEADERS = PUBLIC_CONTRACT.extension.clientHeaders;
 
 export type ExtensionClient = {
   analysisVersions: string[];

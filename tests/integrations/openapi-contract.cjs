@@ -4,6 +4,12 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const specification = JSON.parse(fs.readFileSync(path.resolve("public/openapi.json"), "utf8"));
+const compatibility = JSON.parse(
+  fs.readFileSync(path.resolve("integrations/browser-extension/compatibility.json"), "utf8"),
+);
+const manifest = JSON.parse(
+  fs.readFileSync(path.resolve("integrations/browser-extension/manifest.json"), "utf8"),
+);
 const request = specification.components.schemas.AnalyzeRequest;
 const response = specification.components.schemas.AnalyzeResponse;
 const result = specification.components.schemas.AnalysisResult;
@@ -44,10 +50,23 @@ assert.deepEqual(coverage.required, [
 ]);
 assert.equal(coverage.additionalProperties, false);
 assert.deepEqual(coverage.properties.extraction_type.enum, ["direct", "ocr", "parsed"]);
-assert.equal(response.properties.analysis_version.const, "analysis-v10");
+assert.equal(response.properties.analysis_version.const, compatibility.current_analysis_version);
 assert.equal(response.properties.privacy.properties.stored.const, false);
-assert.equal(capabilities.properties.extension.properties.latest_version.const, "0.4.0");
-assert.equal(capabilities.properties.extension.properties.minimum_pairing_version.const, "0.3.9");
+assert.equal(compatibility.schema, "maillume-extension-compatibility-v1");
+assert.equal(compatibility.extension_version, manifest.version);
+assert.equal(capabilities.properties.analysis_version.const, compatibility.current_analysis_version);
+assert.equal(capabilities.properties.extension.properties.id.const, compatibility.extension_id);
+assert.equal(capabilities.properties.extension.properties.latest_version.const, compatibility.extension_version);
+assert.equal(capabilities.properties.extension.properties.minimum_analysis_version.type, "string");
+assert.equal(capabilities.properties.extension.properties.minimum_pairing_version.const, compatibility.minimum_pairing_extension_version);
+assert.deepEqual(
+  capabilities.properties.extension.properties.supported_analysis_versions.items.pattern,
+  "^analysis-v[1-9][0-9]{0,2}$",
+);
+assert.equal(
+  compatibility.supported_analysis_versions.includes(compatibility.current_analysis_version),
+  true,
+);
 assert.deepEqual(pairingStart.properties.lifetimeDays.enum, [30, 90, 180, 365]);
 assert.equal(pairingStart.properties.browserConnectionId.pattern, "^mlb_[a-f0-9]{32}$");
 assert.equal(pairingRedeem.properties.plaintext.pattern, "^mlm_[A-Za-z0-9_-]{43}$");

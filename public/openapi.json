@@ -5,7 +5,11 @@
     "version": "0.2.0-beta",
     "description": "Authenticated email risk assessment. Scan content and results are processed for the request and are not stored. Results are automated assessments, not guarantees."
   },
-  "servers": [{ "url": "https://app.maillume.io" }],
+  "servers": [
+    {
+      "url": "https://app.maillume.io"
+    }
+  ],
   "paths": {
     "/api/v1/capabilities": {
       "get": {
@@ -14,7 +18,13 @@
         "responses": {
           "200": {
             "description": "Current compatibility contract",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CapabilitiesResponse" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -24,73 +34,135 @@
         "summary": "Start a short-lived official extension connection",
         "security": [],
         "parameters": [
-          { "$ref": "#/components/parameters/ExtensionId" },
-          { "$ref": "#/components/parameters/ExtensionVersion" },
-          { "$ref": "#/components/parameters/AnalysisVersions" }
+          {
+            "$ref": "#/components/parameters/ExtensionId"
+          },
+          {
+            "$ref": "#/components/parameters/ExtensionVersion"
+          },
+          {
+            "$ref": "#/components/parameters/AnalysisVersions"
+          }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ExtensionPairingStartRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/ExtensionPairingStartRequest"
+              }
             }
           }
         },
         "responses": {
           "201": {
             "description": "Short-lived browser approval request created",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ExtensionPairingStartResponse" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtensionPairingStartResponse"
+                }
+              }
+            }
           },
-          "400": { "$ref": "#/components/responses/Error" },
-          "426": { "$ref": "#/components/responses/Error" },
-          "429": { "$ref": "#/components/responses/Error" },
-          "503": { "$ref": "#/components/responses/Error" }
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "426": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
         }
       },
       "put": {
         "summary": "Poll and redeem an approved extension connection",
         "security": [],
         "parameters": [
-          { "$ref": "#/components/parameters/ExtensionId" },
-          { "$ref": "#/components/parameters/ExtensionVersion" },
-          { "$ref": "#/components/parameters/AnalysisVersions" }
+          {
+            "$ref": "#/components/parameters/ExtensionId"
+          },
+          {
+            "$ref": "#/components/parameters/ExtensionVersion"
+          },
+          {
+            "$ref": "#/components/parameters/AnalysisVersions"
+          }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ExtensionPairingRedeemRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/ExtensionPairingRedeemRequest"
+              }
             }
           }
         },
         "responses": {
           "201": {
             "description": "Dedicated browser API key returned once",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ExtensionPairingRedeemResponse" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtensionPairingRedeemResponse"
+                }
+              }
+            }
           },
           "202": {
             "description": "Approval is still pending",
-            "headers": { "Retry-After": { "schema": { "type": "integer" } } }
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
           },
-          "400": { "$ref": "#/components/responses/Error" },
-          "403": { "$ref": "#/components/responses/Error" },
-          "409": { "$ref": "#/components/responses/Error" },
-          "410": { "$ref": "#/components/responses/Error" },
-          "426": { "$ref": "#/components/responses/Error" },
-          "429": { "$ref": "#/components/responses/Error" },
-          "503": { "$ref": "#/components/responses/Error" }
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error"
+          },
+          "426": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
         }
       }
     },
     "/api/v1/analyze": {
       "post": {
         "summary": "Analyze normalized email content",
-        "security": [{ "apiKey": [] }],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/AnalyzeRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeRequest"
+              }
             }
           }
         },
@@ -98,18 +170,46 @@
           "200": {
             "description": "Assessment completed",
             "headers": {
-              "X-RateLimit-Limit": { "schema": { "type": "integer" } },
-              "X-RateLimit-Remaining": { "schema": { "type": "integer" } }
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
             },
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AnalyzeResponse" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyzeResponse"
+                }
+              }
+            }
           },
-          "400": { "$ref": "#/components/responses/Error" },
-          "401": { "$ref": "#/components/responses/Error" },
-          "413": { "$ref": "#/components/responses/Error" },
-          "429": { "$ref": "#/components/responses/Error" },
-          "500": { "$ref": "#/components/responses/Error" },
-          "502": { "$ref": "#/components/responses/Error" },
-          "503": { "$ref": "#/components/responses/Error" }
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          },
+          "502": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
         }
       }
     }
@@ -120,45 +220,86 @@
         "name": "X-Maillume-Extension-Id",
         "in": "header",
         "required": true,
-        "schema": { "type": "string", "pattern": "^[a-p]{32}$" }
+        "schema": {
+          "type": "string",
+          "pattern": "^[a-p]{32}$"
+        }
       },
       "ExtensionVersion": {
         "name": "X-Maillume-Extension-Version",
         "in": "header",
         "required": true,
-        "schema": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+        "schema": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        }
       },
       "AnalysisVersions": {
         "name": "X-Maillume-Analysis-Versions",
         "in": "header",
         "required": true,
-        "schema": { "type": "string", "example": "analysis-v9,analysis-v10" }
+        "schema": {
+          "type": "string",
+          "example": "analysis-v10,analysis-v11"
+        }
       }
     },
     "securitySchemes": {
-      "apiKey": { "type": "http", "scheme": "bearer", "bearerFormat": "mlm_..." }
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "mlm_..."
+      }
     },
     "schemas": {
       "CapabilitiesResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["analysis_version", "api_version", "extension"],
+        "required": [
+          "analysis_version",
+          "api_version",
+          "extension"
+        ],
         "properties": {
-          "analysis_version": { "const": "analysis-v10" },
-          "api_version": { "const": "v1" },
+          "analysis_version": {
+            "const": "analysis-v11"
+          },
+          "api_version": {
+            "const": "v1"
+          },
           "extension": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "latest_version", "minimum_analysis_version", "minimum_pairing_version", "pairing_available", "supported_analysis_versions"],
+            "required": [
+              "id",
+              "latest_version",
+              "minimum_analysis_version",
+              "minimum_pairing_version",
+              "pairing_available",
+              "supported_analysis_versions"
+            ],
             "properties": {
-              "id": { "const": "bjiiailjalkfjimkjdikoockjlnjolle" },
-              "latest_version": { "const": "0.4.0" },
-              "minimum_analysis_version": { "type": "string" },
-              "minimum_pairing_version": { "const": "0.3.9" },
-              "pairing_available": { "const": true },
+              "id": {
+                "const": "bjiiailjalkfjimkjdikoockjlnjolle"
+              },
+              "latest_version": {
+                "const": "0.4.0"
+              },
+              "minimum_analysis_version": {
+                "type": "string"
+              },
+              "minimum_pairing_version": {
+                "const": "0.3.9"
+              },
+              "pairing_available": {
+                "const": true
+              },
               "supported_analysis_versions": {
                 "type": "array",
-                "items": { "type": "string", "pattern": "^analysis-v[1-9][0-9]{0,2}$" }
+                "items": {
+                  "type": "string",
+                  "pattern": "^analysis-v[1-9][0-9]{0,2}$"
+                }
               }
             }
           }
@@ -167,62 +308,170 @@
       "ExtensionPairingStartRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "properties": {
           "browserConnectionId": {
             "type": "string",
             "pattern": "^mlb_[a-f0-9]{32}$",
             "description": "Random installation identifier generated and retained locally by extension 0.4.0 or later. The server stores only its SHA-256 hash so reconnecting the same browser rotates that browser credential."
           },
-          "name": { "type": "string", "minLength": 1, "maxLength": 50 },
-          "lifetimeDays": { "type": "integer", "enum": [30, 90, 180, 365], "default": 365 },
-          "locale": { "type": "string", "enum": ["en", "nl"], "default": "en" }
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "lifetimeDays": {
+            "type": "integer",
+            "enum": [
+              30,
+              90,
+              180,
+              365
+            ],
+            "default": 365
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "nl"
+            ],
+            "default": "en"
+          }
         }
       },
       "ExtensionPairingStartResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["device_code", "expires_at", "expires_in", "interval", "pairing_id", "user_code", "verification_uri_complete"],
+        "required": [
+          "device_code",
+          "expires_at",
+          "expires_in",
+          "interval",
+          "pairing_id",
+          "user_code",
+          "verification_uri_complete"
+        ],
         "properties": {
-          "device_code": { "type": "string", "pattern": "^mlp_[A-Za-z0-9_-]{43}$" },
-          "expires_at": { "type": "string", "format": "date-time" },
-          "expires_in": { "type": "integer", "maximum": 600 },
-          "interval": { "type": "integer", "minimum": 1, "maximum": 30 },
-          "pairing_id": { "type": "string", "format": "uuid" },
-          "user_code": { "type": "string", "pattern": "^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$" },
-          "verification_uri_complete": { "type": "string", "format": "uri" }
+          "device_code": {
+            "type": "string",
+            "pattern": "^mlp_[A-Za-z0-9_-]{43}$"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expires_in": {
+            "type": "integer",
+            "maximum": 600
+          },
+          "interval": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30
+          },
+          "pairing_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_code": {
+            "type": "string",
+            "pattern": "^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$"
+          },
+          "verification_uri_complete": {
+            "type": "string",
+            "format": "uri"
+          }
         }
       },
       "ExtensionPairingRedeemRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["deviceCode", "pairingId"],
+        "required": [
+          "deviceCode",
+          "pairingId"
+        ],
         "properties": {
-          "deviceCode": { "type": "string", "pattern": "^mlp_[A-Za-z0-9_-]{43}$" },
-          "pairingId": { "type": "string", "format": "uuid" }
+          "deviceCode": {
+            "type": "string",
+            "pattern": "^mlp_[A-Za-z0-9_-]{43}$"
+          },
+          "pairingId": {
+            "type": "string",
+            "format": "uuid"
+          }
         }
       },
       "ExtensionPairingRedeemResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["key", "plaintext", "status"],
+        "required": [
+          "key",
+          "plaintext",
+          "status"
+        ],
         "properties": {
-          "status": { "const": "connected" },
-          "plaintext": { "type": "string", "pattern": "^mlm_[A-Za-z0-9_-]{43}$" },
+          "status": {
+            "const": "connected"
+          },
+          "plaintext": {
+            "type": "string",
+            "pattern": "^mlm_[A-Za-z0-9_-]{43}$"
+          },
           "key": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["created_at", "credential_kind", "expires_at", "id", "inactive_after", "key_prefix", "monthly_quota", "name"],
+            "required": [
+              "created_at",
+              "credential_kind",
+              "expires_at",
+              "id",
+              "inactive_after",
+              "key_prefix",
+              "monthly_quota",
+              "name"
+            ],
             "properties": {
-              "created_at": { "type": "string", "format": "date-time" },
-              "credential_kind": { "const": "browser" },
-              "expires_at": { "type": "string", "format": "date-time" },
-              "id": { "type": "string", "format": "uuid" },
-              "inactive_after": { "type": "string", "format": "date-time" },
-              "key_prefix": { "type": "string", "maxLength": 16 },
-              "monthly_quota": { "type": "integer", "minimum": 1 },
-              "name": { "type": "string", "maxLength": 50 },
-              "rotated_from_id": { "type": ["string", "null"], "format": "uuid" }
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "credential_kind": {
+                "const": "browser"
+              },
+              "expires_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "inactive_after": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "key_prefix": {
+                "type": "string",
+                "maxLength": 16
+              },
+              "monthly_quota": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 50
+              },
+              "rotated_from_id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid"
+              }
             }
           }
         }
@@ -230,14 +479,44 @@
       "AnalyzeRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["body"],
+        "required": [
+          "body"
+        ],
         "properties": {
-          "source": { "type": "string", "enum": ["paste", "screenshot", "eml", "chrome"] },
-          "subject": { "type": "string", "maxLength": 300 },
-          "senderEmail": { "type": "string", "maxLength": 320 },
-          "locale": { "type": "string", "enum": ["en", "nl"], "default": "en" },
-          "evidenceTruncated": { "type": "boolean", "default": false },
-          "body": { "type": "string", "minLength": 1, "maxLength": 20000 },
+          "source": {
+            "type": "string",
+            "enum": [
+              "paste",
+              "screenshot",
+              "eml",
+              "chrome"
+            ]
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "senderEmail": {
+            "type": "string",
+            "maxLength": 320
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "nl"
+            ],
+            "default": "en"
+          },
+          "evidenceTruncated": {
+            "type": "boolean",
+            "default": false
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
           "links": {
             "type": "array",
             "maxItems": 20,
@@ -254,10 +533,23 @@
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["displayedUrl", "destinationUrl"],
+              "required": [
+                "displayedUrl",
+                "destinationUrl"
+              ],
               "properties": {
-                "displayedUrl": { "type": "string", "format": "uri", "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://", "maxLength": 2048 },
-                "destinationUrl": { "type": "string", "format": "uri", "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://", "maxLength": 2048 }
+                "displayedUrl": {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://",
+                  "maxLength": 2048
+                },
+                "destinationUrl": {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://",
+                  "maxLength": 2048
+                }
               }
             }
           },
@@ -267,7 +559,11 @@
             "description": "Coarse categories derived locally from attachment names and MIME metadata. Filenames and attachment contents are not sent.",
             "items": {
               "type": "string",
-              "enum": ["executable", "macro_enabled", "double_extension"]
+              "enum": [
+                "executable",
+                "macro_enabled",
+                "double_extension"
+              ]
             }
           },
           "emailAuthentication": {
@@ -277,15 +573,39 @@
             "properties": {
               "spf": {
                 "type": "string",
-                "enum": ["pass", "fail", "softfail", "neutral", "none", "temperror", "permerror"]
+                "enum": [
+                  "pass",
+                  "fail",
+                  "softfail",
+                  "neutral",
+                  "none",
+                  "temperror",
+                  "permerror"
+                ]
               },
               "dkim": {
                 "type": "string",
-                "enum": ["pass", "fail", "softfail", "neutral", "none", "temperror", "permerror"]
+                "enum": [
+                  "pass",
+                  "fail",
+                  "softfail",
+                  "neutral",
+                  "none",
+                  "temperror",
+                  "permerror"
+                ]
               },
               "dmarc": {
                 "type": "string",
-                "enum": ["pass", "fail", "softfail", "neutral", "none", "temperror", "permerror"]
+                "enum": [
+                  "pass",
+                  "fail",
+                  "softfail",
+                  "neutral",
+                  "none",
+                  "temperror",
+                  "permerror"
+                ]
               },
               "replyToMismatch": {
                 "type": "boolean",
@@ -302,30 +622,99 @@
       "AnalysisResult": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["classification", "risk_level", "risk_score", "score_factors", "suspicious_signals", "detected_links", "recommended_action", "short_explanation", "evidence_coverage"],
+        "required": [
+          "classification",
+          "risk_level",
+          "risk_score",
+          "score_factors",
+          "suspicious_signals",
+          "detected_links",
+          "recommended_action",
+          "short_explanation",
+          "evidence_coverage"
+        ],
         "properties": {
-          "classification": { "type": "string", "enum": ["likely_phishing", "likely_spam", "likely_legitimate", "uncertain"] },
-          "risk_level": { "type": "string", "enum": ["low", "medium", "high"] },
-          "risk_score": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Versioned risk index equal to the sum of score_factors contributions; not a probability." },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "likely_phishing",
+              "likely_spam",
+              "likely_legitimate",
+              "uncertain"
+            ]
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "risk_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Versioned risk index equal to the sum of score_factors contributions; not a probability."
+          },
           "score_factors": {
             "type": "array",
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["id", "family", "contribution", "label"],
+              "required": [
+                "id",
+                "family",
+                "contribution",
+                "label"
+              ],
               "properties": {
-                "id": { "type": "string" },
-                "family": { "type": "string", "enum": ["identity", "destination", "intent", "delivery", "style"] },
-                "contribution": { "type": "integer", "minimum": 1, "maximum": 30 },
-                "label": { "type": "string" }
+                "id": {
+                  "type": "string"
+                },
+                "family": {
+                  "type": "string",
+                  "enum": [
+                    "identity",
+                    "destination",
+                    "intent",
+                    "delivery",
+                    "style"
+                  ]
+                },
+                "contribution": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 30
+                },
+                "label": {
+                  "type": "string"
+                }
               }
             }
           },
-          "suspicious_signals": { "type": "array", "items": { "type": "string" } },
-          "detected_links": { "type": "array", "items": { "type": "string", "format": "uri" } },
-          "recommended_action": { "type": "string" },
-          "short_explanation": { "type": "string" },
-          "evidence_coverage": { "$ref": "#/components/schemas/EvidenceCoverage" }
+          "suspicious_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "detected_links": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "recommended_action": {
+            "type": "string"
+          },
+          "short_explanation": {
+            "type": "string"
+          },
+          "evidence_coverage": {
+            "$ref": "#/components/schemas/EvidenceCoverage"
+          }
         }
       },
       "EvidenceCoverage": {
@@ -341,43 +730,105 @@
           "extraction_type"
         ],
         "properties": {
-          "subject_available": { "type": "boolean" },
-          "sender_available": { "type": "boolean" },
-          "full_content_available": { "type": "boolean" },
-          "link_destinations_available": { "type": "boolean" },
-          "authentication_results_available": { "type": "boolean" },
-          "attachment_evidence_available": { "type": "boolean" },
-          "extraction_type": { "type": "string", "enum": ["direct", "ocr", "parsed"] }
+          "subject_available": {
+            "type": "boolean"
+          },
+          "sender_available": {
+            "type": "boolean"
+          },
+          "full_content_available": {
+            "type": "boolean"
+          },
+          "link_destinations_available": {
+            "type": "boolean"
+          },
+          "authentication_results_available": {
+            "type": "boolean"
+          },
+          "attachment_evidence_available": {
+            "type": "boolean"
+          },
+          "extraction_type": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "ocr",
+              "parsed"
+            ]
+          }
         }
       },
       "AnalyzeResponse": {
         "type": "object",
-        "required": ["result", "analysis_mode", "analysis_provider", "analysis_version", "disclaimer", "privacy"],
+        "required": [
+          "result",
+          "analysis_mode",
+          "analysis_provider",
+          "analysis_version",
+          "disclaimer",
+          "privacy"
+        ],
         "properties": {
-          "result": { "$ref": "#/components/schemas/AnalysisResult" },
-          "analysis_mode": { "type": "string", "enum": ["heuristic", "ai"] },
-          "analysis_provider": { "type": "string", "enum": ["heuristic", "openai", "anthropic", "openai-compatible"] },
-          "analysis_version": { "const": "analysis-v10" },
-          "disclaimer": { "type": "string" },
+          "result": {
+            "$ref": "#/components/schemas/AnalysisResult"
+          },
+          "analysis_mode": {
+            "type": "string",
+            "enum": [
+              "heuristic",
+              "ai"
+            ]
+          },
+          "analysis_provider": {
+            "type": "string",
+            "enum": [
+              "heuristic",
+              "openai",
+              "anthropic",
+              "openai-compatible"
+            ]
+          },
+          "analysis_version": {
+            "const": "analysis-v11"
+          },
+          "disclaimer": {
+            "type": "string"
+          },
           "privacy": {
             "type": "object",
-            "required": ["stored", "retention", "message"],
+            "required": [
+              "stored",
+              "retention",
+              "message"
+            ],
             "properties": {
-              "stored": { "const": false },
-              "retention": { "const": "not_stored" },
-              "message": { "type": "string" }
+              "stored": {
+                "const": false
+              },
+              "retention": {
+                "const": "not_stored"
+              },
+              "message": {
+                "type": "string"
+              }
             }
           }
         }
       },
       "Error": {
         "type": "object",
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "properties": {
-          "error": { "type": "string" },
+          "error": {
+            "type": "string"
+          },
           "fieldErrors": {
             "type": "object",
-            "additionalProperties": { "type": "string" }
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       }
@@ -386,9 +837,19 @@
       "Error": {
         "description": "Request failed",
         "headers": {
-          "Retry-After": { "schema": { "type": "integer" } }
+          "Retry-After": {
+            "schema": {
+              "type": "integer"
+            }
+          }
         },
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
       }
     }
   }

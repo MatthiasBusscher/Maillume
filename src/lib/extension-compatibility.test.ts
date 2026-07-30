@@ -14,7 +14,7 @@ import {
 } from "./extension-compatibility";
 
 function clientHeaders({
-  analysisVersions = "analysis-v9, analysis-v10",
+  analysisVersions = "analysis-v10, analysis-v11",
   extensionId = OFFICIAL_BROWSER_EXTENSION_ID,
   extensionVersion = LATEST_BROWSER_EXTENSION_VERSION,
 } = {}) {
@@ -36,7 +36,7 @@ assert.equal(isBrowserExtensionVersion("65536.0.0"), false);
 
 assert.deepEqual(getExtensionClient(new Headers()), null);
 assert.deepEqual(getExtensionClient(clientHeaders()), {
-  analysisVersions: ["analysis-v9", "analysis-v10"],
+  analysisVersions: ["analysis-v10", "analysis-v11"],
   extensionId: OFFICIAL_BROWSER_EXTENSION_ID,
   extensionVersion: LATEST_BROWSER_EXTENSION_VERSION,
 });
@@ -46,7 +46,7 @@ assert.deepEqual(
   {
     compatible: false,
     client: {
-      analysisVersions: ["analysis-v9", "analysis-v10"],
+      analysisVersions: ["analysis-v10", "analysis-v11"],
       extensionId: OFFICIAL_BROWSER_EXTENSION_ID,
       extensionVersion: "0.3.7",
     },
@@ -73,7 +73,7 @@ assert.equal(
 );
 
 const capabilities = getExtensionCapabilities();
-assert.equal(capabilities.analysis_version, "analysis-v10");
+assert.equal(capabilities.analysis_version, "analysis-v11");
 assert.equal(capabilities.extension.id, OFFICIAL_BROWSER_EXTENSION_ID);
 assert.equal(capabilities.extension.latest_version, LATEST_BROWSER_EXTENSION_VERSION);
 assert.equal(capabilities.extension.minimum_analysis_version, MINIMUM_ANALYSIS_EXTENSION_VERSION);
