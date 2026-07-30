@@ -46,7 +46,7 @@ export async function GET() {
   const [keysResult, limitResult, usageResult] = await Promise.all([
     context.client
       .from("api_keys")
-      .select("id,name,key_prefix,monthly_quota,created_at,last_used_at,revoked_at,expires_at,rotated_from_id")
+      .select("id,name,key_prefix,monthly_quota,created_at,last_used_at,revoked_at,expires_at,inactive_after,credential_kind,rotated_from_id")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false }),
     context.client
@@ -68,8 +68,10 @@ export async function GET() {
 
   const keys: PublicApiKey[] = (keysResult.data ?? []).map((key) => ({
     created_at: key.created_at,
+    credential_kind: key.credential_kind,
     expires_at: key.expires_at,
     id: key.id,
+    inactive_after: key.inactive_after,
     key_prefix: key.key_prefix,
     last_used_at: key.last_used_at,
     monthly_quota: key.monthly_quota,

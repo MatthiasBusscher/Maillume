@@ -42,6 +42,12 @@ summary { cursor: pointer; font-size: 13px; font-weight: 700; }
 .automatic-connection { border-left: 3px solid #087b72; background: #eaf6f5; padding: 12px; }
 .automatic-connection h2 { margin-bottom: 6px; }
 .automatic-connection p { margin-bottom: 10px; font-size: 11px; }
+.automatic-connection button + button { margin-top: 8px; }
+.connection-state { border-left: 3px solid #aeb6ac; background: white; padding: 8px; color: #374238; font-weight: 700; }
+.connection-state[data-connected="true"] { border-left-color: #087b72; background: #f5fbfa; color: #17645e; }
+.advanced-setup { border: 1px solid #cbd0c5; padding: 10px; }
+.advanced-setup > summary { color: #4f5b50; font-size: 11px; }
+.advanced-setup > .fields { padding-top: 12px; }
 .settings-divider { display: flex; align-items: center; gap: 8px; color: #687268; font: 9px ui-monospace, monospace; text-transform: uppercase; }
 .settings-divider::before, .settings-divider::after { height: 1px; flex: 1; background: #cbd0c5; content: ""; }
 .small { margin-bottom: 0; font-size: 11px; }

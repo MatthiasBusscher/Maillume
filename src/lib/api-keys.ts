@@ -4,8 +4,12 @@ export const MAX_API_KEYS_PER_USER = 5;
 export const DEFAULT_MONTHLY_API_QUOTA = 25;
 export const API_KEY_LIFETIME_DAYS = [30, 90, 180] as const;
 export const DEFAULT_API_KEY_LIFETIME_DAYS = 90;
+export const BROWSER_CONNECTION_LIFETIME_DAYS = 365;
+export const BROWSER_CONNECTION_INACTIVITY_DAYS = 90;
+export const BROWSER_CONNECTION_EXPIRY_WARNING_DAYS = 30;
 
 export type ApiKeyLifetimeDays = (typeof API_KEY_LIFETIME_DAYS)[number];
+export type ApiKeyCredentialKind = "browser" | "developer";
 export type ApiKeyStatus = "active" | "expired" | "revoked";
 
 export type AccountApiUsage = {
@@ -16,8 +20,10 @@ export type AccountApiUsage = {
 
 export type PublicApiKey = {
   created_at: string;
+  credential_kind: ApiKeyCredentialKind;
   expires_at: string;
   id: string;
+  inactive_after: string | null;
   key_prefix: string;
   last_used_at: string | null;
   monthly_quota: number;
@@ -63,9 +69,21 @@ export function getApiKeyExpiration(
 }
 
 export function getApiKeyStatus(
-  key: Pick<PublicApiKey, "expires_at" | "revoked_at">,
+  key: Pick<PublicApiKey, "credential_kind" | "expires_at" | "inactive_after" | "revoked_at">,
   now = new Date(),
 ): ApiKeyStatus {
   if (key.revoked_at) return "revoked";
-  return new Date(key.expires_at).getTime() <= now.getTime() ? "expired" : "active";
+  const effectiveExpiration = getEffectiveApiKeyExpiration(key);
+  return effectiveExpiration.getTime() <= now.getTime() ? "expired" : "active";
+}
+
+export function getEffectiveApiKeyExpiration(
+  key: Pick<PublicApiKey, "credential_kind" | "expires_at" | "inactive_after">,
+): Date {
+  const hardExpiration = new Date(key.expires_at);
+  if (key.credential_kind !== "browser" || !key.inactive_after) return hardExpiration;
+  const inactivityExpiration = new Date(key.inactive_after);
+  return inactivityExpiration.getTime() < hardExpiration.getTime()
+    ? inactivityExpiration
+    : hardExpiration;
 }

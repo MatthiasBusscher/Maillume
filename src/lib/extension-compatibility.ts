@@ -1,7 +1,7 @@
 import { ANALYSIS_PIPELINE_VERSION } from "./types";
 
 export const OFFICIAL_BROWSER_EXTENSION_ID = "bjiiailjalkfjimkjdikoockjlnjolle";
-export const LATEST_BROWSER_EXTENSION_VERSION = "0.3.9";
+export const LATEST_BROWSER_EXTENSION_VERSION = "0.4.0";
 export const MINIMUM_ANALYSIS_EXTENSION_VERSION = "0.3.8";
 export const MINIMUM_PAIRING_EXTENSION_VERSION = "0.3.9";
 export const SUPPORTED_EXTENSION_ANALYSIS_VERSIONS = [

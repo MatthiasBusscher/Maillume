@@ -40,9 +40,20 @@ function main() {
     getApiKeyExpiration(30, new Date("2026-01-01T00:00:00.000Z")),
     "2026-01-31T00:00:00.000Z",
   );
-  assert.equal(getApiKeyStatus({ expires_at: "2027-01-01T00:00:00.000Z", revoked_at: null }, new Date("2026-01-01T00:00:00.000Z")), "active");
-  assert.equal(getApiKeyStatus({ expires_at: "2026-01-01T00:00:00.000Z", revoked_at: null }, new Date("2026-01-01T00:00:00.000Z")), "expired");
-  assert.equal(getApiKeyStatus({ expires_at: "2027-01-01T00:00:00.000Z", revoked_at: "2026-01-01T00:00:00.000Z" }, new Date("2026-01-01T00:00:00.000Z")), "revoked");
+  const developerKey = {
+    credential_kind: "developer" as const,
+    inactive_after: null,
+    revoked_at: null,
+  };
+  assert.equal(getApiKeyStatus({ ...developerKey, expires_at: "2027-01-01T00:00:00.000Z" }, new Date("2026-01-01T00:00:00.000Z")), "active");
+  assert.equal(getApiKeyStatus({ ...developerKey, expires_at: "2026-01-01T00:00:00.000Z" }, new Date("2026-01-01T00:00:00.000Z")), "expired");
+  assert.equal(getApiKeyStatus({ ...developerKey, expires_at: "2027-01-01T00:00:00.000Z", revoked_at: "2026-01-01T00:00:00.000Z" }, new Date("2026-01-01T00:00:00.000Z")), "revoked");
+  assert.equal(getApiKeyStatus({
+    credential_kind: "browser",
+    expires_at: "2027-01-01T00:00:00.000Z",
+    inactive_after: "2026-04-01T00:00:00.000Z",
+    revoked_at: null,
+  }, new Date("2026-04-01T00:00:00.000Z")), "expired");
 
   console.log("Checked hosted API key contracts.");
 }

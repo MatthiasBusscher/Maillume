@@ -138,7 +138,8 @@ async function run() {
     await panelPage.reload();
     assert.equal(await panelPage.locator("#apiKey").inputValue(), rememberedKey);
     assert.equal(await panelPage.locator("#rememberApiKey").isChecked(), true);
-    await panelPage.locator("summary").click();
+    await panelPage.getByText("Connection settings", { exact: true }).click();
+    await panelPage.getByText("Advanced manual setup", { exact: true }).click();
     await panelPage.locator("#apiKeyVisibility").click();
     assert.equal(await panelPage.locator("#apiKey").getAttribute("type"), "text");
     assert.equal(await panelPage.locator("#apiKeyVisibility").getAttribute("aria-pressed"), "true");

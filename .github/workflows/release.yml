@@ -20,6 +20,11 @@ on:
         required: true
         default: false
         type: boolean
+      browser_connections_migration_applied:
+        description: Confirm the production browser-connections migration is applied
+        required: true
+        default: false
+        type: boolean
 
 permissions: {}
 
@@ -240,6 +245,7 @@ jobs:
           persist-credentials: false
       - name: Require production migration confirmation
         env:
+          BROWSER_CONNECTIONS_MIGRATION_APPLIED: ${{ inputs.browser_connections_migration_applied }}
           EXTENSION_PAIRING_MIGRATION_APPLIED: ${{ inputs.extension_pairing_migration_applied }}
           FEEDBACK_SUMMARY_MIGRATION_APPLIED: ${{ inputs.feedback_summary_migration_applied }}
         run: |
@@ -249,6 +255,10 @@ jobs:
           fi
           if [[ "$EXTENSION_PAIRING_MIGRATION_APPLIED" != "true" ]]; then
             echo "Apply and verify the production extension-pairing migration before deployment." >&2
+            exit 1
+          fi
+          if [[ "$BROWSER_CONNECTIONS_MIGRATION_APPLIED" != "true" ]]; then
+            echo "Apply and verify the production browser-connections migration before deployment." >&2
             exit 1
           fi
       - name: Verify compatible Chrome extension is live

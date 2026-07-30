@@ -1,5 +1,5 @@
 const elements = Object.fromEntries(
-  ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "connect", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"]
+  ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "manualSetup", "connectionState", "connect", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"]
     .map((id) => [id, document.getElementById(id)]),
 );
 let activeTabId;
@@ -7,6 +7,8 @@ let committedEndpoint = "";
 let committedApiKey = "";
 let committedRememberApiKey = false;
 let committedApiKeyExpiresAt = "";
+let committedApiKeyHardExpiresAt = "";
+let committedConnectionKind = "";
 let pairingPending = false;
 let captureQueue = Promise.resolve();
 let latestCaptureId = "";
@@ -22,6 +24,8 @@ let capturedContentComplete = false;
 // deploy and a Chrome Web Store review land at different times.
 const SUPPORTED_ANALYSIS_VERSIONS = ["analysis-v6", "analysis-v7", "analysis-v8", "analysis-v9", "analysis-v10"];
 const EXTENSION_VERSION = chrome.runtime.getManifest().version;
+const BROWSER_CONNECTION_LIFETIME_DAYS = 365;
+const BROWSER_CONNECTION_INACTIVITY_DAYS = 90;
 const EXTENSION_HEADERS = {
   "X-Maillume-Analysis-Versions": SUPPORTED_ANALYSIS_VERSIONS.join(","),
   "X-Maillume-Extension-Id": chrome.runtime.id,
@@ -52,23 +56,28 @@ const dynamicCopy = {
     permissionCleanupFailed: "The previous deployment permission could not be removed. The connection was not changed.",
     saveFailed: "The connection settings could not be saved.",
     connecting: "Waiting for approval in the Maillume account page...",
-    connected: "This browser is connected. The dedicated API key is ready to use.",
-    pairingDenied: "The browser connection was denied. No API key was created.",
+    connected: "This browser is connected and ready to analyze messages.",
+    connectionStateConnected: "Connected through your Maillume account.",
+    connectionStateDisconnected: "This browser is not connected.",
+    connectButton: "Connect this browser",
+    reconnectButton: "Reconnect this browser",
+    pairingDenied: "The browser connection was denied. No browser credential was created.",
     pairingExpired: "The browser connection request expired. Start again to create a new request.",
-    pairingFailed: "The browser connection could not be completed. You can still enter an API key manually.",
-    pairingUnsupported: "This deployment does not support secure browser connection. You can still enter an API key manually.",
+    pairingFailed: "The browser connection could not be completed. Advanced manual setup is still available.",
+    pairingUnsupported: "This deployment does not support secure browser connection. Open Advanced manual setup to use a key.",
     updateRequired: "This Maillume extension must be updated before it can connect to this deployment.",
     savedPersistent: "Deployment and API key saved in this Chrome profile for restarts and updates.",
     savedSession: "Deployment saved. API key kept only for this browser session.",
-    removed: "Connection, API key, and deployment permission removed.",
+    removed: "Browser connection, local credential, and deployment permission removed.",
     removeStorageFailed: "Chrome could not clear all connection settings. Try removing the connection again.",
     removePermissionFailed: "The connection and API key were cleared, but Chrome could not remove the deployment permission.",
     bodyRequired: "Capture or enter the email text first.",
-    connectionRequired: "Save a deployment and API key first.",
+    connectionRequired: "Connect this browser first, or use Advanced manual setup.",
     sending: (origin) => `Sending the reviewed text to ${origin}...`,
     invalidResult: "The deployment returned an invalid analysis response.",
     incompatibleResult: "The extension and deployment use different analysis versions. Update the extension from the official source, then reload it in chrome://extensions.",
     authenticationFailed: "The deployment rejected the API key.",
+    browserAuthenticationFailed: "The deployment rejected this browser connection. Reconnect this browser.",
     quotaExceeded: "This request was limited. Check account usage or wait before trying again.",
     requestFailed: (status) => `The deployment returned HTTP ${status}.`,
     unreachable: "The deployment could not be reached. Check the URL and connection permission.",
@@ -76,6 +85,8 @@ const dynamicCopy = {
     destination: (endpoint) => `Destination: ${endpoint}`,
     destinationExpiring: (endpoint, days) => `Destination: ${endpoint}. The API key expires in ${days} day${days === 1 ? "" : "s"}.`,
     destinationExpired: (endpoint) => `Destination: ${endpoint}. The API key has expired; reconnect this browser.`,
+    browserDestinationExpiring: (endpoint, days) => `Destination: ${endpoint}. This browser connection expires in ${days} day${days === 1 ? "" : "s"} unless it is used.`,
+    browserDestinationExpired: (endpoint) => `Destination: ${endpoint}. This browser connection has expired; reconnect this browser.`,
     destinationNeedsKey: (endpoint) => `Destination: ${endpoint}. Enter and save an API key.`,
     unsavedDestination: (endpoint) => `Unsaved destination: ${endpoint}`,
     unsavedKey: (endpoint) => `Destination: ${endpoint}. The edited API key has not been saved for this session.`,
@@ -127,23 +138,28 @@ const dynamicCopy = {
     permissionCleanupFailed: "De vorige toestemming voor deze omgeving kon niet worden verwijderd. De verbinding is niet gewijzigd.",
     saveFailed: "De verbindingsinstellingen konden niet worden opgeslagen.",
     connecting: "Wachten op goedkeuring op de Maillume-accountpagina...",
-    connected: "Deze browser is verbonden. De eigen API-sleutel is klaar voor gebruik.",
-    pairingDenied: "De browserverbinding is geweigerd. Er is geen API-sleutel gemaakt.",
+    connected: "Deze browser is verbonden en klaar om berichten te analyseren.",
+    connectionStateConnected: "Verbonden via je Maillume-account.",
+    connectionStateDisconnected: "Deze browser is niet verbonden.",
+    connectButton: "Deze browser verbinden",
+    reconnectButton: "Deze browser opnieuw verbinden",
+    pairingDenied: "De browserverbinding is geweigerd. Er is geen browserreferentie gemaakt.",
     pairingExpired: "Het verbindingsverzoek is verlopen. Start opnieuw om een nieuw verzoek te maken.",
-    pairingFailed: "De browserverbinding kon niet worden voltooid. Je kunt nog steeds handmatig een API-sleutel invoeren.",
-    pairingUnsupported: "Deze omgeving ondersteunt veilig verbinden met de browser niet. Je kunt nog steeds handmatig een API-sleutel invoeren.",
+    pairingFailed: "De browserverbinding kon niet worden voltooid. Geavanceerde handmatige configuratie blijft beschikbaar.",
+    pairingUnsupported: "Deze omgeving ondersteunt veilig verbinden met de browser niet. Open Geavanceerde handmatige configuratie om een sleutel te gebruiken.",
     updateRequired: "Deze Maillume-extensie moet worden bijgewerkt voordat ze met deze omgeving kan verbinden.",
     savedPersistent: "Omgeving en API-sleutel opgeslagen in dit Chrome-profiel voor herstarts en updates.",
     savedSession: "Omgeving opgeslagen. API-sleutel alleen voor deze browsersessie bewaard.",
-    removed: "Verbinding, API-sleutel en toestemming voor deze omgeving verwijderd.",
+    removed: "Browserverbinding, lokale sleutel en toestemming voor deze omgeving verwijderd.",
     removeStorageFailed: "Chrome kon niet alle verbindingsinstellingen wissen. Probeer de verbinding opnieuw te verwijderen.",
     removePermissionFailed: "De verbinding en API-sleutel zijn gewist, maar Chrome kon de toestemming voor deze omgeving niet verwijderen.",
     bodyRequired: "Leg eerst de e-mailtekst vast of voer die in.",
-    connectionRequired: "Sla eerst een Maillume-omgeving en API-sleutel op.",
+    connectionRequired: "Verbind eerst deze browser of gebruik Geavanceerde handmatige configuratie.",
     sending: (origin) => `De gecontroleerde tekst wordt naar ${origin} verzonden...`,
     invalidResult: "De Maillume-omgeving gaf een ongeldig analyseresultaat terug.",
     incompatibleResult: "De extensie en Maillume-omgeving gebruiken verschillende analyseversies. Werk de extensie bij vanuit de officiële broncode en laad haar daarna opnieuw via chrome://extensions.",
     authenticationFailed: "De Maillume-omgeving heeft de API-sleutel geweigerd.",
+    browserAuthenticationFailed: "De Maillume-omgeving heeft deze browserverbinding geweigerd. Verbind deze browser opnieuw.",
     quotaExceeded: "Deze aanvraag is beperkt. Controleer het accountgebruik of wacht voordat je het opnieuw probeert.",
     requestFailed: (status) => `De Maillume-omgeving gaf HTTP ${status} terug.`,
     unreachable: "De Maillume-omgeving is niet bereikbaar. Controleer de URL en toestemming.",
@@ -151,6 +167,8 @@ const dynamicCopy = {
     destination: (endpoint) => `Bestemming: ${endpoint}`,
     destinationExpiring: (endpoint, days) => `Bestemming: ${endpoint}. De API-sleutel verloopt over ${days} ${days === 1 ? "dag" : "dagen"}.`,
     destinationExpired: (endpoint) => `Bestemming: ${endpoint}. De API-sleutel is verlopen; verbind deze browser opnieuw.`,
+    browserDestinationExpiring: (endpoint, days) => `Bestemming: ${endpoint}. Deze browserverbinding verloopt over ${days} ${days === 1 ? "dag" : "dagen"} als ze niet wordt gebruikt.`,
+    browserDestinationExpired: (endpoint) => `Bestemming: ${endpoint}. Deze browserverbinding is verlopen; verbind deze browser opnieuw.`,
     destinationNeedsKey: (endpoint) => `Bestemming: ${endpoint}. Voer een API-sleutel in en sla die op.`,
     unsavedDestination: (endpoint) => `Niet-opgeslagen bestemming: ${endpoint}`,
     unsavedKey: (endpoint) => `Bestemming: ${endpoint}. De gewijzigde API-sleutel is nog niet opgeslagen voor deze sessie.`,
@@ -192,9 +210,25 @@ initialize().catch(() => setStatus(getDynamicCopy().initializationFailed, true))
 async function initialize() {
   localizeUi();
   const [localSettings, sessionSettings] = await Promise.all([
-    chrome.storage.local.get(["endpoint", "apiKey", "apiKeyExpiresAt"]),
-    chrome.storage.session.get(["apiKey", "apiKeyExpiresAt", "extensionPairing"]),
+    chrome.storage.local.get([
+      "endpoint",
+      "apiKey",
+      "apiKeyExpiresAt",
+      "apiKeyHardExpiresAt",
+      "connectionKind",
+      "browserConnectionId",
+    ]),
+    chrome.storage.session.get([
+      "apiKey",
+      "apiKeyExpiresAt",
+      "apiKeyHardExpiresAt",
+      "connectionKind",
+      "extensionPairing",
+    ]),
   ]);
+  if (!isBrowserConnectionId(localSettings.browserConnectionId)) {
+    await chrome.storage.local.set({ browserConnectionId: createBrowserConnectionId() });
+  }
   if (localSettings.endpoint) elements.endpoint.value = localSettings.endpoint;
   const storedApiKey = localSettings.apiKey || sessionSettings.apiKey || "";
   if (storedApiKey) elements.apiKey.value = storedApiKey;
@@ -202,7 +236,14 @@ async function initialize() {
   committedApiKey = storedApiKey;
   committedRememberApiKey = Boolean(localSettings.apiKey);
   committedApiKeyExpiresAt = localSettings.apiKeyExpiresAt || sessionSettings.apiKeyExpiresAt || "";
+  committedApiKeyHardExpiresAt = localSettings.apiKeyHardExpiresAt
+    || sessionSettings.apiKeyHardExpiresAt
+    || committedApiKeyExpiresAt;
+  committedConnectionKind = localSettings.connectionKind
+    || sessionSettings.connectionKind
+    || (storedApiKey ? "manual" : "");
   elements.rememberApiKey.checked = committedRememberApiKey || !sessionSettings.apiKey;
+  updateConnectionState();
   updateDestination();
   updateAnalyzeState();
   if (isStoredPairing(sessionSettings.extensionPairing)) {
@@ -350,24 +391,34 @@ elements.connect.addEventListener("click", async () => {
     if (!isCompatibleCapabilityResponse(capabilityPayload)) {
       throw new PairingError("update");
     }
+    const browserLifecycle = supportsBrowserConnectionLifecycle(capabilityPayload);
+    const { browserConnectionId } = await chrome.storage.local.get(["browserConnectionId"]);
+    if (!isBrowserConnectionId(browserConnectionId)) throw new PairingError("failed");
 
     const response = await fetch(`${endpoint}/api/v1/extension-pairing`, {
       method: "POST",
       headers: { ...EXTENSION_HEADERS, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        lifetimeDays: 90,
-        locale: getLocale(),
-        name: getBrowserKeyName(),
-      }),
+      body: JSON.stringify(browserLifecycle
+        ? {
+            browserConnectionId,
+            lifetimeDays: BROWSER_CONNECTION_LIFETIME_DAYS,
+            locale: getLocale(),
+            name: getBrowserKeyName(),
+          }
+        : {
+            lifetimeDays: 90,
+            locale: getLocale(),
+            name: getBrowserKeyName(),
+          }),
     });
     if (response.status === 404) throw new PairingError("unsupported");
     if (response.status === 426) throw new PairingError("update");
     if (!response.ok) throw new PairingError("failed");
     const payload = await response.json();
-    const pairing = normalizePairingResponse(payload, endpoint);
+    const pairing = normalizePairingResponse(payload, endpoint, browserLifecycle);
     if (!pairing) throw new PairingError("failed");
 
-    pairing.remember = elements.rememberApiKey.checked === true;
+    pairing.remember = true;
     await chrome.storage.session.set({ extensionPairing: pairing });
     await chrome.tabs.create({ url: pairing.verificationUrl });
     await resumePairing(pairing);
@@ -375,6 +426,7 @@ elements.connect.addEventListener("click", async () => {
     pairingPending = false;
     elements.connect.disabled = false;
     const reason = error instanceof PairingError ? error.reason : "failed";
+    if (reason === "unsupported" || reason === "failed") elements.manualSetup.open = true;
     setStatus(
       reason === "unsupported"
         ? copy.pairingUnsupported
@@ -394,7 +446,14 @@ elements.save.addEventListener("click", async () => {
   const rememberApiKey = elements.rememberApiKey.checked === true;
   if (!/^mlm_[A-Za-z0-9_-]{43}$/.test(apiKey)) return setStatus(copy.invalidApiKey, true);
 
-  const outcome = await commitConnection({ apiKey, endpoint, expiresAt: "", rememberApiKey });
+  const outcome = await commitConnection({
+    apiKey,
+    connectionKind: "manual",
+    endpoint,
+    expiresAt: "",
+    hardExpiresAt: "",
+    rememberApiKey,
+  });
   if (outcome === "permission_error") return setStatus(copy.permissionError, true);
   if (outcome === "permission_denied") return setStatus(copy.permissionDenied, true);
   if (outcome === "cleanup_failed") return setStatus(copy.permissionCleanupFailed, true);
@@ -446,22 +505,50 @@ elements.reset.addEventListener("click", async () => {
   const copy = getDynamicCopy();
   const originPattern = committedEndpoint ? permissionPattern(committedEndpoint) : null;
   const storageResults = await Promise.allSettled([
-    chrome.storage.local.remove(["endpoint", "apiKey", "apiKeyExpiresAt"]),
-    chrome.storage.session.remove(["apiKey", "apiKeyExpiresAt", "extensionPairing"]),
+    chrome.storage.local.remove([
+      "endpoint",
+      "apiKey",
+      "apiKeyExpiresAt",
+      "apiKeyHardExpiresAt",
+      "connectionKind",
+    ]),
+    chrome.storage.session.remove([
+      "apiKey",
+      "apiKeyExpiresAt",
+      "apiKeyHardExpiresAt",
+      "connectionKind",
+      "extensionPairing",
+    ]),
   ]);
   if (storageResults.some(({ status }) => status === "rejected")) {
     const [localSettings, sessionSettings] = await Promise.all([
-      chrome.storage.local.get(["endpoint", "apiKey", "apiKeyExpiresAt"]).catch(() => ({})),
-      chrome.storage.session.get(["apiKey", "apiKeyExpiresAt"]).catch(() => ({})),
+      chrome.storage.local.get([
+        "endpoint",
+        "apiKey",
+        "apiKeyExpiresAt",
+        "apiKeyHardExpiresAt",
+        "connectionKind",
+      ]).catch(() => ({})),
+      chrome.storage.session.get([
+        "apiKey",
+        "apiKeyExpiresAt",
+        "apiKeyHardExpiresAt",
+        "connectionKind",
+      ]).catch(() => ({})),
     ]);
     committedEndpoint = localSettings.endpoint || "";
     committedApiKey = localSettings.apiKey || sessionSettings.apiKey || "";
     committedRememberApiKey = Boolean(localSettings.apiKey);
     committedApiKeyExpiresAt = localSettings.apiKeyExpiresAt || sessionSettings.apiKeyExpiresAt || "";
+    committedApiKeyHardExpiresAt = localSettings.apiKeyHardExpiresAt
+      || sessionSettings.apiKeyHardExpiresAt
+      || committedApiKeyExpiresAt;
+    committedConnectionKind = localSettings.connectionKind || sessionSettings.connectionKind || "";
     elements.endpoint.value = committedEndpoint || "https://app.maillume.io";
     elements.apiKey.value = committedApiKey;
     elements.rememberApiKey.checked = committedRememberApiKey;
     clearMessageData();
+    updateConnectionState();
     updateDestination();
     return setStatus(copy.removeStorageFailed, true);
   }
@@ -478,11 +565,14 @@ elements.reset.addEventListener("click", async () => {
   committedApiKey = "";
   committedRememberApiKey = false;
   committedApiKeyExpiresAt = "";
+  committedApiKeyHardExpiresAt = "";
+  committedConnectionKind = "";
   elements.endpoint.value = "https://app.maillume.io";
   elements.apiKey.value = "";
   elements.apiKey.type = "password";
   elements.rememberApiKey.checked = true;
   clearMessageData();
+  updateConnectionState();
   updateDestination();
   updateAnalyzeState();
   setStatus(permissionRemoved ? copy.removed : copy.removePermissionFailed, !permissionRemoved);
@@ -525,7 +615,13 @@ elements.analyze.addEventListener("click", async () => {
     }
 
     if (response.status === 426) throw new Error(copy.updateRequired);
-    if (response.status === 401 || response.status === 403) throw new Error(copy.authenticationFailed);
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        committedConnectionKind === "browser"
+          ? copy.browserAuthenticationFailed
+          : copy.authenticationFailed,
+      );
+    }
     if (response.status === 429) throw new Error(copy.quotaExceeded);
     if (!response.ok) throw new Error(copy.requestFailed(response.status));
 
@@ -537,6 +633,7 @@ elements.analyze.addEventListener("click", async () => {
     }
     if (!SUPPORTED_ANALYSIS_VERSIONS.includes(payload?.analysis_version)) throw new Error(copy.incompatibleResult);
     if (!isAnalysisResponse(payload)) throw new Error(copy.invalidResult);
+    await refreshBrowserConnectionExpiry();
     renderResult(payload.result);
     setStatus(copy.complete);
   } catch (error) {
@@ -590,14 +687,30 @@ function updateDestination() {
   }
   const daysUntilExpiry = getDaysUntilExpiry(committedApiKeyExpiresAt);
   if (daysUntilExpiry !== null && daysUntilExpiry <= 0) {
-    elements.destination.textContent = copy.destinationExpired(endpoint);
+    elements.destination.textContent = committedConnectionKind === "browser"
+      ? copy.browserDestinationExpired(endpoint)
+      : copy.destinationExpired(endpoint);
     return;
   }
-  if (daysUntilExpiry !== null && daysUntilExpiry <= 14) {
-    elements.destination.textContent = copy.destinationExpiring(endpoint, daysUntilExpiry);
+  const warningDays = committedConnectionKind === "browser" ? 30 : 14;
+  if (daysUntilExpiry !== null && daysUntilExpiry <= warningDays) {
+    elements.destination.textContent = committedConnectionKind === "browser"
+      ? copy.browserDestinationExpiring(endpoint, daysUntilExpiry)
+      : copy.destinationExpiring(endpoint, daysUntilExpiry);
     return;
   }
   elements.destination.textContent = copy.destination(endpoint);
+}
+
+function updateConnectionState() {
+  const connected = Boolean(committedApiKey && committedEndpoint && !isExpired(committedApiKeyExpiresAt));
+  const copy = getDynamicCopy();
+  elements.connectionState.textContent = connected
+    ? copy.connectionStateConnected
+    : copy.connectionStateDisconnected;
+  elements.connectionState.dataset.connected = String(connected);
+  elements.connect.textContent = connected ? copy.reconnectButton : copy.connectButton;
+  elements.reset.hidden = !committedApiKey && !committedEndpoint;
 }
 
 function updateAnalyzeState() {
@@ -624,8 +737,10 @@ function permissionPattern(endpoint) {
 
 async function commitConnection({
   apiKey,
+  connectionKind,
   endpoint,
   expiresAt,
+  hardExpiresAt,
   permissionAlreadyGranted = false,
   rememberApiKey,
 }) {
@@ -644,7 +759,13 @@ async function commitConnection({
   try {
     await Promise.all([
       chrome.storage.local.set({ endpoint }),
-      storeApiKey(apiKey, rememberApiKey, expiresAt),
+      storeApiKey(
+        apiKey,
+        rememberApiKey,
+        expiresAt,
+        hardExpiresAt,
+        connectionKind,
+      ),
     ]);
   } catch {
     await restoreCommittedSettings();
@@ -670,10 +791,13 @@ async function commitConnection({
   committedApiKey = apiKey;
   committedRememberApiKey = rememberApiKey;
   committedApiKeyExpiresAt = expiresAt;
+  committedApiKeyHardExpiresAt = hardExpiresAt || expiresAt;
+  committedConnectionKind = connectionKind;
   elements.endpoint.value = endpoint;
   elements.apiKey.value = apiKey;
   elements.apiKey.type = "password";
   elements.rememberApiKey.checked = rememberApiKey;
+  updateConnectionState();
   updateDestination();
   updateAnalyzeState();
   return "saved";
@@ -684,32 +808,94 @@ async function restoreCommittedSettings() {
     ? chrome.storage.local.set({ endpoint: committedEndpoint })
     : chrome.storage.local.remove(["endpoint"]);
   const keyOperation = committedApiKey
-    ? storeApiKey(committedApiKey, committedRememberApiKey, committedApiKeyExpiresAt)
+    ? storeApiKey(
+        committedApiKey,
+        committedRememberApiKey,
+        committedApiKeyExpiresAt,
+        committedApiKeyHardExpiresAt,
+        committedConnectionKind,
+      )
     : Promise.all([
-        chrome.storage.local.remove(["apiKey", "apiKeyExpiresAt"]),
-        chrome.storage.session.remove(["apiKey", "apiKeyExpiresAt"]),
+        chrome.storage.local.remove([
+          "apiKey",
+          "apiKeyExpiresAt",
+          "apiKeyHardExpiresAt",
+          "connectionKind",
+        ]),
+        chrome.storage.session.remove([
+          "apiKey",
+          "apiKeyExpiresAt",
+          "apiKeyHardExpiresAt",
+          "connectionKind",
+        ]),
       ]);
   await Promise.allSettled([endpointOperation, keyOperation]);
 }
 
-async function storeApiKey(apiKey, remember, expiresAt = "") {
+async function storeApiKey(
+  apiKey,
+  remember,
+  expiresAt = "",
+  hardExpiresAt = "",
+  connectionKind = "manual",
+) {
+  const metadata = {
+    connectionKind,
+    ...(expiresAt ? { apiKeyExpiresAt: expiresAt } : {}),
+    ...(hardExpiresAt ? { apiKeyHardExpiresAt: hardExpiresAt } : {}),
+  };
   if (remember) {
     await Promise.all([
-      chrome.storage.local.set({ apiKey, ...(expiresAt ? { apiKeyExpiresAt: expiresAt } : {}) }),
+      chrome.storage.local.set({ apiKey, ...metadata }),
       expiresAt
         ? Promise.resolve()
         : chrome.storage.local.remove(["apiKeyExpiresAt"]),
-      chrome.storage.session.remove(["apiKey", "apiKeyExpiresAt"]),
+      hardExpiresAt
+        ? Promise.resolve()
+        : chrome.storage.local.remove(["apiKeyHardExpiresAt"]),
+      chrome.storage.session.remove([
+        "apiKey",
+        "apiKeyExpiresAt",
+        "apiKeyHardExpiresAt",
+        "connectionKind",
+      ]),
     ]);
     return;
   }
   await Promise.all([
-    chrome.storage.local.remove(["apiKey", "apiKeyExpiresAt"]),
-    chrome.storage.session.set({ apiKey, ...(expiresAt ? { apiKeyExpiresAt: expiresAt } : {}) }),
+    chrome.storage.local.remove([
+      "apiKey",
+      "apiKeyExpiresAt",
+      "apiKeyHardExpiresAt",
+      "connectionKind",
+    ]),
+    chrome.storage.session.set({ apiKey, ...metadata }),
     expiresAt
       ? Promise.resolve()
       : chrome.storage.session.remove(["apiKeyExpiresAt"]),
+    hardExpiresAt
+      ? Promise.resolve()
+      : chrome.storage.session.remove(["apiKeyHardExpiresAt"]),
   ]);
+}
+
+async function refreshBrowserConnectionExpiry() {
+  if (committedConnectionKind !== "browser" || !committedApiKeyHardExpiresAt) return;
+  const inactivityExpiration = new Date(
+    Date.now() + BROWSER_CONNECTION_INACTIVITY_DAYS * 86_400_000,
+  ).toISOString();
+  committedApiKeyExpiresAt = earlierTimestamp(
+    committedApiKeyHardExpiresAt,
+    inactivityExpiration,
+  );
+  await storeApiKey(
+    committedApiKey,
+    committedRememberApiKey,
+    committedApiKeyExpiresAt,
+    committedApiKeyHardExpiresAt,
+    committedConnectionKind,
+  );
+  updateDestination();
 }
 
 async function resumePairing(pairing) {
@@ -752,14 +938,16 @@ async function resumePairing(pairing) {
       if (!response.ok) throw new PairingError("failed");
 
       const payload = await response.json();
-      const key = normalizeConnectedKey(payload);
+      const key = normalizeConnectedKey(payload, pairing.browserLifecycle === true);
       if (!key) throw new PairingError("failed");
       const outcome = await commitConnection({
         apiKey: key.plaintext,
+        connectionKind: "browser",
         endpoint: pairing.endpoint,
         expiresAt: key.expiresAt,
+        hardExpiresAt: key.hardExpiresAt,
         permissionAlreadyGranted: true,
-        rememberApiKey: pairing.remember,
+        rememberApiKey: true,
       });
       if (outcome !== "saved") throw new PairingError("failed");
       await chrome.storage.session.remove(["extensionPairing"]);
@@ -788,7 +976,7 @@ async function resumePairing(pairing) {
   }
 }
 
-function normalizePairingResponse(payload, endpoint) {
+function normalizePairingResponse(payload, endpoint, browserLifecycle) {
   if (
     !payload
     || typeof payload !== "object"
@@ -808,6 +996,7 @@ function normalizePairingResponse(payload, endpoint) {
       return null;
     }
     return {
+      browserLifecycle,
       deviceCode: payload.device_code,
       endpoint,
       expiresAt: payload.expires_at,
@@ -820,12 +1009,29 @@ function normalizePairingResponse(payload, endpoint) {
   }
 }
 
-function normalizeConnectedKey(payload) {
-  const expiresAt = payload?.key?.expires_at;
-  return payload?.status === "connected"
-    && /^mlm_[A-Za-z0-9_-]{43}$/.test(payload.plaintext)
-    && isFutureTimestamp(expiresAt)
-    ? { expiresAt, plaintext: payload.plaintext }
+function normalizeConnectedKey(payload, browserLifecycle) {
+  const hardExpiresAt = payload?.key?.expires_at;
+  const inactiveAfter = payload?.key?.inactive_after;
+  if (
+    payload?.status !== "connected"
+    || !/^mlm_[A-Za-z0-9_-]{43}$/.test(payload.plaintext)
+    || !isFutureTimestamp(hardExpiresAt)
+  ) {
+    return null;
+  }
+  if (!browserLifecycle) {
+    return {
+      expiresAt: hardExpiresAt,
+      hardExpiresAt,
+      plaintext: payload.plaintext,
+    };
+  }
+  return payload?.key?.credential_kind === "browser" && isFutureTimestamp(inactiveAfter)
+    ? {
+        expiresAt: earlierTimestamp(hardExpiresAt, inactiveAfter),
+        hardExpiresAt,
+        plaintext: payload.plaintext,
+      }
     : null;
 }
 
@@ -863,6 +1069,11 @@ function isCompatibleCapabilityResponse(payload) {
   );
 }
 
+function supportsBrowserConnectionLifecycle(payload) {
+  return isCompatibleCapabilityResponse(payload)
+    && compareVersions(payload.extension.latest_version, "0.4.0") >= 0;
+}
+
 function compareVersions(left, right) {
   if (!/^\d+\.\d+\.\d+$/.test(left) || !/^\d+\.\d+\.\d+$/.test(right)) return Number.NaN;
   const leftParts = left.split(".").map(Number);
@@ -879,6 +1090,18 @@ function getBrowserKeyName() {
     .trim()
     .slice(0, 28);
   return `Chrome extension · ${platform}`.slice(0, 50);
+}
+
+function createBrowserConnectionId() {
+  return `mlb_${crypto.randomUUID().replaceAll("-", "")}`;
+}
+
+function isBrowserConnectionId(value) {
+  return typeof value === "string" && /^mlb_[a-f0-9]{32}$/.test(value);
+}
+
+function earlierTimestamp(left, right) {
+  return Date.parse(left) <= Date.parse(right) ? left : right;
 }
 
 function getDaysUntilExpiry(value) {

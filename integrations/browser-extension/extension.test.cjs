@@ -415,7 +415,7 @@ function createPanelElement() {
 
 async function testPanelSendsCapturedLinkMetadata() {
   const runtime = event();
-  const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "connect", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"];
+  const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "manualSetup", "connectionState", "connect", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"];
   const elements = new Map(ids.map((id) => [id, createPanelElement()]));
   const localStorage = { endpoint: "https://app.maillume.io" };
   const sessionStorage = { apiKey: `mlm_${"a".repeat(43)}` };
@@ -473,7 +473,10 @@ async function testPanelSendsCapturedLinkMetadata() {
   let responseStatus = 200;
   let permissionGranted = true;
   let requestHeaders;
+  let pairingStartPayload;
   let pairingMode = false;
+  let capabilityLatestVersion = "0.4.0";
+  let lifecyclePairingResponse = true;
   let openedApprovalUrl;
   const pairingId = "40000000-0000-4000-8000-000000000004";
   const deviceCode = `mlp_${"d".repeat(43)}`;
@@ -483,7 +486,7 @@ async function testPanelSendsCapturedLinkMetadata() {
       i18n: { getUILanguage: () => "en-US" },
       runtime: {
         id: "bjiiailjalkfjimkjdikoockjlnjolle",
-        getManifest: () => ({ version: "0.3.9" }),
+        getManifest: () => ({ version: "0.4.0" }),
         onMessage: runtime,
         sendMessage: async () => responses.shift(),
       },
@@ -505,6 +508,7 @@ async function testPanelSendsCapturedLinkMetadata() {
     },
     clearTimeout,
     console,
+    crypto: { randomUUID: () => "12345678-1234-4123-8123-123456789abc" },
     fetch: async (url, options = {}) => {
       if (pairingMode) {
         const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString();
@@ -517,7 +521,7 @@ async function testPanelSendsCapturedLinkMetadata() {
               api_version: "v1",
               extension: {
                 id: "bjiiailjalkfjimkjdikoockjlnjolle",
-                latest_version: "0.3.9",
+                latest_version: capabilityLatestVersion,
                 minimum_analysis_version: "0.3.8",
                 minimum_pairing_version: "0.3.9",
                 pairing_available: true,
@@ -527,6 +531,7 @@ async function testPanelSendsCapturedLinkMetadata() {
           };
         }
         if (options.method === "POST") {
+          pairingStartPayload = JSON.parse(options.body);
           requestHeaders = options.headers;
           return {
             ok: true,
@@ -550,12 +555,18 @@ async function testPanelSendsCapturedLinkMetadata() {
           json: async () => ({
             key: {
               created_at: new Date().toISOString(),
-              expires_at: new Date(Date.now() + 90 * 86_400_000).toISOString(),
+              expires_at: new Date(Date.now() + 365 * 86_400_000).toISOString(),
               id: "50000000-0000-4000-8000-000000000005",
               key_prefix: pairedKey.slice(0, 12),
               monthly_quota: 25,
               name: "Chrome extension · macOS",
               rotated_from_id: null,
+              ...(lifecyclePairingResponse
+                ? {
+                    credential_kind: "browser",
+                    inactive_after: new Date(Date.now() + 90 * 86_400_000).toISOString(),
+                  }
+                : {}),
             },
             plaintext: pairedKey,
             status: "connected",
@@ -612,7 +623,7 @@ async function testPanelSendsCapturedLinkMetadata() {
       destinationUrl: "https://bit.ly/synthetic-review",
     }],
   });
-  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.3.9");
+  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.0");
   assert.equal(requestHeaders["X-Maillume-Extension-Id"], "bjiiailjalkfjimkjdikoockjlnjolle");
   assert.equal(requestHeaders["X-Maillume-Analysis-Versions"].includes("analysis-v10"), true);
   assert.equal(elements.get("reviewStep").hidden, true, "successful analysis must collapse the captured-detail step");
@@ -711,17 +722,37 @@ async function testPanelSendsCapturedLinkMetadata() {
   assert.equal(elements.get("status").textContent, "This request was limited. Check account usage or wait before trying again.");
 
   pairingMode = true;
-  elements.get("rememberApiKey").checked = true;
+  capabilityLatestVersion = "0.3.9";
+  lifecyclePairingResponse = false;
+  await elements.get("connect").dispatch("click");
+  assert.deepEqual(pairingStartPayload, {
+    lifetimeDays: 90,
+    locale: "en",
+    name: "Chrome extension · macOS",
+  }, "0.4.0 must retain a legacy pairing request until the lifecycle server is deployed");
+  assert.equal(localStorage.apiKey, pairedKey, "legacy rollout pairing must remain usable");
+
+  capabilityLatestVersion = "0.4.0";
+  lifecyclePairingResponse = true;
   await elements.get("connect").dispatch("click");
   assert.equal(
     openedApprovalUrl,
     `https://app.maillume.io/account/connect-extension/${pairingId}?code=2345-6789`,
   );
+  assert.deepEqual(pairingStartPayload, {
+    browserConnectionId: "mlb_12345678123441238123123456789abc",
+    lifetimeDays: 365,
+    locale: "en",
+    name: "Chrome extension · macOS",
+  });
   assert.equal(localStorage.apiKey, pairedKey, "approved pairing must save the dedicated browser key");
   assert.match(localStorage.apiKeyExpiresAt, /^\d{4}-\d{2}-\d{2}T/);
   assert.equal(sessionStorage.extensionPairing, undefined, "completed pairing state must be removed");
-  assert.equal(elements.get("status").textContent, "This browser is connected. The dedicated API key is ready to use.");
-  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.3.9");
+  assert.equal(elements.get("status").textContent, "This browser is connected and ready to analyze messages.");
+  assert.equal(localStorage.connectionKind, "browser");
+  assert.equal(localStorage.browserConnectionId, "mlb_12345678123441238123123456789abc");
+  assert.equal(elements.get("connectionState").textContent, "Connected through your Maillume account.");
+  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.0");
 }
 
 (async () => {
