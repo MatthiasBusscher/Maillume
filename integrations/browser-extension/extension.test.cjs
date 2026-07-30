@@ -752,6 +752,9 @@ async function testPanelSendsCapturedLinkMetadata() {
   assert.equal(localStorage.connectionKind, "browser");
   assert.equal(localStorage.browserConnectionId, "mlb_12345678123441238123123456789abc");
   assert.equal(elements.get("connectionState").textContent, "Connected through your Maillume account.");
+  assert.equal(elements.get("apiKey").value, "", "a managed browser credential must never be copied into the manual key field");
+  assert.equal(elements.get("connect").hidden, true, "an active browser connection must not offer another connection action");
+  assert.equal(elements.get("reset").hidden, false, "an active browser connection must retain an explicit removal action");
   assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.0");
 }
 

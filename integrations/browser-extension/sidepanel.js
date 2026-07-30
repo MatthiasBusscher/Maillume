@@ -58,6 +58,7 @@ const dynamicCopy = {
     connecting: "Waiting for approval in the Maillume account page...",
     connected: "This browser is connected and ready to analyze messages.",
     connectionStateConnected: "Connected through your Maillume account.",
+    connectionStateManual: "Connected with an advanced manual API key.",
     connectionStateDisconnected: "This browser is not connected.",
     connectButton: "Connect this browser",
     reconnectButton: "Reconnect this browser",
@@ -140,6 +141,7 @@ const dynamicCopy = {
     connecting: "Wachten op goedkeuring op de Maillume-accountpagina...",
     connected: "Deze browser is verbonden en klaar om berichten te analyseren.",
     connectionStateConnected: "Verbonden via je Maillume-account.",
+    connectionStateManual: "Verbonden met een geavanceerde handmatige API-sleutel.",
     connectionStateDisconnected: "Deze browser is niet verbonden.",
     connectButton: "Deze browser verbinden",
     reconnectButton: "Deze browser opnieuw verbinden",
@@ -231,7 +233,6 @@ async function initialize() {
   }
   if (localSettings.endpoint) elements.endpoint.value = localSettings.endpoint;
   const storedApiKey = localSettings.apiKey || sessionSettings.apiKey || "";
-  if (storedApiKey) elements.apiKey.value = storedApiKey;
   committedEndpoint = localSettings.endpoint || "";
   committedApiKey = storedApiKey;
   committedRememberApiKey = Boolean(localSettings.apiKey);
@@ -242,6 +243,7 @@ async function initialize() {
   committedConnectionKind = localSettings.connectionKind
     || sessionSettings.connectionKind
     || (storedApiKey ? "manual" : "");
+  elements.apiKey.value = committedConnectionKind === "browser" ? "" : storedApiKey;
   elements.rememberApiKey.checked = committedRememberApiKey || !sessionSettings.apiKey;
   updateConnectionState();
   updateDestination();
@@ -545,7 +547,7 @@ elements.reset.addEventListener("click", async () => {
       || committedApiKeyExpiresAt;
     committedConnectionKind = localSettings.connectionKind || sessionSettings.connectionKind || "";
     elements.endpoint.value = committedEndpoint || "https://app.maillume.io";
-    elements.apiKey.value = committedApiKey;
+    elements.apiKey.value = committedConnectionKind === "browser" ? "" : committedApiKey;
     elements.rememberApiKey.checked = committedRememberApiKey;
     clearMessageData();
     updateConnectionState();
@@ -681,7 +683,7 @@ function updateDestination() {
     elements.destination.textContent = copy.destinationNeedsKey(endpoint);
     return;
   }
-  if (elements.apiKey.value.trim() !== committedApiKey) {
+  if (!isCredentialInputCurrent()) {
     elements.destination.textContent = copy.unsavedKey(endpoint);
     return;
   }
@@ -704,12 +706,18 @@ function updateDestination() {
 
 function updateConnectionState() {
   const connected = Boolean(committedApiKey && committedEndpoint && !isExpired(committedApiKeyExpiresAt));
+  const browserConnected = connected && committedConnectionKind === "browser";
   const copy = getDynamicCopy();
-  elements.connectionState.textContent = connected
+  elements.connectionState.textContent = browserConnected
     ? copy.connectionStateConnected
-    : copy.connectionStateDisconnected;
+    : connected
+      ? copy.connectionStateManual
+      : copy.connectionStateDisconnected;
   elements.connectionState.dataset.connected = String(connected);
-  elements.connect.textContent = connected ? copy.reconnectButton : copy.connectButton;
+  elements.connect.hidden = browserConnected;
+  elements.connect.textContent = committedConnectionKind === "browser"
+    ? copy.reconnectButton
+    : copy.connectButton;
   elements.reset.hidden = !committedApiKey && !committedEndpoint;
 }
 
@@ -720,9 +728,14 @@ function updateAnalyzeState() {
     && committedApiKey
     && endpoint
     && endpoint === committedEndpoint
-    && elements.apiKey.value.trim() === committedApiKey
+    && isCredentialInputCurrent()
     && !isExpired(committedApiKeyExpiresAt)
   );
+}
+
+function isCredentialInputCurrent() {
+  return committedConnectionKind === "browser"
+    || elements.apiKey.value.trim() === committedApiKey;
 }
 
 function setCapturePending(pending) {
@@ -794,9 +807,13 @@ async function commitConnection({
   committedApiKeyHardExpiresAt = hardExpiresAt || expiresAt;
   committedConnectionKind = connectionKind;
   elements.endpoint.value = endpoint;
-  elements.apiKey.value = apiKey;
+  elements.apiKey.value = connectionKind === "browser" ? "" : apiKey;
   elements.apiKey.type = "password";
+  elements.apiKeyVisibility.setAttribute("aria-pressed", "false");
+  elements.apiKeyVisibility.setAttribute("aria-label", getDynamicCopy().showApiKey);
+  elements.apiKeyVisibility.setAttribute("title", getDynamicCopy().showApiKey);
   elements.rememberApiKey.checked = rememberApiKey;
+  if (connectionKind === "browser") elements.manualSetup.open = false;
   updateConnectionState();
   updateDestination();
   updateAnalyzeState();
