@@ -10,6 +10,7 @@ import { accountNl } from "@/lib/i18n/account-nl";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizePath } from "@/lib/i18n/site-locale";
 import {
+  createExtensionPairingApprovalScope,
   getExtensionPairingMutationTokenInput,
   isExtensionPairingId,
   normalizeExtensionPairingUserCode,
@@ -127,9 +128,10 @@ export default async function ConnectExtensionPage({
     return <PairingState copy={copy} locale={locale} state="unavailable" />;
   }
 
+  const approvalScope = createExtensionPairingApprovalScope(pairingId, userCode);
   const csrf = createAccountMutationToken(
     "extension-pairing",
-    getExtensionPairingMutationTokenInput(data.user.id, pairingId, userCode),
+    getExtensionPairingMutationTokenInput(data.user.id, approvalScope),
     adminConfig.secretKey,
   );
 
@@ -163,6 +165,7 @@ export default async function ConnectExtensionPage({
         className="mt-7 grid gap-3 sm:grid-cols-2"
       >
         <input type="hidden" name="code" value={userCode} />
+        <input type="hidden" name="scope" value={approvalScope} />
         <input type="hidden" name="csrf" value={csrf} />
         <input type="hidden" name="locale" value={locale} />
         <button

@@ -8,7 +8,10 @@ import {
   verifyAccountMutationToken,
 } from "./account-mutation-token";
 import { isStrictSameOriginMutation } from "./account-request";
-import { getExtensionPairingMutationTokenInput } from "../extension-pairing";
+import {
+  createExtensionPairingApprovalScope,
+  getExtensionPairingMutationTokenInput,
+} from "../extension-pairing";
 
 const input = {
   lastSignInAt: "2026-07-18T08:00:00.000Z",
@@ -17,10 +20,12 @@ const input = {
 const secret = "server-only-test-secret";
 const now = Date.parse("2026-07-18T08:00:00.000Z");
 const languageToken = createAccountMutationToken("language", input, secret, now);
+const pairingId = "10000000-0000-4000-8000-000000000001";
+const pairingCode = "ABCD-2345";
+const extensionPairingScope = createExtensionPairingApprovalScope(pairingId, pairingCode);
 const extensionPairingInput = getExtensionPairingMutationTokenInput(
   input.userId,
-  "10000000-0000-4000-8000-000000000001",
-  "ABCD-2345",
+  extensionPairingScope,
 );
 const extensionPairingToken = createAccountMutationToken(
   "extension-pairing",
@@ -64,8 +69,7 @@ assert.equal(
     extensionPairingToken,
     getExtensionPairingMutationTokenInput(
       input.userId,
-      "10000000-0000-4000-8000-000000000001",
-      "EFGH-6789",
+      createExtensionPairingApprovalScope(pairingId, "EFGH-6789"),
     ),
     secret,
     now,
@@ -79,8 +83,10 @@ assert.equal(
     extensionPairingToken,
     getExtensionPairingMutationTokenInput(
       input.userId,
-      "20000000-0000-4000-8000-000000000002",
-      "ABCD-2345",
+      createExtensionPairingApprovalScope(
+        "20000000-0000-4000-8000-000000000002",
+        pairingCode,
+      ),
     ),
     secret,
     now,
@@ -94,8 +100,7 @@ assert.equal(
     extensionPairingToken,
     getExtensionPairingMutationTokenInput(
       "20000000-0000-4000-8000-000000000002",
-      "10000000-0000-4000-8000-000000000001",
-      "ABCD-2345",
+      extensionPairingScope,
     ),
     secret,
     now,

@@ -10,6 +10,7 @@ import {
 export const EXTENSION_PAIRING_TTL_SECONDS = 10 * 60;
 export const EXTENSION_PAIRING_POLL_SECONDS = 3;
 export const EXTENSION_PAIRING_MAX_REQUEST_BYTES = 2 * 1024;
+const EXTENSION_PAIRING_APPROVAL_SCOPE_PREFIX = "mlps_";
 const USER_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 
 export type ExtensionPairingRequest = {
@@ -73,14 +74,52 @@ export function getPairingVerificationPath(
   return `${prefix}/account/connect-extension/${encodeURIComponent(pairingId)}?code=${encodeURIComponent(userCode)}`;
 }
 
-export function getExtensionPairingMutationTokenInput(
-  userId: string,
+export function createExtensionPairingApprovalScope(
   pairingId: string,
   userCode: string,
+): string {
+  const payload = JSON.stringify({ pairingId, userCode });
+  return `${EXTENSION_PAIRING_APPROVAL_SCOPE_PREFIX}${Buffer.from(payload).toString("base64url")}`;
+}
+
+export function isExtensionPairingApprovalScope(
+  value: unknown,
+  pairingId: string,
+  userCode: string,
+): value is string {
+  if (
+    typeof value !== "string"
+    || !value.startsWith(EXTENSION_PAIRING_APPROVAL_SCOPE_PREFIX)
+    || value.length > 256
+  ) {
+    return false;
+  }
+
+  const encodedPayload = value.slice(EXTENSION_PAIRING_APPROVAL_SCOPE_PREFIX.length);
+  if (!/^[A-Za-z0-9_-]+$/.test(encodedPayload)) return false;
+
+  try {
+    const payloadBytes = Buffer.from(encodedPayload, "base64url");
+    if (payloadBytes.toString("base64url") !== encodedPayload) return false;
+    const payload = JSON.parse(payloadBytes.toString("utf8")) as unknown;
+    if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return false;
+    const record = payload as Record<string, unknown>;
+    return Object.keys(record).sort().join(",") === "pairingId,userCode"
+      && record.pairingId === pairingId
+      && record.userCode === userCode;
+  } catch {
+    return false;
+  }
+}
+
+export function getExtensionPairingMutationTokenInput(
+  userId: string,
+  approvalScope: string,
 ) {
-  // Bind approval to the immutable request, not mutable authentication metadata.
+  // Sign the exact submitted scope. The resolution route independently decodes
+  // and matches it to the immutable pairing identifier and displayed user code.
   return {
-    context: `extension-pairing\n${pairingId}\n${userCode}`,
+    context: approvalScope,
     userId,
   };
 }
