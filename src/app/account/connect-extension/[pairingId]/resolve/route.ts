@@ -13,7 +13,7 @@ import {
   isStrictSameOriginMutation,
   readBoundedRequestBody,
 } from "@/lib/security/account-request";
-import { verifyAccountMutationToken } from "@/lib/security/account-mutation-token";
+import { isAuthorizedAccountMutation } from "@/lib/security/account-mutation-token";
 import { createSupabaseAdminClient, getSupabaseAdminConfig } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -30,12 +30,10 @@ export async function POST(
     host: request.headers.get("host"),
     requestUrl: request.url,
   });
-  if (
-    !hasRequestContentType(request, "application/x-www-form-urlencoded")
-    || !isStrictSameOriginMutation(request, publicOrigin)
-  ) {
+  if (!hasRequestContentType(request, "application/x-www-form-urlencoded")) {
     return privateResponse("Invalid browser connection request.", 403);
   }
+  const originIsValid = isStrictSameOriginMutation(request, publicOrigin);
 
   const rawBody = await readBoundedRequestBody(request, PAIRING_RESOLUTION_MAX_REQUEST_BYTES);
   if (!rawBody.ok) return privateResponse("Browser connection request is too large.", 413);
@@ -89,12 +87,13 @@ export async function POST(
   if (
     !admin
     || !adminConfig
-    || !verifyAccountMutationToken(
-      "extension-pairing",
-      formData.get("csrf"),
-      getExtensionPairingMutationTokenInput(data.user.id, approvalScope),
-      adminConfig.secretKey,
-    )
+    || !isAuthorizedAccountMutation({
+      action: "extension-pairing",
+      input: getExtensionPairingMutationTokenInput(data.user.id, approvalScope),
+      sameOrigin: originIsValid,
+      secret: adminConfig.secretKey,
+      token: formData.get("csrf"),
+    })
   ) {
     return privateResponse("Invalid browser connection request.", 403);
   }
