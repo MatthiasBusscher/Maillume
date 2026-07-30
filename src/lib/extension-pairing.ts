@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 
 import {
   DEFAULT_API_KEY_LIFETIME_DAYS,
@@ -74,7 +74,9 @@ export function getPairingVerificationPath(
 }
 
 function createUserCode(): string {
-  const bytes = randomBytes(8);
-  const characters = [...bytes].map((byte) => USER_CODE_ALPHABET[byte % USER_CODE_ALPHABET.length]);
+  const characters = Array.from(
+    { length: 8 },
+    () => USER_CODE_ALPHABET[randomInt(USER_CODE_ALPHABET.length)],
+  );
   return `${characters.slice(0, 4).join("")}-${characters.slice(4).join("")}`;
 }
