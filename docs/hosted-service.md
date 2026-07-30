@@ -8,13 +8,13 @@ Maillume remains an open-source, privacy-first scanner first and a hosted servic
 
 - Anonymous heuristic scans stay free and do not require an account.
 - Normal scans are processed for the current assessment only. They are not reused for analytics, model training, or evaluation fixtures.
-- A free account is optional and is currently needed only to create revocable integration API keys. Hosted AI allowances and saved preferences remain future features.
+- A free account is optional and is currently needed only to connect browser profiles or create revocable developer API keys. Hosted AI allowances and saved preferences remain future features.
 - A paid hosted plan may sell managed AI capacity, Chrome extension convenience, and support. It must have explicit usage limits.
 - Self-hosting and bring-your-own-key AI remain free under the repository license.
 - Raw email content, screenshots, `.eml` files, OCR text, links, and assessment results are not retained after scoring.
 - Detection improvements use synthetic fixtures and optional non-content feedback. Production emails do not become a dataset.
 - Moneybird is the preferred first billing and invoicing system for the Dutch operator. Stripe is deferred unless international payment coverage, marketplace requirements, or measured conversion needs justify the extra provider and reconciliation complexity.
-- A hosted account may have at most five active API keys. The public-beta quota is 25 heuristic integration requests per account per UTC month, shared by those keys. Creating or managing integration keys requires authenticator-app 2FA and an AAL2 session.
+- A hosted account may have at most five connected browsers and five active developer API keys. The public-beta quota is 25 heuristic integration requests per account per UTC month, shared by all credentials. Creating or managing credentials requires authenticator-app 2FA and an AAL2 session.
 - Organization administration, colleague invitations, role-based access, and audit logs are a later team-account project. A broad application-wide admin role is not part of the beta.
 
 ## Product Boundaries
@@ -26,7 +26,7 @@ Maillume remains an open-source, privacy-first scanner first and a hosted servic
 | Plus account | Yes | Heuristic plus hosted AI | Hypothesis: 20 AI scans/day and 100/month | Request lifetime only |
 | Self-hosted | Determined by installer | Heuristic or installer-selected AI provider | Determined and paid by installer | Determined by installer; no-storage remains the project default |
 
-The free and Plus allowances are hypotheses for cost validation, not a public pricing promise. There are no automatic overages, rollover credits, unlimited AI claims, scan history, or team features in this phase. API keys expire after 30, 90, or 180 days; non-expiring bearer credentials are intentionally unsupported.
+The free and Plus allowances are hypotheses for cost validation, not a public pricing promise. There are no automatic overages, rollover credits, unlimited AI claims, scan history, or team features in this phase. Developer API keys expire after 30, 90, or 180 days. Browser connections have a one-year hard expiry and a rolling 90-day inactivity deadline. Non-expiring bearer credentials are intentionally unsupported.
 
 ## Data Flow
 
@@ -56,7 +56,7 @@ Screenshot OCR, QR decoding, and `.eml` parsing happen in the browser. The hoste
 | Subject, sender, body, OCR text, links | Request memory; selected AI provider in hosted AI mode | No | Discarded after the response |
 | Structured assessment | Browser state and response memory | No | Discarded on refresh or navigation |
 | Account identity and preferences | Supabase Auth and application database | Yes, for account features only | Account lifetime; deletion workflow removes application data |
-| Integration API key and quota counters | Application database | Yes | Key metadata until revocation/account deletion; aggregate monthly counts for up to 13 months |
+| Browser/developer credential and quota counters | Application database | Yes | Credential metadata until revocation/account deletion; aggregate monthly counts for up to 13 months |
 | Quota reservation metadata (account/key IDs, period, timestamps) | Application database | Yes, without scan content or results | Finalized or refunded during the request; eligible for deletion after 10 minutes by a five-minute purge job |
 | Billing customer and subscription references | Application database and payment provider | Yes, without payment-card data | Required account and financial retention periods |
 | Operational request metadata | Hosting and security systems | Yes, without message content or query strings | Target maximum 14 days |

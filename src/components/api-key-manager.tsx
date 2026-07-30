@@ -13,6 +13,7 @@ import type { AccountDictionary } from "@/lib/i18n/account-en";
 import type { SiteLocale } from "@/lib/i18n/site-locale";
 
 const KEY_LIFETIMES = [30, 90, 180] satisfies readonly ApiKeyLifetimeDays[];
+const BROWSER_CONNECTION_EXPIRY_WARNING_DAYS = 30;
 
 type ApiKeysPayload = {
   error?: string;
@@ -37,6 +38,7 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
   const [copyFeedback, setCopyFeedback] = useState<"idle" | "copied" | "error">("idle");
   const [message, setMessage] = useState<string>(labels.loading);
   const [busy, setBusy] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   const loadKeys = useCallback(async () => {
     try {
@@ -47,11 +49,11 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
       const nextKeys = payload.keys ?? [];
       setKeys(nextKeys);
       setUsage(payload.usage);
-      setMessage(nextKeys.length ? "" : labels.empty);
+      setMessage("");
     } catch {
       setMessage(labels.unavailable);
     }
-  }, [labels.empty, labels.unavailable]);
+  }, [labels.unavailable]);
 
   useEffect(() => { void loadKeys(); }, [loadKeys]);
 
@@ -120,6 +122,8 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
   }
 
   async function revokeKey(id: string) {
+    if (!window.confirm(labels.revokeConfirmation)) return;
+
     setBusy(true);
     setMessage("");
 
@@ -132,6 +136,7 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
       const payload = await readPayload(response);
       if (!response.ok) return setMessage(payload.error ?? labels.revocationFailed);
       await loadKeys();
+      setMessage(labels.revoked);
     } catch {
       setMessage(labels.revocationFailed);
     } finally {
@@ -157,6 +162,79 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
   const remainingRequests = usage
     ? Math.max(0, usage.monthly_quota - usage.request_count)
     : 0;
+  const browserConnections = keys.filter((key) => key.credential_kind === "browser");
+  const developerKeys = keys.filter((key) => key.credential_kind === "developer");
+  const inactiveCount = keys.filter((key) => key.status !== "active").length;
+  const visibleBrowserConnections = browserConnections.filter(
+    (key) => showInactive || key.status === "active",
+  );
+  const visibleDeveloperKeys = developerKeys.filter(
+    (key) => showInactive || key.status === "active",
+  );
+
+  function renderCredential(key: PublicApiKey, allowRotation: boolean) {
+    const effectiveExpiration = getEffectiveExpiration(key);
+    const daysUntilExpiry = getDaysUntilExpiry(effectiveExpiration);
+    const warningDays = key.credential_kind === "browser"
+      ? BROWSER_CONNECTION_EXPIRY_WARNING_DAYS
+      : 14;
+    const expiresSoon = key.status === "active"
+      && daysUntilExpiry !== null
+      && daysUntilExpiry <= warningDays;
+
+    return (
+      <div key={key.id} className="grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-semibold">{key.name}</p>
+            <span className={`border px-2 py-1 font-mono text-[10px] font-semibold uppercase ${statusStyles[key.status]}`}>
+              {labels.statuses[key.status]}
+            </span>
+          </div>
+          <p className="mt-2 font-mono text-[10px] leading-5 text-[#687268]">
+            {key.key_prefix}... · {labels.created} {formatDate(key.created_at, locale)} · {key.credential_kind === "browser" ? labels.browserExpires : labels.expires} {formatDate(effectiveExpiration, locale)}
+          </p>
+          <p className="mt-1 font-mono text-[10px] leading-5 text-[#687268]">
+            {labels.lastUsed} {key.last_used_at ? formatDateTime(key.last_used_at, locale) : labels.neverUsed}
+          </p>
+          {expiresSoon ? (
+            <p className="mt-2 inline-flex border-l-4 border-[#c38122] bg-[#fff6e7] px-3 py-2 text-xs font-semibold text-[#714812]">
+              {labels.expiresSoon} {daysUntilExpiry} {daysUntilExpiry === 1 ? labels.day : labels.days}.
+            </p>
+          ) : null}
+          {key.rotated_from_id ? <p className="mt-1 text-xs text-[#59655a]">{labels.rotatedReplacement}</p> : null}
+        </div>
+        {key.status === "active" ? (
+          <div className="flex items-center gap-2">
+            {allowRotation ? (
+              <button
+                type="button"
+                onClick={() => rotateKey(key.id)}
+                disabled={busy}
+                title={labels.rotateTitle}
+                aria-label={`${labels.rotateTitle}: ${key.name}`}
+                className="inline-flex h-10 items-center gap-2 border border-[#85b9b3] px-3 text-xs font-semibold text-[#17645e] hover:bg-[#eaf6f5] disabled:opacity-50"
+              >
+                <RotateCw className="h-4 w-4" aria-hidden="true" />
+                {labels.replaceLostKey}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => revokeKey(key.id)}
+              disabled={busy}
+              title={labels.revokeTitle}
+              aria-label={`${labels.revokeTitle}: ${key.name}`}
+              className="inline-flex h-10 items-center gap-2 border border-[#d08b82] px-3 text-xs font-semibold text-[#8f251b] hover:bg-[#fff0ed] disabled:opacity-50"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+              {labels.revokeTitle}
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <section className="mt-10 border border-[#111711] bg-white">
@@ -196,6 +274,37 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
           </div>
         </div>
       ) : null}
+
+      {inactiveCount > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#aeb6ac] bg-[#f9faf7] px-6 py-4">
+          <p className="max-w-2xl text-xs leading-5 text-[#59655a]">{labels.inactiveHelp}</p>
+          <button
+            type="button"
+            onClick={() => setShowInactive((visible) => !visible)}
+            aria-expanded={showInactive}
+            className="border border-[#aeb6ac] bg-white px-3 py-2 text-xs font-semibold text-[#111711] hover:bg-[#eef1eb]"
+          >
+            {showInactive ? labels.hideInactive : `${labels.showInactive} (${inactiveCount})`}
+          </button>
+        </div>
+      ) : null}
+
+      <div className="border-b border-[#d8dcd3] bg-[#f9faf7] px-5 py-4">
+        <h3 className="text-sm font-semibold text-[#111711]">{labels.browserTitle}</h3>
+        <p className="mt-1 max-w-3xl text-xs leading-5 text-[#59655a]">{labels.browserHelp}</p>
+      </div>
+      {visibleBrowserConnections.length ? (
+        <div className="divide-y divide-[#d8dcd3] border-b border-[#aeb6ac]">
+          {visibleBrowserConnections.map((key) => renderCredential(key, false))}
+        </div>
+      ) : (
+        <p className="border-b border-[#aeb6ac] px-6 py-5 text-sm text-[#59655a]">{labels.browserEmpty}</p>
+      )}
+
+      <div className="border-b border-[#d8dcd3] bg-[#f9faf7] px-5 py-4">
+        <h3 className="text-sm font-semibold text-[#111711]">{labels.developerTitle}</h3>
+        <p className="mt-1 max-w-3xl text-xs leading-5 text-[#59655a]">{labels.developerHelp}</p>
+      </div>
 
       <div className="grid gap-3 border-b border-[#aeb6ac] p-6 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_12rem_auto]">
         <label className="grid gap-2 text-xs font-semibold text-[#4f5b50]">
@@ -243,68 +352,14 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
         </div>
       ) : null}
 
-      {keys.length ? (
+      {visibleDeveloperKeys.length ? (
         <div className="border-b border-[#d8dcd3] bg-[#f9faf7] px-5 py-4">
           <h3 className="text-sm font-semibold text-[#111711]">{labels.savedKeys}</h3>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-[#59655a]">{labels.savedKeysHelp}</p>
         </div>
       ) : null}
       <div className="divide-y divide-[#d8dcd3]">
-        {keys.map((key) => {
-          const daysUntilExpiry = getDaysUntilExpiry(key.expires_at);
-          const expiresSoon = key.status === "active"
-            && daysUntilExpiry !== null
-            && daysUntilExpiry <= 14;
-          return (
-          <div key={key.id} className="grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-semibold">{key.name}</p>
-                <span className={`border px-2 py-1 font-mono text-[10px] font-semibold uppercase ${statusStyles[key.status]}`}>
-                  {labels.statuses[key.status]}
-                </span>
-              </div>
-              <p className="mt-2 font-mono text-[10px] leading-5 text-[#687268]">
-                {key.key_prefix}... · {labels.created} {formatDate(key.created_at, locale)} · {labels.expires} {formatDate(key.expires_at, locale)}
-              </p>
-              <p className="mt-1 font-mono text-[10px] leading-5 text-[#687268]">
-                {labels.lastUsed} {key.last_used_at ? formatDateTime(key.last_used_at, locale) : labels.neverUsed}
-              </p>
-              {expiresSoon ? (
-                <p className="mt-2 inline-flex border-l-4 border-[#c38122] bg-[#fff6e7] px-3 py-2 text-xs font-semibold text-[#714812]">
-                  {labels.expiresSoon} {daysUntilExpiry} {daysUntilExpiry === 1 ? labels.day : labels.days}.
-                </p>
-              ) : null}
-              {key.rotated_from_id ? <p className="mt-1 text-xs text-[#59655a]">{labels.rotatedReplacement}</p> : null}
-            </div>
-            {key.status === "active" ? (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => rotateKey(key.id)}
-                  disabled={busy}
-                  title={labels.rotateTitle}
-                  aria-label={`${labels.rotateTitle}: ${key.name}`}
-                  className="inline-flex h-10 items-center gap-2 border border-[#85b9b3] px-3 text-xs font-semibold text-[#17645e] hover:bg-[#eaf6f5] disabled:opacity-50"
-                >
-                  <RotateCw className="h-4 w-4" aria-hidden="true" />
-                  {labels.replaceLostKey}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => revokeKey(key.id)}
-                  disabled={busy}
-                  title={labels.revokeTitle}
-                  aria-label={`${labels.revokeTitle}: ${key.name}`}
-                  className="grid h-10 w-10 place-items-center border border-[#d08b82] text-[#8f251b] hover:bg-[#fff0ed] disabled:opacity-50"
-                >
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
-            ) : null}
-          </div>
-          );
-        })}
+        {visibleDeveloperKeys.map((key) => renderCredential(key, true))}
       </div>
       <p role="status" className="flex min-h-12 items-center gap-2 px-6 text-sm text-[#59655a]">
         {message}
@@ -345,6 +400,13 @@ function getDaysUntilExpiry(value: string): number | null {
   const expiresAt = Date.parse(value);
   if (!Number.isFinite(expiresAt)) return null;
   return Math.max(0, Math.ceil((expiresAt - Date.now()) / 86_400_000));
+}
+
+function getEffectiveExpiration(key: PublicApiKey): string {
+  if (key.credential_kind !== "browser" || !key.inactive_after) return key.expires_at;
+  return Date.parse(key.inactive_after) < Date.parse(key.expires_at)
+    ? key.inactive_after
+    : key.expires_at;
 }
 
 function formatPeriod(value: string, locale: SiteLocale): string {

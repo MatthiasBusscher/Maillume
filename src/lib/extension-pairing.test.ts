@@ -8,7 +8,9 @@ import {
   getExtensionPairingMutationTokenInput,
   getPairingExpiration,
   getPairingVerificationPath,
+  hashExtensionBrowserConnectionId,
   hashExtensionPairingDeviceCode,
+  isExtensionBrowserConnectionId,
   isExtensionPairingApprovalScope,
   isExtensionPairingDeviceCode,
   isExtensionPairingId,
@@ -30,6 +32,12 @@ assert.notEqual(first.deviceCode, second.deviceCode);
 assert.notEqual(first.userCode, second.userCode);
 assert.equal(isExtensionPairingDeviceCode(first.deviceCode), true);
 assert.equal(isExtensionPairingDeviceCode("mlp_short"), false);
+assert.equal(isExtensionBrowserConnectionId("mlb_12345678123441238123123456789abc"), true);
+assert.equal(isExtensionBrowserConnectionId("mlb_short"), false);
+assert.match(
+  hashExtensionBrowserConnectionId("mlb_12345678123441238123123456789abc"),
+  /^[a-f0-9]{64}$/,
+);
 assert.equal(isExtensionPairingId(pairingId), true);
 assert.equal(isExtensionPairingId("not-a-uuid"), false);
 assert.equal(normalizeExtensionPairingUserCode("abcd-2345"), "ABCD-2345");
@@ -40,15 +48,31 @@ assert.deepEqual(normalizeExtensionPairingRequest({
   locale: "nl",
   name: " Chrome op Mac ",
 }), {
+  browserConnectionId: null,
   lifetimeDays: 90,
   locale: "nl",
   name: "Chrome op Mac",
 });
 assert.deepEqual(normalizeExtensionPairingRequest({ name: "Chrome" }), {
+  browserConnectionId: null,
   lifetimeDays: 90,
   locale: "en",
   name: "Chrome",
 });
+assert.deepEqual(normalizeExtensionPairingRequest({
+  browserConnectionId: "mlb_12345678123441238123123456789abc",
+  lifetimeDays: 30,
+  name: "Chrome",
+}), {
+  browserConnectionId: "mlb_12345678123441238123123456789abc",
+  lifetimeDays: 365,
+  locale: "en",
+  name: "Chrome",
+});
+assert.equal(normalizeExtensionPairingRequest({
+  browserConnectionId: "mlb_invalid",
+  name: "Chrome",
+}), null);
 assert.equal(normalizeExtensionPairingRequest({ lifetimeDays: 365, name: "Chrome" }), null);
 assert.equal(normalizeExtensionPairingRequest({ locale: "de", name: "Chrome" }), null);
 assert.equal(

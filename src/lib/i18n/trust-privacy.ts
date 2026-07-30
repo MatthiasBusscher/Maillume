@@ -10,7 +10,7 @@ export const trustPrivacyCopy = {
     title: "Privacy notice",
     description: "Maillume is designed to assess one email at a time without creating a scan history or saving the message or result in application storage. This notice describes the official public-beta data flow; self-hosted operators are responsible for their own deployment notices.",
     updatedLabel: "Last updated",
-    updatedDate: "July 19, 2026",
+    updatedDate: "July 30, 2026",
     sections: {
       assessments: {
         title: "Email assessments",
@@ -44,14 +44,14 @@ export const trustPrivacyCopy = {
           "Email-and-password sign-in and Google sign-in are optional and are provided through Supabase when enabled. The account may include your email address, display name, provider identifier, session cookies, and basic authentication metadata.",
           "If you enable authenticator-app two-factor authentication, Supabase processes the enrollment and verification data needed for TOTP. Maillume does not receive or store the authenticator app's private data outside the authentication service.",
           "Signing in does not create scan history. Authentication cookies maintain the signed-in session. When production authentication is enabled, the account page provides confirmation-gated deletion of the Supabase identity.",
-          "When you create an integration API key, Maillume stores its owner, name, short prefix, SHA-256 hash, quota, timestamps, UTC billing month, and aggregate request count. The plaintext key is shown once. API usage records exclude message content, results, links, IP addresses, and message identifiers.",
+          "For developer API keys and browser connections, Maillume stores the owner, name, short prefix, credential SHA-256 hash, type, quota, timestamps, UTC billing month, and aggregate request count. Browser connections also store only the SHA-256 hash of a random installation identifier and a rolling inactivity deadline. Plaintext credentials are returned once. API usage records exclude message content, results, links, IP addresses, and message identifiers.",
         ],
       },
       integrations: {
         title: "Chrome browser extension",
         paragraphs: [
           "The Chrome extension captures text you explicitly select or, when supported and unambiguous, the visibly open webmail message after you start the action. It sends those fields to the Maillume deployment displayed in the extension for that assessment.",
-          "The extension does not perform background mailbox scanning and does not persist message content or results. Its endpoint preference is stored locally. You can explicitly remember a dedicated API key in trusted extension-local storage across restarts and updates, or keep it only for the browser session.",
+          "The extension does not perform background mailbox scanning and does not persist message content or results. Its endpoint, dedicated browser credential, expiry metadata, and random installation identifier are stored in trusted extension-local storage across restarts and updates. The server receives only a hash of the installation identifier. Advanced manual setup can keep a developer API key locally or only for the browser session.",
           "Chrome extension data is used only to provide and secure the email-risk assessment you request. Maillume does not sell extension data, use it for advertising or credit decisions, transfer it for unrelated purposes, or allow people to read message content except when you give specific support consent or when access is required for security or legal obligations.",
         ],
       },
@@ -85,7 +85,7 @@ export const trustPrivacyCopy = {
     title: "Privacyverklaring",
     description: "Maillume is ontworpen om telkens één e-mail te beoordelen zonder scangeschiedenis aan te maken of het bericht of resultaat in de applicatieopslag te bewaren. Deze verklaring beschrijft de gegevensstroom van de officiële publieke bèta; beheerders van zelfgehoste omgevingen zijn verantwoordelijk voor hun eigen verklaringen.",
     updatedLabel: "Laatst bijgewerkt",
-    updatedDate: "19 juli 2026",
+    updatedDate: "30 juli 2026",
     sections: {
       assessments: {
         title: "E-mailbeoordelingen",
@@ -119,14 +119,14 @@ export const trustPrivacyCopy = {
           "Inloggen met e-mailadres en wachtwoord en inloggen met Google zijn optioneel en verlopen via Supabase. Je account kan je e-mailadres, weergavenaam, provider-ID, sessiecookies en algemene authenticatiemetadata bevatten.",
           "Als je tweestapsverificatie met een authenticatie-app inschakelt, verwerkt Supabase de inschrijf- en verificatiegegevens die nodig zijn voor TOTP. Maillume ontvangt of bewaart de privégegevens van de authenticatie-app niet buiten de authenticatiedienst.",
           "Inloggen maakt geen scangeschiedenis aan. Authenticatiecookies houden de ingelogde sessie in stand. Wanneer productie-authenticatie is ingeschakeld, biedt de accountpagina verwijdering van de Supabase-identiteit na bevestiging.",
-          "Wanneer je een integratie-API-sleutel maakt, bewaart Maillume de eigenaar, naam, korte prefix, SHA-256-hash, quota, tijdstippen, UTC-gebruiksmaand en het totale aantal aanvragen. De leesbare sleutel wordt één keer getoond. API-gebruiksrecords bevatten geen berichtinhoud, resultaten, links, IP-adressen of bericht-ID's.",
+          "Voor API-sleutels voor ontwikkelaars en browserverbindingen bewaart Maillume de eigenaar, naam, korte prefix, SHA-256-hash van de sleutel, het type, quota, tijdstippen, UTC-gebruiksmaand en het totale aantal aanvragen. Voor browserverbindingen bewaart Maillume ook alleen de SHA-256-hash van een willekeurig installatiekenmerk en een verschuivende inactiviteitsdatum. Leesbare sleutels worden één keer teruggestuurd. API-gebruiksrecords bevatten geen berichtinhoud, resultaten, links, IP-adressen of bericht-ID's.",
         ],
       },
       integrations: {
         title: "Chrome-browserextensie",
         paragraphs: [
           "De Chrome-extensie legt tekst vast die je uitdrukkelijk selecteert of, wanneer dit wordt ondersteund en ondubbelzinnig is, het zichtbaar geopende webmailbericht nadat je de actie start. De extensie stuurt die velden voor de beoordeling naar de Maillume-omgeving die in de extensie wordt getoond.",
-          "De extensie scant postvakken niet op de achtergrond en bewaart geen berichtinhoud of resultaten. De voorkeur voor het endpoint wordt lokaal opgeslagen. Je kunt er uitdrukkelijk voor kiezen een aparte API-sleutel in vertrouwde lokale extensieopslag te bewaren voor herstarts en updates, of de sleutel alleen tijdens de browsersessie bewaren.",
+          "De extensie scant postvakken niet op de achtergrond en bewaart geen berichtinhoud of resultaten. Het endpoint, de eigen browsersleutel, verloopmetadata en een willekeurig installatiekenmerk worden in vertrouwde lokale extensieopslag bewaard voor herstarts en updates. De server ontvangt alleen een hash van het installatiekenmerk. Geavanceerde handmatige configuratie kan een ontwikkelaars-API-sleutel lokaal of alleen voor de browsersessie bewaren.",
           "Gegevens uit de Chrome-extensie worden alleen gebruikt om de door jou gevraagde e-mailrisicobeoordeling te leveren en beveiligen. Maillume verkoopt extensiegegevens niet, gebruikt ze niet voor advertenties of kredietbeslissingen, draagt ze niet over voor ongerelateerde doeleinden en laat mensen geen berichtinhoud lezen, behalve wanneer je daarvoor uitdrukkelijk toestemming geeft bij ondersteuning of wanneer toegang nodig is voor beveiligings- of wettelijke verplichtingen.",
         ],
       },

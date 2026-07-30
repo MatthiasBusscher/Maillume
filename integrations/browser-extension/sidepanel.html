@@ -68,22 +68,28 @@
           <label><span data-nl="Maillume-omgeving">Maillume deployment</span> <input id="endpoint" type="url" value="https://app.maillume.io" /></label>
           <section class="automatic-connection">
             <h2 data-nl="Veilig verbinden met je account">Connect securely with your account</h2>
-            <p data-nl="Maillume opent een korte goedkeuringspagina en maakt na jouw toestemming een eigen, intrekbare sleutel voor deze browser.">Maillume opens a short approval page and, after your permission, creates a dedicated revocable key for this browser.</p>
+            <p data-nl="Maillume opent een korte goedkeuringspagina en verbindt deze browser na jouw toestemming. Je hoeft geen API-sleutel te kopiëren.">Maillume opens a short approval page and connects this browser after your permission. You do not need to copy an API key.</p>
+            <p id="connectionState" class="connection-state" data-nl="Deze browser is niet verbonden.">This browser is not connected.</p>
             <button id="connect" type="button" data-nl="Deze browser verbinden">Connect this browser</button>
+            <button id="reset" type="button" class="danger" data-nl="Verbinding verwijderen" hidden>Remove connection</button>
           </section>
-          <div class="settings-divider"><span data-nl="of voer handmatig een sleutel in">or enter a key manually</span></div>
-          <label><span data-nl="API-sleutel">API key</span>
-            <span class="secret-field">
-              <input id="apiKey" type="password" autocomplete="off" placeholder="mlm_..." />
-              <button id="apiKeyVisibility" type="button" class="icon-button" aria-label="Show API key" data-nl-aria-label="API-sleutel tonen" aria-pressed="false">
-                <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m4 4 16 16"/></svg>
-              </button>
-            </span>
-          </label>
-          <label class="remember-key"><input id="rememberApiKey" type="checkbox" checked /> <span data-nl="API-sleutel op dit apparaat onthouden">Remember API key on this device</span></label>
-          <button id="save" type="button" class="secondary" data-nl="Verbinding opslaan">Save connection</button>
-          <button id="reset" type="button" class="danger" data-nl="Verbinding verwijderen">Remove connection</button>
-          <p class="small" data-nl="De URL van de Maillume-omgeving wordt lokaal opgeslagen. Als onthouden is ingeschakeld, blijft de API-sleutel in de lokale extensieopslag van dit Chrome-profiel staan voor herstarts en updates. Schakel dit uit voor opslag alleen tijdens de browsersessie. Berichtinhoud en resultaten worden nooit opgeslagen.">The deployment URL is stored locally. When remember is enabled, the API key remains in this Chrome profile's local extension storage across restarts and updates. Turn it off for browser-session-only storage. Message content and results are never stored.</p>
+          <details id="manualSetup" class="advanced-setup">
+            <summary data-nl="Geavanceerde handmatige configuratie">Advanced manual setup</summary>
+            <div class="fields">
+              <p class="small" data-nl="Gebruik dit alleen voor oudere omgevingen, ontwikkeling of herstel. Voor app.maillume.io is veilig verbinden met je account de aanbevolen methode.">Use this only for older deployments, development, or recovery. For app.maillume.io, secure account connection is the recommended method.</p>
+              <label><span data-nl="API-sleutel">API key</span>
+                <span class="secret-field">
+                  <input id="apiKey" type="password" autocomplete="off" placeholder="mlm_..." />
+                  <button id="apiKeyVisibility" type="button" class="icon-button" aria-label="Show API key" data-nl-aria-label="API-sleutel tonen" aria-pressed="false">
+                    <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m4 4 16 16"/></svg>
+                  </button>
+                </span>
+              </label>
+              <label class="remember-key"><input id="rememberApiKey" type="checkbox" checked /> <span data-nl="Handmatige sleutel op dit apparaat onthouden">Remember manual key on this device</span></label>
+              <button id="save" type="button" class="secondary" data-nl="Handmatige verbinding opslaan">Save manual connection</button>
+            </div>
+          </details>
+          <p class="small" data-nl="De omgeving en browserverbinding worden lokaal in dit Chrome-profiel opgeslagen. Berichtinhoud en resultaten worden nooit opgeslagen.">The deployment and browser connection are stored locally in this Chrome profile. Message content and results are never stored.</p>
         </div>
       </details>
 

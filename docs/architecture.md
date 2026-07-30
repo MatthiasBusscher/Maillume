@@ -62,8 +62,8 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Production feedback storage uses a server-only Supabase service-role key, Row Level Security, and automatic expiry. The scanner remains available when feedback is disabled.
    - Maintainer calibration uses a security-definer aggregate function that suppresses small cells, caps identical hourly signatures, filters test versions, and never returns raw feedback rows.
    - Optional accounts store identity, session, and authentication-factor metadata in Supabase Auth. Hashed integration-key metadata and aggregate quotas are implemented; future preferences, paid entitlements, and billing references may be added, but not scan history or assessment content.
-   - Official extension pairing uses short-lived device authorization: the database stores a hashed device verifier and bounded key-request metadata, while the browser receives plaintext only once after AAL2 approval. It does not embed account login or expose the account session to the extension.
-   - Organizations, delegated administrators, and cross-account key management remain out of scope. Each person manages up to five dedicated keys within their own account.
+   - Official extension pairing uses short-lived device authorization: the database stores hashed device and browser-installation verifiers plus bounded request metadata, while the browser receives its credential only once after AAL2 approval. Reconnecting the same browser atomically replaces its credential. It does not embed account login or expose the account session to the extension.
+   - Organizations, delegated administrators, and cross-account key management remain out of scope. Each person manages up to five connected browsers and five developer keys within their own account.
 
 6. Deployment
    - A standalone Next.js container runs on the Hostinger VPS behind Cloudflare Tunnel.

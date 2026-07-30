@@ -440,7 +440,7 @@ function main() {
   assert.match(extensionManifest, /"minimum_chrome_version": "116"/);
   assert.doesNotMatch(extensionManifest, /"content_scripts"|"tabs"|mail\.google\.com|outlook\.office\.com/);
   assert.doesNotMatch(extensionPanel, /storage\.local\.set\([^)]*(?:body|result)[\s\S]*?\)/);
-  assert.match(extensionPanel, /storeApiKey\(apiKey, rememberApiKey, expiresAt\)/);
+  assert.match(extensionPanel, /storeApiKey\(\s*apiKey,\s*remember,/);
   assert.match(extensionPanel, /storage\.local\.set\(\{ apiKey,/);
   assert.match(extensionPanel, /storage\.session\.set\(\{ apiKey,/);
   assert.match(extensionPanel, /storage\.session\.set\(\{ extensionPairing: pairing \}\)/);

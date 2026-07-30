@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomInt } from "node:crypto";
 
 import {
+  BROWSER_CONNECTION_LIFETIME_DAYS,
   DEFAULT_API_KEY_LIFETIME_DAYS,
   normalizeApiKeyLifetimeDays,
   normalizeApiKeyName,
@@ -14,7 +15,8 @@ const EXTENSION_PAIRING_APPROVAL_SCOPE_PREFIX = "mlps_";
 const USER_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 
 export type ExtensionPairingRequest = {
-  lifetimeDays: ApiKeyLifetimeDays;
+  browserConnectionId: string | null;
+  lifetimeDays: ApiKeyLifetimeDays | typeof BROWSER_CONNECTION_LIFETIME_DAYS;
   locale: "en" | "nl";
   name: string;
 };
@@ -32,8 +34,16 @@ export function hashExtensionPairingDeviceCode(deviceCode: string): string {
   return createHash("sha256").update(deviceCode).digest("hex");
 }
 
+export function hashExtensionBrowserConnectionId(connectionId: string): string {
+  return createHash("sha256").update(connectionId).digest("hex");
+}
+
 export function isExtensionPairingDeviceCode(value: string): boolean {
   return /^mlp_[A-Za-z0-9_-]{43}$/.test(value);
+}
+
+export function isExtensionBrowserConnectionId(value: string): boolean {
+  return /^mlb_[a-f0-9]{32}$/.test(value);
 }
 
 export function isExtensionPairingId(value: string): boolean {
@@ -53,12 +63,20 @@ export function normalizeExtensionPairingRequest(value: unknown): ExtensionPairi
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
   const body = value as Record<string, unknown>;
   const name = normalizeApiKeyName(body.name);
-  const lifetimeDays = body.lifetimeDays === undefined
-    ? DEFAULT_API_KEY_LIFETIME_DAYS
-    : normalizeApiKeyLifetimeDays(body.lifetimeDays);
+  const browserConnectionId = typeof body.browserConnectionId === "string"
+    && isExtensionBrowserConnectionId(body.browserConnectionId)
+    ? body.browserConnectionId
+    : body.browserConnectionId === undefined
+      ? null
+      : undefined;
+  const lifetimeDays = browserConnectionId
+    ? BROWSER_CONNECTION_LIFETIME_DAYS
+    : body.lifetimeDays === undefined
+      ? DEFAULT_API_KEY_LIFETIME_DAYS
+      : normalizeApiKeyLifetimeDays(body.lifetimeDays);
   const locale = body.locale === "nl" ? "nl" : body.locale === "en" || body.locale === undefined ? "en" : null;
-  if (!name || !lifetimeDays || !locale) return null;
-  return { lifetimeDays, locale, name };
+  if (!name || !lifetimeDays || !locale || browserConnectionId === undefined) return null;
+  return { browserConnectionId, lifetimeDays, locale, name };
 }
 
 export function getPairingExpiration(now = new Date()): string {

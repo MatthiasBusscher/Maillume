@@ -17,6 +17,7 @@ import {
   EXTENSION_PAIRING_POLL_SECONDS,
   EXTENSION_PAIRING_TTL_SECONDS,
   getPairingVerificationPath,
+  hashExtensionBrowserConnectionId,
   hashExtensionPairingDeviceCode,
   isExtensionPairingDeviceCode,
   isExtensionPairingId,
@@ -45,8 +46,10 @@ type CreatePairingRow = {
 
 type RedeemPairingRow = {
   created_at: string | null;
+  credential_kind: string | null;
   expires_at: string | null;
   id: string | null;
+  inactive_after: string | null;
   key_prefix: string | null;
   monthly_quota: number | null;
   name: string | null;
@@ -86,7 +89,11 @@ export async function POST(request: Request) {
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const credentials = createExtensionPairingCredentials();
-    const { data, error } = await admin.rpc("create_extension_pairing", {
+    const browserConnectionHash = pairingRequest.browserConnectionId
+      ? hashExtensionBrowserConnectionId(pairingRequest.browserConnectionId)
+      : credentials.deviceCodeHash;
+    const { data, error } = await admin.rpc("create_extension_pairing_v2", {
+      p_browser_connection_hash: browserConnectionHash,
       p_device_code_hash: credentials.deviceCodeHash,
       p_extension_id: compatibility.client.extensionId,
       p_extension_version: compatibility.client.extensionVersion,
@@ -168,7 +175,7 @@ export async function PUT(request: Request) {
   const admin = createSupabaseAdminClient();
   if (!admin) return jsonError("Browser connection is not configured.", 503);
   const key = createApiKey();
-  const { data, error } = await admin.rpc("redeem_extension_pairing", {
+  const { data, error } = await admin.rpc("redeem_extension_pairing_v2", {
     p_device_code_hash: hashExtensionPairingDeviceCode(deviceCode),
     p_key_prefix: key.prefix,
     p_pairing_id: pairingId,
@@ -188,7 +195,7 @@ export async function PUT(request: Request) {
   if (result.operation_status === "expired") return jsonError("Browser connection request expired.", 410);
   if (result.operation_status === "redeemed") return jsonError("Browser connection request was already used.", 409);
   if (result.operation_status === "active_limit") {
-    return jsonError("The account already has the maximum number of active API keys.", 409);
+    return jsonError("The account already has five connected browsers.", 409);
   }
   if (result.operation_status === "throttled") {
     return jsonError("Too many API key changes. Try again later.", 429, { "Retry-After": "86400" });
@@ -200,6 +207,8 @@ export async function PUT(request: Request) {
     || !result.key_prefix
     || !result.created_at
     || !result.expires_at
+    || result.credential_kind !== "browser"
+    || !result.inactive_after
   ) {
     return jsonError("Browser connection request is invalid.", 404);
   }
@@ -207,8 +216,10 @@ export async function PUT(request: Request) {
   return NextResponse.json({
     key: {
       created_at: result.created_at,
+      credential_kind: result.credential_kind,
       expires_at: result.expires_at,
       id: result.id,
+      inactive_after: result.inactive_after,
       key_prefix: result.key_prefix,
       monthly_quota: result.monthly_quota,
       name: result.name,

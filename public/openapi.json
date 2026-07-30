@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Maillume Hosted API",
-    "version": "0.1.0-beta",
+    "version": "0.2.0-beta",
     "description": "Authenticated email risk assessment. Scan content and results are processed for the request and are not stored. Results are automated assessments, not guarantees."
   },
   "servers": [{ "url": "https://app.maillume.io" }],
@@ -152,7 +152,7 @@
             "required": ["id", "latest_version", "minimum_analysis_version", "minimum_pairing_version", "pairing_available", "supported_analysis_versions"],
             "properties": {
               "id": { "const": "bjiiailjalkfjimkjdikoockjlnjolle" },
-              "latest_version": { "const": "0.3.9" },
+              "latest_version": { "const": "0.4.0" },
               "minimum_analysis_version": { "type": "string" },
               "minimum_pairing_version": { "const": "0.3.9" },
               "pairing_available": { "const": true },
@@ -169,8 +169,13 @@
         "additionalProperties": false,
         "required": ["name"],
         "properties": {
+          "browserConnectionId": {
+            "type": "string",
+            "pattern": "^mlb_[a-f0-9]{32}$",
+            "description": "Random installation identifier generated and retained locally by extension 0.4.0 or later. The server stores only its SHA-256 hash so reconnecting the same browser rotates that browser credential."
+          },
           "name": { "type": "string", "minLength": 1, "maxLength": 50 },
-          "lifetimeDays": { "type": "integer", "enum": [30, 90, 180], "default": 90 },
+          "lifetimeDays": { "type": "integer", "enum": [30, 90, 180, 365], "default": 365 },
           "locale": { "type": "string", "enum": ["en", "nl"], "default": "en" }
         }
       },
@@ -207,11 +212,13 @@
           "key": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["created_at", "expires_at", "id", "key_prefix", "monthly_quota", "name"],
+            "required": ["created_at", "credential_kind", "expires_at", "id", "inactive_after", "key_prefix", "monthly_quota", "name"],
             "properties": {
               "created_at": { "type": "string", "format": "date-time" },
+              "credential_kind": { "const": "browser" },
               "expires_at": { "type": "string", "format": "date-time" },
               "id": { "type": "string", "format": "uuid" },
+              "inactive_after": { "type": "string", "format": "date-time" },
               "key_prefix": { "type": "string", "maxLength": 16 },
               "monthly_quota": { "type": "integer", "minimum": 1 },
               "name": { "type": "string", "maxLength": 50 },

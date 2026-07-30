@@ -1,6 +1,6 @@
 # Chrome Extension Publication Packet
 
-This document is the submission source of truth for the Chrome Web Store. Do not submit the Chrome extension until the production URLs, operator identity, privacy contact, and API-key flow are live.
+This document is the submission source of truth for the Chrome Web Store. Do not submit the Chrome extension until the production URLs, operator identity, privacy contact, and browser-connection flow are live.
 
 ## Shared Listing Copy
 
@@ -30,7 +30,7 @@ Package: `dist/maillume-browser-extension.zip`, produced by `npm run package:int
 >
 > The extension acts only after you invoke it. It has no persistent Gmail or Outlook host access, background mailbox scanning, scan history, advertising, or analytics. Message content and results stay in memory and are not written to extension storage.
 >
-> The selected content is sent over HTTPS to the Maillume deployment shown in the panel only after you press Analyze message. The official service processes it for that response and does not store the message or assessment. A revocable Maillume API key is required. You can keep the key for the browser session or explicitly remember it in this Chrome profile.
+> The selected content is sent over HTTPS to the Maillume deployment shown in the panel only after you press Analyze message. The official service processes it for that response and does not store the message or assessment. Connect the extension through your Maillume account; no API key needs to be copied. The resulting browser credential is dedicated to this Chrome profile and can be revoked from your account.
 >
 > Supported webmail clients: Gmail and Outlook on the web. English and Dutch interfaces are included.
 
@@ -42,7 +42,7 @@ Localize the listing in Dutch using the same claims and boundaries before submis
 
 Declare these handled data types:
 
-- `Authentication information`: the dedicated Maillume API key, stored locally only when the user chooses that option and sent to the selected deployment to authenticate an assessment.
+- `Authentication information`: the dedicated Maillume browser credential stored in trusted extension-local storage and sent to the selected deployment to authenticate an assessment. Advanced manual setup can store a developer API key locally or for the current browser session.
 - `Personal communications`: the reviewed email subject, sender, and text sent only for the requested assessment.
 - `Website content`: the explicitly selected or visibly open supported-webmail content and available displayed/destination link metadata needed for the assessment.
 
@@ -57,10 +57,10 @@ Permission justifications:
 - `activeTab`: temporary access after the toolbar action so the extension can read text selected by the user or the visibly open message in a supported webmail client.
 - `scripting`: executes the small, one-time capture function in that temporary active tab.
 - `sidePanel`: keeps the review and result interface beside the email.
-- `storage`: stores the deployment URL locally and, when the user enables the clearly disclosed remember option, stores the dedicated API key in trusted extension-local storage across restarts and updates. Otherwise the key remains session-only. It never stores message content or results.
+- `storage`: stores the deployment URL, dedicated browser credential, expiry metadata, and random installation identifier in trusted extension-local storage across restarts and updates. The server receives only a hash of the installation identifier. Advanced manual setup can keep a developer key locally or session-only. Storage never contains message content or results.
 - Optional host access: requested interactively for the exact Maillume deployment selected by the user so the extension can call its API.
 
-Changing deployments revokes the previous origin grant. Removing the saved connection clears the key from both local and session storage and revokes the active origin grant. Captured text uses a one-time in-memory handoff and expires if it is not consumed. The English and Dutch interfaces request assessment output in the browser UI language.
+Changing deployments revokes the previous origin grant. Removing the saved connection clears the credential from local and session storage and revokes the active origin grant. The non-secret random installation identifier remains local so reconnecting the same Chrome profile can rotate its previous server credential. Captured text uses a one-time in-memory handoff and expires if it is not consumed. The English and Dutch interfaces request assessment output in the browser UI language.
 
 The package declares no content scripts, persistent webmail host access, tabs permission, cookies permission, webRequest permission, or background mailbox behavior.
 
@@ -74,14 +74,14 @@ Before submission:
 
 ### Reviewer instructions
 
-1. Use Chrome 116 or newer and a dedicated reviewer API key supplied through the private reviewer-instructions field. Never place a key in listing copy, screenshots, GitHub, or issue comments.
+1. Use Chrome 116 or newer and a dedicated Maillume reviewer account with TOTP 2FA. Never place account credentials, pairing links, or browser credentials in listing copy, screenshots, GitHub, or issue comments.
 2. Open one synthetic message in Gmail or Outlook on the web and click the Maillume toolbar icon.
-3. Under **Connection settings**, keep `https://app.maillume.io`, enter the reviewer key, choose the desired key-storage option, and select **Save connection**. Approve the host permission for that deployment.
+3. Under **Connection settings**, keep `https://app.maillume.io` and choose **Connect this browser**. Sign in with the reviewer account, complete TOTP, approve the named browser connection, and return to the side panel. Approve the host permission for that deployment.
 4. Confirm the captured subject, sender, and text, then select **Analyze message**.
 5. The expected result is a score, risk level, explanation, observed signals, and a recommended action. Results vary with the synthetic message and are not guarantees.
-6. Select **Remove connection** after review to clear the endpoint and key and revoke the optional host permission.
+6. Select **Remove connection** after review to clear the local credential and endpoint and revoke the optional host permission. Revoke the reviewer browser from the account page as well.
 
-Record the reviewer key's creation and expiry in the private operator record. Revoke it after review or at its planned expiry.
+Record the reviewer browser name and approval time in the private operator record. Revoke it after review.
 
 ## Manual Chrome Stable Acceptance
 
@@ -92,9 +92,10 @@ Use the exact checksummed release candidate and synthetic content only. Record t
 3. Repeat the selected-text and visibly open-message checks in Outlook. Keep the panel open, change messages, press **Use current message**, and confirm the previous message and result disappear before the new capture appears.
 4. Switch tabs and navigate within each webmail client. Confirm the panel never analyzes stale content. On a restricted page such as `chrome://settings`, confirm capture is refused with the restricted-page explanation.
 5. Deny the deployment permission once and confirm no connection is saved. Grant it on the next attempt. Verify Dutch/English text containing `café — 日本語 — 🛡️` survives capture, and confirm a message beyond 20,000 characters is bounded to the documented limit.
-6. Create a fresh production key from an AAL2 account and complete one synthetic assessment. Revoke that key, retry without changing the panel key, and capture the `401` rejection state. Do not record the key value.
-7. With an exhausted test account, confirm the panel explains the `429` limit and retains the configured key so the user can retry after the limit resets. Record only status and aggregate quota evidence.
-8. Test both key-storage choices. With remember disabled, restart Chrome and confirm the key is absent. With remember enabled, reload the unpacked extension from the same directory and confirm the key remains available and can be revealed. Use **Remove connection** and confirm the endpoint, local key, session key, and optional deployment permission are all removed.
+6. Connect a fresh production browser from an AAL2 account and complete one synthetic assessment. Revoke that browser from the account, retry without reconnecting, and capture the `401` rejection state. Do not record the credential value.
+7. Reconnect the same browser and confirm the account still shows one active entry for that Chrome profile and its prior credential is revoked.
+8. With an exhausted test account, confirm the panel explains the `429` limit and retains the browser connection so the user can retry after the limit resets. Record only status and aggregate quota evidence.
+9. Use **Remove connection** and confirm the endpoint, local credential, session credential, pending pairing, and optional deployment permission are removed. Confirm **Advanced manual setup** stays closed during the ordinary flow and can still save a test key for the documented recovery path.
 
 The automated suite exercises the corresponding capture and response branches, but it does not replace these real Chrome Stable, Gmail, Outlook, production-key, and permission-prompt observations.
 

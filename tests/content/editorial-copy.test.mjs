@@ -122,8 +122,12 @@ test("privacy and authentication copy describe the real data flow", () => {
   assert.match(accountNl, /Log in of maak een account/);
   assert.match(read("src/components/email-auth-form.tsx"), /mode === "sign-in" \|\| mode === "forgot"/);
   assert.match(extension, /Review the captured details/);
-  assert.match(extension, /Remember API key on this device/);
-  assert.match(extension, /API-sleutel op dit apparaat onthouden/);
+  assert.match(extension, /Connect this browser/);
+  assert.match(extension, /Advanced manual setup/);
+  assert.match(extension, /Remember manual key on this device/);
+  assert.match(extension, /Handmatige sleutel op dit apparaat onthouden/);
+  assert.match(privacy, /server receives only a hash of the installation identifier/);
+  assert.match(privacy, /server ontvangt alleen een hash van het installatiekenmerk/);
   assert.doesNotMatch(extension, /Review before sending|Controleer vóór verzending/);
 });
 
