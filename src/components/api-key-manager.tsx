@@ -38,6 +38,7 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
   const [copyFeedback, setCopyFeedback] = useState<"idle" | "copied" | "error">("idle");
   const [message, setMessage] = useState<string>(labels.loading);
   const [busy, setBusy] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   const loadKeys = useCallback(async () => {
     try {
@@ -121,6 +122,8 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
   }
 
   async function revokeKey(id: string) {
+    if (!window.confirm(labels.revokeConfirmation)) return;
+
     setBusy(true);
     setMessage("");
 
@@ -133,6 +136,7 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
       const payload = await readPayload(response);
       if (!response.ok) return setMessage(payload.error ?? labels.revocationFailed);
       await loadKeys();
+      setMessage(labels.revoked);
     } catch {
       setMessage(labels.revocationFailed);
     } finally {
@@ -160,6 +164,13 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
     : 0;
   const browserConnections = keys.filter((key) => key.credential_kind === "browser");
   const developerKeys = keys.filter((key) => key.credential_kind === "developer");
+  const inactiveCount = keys.filter((key) => key.status !== "active").length;
+  const visibleBrowserConnections = browserConnections.filter(
+    (key) => showInactive || key.status === "active",
+  );
+  const visibleDeveloperKeys = developerKeys.filter(
+    (key) => showInactive || key.status === "active",
+  );
 
   function renderCredential(key: PublicApiKey, allowRotation: boolean) {
     const effectiveExpiration = getEffectiveExpiration(key);
@@ -214,9 +225,10 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
               disabled={busy}
               title={labels.revokeTitle}
               aria-label={`${labels.revokeTitle}: ${key.name}`}
-              className="grid h-10 w-10 place-items-center border border-[#d08b82] text-[#8f251b] hover:bg-[#fff0ed] disabled:opacity-50"
+              className="inline-flex h-10 items-center gap-2 border border-[#d08b82] px-3 text-xs font-semibold text-[#8f251b] hover:bg-[#fff0ed] disabled:opacity-50"
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
+              {labels.revokeTitle}
             </button>
           </div>
         ) : null}
@@ -263,13 +275,27 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
         </div>
       ) : null}
 
+      {inactiveCount > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#aeb6ac] bg-[#f9faf7] px-6 py-4">
+          <p className="max-w-2xl text-xs leading-5 text-[#59655a]">{labels.inactiveHelp}</p>
+          <button
+            type="button"
+            onClick={() => setShowInactive((visible) => !visible)}
+            aria-expanded={showInactive}
+            className="border border-[#aeb6ac] bg-white px-3 py-2 text-xs font-semibold text-[#111711] hover:bg-[#eef1eb]"
+          >
+            {showInactive ? labels.hideInactive : `${labels.showInactive} (${inactiveCount})`}
+          </button>
+        </div>
+      ) : null}
+
       <div className="border-b border-[#d8dcd3] bg-[#f9faf7] px-5 py-4">
         <h3 className="text-sm font-semibold text-[#111711]">{labels.browserTitle}</h3>
         <p className="mt-1 max-w-3xl text-xs leading-5 text-[#59655a]">{labels.browserHelp}</p>
       </div>
-      {browserConnections.length ? (
+      {visibleBrowserConnections.length ? (
         <div className="divide-y divide-[#d8dcd3] border-b border-[#aeb6ac]">
-          {browserConnections.map((key) => renderCredential(key, false))}
+          {visibleBrowserConnections.map((key) => renderCredential(key, false))}
         </div>
       ) : (
         <p className="border-b border-[#aeb6ac] px-6 py-5 text-sm text-[#59655a]">{labels.browserEmpty}</p>
@@ -326,14 +352,14 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
         </div>
       ) : null}
 
-      {developerKeys.length ? (
+      {visibleDeveloperKeys.length ? (
         <div className="border-b border-[#d8dcd3] bg-[#f9faf7] px-5 py-4">
           <h3 className="text-sm font-semibold text-[#111711]">{labels.savedKeys}</h3>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-[#59655a]">{labels.savedKeysHelp}</p>
         </div>
       ) : null}
       <div className="divide-y divide-[#d8dcd3]">
-        {developerKeys.map((key) => renderCredential(key, true))}
+        {visibleDeveloperKeys.map((key) => renderCredential(key, true))}
       </div>
       <p role="status" className="flex min-h-12 items-center gap-2 px-6 text-sm text-[#59655a]">
         {message}
