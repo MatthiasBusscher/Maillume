@@ -1,3 +1,5 @@
+import { isSafeSupabaseUrl } from "./url";
+
 export type PublicSupabaseConfig = {
   publishableKey: string;
   url: string;
@@ -15,7 +17,7 @@ export function getPublicSupabaseConfig(
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )?.trim();
 
-  if (!url || !publishableKey) {
+  if (!url || !publishableKey || !isSafeSupabaseUrl(url)) {
     return null;
   }
 

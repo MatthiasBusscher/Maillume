@@ -40,22 +40,28 @@ function renderResult(result) {
   elements.level.textContent = copy.levels[result.risk_level];
   elements.level.dataset.level = result.risk_level;
   elements.classification.textContent = copy.classifications[result.classification];
-  elements.explanation.textContent = result.short_explanation;
-  elements.action.textContent = result.recommended_action;
+  elements.explanation.textContent = renderText(result.short_explanation);
+  elements.action.textContent = renderText(result.recommended_action);
   renderEvidenceCoverage(result.evidence_coverage);
-  elements.factors.replaceChildren(...result.score_factors.map((factor) => {
+  elements.factors.replaceChildren(...result.score_factors.slice(0, MAX_ANALYSIS_RESPONSE_FACTORS).map((factor) => {
     const item = document.createElement("li");
-    item.textContent = `${factor.label}: +${factor.contribution} ${copy.points}`;
+    item.textContent = `${renderText(factor.label)}: +${factor.contribution} ${copy.points}`;
     return item;
   }));
-  elements.signals.replaceChildren(...result.suspicious_signals.map((signal) => {
+  elements.signals.replaceChildren(...result.suspicious_signals.slice(0, MAX_ANALYSIS_RESPONSE_SIGNALS).map((signal) => {
     const item = document.createElement("li");
-    item.textContent = signal;
+    item.textContent = renderText(signal);
     return item;
   }));
   elements.reviewStep.hidden = true;
   elements.analyze.hidden = true;
   elements.result.hidden = false;
+}
+
+function renderText(value) {
+  return typeof value === "string"
+    ? value.slice(0, MAX_ANALYSIS_RESPONSE_TEXT_CHARACTERS)
+    : "";
 }
 
 function renderEvidenceCoverage(coverage) {

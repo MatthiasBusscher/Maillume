@@ -204,7 +204,9 @@ elements.analyze.addEventListener("click", async () => {
     if (response.status === 429) throw new Error(copy.quotaExceeded);
     if (!response.ok) throw new Error(copy.requestFailed(response.status));
     let payload;
-    try { payload = await response.json(); } catch { throw new Error(copy.invalidResult); }
+    try { payload = await readBoundedAnalysisResponse(response); } catch (error) {
+      throw new Error(error instanceof AnalysisResponseTooLargeError ? copy.resultTooLarge : copy.invalidResult);
+    }
     if (!SUPPORTED_ANALYSIS_VERSIONS.includes(payload?.analysis_version)) throw new Error(copy.incompatibleResult);
     if (!isAnalysisResponse(payload)) throw new Error(copy.invalidResult);
     await refreshBrowserConnectionExpiry();

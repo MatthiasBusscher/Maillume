@@ -427,6 +427,32 @@ function createPanelElement() {
   };
 }
 
+function createStreamingJsonResponse(payload, status, { chunks, contentLength } = {}) {
+  const responseChunks = chunks || [new TextEncoder().encode(JSON.stringify(payload))];
+  let index = 0;
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: {
+      get(name) {
+        return name.toLowerCase() === "content-length" ? contentLength ?? null : null;
+      },
+    },
+    body: {
+      getReader() {
+        return {
+          async read() {
+            if (index >= responseChunks.length) return { done: true };
+            return { done: false, value: responseChunks[index++] };
+          },
+          async cancel() {},
+          releaseLock() {},
+        };
+      },
+    },
+  };
+}
+
 async function testPanelSendsCapturedLinkMetadata() {
   const runtime = event();
   const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "manualSetup", "connectionState", "connect", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"];
@@ -485,6 +511,8 @@ async function testPanelSendsCapturedLinkMetadata() {
   };
   let responsePayload = validResponse;
   let responseStatus = 200;
+  let responseChunks;
+  let responseContentLength;
   let permissionGranted = true;
   let requestHeaders;
   let pairingStartPayload;
@@ -589,14 +617,15 @@ async function testPanelSendsCapturedLinkMetadata() {
       }
       requestPayload = JSON.parse(options.body);
       requestHeaders = options.headers;
-      return {
-        ok: responseStatus >= 200 && responseStatus < 300,
-        status: responseStatus,
-        json: async () => responsePayload,
-      };
+      return createStreamingJsonResponse(responsePayload, responseStatus, {
+        chunks: responseChunks,
+        contentLength: responseContentLength,
+      });
     },
     navigator: { platform: "macOS" },
     setTimeout,
+    TextDecoder,
+    Uint8Array,
     URL,
   };
   vm.createContext(context);
@@ -690,6 +719,20 @@ async function testPanelSendsCapturedLinkMetadata() {
         },
       },
     },
+    {
+      ...validResponse,
+      result: {
+        ...validResponse.result,
+        suspicious_signals: Array(101).fill("Too many signals"),
+      },
+    },
+    {
+      ...validResponse,
+      result: {
+        ...validResponse.result,
+        short_explanation: "x".repeat(2_049),
+      },
+    },
   ]) {
     assert.equal(context.isAnalysisResponse(invalidResponse), false);
   }
@@ -698,6 +741,36 @@ async function testPanelSendsCapturedLinkMetadata() {
   await elements.get("analyze").dispatch("click");
   assert.equal(elements.get("result").hidden, true, "the panel must reject an invalid API envelope");
   assert.equal(elements.get("status").textContent, "The extension and deployment use different analysis versions. Update the extension from the official source, then reload it in chrome://extensions.");
+
+  responsePayload = validResponse;
+  responseContentLength = String(256 * 1024 + 1);
+  await elements.get("analyze").dispatch("click");
+  assert.equal(elements.get("result").hidden, true, "an oversized declared response must not reach rendering");
+  assert.equal(elements.get("status").textContent, "The deployment returned an analysis response that is too large to display safely.");
+
+  responseContentLength = "1";
+  responseChunks = [new Uint8Array(256 * 1024 + 1)];
+  await elements.get("analyze").dispatch("click");
+  assert.equal(elements.get("result").hidden, true, "an oversized streamed response with a false Content-Length must not reach parsing or rendering");
+  assert.equal(elements.get("status").textContent, "The deployment returned an analysis response that is too large to display safely.");
+
+  responseContentLength = undefined;
+  await elements.get("analyze").dispatch("click");
+  assert.equal(elements.get("result").hidden, true, "an oversized streamed response without Content-Length must not reach parsing or rendering");
+  assert.equal(elements.get("status").textContent, "The deployment returned an analysis response that is too large to display safely.");
+  responseChunks = undefined;
+
+  context.renderResult({
+    ...validResponse.result,
+    short_explanation: "x".repeat(2_048 + 1),
+    score_factors: Array.from({ length: 100 + 1 }, () => ({
+      id: "factor", family: "style", contribution: 1, label: "x".repeat(2_048 + 1),
+    })),
+    suspicious_signals: Array(100 + 1).fill("x".repeat(2_048 + 1)),
+  });
+  assert.equal(elements.get("factors").children.length, 100, "rendering must cap factor nodes even if validation is bypassed");
+  assert.equal(elements.get("signals").children.length, 100, "rendering must cap signal nodes even if validation is bypassed");
+  assert.equal(elements.get("explanation").textContent.length, 2_048, "rendering must cap direct text even if validation is bypassed");
 
   runtime.listener({ type: "capture-ready", tabId: 22, captureId: "capture-7" });
   await flush();
