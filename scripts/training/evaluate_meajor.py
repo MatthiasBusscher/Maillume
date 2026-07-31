@@ -11,6 +11,7 @@ from meajor_common import (
     DATASET_CSV_MD5,
     LOCKED_SOURCE,
     binary_metrics,
+    build_feature_map,
     load_examples,
     load_model,
     score_exported_model,
@@ -30,7 +31,11 @@ def main() -> None:
         raise RuntimeError("Model was trained from a different dataset revision.")
     examples, ingestion = load_examples(arguments.csv)
     locked = [item for item in examples if item.source == LOCKED_SOURCE]
-    probabilities = [score_exported_model(model, item.text) for item in locked]
+    feature_map = build_feature_map(model)
+    probabilities = [
+        score_exported_model(model, item.text, feature_map)
+        for item in locked
+    ]
     metrics = binary_metrics(
         [item.label for item in locked],
         probabilities,

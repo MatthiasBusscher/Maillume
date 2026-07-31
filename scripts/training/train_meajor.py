@@ -24,6 +24,7 @@ from meajor_common import (
     TRAIN_SOURCE,
     VALIDATION_SOURCE,
     binary_metrics,
+    build_feature_map,
     character_features,
     choose_threshold,
     choose_standalone_threshold,
@@ -179,8 +180,13 @@ def main() -> None:
         num=min(100, len(validation)),
         dtype=int,
     )
+    exported_feature_map = build_feature_map(artifact)
     for index in sample_indexes:
-        exported_probability = score_exported_model(artifact, validation[index].text)
+        exported_probability = score_exported_model(
+            artifact,
+            validation[index].text,
+            exported_feature_map,
+        )
         fitted_probability = validation_probabilities[index]
         if abs(exported_probability - fitted_probability) > 1e-6:
             raise RuntimeError(

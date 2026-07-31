@@ -261,11 +261,20 @@ def load_model(path: Path) -> dict:
     return model
 
 
-def score_exported_model(model: dict, text: str) -> float:
-    feature_map = {
+def build_feature_map(model: dict) -> dict[tuple[str, str], tuple[float, float]]:
+    return {
         (item["kind"], item["term"]): (item["idf"], item["weight"])
         for item in model["features"]
     }
+
+
+def score_exported_model(
+    model: dict,
+    text: str,
+    feature_map: dict[tuple[str, str], tuple[float, float]] | None = None,
+) -> float:
+    if feature_map is None:
+        feature_map = build_feature_map(model)
     counts: dict[tuple[str, str], int] = {}
     for kind, terms in (
         ("word", tokenize(text)),
