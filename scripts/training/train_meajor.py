@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 import numpy as np
-from scipy.sparse import hstack
-from sklearn.feature_extraction.text import TfidfVectorizer
+from scipy.sparse import csr_matrix, hstack
+from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import normalize
 
@@ -19,21 +19,48 @@ from meajor_common import (
     DATASET_LICENSE,
     DATASET_VERSION,
     DEVELOPMENT_SOURCE,
+    CHARACTER_BUCKET_COUNT,
     LOCKED_SOURCE,
     MAX_TEXT_CHARS,
     TRAIN_SOURCE,
     VALIDATION_SOURCE,
+    WORD_BUCKET_COUNT,
     binary_metrics,
     build_feature_map,
     character_features,
     choose_threshold,
     choose_standalone_threshold,
+    feature_bucket,
     is_validation_group,
     load_examples,
     score_exported_model,
     tokenize,
     verify_dataset,
 )
+
+
+def hashed_term_counts(
+    texts: list[str],
+    feature_kind: str,
+    bucket_count: int,
+) -> csr_matrix:
+    extractor = tokenize if feature_kind == "word" else character_features
+    rows: list[int] = []
+    columns: list[int] = []
+    values: list[int] = []
+    for row, text in enumerate(texts):
+        counts: dict[int, int] = {}
+        for term in extractor(text):
+            bucket = feature_bucket(term, bucket_count)
+            counts[bucket] = counts.get(bucket, 0) + 1
+        rows.extend([row] * len(counts))
+        columns.extend(counts)
+        values.extend(counts.values())
+    return csr_matrix(
+        (values, (rows, columns)),
+        shape=(len(texts), bucket_count),
+        dtype=np.float64,
+    )
 
 
 def main() -> None:
@@ -43,7 +70,9 @@ def main() -> None:
     arguments = parser.parse_args()
 
     verify_dataset(arguments.csv)
-    examples, ingestion = load_examples(arguments.csv)
+    # The independent locked source is intentionally excluded from all tuning
+    # and artifact-generation work.
+    examples, ingestion = load_examples(arguments.csv, include_locked=False)
     training = [
         item
         for item in examples
@@ -60,38 +89,29 @@ def main() -> None:
         and is_validation_group(item.group)
     ]
 
-    word_vectorizer = TfidfVectorizer(
-        tokenizer=tokenize,
-        preprocessor=None,
-        token_pattern=None,
-        lowercase=False,
-        ngram_range=(1, 1),
-        min_df=4,
-        max_df=0.995,
-        max_features=30_000,
-        sublinear_tf=True,
-        norm=None,
-        dtype=np.float64,
-    )
-    character_vectorizer = TfidfVectorizer(
-        analyzer=character_features,
-        lowercase=False,
-        min_df=10,
-        max_df=0.995,
-        max_features=50_000,
-        sublinear_tf=True,
-        norm=None,
-        dtype=np.float64,
-    )
     training_texts = [item.text for item in training]
     validation_texts = [item.text for item in validation]
+    word_transformer = TfidfTransformer(sublinear_tf=True, norm=None)
+    character_transformer = TfidfTransformer(sublinear_tf=True, norm=None)
+    training_word_counts = hashed_term_counts(
+        training_texts, "word", WORD_BUCKET_COUNT,
+    )
+    validation_word_counts = hashed_term_counts(
+        validation_texts, "word", WORD_BUCKET_COUNT,
+    )
+    training_character_counts = hashed_term_counts(
+        training_texts, "character", CHARACTER_BUCKET_COUNT,
+    )
+    validation_character_counts = hashed_term_counts(
+        validation_texts, "character", CHARACTER_BUCKET_COUNT,
+    )
     training_matrix = normalize(hstack([
-        word_vectorizer.fit_transform(training_texts),
-        character_vectorizer.fit_transform(training_texts),
+        word_transformer.fit_transform(training_word_counts),
+        character_transformer.fit_transform(training_character_counts),
     ], format="csr"))
     validation_matrix = normalize(hstack([
-        word_vectorizer.transform(validation_texts),
-        character_vectorizer.transform(validation_texts),
+        word_transformer.transform(validation_word_counts),
+        character_transformer.transform(validation_character_counts),
     ], format="csr"))
     classifier = LogisticRegression(
         C=1.0,
@@ -113,37 +133,35 @@ def main() -> None:
         )
     )
 
-    word_names = word_vectorizer.get_feature_names_out()
-    character_names = character_vectorizer.get_feature_names_out()
     coefficients = classifier.coef_[0]
-    word_idf = word_vectorizer.idf_
-    character_idf = character_vectorizer.idf_
     features = [
         {
             "kind": kind,
-            "term": str(term),
+            "bucket": bucket,
             "idf": round(float(term_idf), 8),
             "weight": round(float(weight), 8),
         }
-        for kind, names, idf, weights in (
+        for kind, bucket_count, idf, weights in (
             (
                 "word",
-                word_names,
-                word_idf,
-                coefficients[:len(word_names)],
+                WORD_BUCKET_COUNT,
+                word_transformer.idf_,
+                coefficients[:WORD_BUCKET_COUNT],
             ),
             (
                 "character",
-                character_names,
-                character_idf,
-                coefficients[len(word_names):],
+                CHARACTER_BUCKET_COUNT,
+                character_transformer.idf_,
+                coefficients[WORD_BUCKET_COUNT:],
             ),
         )
-        for term, term_idf, weight in zip(names, idf, weights, strict=True)
+        for bucket, term_idf, weight in zip(
+            range(bucket_count), idf, weights, strict=True,
+        )
     ]
     artifact = {
         "schema": "maillume-statistical-text-model-v1",
-        "model_version": "meajor-logistic-v1",
+        "model_version": "meajor-logistic-v2",
         "dataset": {
             "doi": DATASET_DOI,
             "version": DATASET_VERSION,
@@ -163,8 +181,11 @@ def main() -> None:
             "standalone_validation_metrics": standalone_validation_metrics,
         },
         "tokenizer": {
-            "normalization": "NFKD-strip-marks-lower-ascii-alnum",
+            "normalization": "NFKD-strip-marks-lower-ascii-alnum-digit-redaction",
             "features": "word-unigrams-and-bigrams-plus-character-3-to-5-grams",
+            "representation": "lossy-fnv1a-feature-buckets",
+            "word_bucket_count": WORD_BUCKET_COUNT,
+            "character_bucket_count": CHARACTER_BUCKET_COUNT,
             "sublinear_tf": True,
             "l2_normalized": True,
         },

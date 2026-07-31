@@ -89,7 +89,7 @@ function main() {
     "src/lib/analysis/statistical-text.ts",
   );
   const statisticalModel = JSON.parse(
-    readProjectFile("src/lib/analysis/models/meajor-v1.json"),
+    readProjectFile("src/lib/analysis/models/meajor-v2.json"),
   ) as {
     schema?: string;
     model_version?: string;
@@ -103,7 +103,7 @@ function main() {
       feature_count?: number;
       text_window_characters?: number;
     };
-    features?: unknown[];
+    features?: Array<Record<string, unknown>>;
   };
   const composeContent = readProjectFile("docker-compose.production.yml");
   const deploymentContent = readProjectFile("docs/deployment.md");
@@ -396,7 +396,7 @@ function main() {
     /\bfetch\s*\(|XMLHttpRequest|WebSocket|node:https?|node:net/,
   );
   assert.equal(statisticalModel.schema, "maillume-statistical-text-model-v1");
-  assert.equal(statisticalModel.model_version, "meajor-logistic-v1");
+  assert.equal(statisticalModel.model_version, "meajor-logistic-v2");
   assert.deepEqual(statisticalModel.dataset, {
     doi: "10.5281/zenodo.18471483",
     version: "2.0",
@@ -406,6 +406,13 @@ function main() {
   assert.equal(statisticalModel.training?.feature_count, 80_000);
   assert.equal(statisticalModel.training?.text_window_characters, 200);
   assert.equal(statisticalModel.features?.length, 80_000);
+  assert.ok(
+    statisticalModel.features?.every((feature) => (
+      Object.keys(feature).sort().join(",") === "bucket,idf,kind,weight"
+      && Number.isInteger(feature.bucket)
+    )),
+    "The distributed model must contain bucket coefficients, never source vocabulary.",
+  );
   assert.doesNotMatch(composeContent, /^\s*ports:/m);
   assert.match(composeContent, /read_only: true/);
   assert.match(composeContent, /no-new-privileges:true/);

@@ -1,8 +1,8 @@
-import modelArtifact from "./models/meajor-v1.json";
+import modelArtifact from "./models/meajor-v2.json";
 
 type ModelFeature = {
   kind: "word" | "character";
-  term: string;
+  bucket: number;
   idf: number;
   weight: number;
 };
@@ -24,15 +24,22 @@ type StatisticalTextModel = {
   training: {
     text_window_characters: number;
   };
+  tokenizer: {
+    normalization: string;
+    representation: string;
+    word_bucket_count: number;
+    character_bucket_count: number;
+  };
   threshold: number;
   standalone_threshold: number;
   intercept: number;
   features: ModelFeature[];
 };
 
+const WORD_BUCKET_COUNT = 30_000;
+const CHARACTER_BUCKET_COUNT = 50_000;
 const model = modelArtifact as StatisticalTextModel;
 validateModel(model);
-
 const wordFeatures = createFeatureMap("word");
 const characterFeatures = createFeatureMap("character");
 
@@ -66,17 +73,23 @@ export function scoreEnglishStatisticalUnwantedText(
 function scoreNormalizedText(text: string): number {
   const counts = new Map<ModelCoefficient, number>();
   const words = text.match(/[a-z0-9]+/g) ?? [];
-  addTerms(counts, wordFeatures, words);
+  addTerms(counts, wordFeatures, words, WORD_BUCKET_COUNT);
   addTerms(
     counts,
     wordFeatures,
     words.slice(0, -1).map((word, index) => `${word} ${words[index + 1]}`),
+    WORD_BUCKET_COUNT,
   );
 
   const padded = ` ${text} `;
   for (const size of [3, 4, 5]) {
     for (let index = 0; index <= padded.length - size; index += 1) {
-      addTerm(counts, characterFeatures, padded.slice(index, index + size));
+      addTerm(
+        counts,
+        characterFeatures,
+        padded.slice(index, index + size),
+        CHARACTER_BUCKET_COUNT,
+      );
     }
   }
 
@@ -120,29 +133,32 @@ function isLikelyEnglishNormalizedText(text: string): boolean {
 }
 
 function normalizeText(subject: string, body: string): string {
-  return `${subject}\n${body}`
+  return (`${subject}\n${body}`
     .slice(0, 200)
     .normalize("NFKD")
     .replace(/\p{M}/gu, "")
     .toLowerCase()
     .match(/[a-z0-9]+/g)
-    ?.join(" ") ?? "";
+    ?.map((token) => /\d/u.test(token) ? "number" : token)
+    .join(" ")) ?? "";
 }
 
 function addTerms(
   counts: Map<ModelCoefficient, number>,
   features: Map<string, ModelCoefficient>,
   terms: string[],
+  bucketCount: number,
 ): void {
-  for (const term of terms) addTerm(counts, features, term);
+  for (const term of terms) addTerm(counts, features, term, bucketCount);
 }
 
 function addTerm(
   counts: Map<ModelCoefficient, number>,
   features: Map<string, ModelCoefficient>,
   term: string,
+  bucketCount: number,
 ): void {
-  const feature = features.get(term);
+  const feature = features.get(String(featureBucket(term, bucketCount)));
   if (!feature) return;
   counts.set(feature, (counts.get(feature) ?? 0) + 1);
 }
@@ -152,21 +168,38 @@ function createFeatureMap(kind: ModelFeature["kind"]): Map<string, ModelCoeffici
     model.features
       .filter((feature) => feature.kind === kind)
       .map((feature) => [
-        feature.term,
+        String(feature.bucket),
         { idf: feature.idf, weight: feature.weight },
       ]),
   );
 }
 
+function featureBucket(term: string, bucketCount: number): number {
+  let value = 0x811c9dc5;
+  for (let index = 0; index < term.length; index += 1) {
+    value ^= term.charCodeAt(index);
+    value = Math.imul(value, 0x01000193) >>> 0;
+  }
+  return value % bucketCount;
+}
+
 function validateModel(value: StatisticalTextModel): void {
+  const featureBuckets = new Set(
+    value.features.map((feature) => `${feature.kind}:${feature.bucket}`),
+  );
   if (
     value.schema !== "maillume-statistical-text-model-v1"
-    || value.model_version !== "meajor-logistic-v1"
+    || value.model_version !== "meajor-logistic-v2"
     || value.dataset.doi !== "10.5281/zenodo.18471483"
     || value.dataset.version !== "2.0"
     || value.dataset.license !== "CC-BY-4.0"
     || value.dataset.csv_md5 !== "aa8f59e96787cbd696c0b650e5400dc9"
     || value.training.text_window_characters !== 200
+    || value.tokenizer.normalization
+      !== "NFKD-strip-marks-lower-ascii-alnum-digit-redaction"
+    || value.tokenizer.representation !== "lossy-fnv1a-feature-buckets"
+    || value.tokenizer.word_bucket_count !== WORD_BUCKET_COUNT
+    || value.tokenizer.character_bucket_count !== CHARACTER_BUCKET_COUNT
     || !Number.isFinite(value.threshold)
     || value.threshold <= 0
     || value.threshold >= 1
@@ -174,6 +207,20 @@ function validateModel(value: StatisticalTextModel): void {
     || value.standalone_threshold < value.threshold
     || value.standalone_threshold >= 1
     || value.features.length !== 80_000
+    || value.features.some((feature) => (
+      (feature.kind !== "word" && feature.kind !== "character")
+      || !Number.isInteger(feature.bucket)
+      || feature.bucket < 0
+      || feature.bucket >= (
+        feature.kind === "word" ? WORD_BUCKET_COUNT : CHARACTER_BUCKET_COUNT
+      )
+      || Object.keys(feature).sort().join(",") !== "bucket,idf,kind,weight"
+    ))
+    || featureBuckets.size !== value.features.length
+    || value.features.filter((feature) => feature.kind === "word").length
+      !== WORD_BUCKET_COUNT
+    || value.features.filter((feature) => feature.kind === "character").length
+      !== CHARACTER_BUCKET_COUNT
   ) {
     throw new Error("The bundled statistical text model failed integrity validation.");
   }

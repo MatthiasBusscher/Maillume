@@ -23,6 +23,9 @@ VALIDATION_SOURCE = "trec6-group-holdout"
 LOCKED_SOURCE = "trec7"
 MAX_TEXT_CHARS = 200
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+NUMBER_TOKEN = "number"
+WORD_BUCKET_COUNT = 30_000
+CHARACTER_BUCKET_COUNT = 50_000
 
 
 @dataclass(frozen=True)
@@ -59,7 +62,26 @@ def normalize_text(subject: str, body: str) -> str:
         for character in decomposed
         if unicodedata.category(character) != "Mn"
     )
-    return " ".join(TOKEN_PATTERN.findall(without_marks.lower()))
+    # Numeric tokens can contain account, invoice, phone, or campaign
+    # identifiers. They do not need to be retained verbatim for the
+    # classifier, so replace every digit-bearing token before feature work.
+    return " ".join(
+        NUMBER_TOKEN if any(character.isdigit() for character in token) else token
+        for token in TOKEN_PATTERN.findall(without_marks.lower())
+    )
+
+
+def feature_bucket(term: str, bucket_count: int) -> int:
+    """Return a stable FNV-1a bucket shared with runtime inference.
+
+    The artifact stores only bucket coefficients, never the text terms that
+    selected them. Input terms are ASCII after ``normalize_text``.
+    """
+    value = 0x811C9DC5
+    for byte in term.encode("ascii"):
+        value ^= byte
+        value = (value * 0x01000193) & 0xFFFFFFFF
+    return value % bucket_count
 
 
 def tokenize(text: str) -> list[str]:
@@ -79,14 +101,21 @@ def character_features(text: str) -> list[str]:
     ]
 
 
-def load_examples(path: Path) -> tuple[list[Example], dict[str, int]]:
+def load_examples(
+    path: Path,
+    *,
+    include_locked: bool = True,
+) -> tuple[list[Example], dict[str, int]]:
     examples: list[Example] = []
     rejected = 0
     with path.open(newline="", encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
             source = row.get("source", "")
             raw_label = row.get("label", "")
-            if source not in {TRAIN_SOURCE, DEVELOPMENT_SOURCE, LOCKED_SOURCE}:
+            allowed_sources = {TRAIN_SOURCE, DEVELOPMENT_SOURCE}
+            if include_locked:
+                allowed_sources.add(LOCKED_SOURCE)
+            if source not in allowed_sources:
                 rejected += 1
                 continue
             if raw_label not in {"0", "0.0", "1", "1.0"}:
@@ -110,8 +139,9 @@ def load_examples(path: Path) -> tuple[list[Example], dict[str, int]]:
     source_priority = {
         TRAIN_SOURCE: 0,
         DEVELOPMENT_SOURCE: 1,
-        LOCKED_SOURCE: 2,
     }
+    if include_locked:
+        source_priority[LOCKED_SOURCE] = 2
     group_owner: dict[str, str] = {}
     for example in examples:
         owner = group_owner.get(example.group)
@@ -263,7 +293,7 @@ def load_model(path: Path) -> dict:
 
 def build_feature_map(model: dict) -> dict[tuple[str, str], tuple[float, float]]:
     return {
-        (item["kind"], item["term"]): (item["idf"], item["weight"])
+        (item["kind"], str(item["bucket"])): (item["idf"], item["weight"])
         for item in model["features"]
     }
 
@@ -276,12 +306,12 @@ def score_exported_model(
     if feature_map is None:
         feature_map = build_feature_map(model)
     counts: dict[tuple[str, str], int] = {}
-    for kind, terms in (
-        ("word", tokenize(text)),
-        ("character", character_features(text)),
+    for kind, terms, bucket_count in (
+        ("word", tokenize(text), WORD_BUCKET_COUNT),
+        ("character", character_features(text), CHARACTER_BUCKET_COUNT),
     ):
         for term in terms:
-            key = (kind, term)
+            key = (kind, str(feature_bucket(term, bucket_count)))
             if key in feature_map:
                 counts[key] = counts.get(key, 0) + 1
     weighted = []

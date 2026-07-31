@@ -26,7 +26,17 @@ phishing.
 Training downloads are stored under ignored `.training-data/` and must never be
 committed, included in the application image, or packaged with the browser
 extension. Only reproducible preprocessing code, attribution, aggregate
-evaluation results, and compact derived model parameters may be committed.
+evaluation results, and compact derived model parameters may be committed. The
+derived model stores lossy FNV-1a feature-bucket coefficients, never vocabulary
+terms. Before hashing, every digit-bearing token is replaced by the
+generic `number` token. This prevents phone, account, invoice, campaign, and
+name-number identifiers from becoming part of the distributed artifact.
+
+The current artifact is `meajor-logistic-v2` in `meajor-v2.json`. The retained
+`docs/releases/meajor-v1-holdout.json` is historical, immutable evidence for
+the earlier readable-vocabulary v1 artifact; it must not be treated as evidence
+for v2. v2 remains blocked from release until it has fresh, independently
+authored English and Dutch evaluation evidence.
 
 The data is used to estimate whether text resembles the licensed corpus's
 malicious class. Deterministic Maillume evidence remains responsible for the
