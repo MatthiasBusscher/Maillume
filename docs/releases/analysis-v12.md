@@ -76,12 +76,12 @@ described as meeting the 90% gates. Further detector work must use broader
 development evidence and a newly authored untouched holdout; this failed
 holdout cannot be reused as proof.
 
-## Licensed-data candidate
+## Licensed-data candidate history
 
-A subsequent, not-yet-released candidate adds a compact English supporting
-classifier trained from the anonymized MeAJOR v2.0 dataset under CC BY 4.0. Raw
-training email is not committed or shipped. The derived factor is visible,
-cannot update from user scans, and cannot independently claim legitimacy.
+The historical v1 candidate added a compact English supporting classifier
+trained from the anonymized MeAJOR v2.0 dataset under CC BY 4.0. Raw training
+email was not committed or shipped. The derived factor was visible, could not
+update from user scans, and could not independently claim legitimacy.
 
 TREC-5 and a deterministic development portion of TREC-6 are used for training.
 An isolated TREC-6 group split selects thresholds. Cross-source duplicate groups
@@ -107,10 +107,14 @@ result is stored in
 [`meajor-v1-holdout.json`](meajor-v1-holdout.json). No model parameter,
 threshold, or detector behavior will be changed using this spent holdout.
 
-This candidate remains blocked. A later candidate may treat TREC-7 as
-development data only if it is evaluated against a different, explicitly
-licensed untouched corpus. A new application-level bilingual holdout and the
-complete release gate are also still required.
+That v1 candidate remains blocked and was withdrawn from the runtime artifact
+because its explicit derived vocabulary could expose identifier-like source
+terms. Its holdout file remains immutable historical v1 evidence. The
+privacy-remediated `meajor-logistic-v2` artifact uses lossy feature buckets and
+digit redaction, but the spent v1 holdout is not evidence for v2. v2 remains
+blocked pending a different, explicitly licensed untouched corpus, a new
+application-level bilingual holdout, and the complete release gate. See
+[`meajor-v2.md`](meajor-v2.md).
 
 ## Existing regression inventory and performance
 
