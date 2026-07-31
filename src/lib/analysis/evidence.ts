@@ -29,6 +29,7 @@ export const EVIDENCE_IDS = [
   "unsolicited_sales",
   "investment_pitch",
   "high_risk_spam",
+  "statistical_unwanted_text",
   "generic_greeting",
   "short_url",
   "risky_link_domain",
@@ -120,6 +121,12 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   unsolicited_sales: spamEvidence("intent", 30, "Looks like unsolicited sales or lead-generation outreach.", "Lijkt op ongevraagde verkoop- of acquisitiemail."),
   investment_pitch: spamEvidence("intent", 30, "Contains a high-return investment or loan pitch.", "Bevat een aanbod voor hoge beleggingsopbrengsten of een lening."),
   high_risk_spam: spamEvidence("intent", 30, "Contains common high-risk spam topics.", "Bevat onderwerpen die vaak in risicovolle spam voorkomen."),
+  statistical_unwanted_text: spamEvidence(
+    "intent",
+    30,
+    "Text patterns resemble unwanted email in a licensed public corpus.",
+    "Tekstpatronen lijken op ongewenste e-mail in een gelicentieerd openbaar corpus.",
+  ),
   generic_greeting: evidence("style", 4, "Uses a generic greeting.", "Gebruikt een algemene aanhef."),
   short_url: evidence("destination", 10, "Uses a shortened URL that hides the destination.", "Gebruikt een verkorte URL die de bestemming verbergt.", true),
   risky_link_domain: evidence("destination", 10, "Uses a link domain pattern often abused in campaigns.", "Gebruikt een linkdomein dat vaak in campagnes wordt misbruikt.", true),
@@ -185,6 +192,7 @@ export function buildAnalysisResult(
     .sort((left, right) => {
       const spamPriority: Partial<Record<EvidenceId, number>> = {
         high_risk_spam: 3,
+        statistical_unwanted_text: 3,
         investment_pitch: 2,
         unsolicited_sales: 2,
         prize_promotion: 1,

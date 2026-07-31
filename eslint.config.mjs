@@ -14,6 +14,7 @@ const eslintConfig = [
     ignores: [
       ".analysis-tests/**",
       ".heuristic-tests/**",
+      ".training-data/**",
       ".next/**",
       "next-env.d.ts",
       "node_modules/**",

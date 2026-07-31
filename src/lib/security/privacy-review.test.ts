@@ -81,6 +81,30 @@ function main() {
   const nextConfigContent = readProjectFile("next.config.ts");
   const cspConfig = readProjectFile("src/lib/security/csp.ts");
   const dockerfileContent = readProjectFile("Dockerfile");
+  const dockerIgnoreContent = readProjectFile(".dockerignore");
+  const gitIgnoreContent = readProjectFile(".gitignore");
+  const noticeContent = readProjectFile("NOTICE");
+  const trainingDataReview = readProjectFile("docs/training-data.md");
+  const statisticalTextContent = readProjectFile(
+    "src/lib/analysis/statistical-text.ts",
+  );
+  const statisticalModel = JSON.parse(
+    readProjectFile("src/lib/analysis/models/meajor-v1.json"),
+  ) as {
+    schema?: string;
+    model_version?: string;
+    dataset?: {
+      doi?: string;
+      version?: string;
+      license?: string;
+      csv_md5?: string;
+    };
+    training?: {
+      feature_count?: number;
+      text_window_characters?: number;
+    };
+    features?: unknown[];
+  };
   const composeContent = readProjectFile("docker-compose.production.yml");
   const deploymentContent = readProjectFile("docs/deployment.md");
   const operationsContent = readProjectFile("docs/operations.md");
@@ -354,6 +378,34 @@ function main() {
   assert.match(dockerfileContent, /rm -rf \/usr\/local\/lib\/node_modules\/npm/);
   assert.match(dockerfileContent, /# syntax=docker\/dockerfile:1\.7@sha256:[0-9a-f]{64}/);
   assert.equal((dockerfileContent.match(/FROM node:22-alpine@sha256:[0-9a-f]{64}/g) ?? []).length, 3);
+  assert.match(gitIgnoreContent, /^\.training-data$/m);
+  assert.match(dockerIgnoreContent, /^\.training-data$/m);
+  assert.match(noticeContent, /10\.5281\/zenodo\.18471483/);
+  assert.match(noticeContent, /Creative Commons Attribution 4\.0 International/);
+  assert.match(noticeContent, /Raw MeAJOR data is not included/);
+  assert.match(trainingDataReview, /Ordinary user scans are never retained or used for training/);
+  assert.match(trainingDataReview, /aa8f59e96787cbd696c0b650e5400dc9/);
+  assert.match(trainingDataReview, /first 200 characters/);
+  assert.match(
+    trainingDataReview,
+    /does not\s+approve downloading or training on the raw SpamAssassin/,
+  );
+  assert.match(statisticalTextContent, /\.slice\(0, 200\)/);
+  assert.doesNotMatch(
+    statisticalTextContent,
+    /\bfetch\s*\(|XMLHttpRequest|WebSocket|node:https?|node:net/,
+  );
+  assert.equal(statisticalModel.schema, "maillume-statistical-text-model-v1");
+  assert.equal(statisticalModel.model_version, "meajor-logistic-v1");
+  assert.deepEqual(statisticalModel.dataset, {
+    doi: "10.5281/zenodo.18471483",
+    version: "2.0",
+    license: "CC-BY-4.0",
+    csv_md5: "aa8f59e96787cbd696c0b650e5400dc9",
+  });
+  assert.equal(statisticalModel.training?.feature_count, 80_000);
+  assert.equal(statisticalModel.training?.text_window_characters, 200);
+  assert.equal(statisticalModel.features?.length, 80_000);
   assert.doesNotMatch(composeContent, /^\s*ports:/m);
   assert.match(composeContent, /read_only: true/);
   assert.match(composeContent, /no-new-privileges:true/);

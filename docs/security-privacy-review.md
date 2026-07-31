@@ -89,6 +89,29 @@ The current service does not use scanned messages to build a dataset. This inclu
 
 A future system that accepts real or auto-redacted messages requires its own legal basis, third-party-data review, access controls, withdrawal and deletion behavior, retention schedule, and security review. It is not approved by this review.
 
+### Licensed Offline Training Data
+
+The separately reviewed MeAJOR v2.0 Zenodo deposit is approved for optional
+offline model training under `CC-BY-4.0`. The deposit is anonymized, versioned,
+and checksum-pinned; its raw CSV is stored only in ignored local
+`.training-data/` and is excluded from Git, containers, extension packages, and
+production storage. Attribution and preprocessing changes are recorded in
+`NOTICE` and `docs/training-data.md`.
+
+Only compact derived feature weights ship with the application. Inference is
+read-only, bounded to the subject and first 200 characters, makes no network
+request, and does not update the model or retain the scanned text. Its
+contribution is a visible score factor and is suppressed for known transactional
+and opted-in contexts. Medium-confidence output may only strengthen existing
+suspicious evidence; a standalone signal uses a stricter validation-calibrated
+threshold.
+
+This approval does not cover Maillume user scans, separately downloading the
+raw upstream TREC/Nazario/Nigerian/SpamAssassin/Enron corpora, or using MeAJOR
+to claim Dutch model coverage. The corpus contains only 57 Dutch-tagged records,
+so statistical inference is limited to text that passes the English-language
+guard.
+
 ### Feedback Implementation
 
 - `/api/feedback` rejects unknown fields and payloads over 4 KB.

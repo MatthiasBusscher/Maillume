@@ -23,6 +23,8 @@
     "check:contracts": "node scripts/check-contract-artifacts.mjs --check",
     "eval:heuristic": "tsc -p tsconfig.heuristics.json && node scripts/evaluate-heuristic.mjs",
     "eval:v12-holdout": "tsc -p tsconfig.heuristics.json && node scripts/evaluate-v12-holdout.mjs",
+    "train:meajor": ".training-data/venv/bin/python scripts/training/train_meajor.py --csv .training-data/meajor_cleaned_preprocessed.csv --output src/lib/analysis/models/meajor-v1.json",
+    "eval:meajor": ".training-data/venv/bin/python scripts/training/evaluate_meajor.py --csv .training-data/meajor_cleaned_preprocessed.csv --model src/lib/analysis/models/meajor-v1.json",
     "bench:heuristic": "tsc -p tsconfig.heuristics.json && node scripts/benchmark-heuristic.mjs",
     "report:feedback": "tsc -p tsconfig.heuristics.json && node scripts/report-feedback.mjs",
     "generate:integration-icons": "node scripts/generate-integration-icons.mjs",

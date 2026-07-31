@@ -76,6 +76,31 @@ described as meeting the 90% gates. Further detector work must use broader
 development evidence and a newly authored untouched holdout; this failed
 holdout cannot be reused as proof.
 
+## Licensed-data candidate
+
+A subsequent, not-yet-released candidate adds a compact English supporting
+classifier trained from the anonymized MeAJOR v2.0 dataset under CC BY 4.0. Raw
+training email is not committed or shipped. The derived factor is visible,
+cannot update from user scans, and cannot independently claim legitimacy.
+
+TREC-5 and a deterministic development portion of TREC-6 are used for training.
+An isolated TREC-6 group split selects thresholds. Cross-source duplicate groups
+are assigned to the more protected split, and the complete TREC-7 source remains
+untouched until the model and integration are frozen.
+
+On the exposed 3,010-case TREC-6 validation group, the supporting threshold
+reports 97.5% precision, 94.5% recall, and a 0.85% false-positive rate. The
+standalone threshold reports 99.4% precision and a 0.18% false-positive rate;
+its lower 80.6% recall is intentional because standalone model output is held
+to a substantially stricter standard.
+
+The frozen derived-model artifact has SHA-256
+`33457877ed01b360689628ae35f177c204728af16ee818e43e818f388d0b36d3`.
+
+These are binary unwanted/benign results, not phishing-versus-spam or Dutch
+results. The candidate remains blocked pending the untouched TREC-7 evaluation,
+a new application-level bilingual holdout, and the complete release gate.
+
 ## Existing regression inventory and performance
 
 Before the fresh holdout was scored, the existing 504-case repository inventory
@@ -85,8 +110,8 @@ classification, and 0/212 legitimate cases above low risk. This inventory
 includes calibration and previously exposed holdouts, so it is regression
 evidence rather than fresh validation.
 
-The maximum-size 20,000-character local benchmark p95 is 3.350 ms. That is
-approximately 1.41× the `analysis-v11` 2.369 ms reference and remains below the
+The maximum-size 20,000-character local benchmark p95 is 3.440 ms. That is
+approximately 1.45× the `analysis-v11` 2.369 ms reference and remains below the
 existing 2× review threshold.
 
 These repository-only synthetic results are a release control, not a claim of

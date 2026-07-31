@@ -27,7 +27,7 @@ Paste an email, add a screenshot, or open an exported `.eml` file. Maillume show
 
 ## Key Capabilities
 
-- **Explainable results:** risk score, risk level, suspicious signals, detected links, and a practical next action.
+- **Explainable results:** risk score, risk level, suspicious signals, detected links, and a practical next action. English heuristic scans can include a visible, locally computed statistical similarity factor derived from licensed public data.
 - **Versioned risk index:** the score is a capped, explainable index of observed evidence, not a probability that a message is malicious.
 - **Three input paths:** pasted text, browser-side screenshot OCR, and browser-side `.eml` parsing.
 - **Sender authentication:** `.eml` scans read the SPF, DKIM, and DMARC outcomes your provider recorded, plus reply and return-path routing. A failure is evidence; a pass is never scored as reassurance.
@@ -126,7 +126,7 @@ type EmailAnalysisResult = {
 };
 ```
 
-The current source contract uses `analysis_version: "analysis-v10"`. Applied factor contributions always sum to `risk_score`, and every result reports which message evidence was available. Maillume derives classification, level, links, coverage, and score server-side; optional AI providers return stable evidence IDs instead of choosing a number. See [evidence coverage](docs/evidence-coverage.md) for the field semantics and staged extension compatibility, and [attack-chain evidence](docs/attack-chain-evidence.md) for the supported combinations and before/after results.
+The current source contract uses `analysis_version: "analysis-v12"`. Applied factor contributions always sum to `risk_score`, and every result reports which message evidence was available. Maillume derives classification, level, links, coverage, and score server-side; optional AI providers return stable evidence IDs instead of choosing a number. See [evidence coverage](docs/evidence-coverage.md) for the field semantics, [attack-chain evidence](docs/attack-chain-evidence.md) for the supported combinations, and [training data](docs/training-data.md) for the licensed statistical model boundary.
 
 ## Self-Hosting and AI
 

@@ -98,11 +98,19 @@ for (const fixture of CROSS_INPUT_FIXTURES) {
       assert.notEqual(variant.result.risk_level, "low", `${fixture.id}/${variant.name}: phishing evidence must not be low risk`);
       assert.notEqual(variant.result.classification, "likely_legitimate", `${fixture.id}/${variant.name}: phishing evidence must not be reassuring`);
     }
-  } else {
+  } else if (fixture.expected === "legitimate") {
     for (const variant of variants) {
       assert.notEqual(variant.result.risk_level, "high", `${fixture.id}/${variant.name}: legitimate hard negative must not be high risk`);
     }
     assert.equal(screenshot.classification, "uncertain", `${fixture.id}: OCR-only evidence must not claim legitimacy`);
+  } else {
+    for (const variant of variants) {
+      assert.notEqual(
+        variant.result.classification,
+        "likely_legitimate",
+        `${fixture.id}/${variant.name}: spam evidence must not be reassuring`,
+      );
+    }
   }
 
   const sharedEvidenceVariants = fixture.linkPair

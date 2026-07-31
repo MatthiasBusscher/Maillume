@@ -8,6 +8,9 @@ build
 coverage
 playwright-report
 test-results
+.training-data
+__pycache__/
+*.pyc
 public/ocr/
 .vercel
 .env

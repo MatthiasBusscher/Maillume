@@ -20,6 +20,10 @@ import {
   getClaimedBrands,
   looksLikeBrandDomainImpersonation,
 } from "./url-evidence";
+import {
+  scoreEnglishStatisticalUnwantedText,
+  STATISTICAL_TEXT_MODEL_METADATA,
+} from "./statistical-text";
 
 const LINK_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/gi;
 const HTML_LINK_PATTERN = /<a\b[^>]*\bhref\s*=\s*(?:"(https?:\/\/[^"\s>]+)"|'(https?:\/\/[^'\s>]+)'|(https?:\/\/[^\s"'=<>`]+))[^>]*>([\s\S]*?)<\/a>/gi;
@@ -253,6 +257,11 @@ const REQUESTED_COMMERCIAL_PATTERNS = [
   /\b(?:door u aangevraagd|zoals aangevraagd|op uw verzoek|zoals besproken|goedgekeurd voorstel|bestaande leverancier|huidige leverancier|geplande verlenging)\b/i,
   ...SUBSCRIBED_PROMOTION_PATTERNS,
 ];
+const TRANSACTIONAL_ACCOUNT_PATTERNS = [
+  /\bwelcome to\b.{0,48}\bconfirm (?:this |your )?email address\b.{0,48}\bactivate (?:your )?account\b/i,
+  /\b(?:one-time|magic) (?:link|code)\b.{0,48}\b(?:you did not request|ignore this email)\b/i,
+  /\bif you did not (?:create|request|start)\b.{0,48}\b(?:ignore|no action)\b/i,
+];
 const COMMERCIAL_OFFER_PATTERNS = [
   /\b(?:consultants?|agency|design team|development (?:team|pod|capacity)|bookkeepers?|brokers?|audit|lead package|business leads?|pricing sheet|premium listing|savings estimate|managed service|service package|cleaning contract)\b/i,
   /\b(?:trading|currency|token|crypto) (?:room|community|signals?|strateg(?:y|ies)|portfolio|trades?)\b/i,
@@ -307,6 +316,32 @@ const SENSITIVE_URL_CONTEXT_EVIDENCE = new Set<EvidenceId>([
   "qr_lure",
   "callback_lure",
   "delivery_lure",
+]);
+const STATISTICAL_SUPPORT_EVIDENCE = new Set<EvidenceId>([
+  "urgency_pressure",
+  "credential_request",
+  "identity_reverification",
+  "payment_request",
+  "attachment_lure",
+  "prize_promotion",
+  "account_threat",
+  "fake_security",
+  "link_call_to_action",
+  "unsolicited_sales",
+  "investment_pitch",
+  "high_risk_spam",
+  "format_pressure",
+  "obfuscation",
+  "unexpected_conversation",
+  "executive_impersonation",
+  "payroll_or_tax_request",
+  "mfa_or_oauth_request",
+  "qr_lure",
+  "callback_lure",
+  "delivery_lure",
+  "secrecy_pressure",
+  "shared_document_lure",
+  "repeated_approval_pressure",
 ]);
 const SENSITIVE_ACCOUNT_ACTION_PATTERNS = [
   /\bsign in with (?:your )?(?:work|company) account.{0,72}\b(?:confirm|keep|retain|restore|review|mark).{0,48}\b(?:access|files?|folders?|preferences|records?|account)\b/i,
@@ -509,6 +544,35 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput | AnalysisEnv
     evidence.add("unsolicited_sales");
   }
   if (
+    locale === "en"
+    && !hasStatisticalTextSuppression(
+      messageContent.slice(
+        0,
+        STATISTICAL_TEXT_MODEL_METADATA.textWindowCharacters,
+      ),
+    )
+  ) {
+    const statisticalScore = scoreEnglishStatisticalUnwantedText(
+      envelope.subject ?? "",
+      envelope.body,
+    );
+    const hasSupportingEvidence = Array.from(evidence).some((id) =>
+      STATISTICAL_SUPPORT_EVIDENCE.has(id)
+    );
+    if (
+      statisticalScore !== null
+      && (
+        statisticalScore >= STATISTICAL_TEXT_MODEL_METADATA.standaloneThreshold
+      || (
+        hasSupportingEvidence
+        && statisticalScore >= STATISTICAL_TEXT_MODEL_METADATA.threshold
+      )
+      )
+    ) {
+      evidence.add("statistical_unwanted_text");
+    }
+  }
+  if (
     (evidence.has("credential_request") || evidence.has("mfa_or_oauth_request"))
     && hasActionableMatch(messageContent, SENSITIVE_ACCOUNT_ACTION_PATTERNS, [
       ...CREDENTIAL_NEGATION_PATTERNS,
@@ -693,6 +757,20 @@ function hasUnsolicitedCommercialPitch(content: string): boolean {
       windowSize: 3,
     },
   );
+}
+
+function hasStatisticalTextSuppression(content: string): boolean {
+  return [
+    ...CREDENTIAL_NEGATION_PATTERNS,
+    ...IDENTITY_REQUEST_SUPPRESSIONS,
+    ...PAYMENT_REQUEST_SUPPRESSIONS,
+    ...CHANGED_PAYMENT_SUPPRESSIONS,
+    ...ATTACHMENT_LURE_SUPPRESSIONS,
+    ...SHARED_DOCUMENT_LURE_SUPPRESSIONS,
+    ...ACCOUNT_THREAT_SUPPRESSIONS,
+    ...REQUESTED_COMMERCIAL_PATTERNS,
+    ...TRANSACTIONAL_ACCOUNT_PATTERNS,
+  ].some((pattern) => pattern.test(content));
 }
 
 function matchesPatternGroup(group: PatternGroup, content: string): boolean {
