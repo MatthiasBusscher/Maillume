@@ -517,7 +517,7 @@ async function testPanelSendsCapturedLinkMetadata() {
   let requestHeaders;
   let pairingStartPayload;
   let pairingMode = false;
-  let capabilityLatestVersion = "0.4.0";
+  let capabilityLatestVersion = "0.4.1";
   let lifecyclePairingResponse = true;
   let openedApprovalUrl;
   const pairingId = "40000000-0000-4000-8000-000000000004";
@@ -528,7 +528,7 @@ async function testPanelSendsCapturedLinkMetadata() {
       i18n: { getUILanguage: () => "en-US" },
       runtime: {
         id: "bjiiailjalkfjimkjdikoockjlnjolle",
-        getManifest: () => ({ version: "0.4.0" }),
+        getManifest: () => ({ version: "0.4.1" }),
         onMessage: runtime,
         sendMessage: async () => responses.shift(),
       },
@@ -666,7 +666,7 @@ async function testPanelSendsCapturedLinkMetadata() {
       destinationUrl: "https://bit.ly/synthetic-review",
     }],
   });
-  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.0");
+  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.1");
   assert.equal(requestHeaders["X-Maillume-Extension-Id"], "bjiiailjalkfjimkjdikoockjlnjolle");
   assert.equal(requestHeaders["X-Maillume-Analysis-Versions"].includes("analysis-v12"), true);
   assert.equal(elements.get("reviewStep").hidden, true, "successful analysis must collapse the captured-detail step");
@@ -856,7 +856,7 @@ async function testPanelSendsCapturedLinkMetadata() {
   assert.equal(localStorage.apiKey, undefined, "removing a browser connection must clear its stored credential");
   assert.equal(localStorage.connectionKind, undefined, "removing a browser connection must clear its connection kind");
   assert.equal(elements.get("apiKeyVisibility").disabled, false, "removing a browser connection must restore manual key visibility control");
-  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.0");
+  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.1");
 }
 
 (async () => {
