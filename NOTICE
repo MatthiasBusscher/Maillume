@@ -6,3 +6,15 @@ License, version 3 only. You may share and modify it under that license.
 
 This program is distributed without any warranty. See LICENSE for the complete
 terms and https://github.com/MatthiasBusscher/Maillume for source code.
+
+Optional classifier model parameters may be derived from:
+
+MeAJOR: Merged email Assets from Joint Open-source Repositories, version 2.0
+Copyright (C) 2026 Francisco Cardoso, João Vitorino, Paulo Mendes, Eva Maia,
+and Isabel Praça
+Licensed under Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+https://doi.org/10.5281/zenodo.18471483
+
+Maillume's preprocessing, feature extraction, training, calibration, and model
+format are modifications. Raw MeAJOR data is not included in this distribution.

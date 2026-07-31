@@ -23,6 +23,39 @@ function main() {
     },
   );
 
+  for (const unsafeUrl of [
+    "http://project.supabase.co",
+    "http://192.0.2.10:54321",
+    "https://user:password@project.supabase.co",
+    "https://project.supabase.co/auth/v1",
+    "https://project.supabase.co?destination=internal",
+    "https://project.supabase.co#fragment",
+  ]) {
+    assert.equal(
+      getPublicSupabaseConfig({
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+        NEXT_PUBLIC_SUPABASE_URL: unsafeUrl,
+      }),
+      null,
+      `unsafe public Supabase URL should be rejected: ${unsafeUrl}`,
+    );
+  }
+
+  for (const localUrl of [
+    "http://localhost:54321",
+    "http://127.0.0.1:54321/",
+    "http://[::1]:54321",
+  ]) {
+    assert.deepEqual(
+      getPublicSupabaseConfig({
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+        NEXT_PUBLIC_SUPABASE_URL: localUrl,
+      }),
+      { publishableKey: "sb_publishable_test", url: localUrl },
+      `loopback HTTP should remain available for local development: ${localUrl}`,
+    );
+  }
+
   assert.equal(arePasskeysEnabled({}), false);
   assert.equal(arePasskeysEnabled({ NEXT_PUBLIC_PASSKEYS_ENABLED: "false" }), false);
   assert.equal(arePasskeysEnabled({ NEXT_PUBLIC_PASSKEYS_ENABLED: "true" }), true);

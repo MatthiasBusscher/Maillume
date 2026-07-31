@@ -62,7 +62,7 @@ Screenshot OCR, QR decoding, and `.eml` parsing happen in the browser. The hoste
 | Operational request metadata | Hosting and security systems | Yes, without message content or query strings | Target maximum 14 days |
 | Optional non-content feedback | Feedback store | Yes | Maximum 90 days before aggregation or deletion |
 
-Before hosted accounts launch, actual backup expiry, processor retention, and infrastructure log settings must be verified. Product copy must not promise deletion faster than the deployed services can deliver.
+Before hosted accounts launch, actual backup expiry, processor retention, infrastructure log settings, any non-EEA provider processing, and the applicable transfer safeguards must be verified. Product copy must not promise deletion faster than the deployed services can deliver. The official privacy notice must identify the controller and contact route, purposes and legal bases, data categories and recipients, retention periods or criteria, current international-transfer safeguards, and the rights and Dutch supervisory-authority complaint route. This architecture record is not legal advice or a legal certification; the operator needs counsel or DPO review for the deployed service.
 
 ## Dataset And Feedback Policy
 

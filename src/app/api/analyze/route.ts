@@ -1,147 +1,22 @@
-import { NextResponse } from "next/server";
-
-import { analyzeEmail } from "@/lib/analysis/analyze-email";
-import { AnalysisConfigError, getAnalysisConfig } from "@/lib/analysis/config";
-import { AiResponseValidationError } from "@/lib/analysis/ai-schema";
-import { validateAnalyzeRequest } from "@/lib/analysis/validate-input";
-import { AiProviderRequestError } from "@/lib/analysis/providers";
-import { AnalysisCapacityError, withAnalysisCapacity } from "@/lib/analysis/concurrency";
-import { enforceAiRateLimit, enforceRequestRateLimit, RateLimitError } from "@/lib/analysis/rate-limit";
-import { getAnalysisMaxRequestBytes } from "@/lib/analysis/request-limits";
-import { countScan } from "@/lib/scan-counters/storage";
-import { readBoundedRequestBody } from "@/lib/security/account-request";
 import {
-  ANALYSIS_DISCLAIMERS,
-  ANALYSIS_PIPELINE_VERSION,
-  type AnalyzeErrorResponse,
-  type AnalyzeResponse,
-} from "@/lib/types";
-
-const NO_STORE_HEADERS = {
-  "Cache-Control": "no-store",
-};
-
-const DEFAULT_REQUEST_LIMIT = 20;
-const DEFAULT_REQUEST_WINDOW_SECONDS = 60;
+  countSuccessfulAnalysis,
+  createAnalysisErrorResponse,
+  createAnalysisSuccessResponse,
+  enforceAnalysisRequestLimit,
+  executeAnalysisRequest,
+  parseAnalysisRequest,
+} from "@/lib/analysis/http";
 
 export async function POST(request: Request) {
-  try {
-    enforceRequestRateLimit(request, {
-      maxRequests: readPositiveInteger("ANALYSIS_REQUEST_LIMIT", DEFAULT_REQUEST_LIMIT, 1_000),
-      windowMs:
-        readPositiveInteger(
-          "ANALYSIS_REQUEST_WINDOW_SECONDS",
-          DEFAULT_REQUEST_WINDOW_SECONDS,
-          86_400,
-        ) * 1_000,
-    });
-  } catch (error) {
-    if (error instanceof RateLimitError) {
-      return jsonError(error.message, 429, {
-        "Retry-After": String(error.retryAfterSeconds),
-      });
-    }
-    throw error;
-  }
+  const rateLimitFailure = enforceAnalysisRequestLimit(request);
+  if (rateLimitFailure) return createAnalysisErrorResponse(rateLimitFailure);
 
-  let payload: unknown;
+  const parsed = await parseAnalysisRequest(request);
+  if (!parsed.ok) return createAnalysisErrorResponse(parsed.failure);
 
-  try {
-    const body = await readBoundedRequestBody(request, getAnalysisMaxRequestBytes());
-    if (!body.ok) {
-      return jsonError("Request body is too large.", 413);
-    }
-    payload = JSON.parse(body.text) as unknown;
-  } catch {
-    return jsonError("Invalid JSON request body.", 400);
-  }
+  const executed = await executeAnalysisRequest(request, parsed.value);
+  if (!executed.ok) return createAnalysisErrorResponse(executed.failure);
 
-  const validation = validateAnalyzeRequest(payload);
-
-  if (!validation.ok) {
-    return NextResponse.json<AnalyzeErrorResponse>(
-      {
-        error: validation.error,
-        fieldErrors: validation.fieldErrors,
-      },
-      {
-        status: 400,
-        headers: NO_STORE_HEADERS,
-      },
-    );
-  }
-
-  let analysis;
-
-  try {
-    const config = getAnalysisConfig();
-
-    enforceAiRateLimit(request, config);
-    analysis = await withAnalysisCapacity(config, () =>
-      analyzeEmail(validation.input, { config }),
-    );
-  } catch (error) {
-    if (error instanceof AnalysisConfigError) {
-      return jsonError(error.message, 500);
-    }
-
-    if (error instanceof RateLimitError) {
-      return jsonError(error.message, 429, {
-        "Retry-After": String(error.retryAfterSeconds),
-      });
-    }
-
-    if (error instanceof AnalysisCapacityError) {
-      return jsonError(error.message, 429, { "Retry-After": "5" });
-    }
-
-    if (error instanceof AiProviderRequestError || error instanceof AiResponseValidationError) {
-      return jsonError(error.message, 502);
-    }
-
-    return jsonError("Analysis failed unexpectedly.", 500);
-  }
-
-  // Counted only once the assessment succeeded, and never awaited.
-  countScan(validation.input.source);
-
-  return NextResponse.json<AnalyzeResponse>(
-    {
-      result: analysis.result,
-      analysis_mode: analysis.mode,
-      analysis_provider: analysis.provider,
-      analysis_version: ANALYSIS_PIPELINE_VERSION,
-      disclaimer: ANALYSIS_DISCLAIMERS[validation.input.locale],
-      privacy: {
-        stored: false,
-        retention: "not_stored",
-        message: validation.input.locale === "nl"
-          ? "De scaninhoud wordt alleen voor deze beoordeling verwerkt en niet in de applicatie opgeslagen."
-          : "Scan content is processed only for this assessment and is not saved in application storage.",
-      },
-    },
-    {
-      headers: NO_STORE_HEADERS,
-    },
-  );
-}
-
-function readPositiveInteger(name: string, fallback: number, maximum: number): number {
-  const value = process.env[name]?.trim();
-  if (!value) return fallback;
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 && parsed <= maximum ? parsed : fallback;
-}
-
-function jsonError(error: string, status: number, headers: HeadersInit = {}) {
-  return NextResponse.json<AnalyzeErrorResponse>(
-    { error },
-    {
-      status,
-      headers: {
-        ...NO_STORE_HEADERS,
-        ...headers,
-      },
-    },
-  );
+  countSuccessfulAnalysis(parsed.value);
+  return createAnalysisSuccessResponse(parsed.value, executed.value);
 }

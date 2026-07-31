@@ -31,78 +31,15 @@ permissions: {}
 jobs:
   verify:
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    uses: ./.github/workflows/verify.yml
+    with:
+      upload-integration-artifacts: true
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Set up Supabase CLI
-        uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
-        with:
-          version: 2.109.1
-      - name: Start local database
-        run: supabase start --ignore-health-check -x edge-runtime,gotrue,imgproxy,kong,logflare,mailpit,postgres-meta,postgrest,realtime,storage-api,studio,supavisor,vector
-      - name: Database lifecycle tests
-        run: |
-          supabase test db --local supabase/tests
-          supabase db lint --local --level warning
-      - run: npx playwright install --with-deps chromium
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run test:analysis
-      - run: npm run test:security
-      - run: npm run test:deployment
-      - run: node --test src/app/auth/callback/route.test.mjs
-      - run: npm run test:integrations
-      - run: npm run test:extension
-      - run: npm run build
-        env:
-          ANALYSIS_MODE: heuristic
-      - run: npm run test:smoke
-      - run: npm run package:integrations
-        env:
-          BUILD_REVISION: ${{ github.sha }}
-      - name: Stop local database
-        if: always()
-        run: supabase stop --no-backup
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: maillume-browser-extension
-          path: dist/maillume-browser-extension.zip
-          if-no-files-found: error
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: maillume-integration-checksums
-          path: dist/integration-SHA256SUMS
-          if-no-files-found: error
-  secrets:
-    name: Full-history secret scan
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_ENABLE_COMMENTS: "false"
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+      pull-requests: read
 
   image:
-    needs: [verify, secrets]
+    needs: verify
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 30

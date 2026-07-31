@@ -10,11 +10,9 @@ const archive = path.join(root, "dist/maillume-browser-extension.zip");
 const manifest = JSON.parse(
   await readFile(path.join(root, "integrations/browser-extension/manifest.json"), "utf8"),
 );
-const sidePanel = await readFile(
-  path.join(root, "integrations/browser-extension/sidepanel.js"),
-  "utf8",
+const compatibility = JSON.parse(
+  await readFile(path.join(root, "integrations/browser-extension/compatibility.json"), "utf8"),
 );
-const types = await readFile(path.join(root, "src/lib/types.ts"), "utf8");
 const expectedRevision = process.env.EXPECTED_REVISION ?? "development";
 
 assert.match(
@@ -29,17 +27,12 @@ const { stdout } = await execFileAsync(
   { maxBuffer: 64 * 1024 },
 );
 const metadata = JSON.parse(stdout);
-const supportedMatch = sidePanel.match(
-  /const SUPPORTED_ANALYSIS_VERSIONS = (\[[^\n]+\]);/,
+const { stdout: packagedCompatibility } = await execFileAsync(
+  "unzip",
+  ["-p", archive, "compatibility.json"],
+  { maxBuffer: 64 * 1024 },
 );
-const currentMatch = types.match(
-  /ANALYSIS_PIPELINE_VERSION = "(analysis-v[1-9]\d*)"/,
-);
-
-assert.ok(supportedMatch, "the extension compatibility range must be statically discoverable");
-assert.ok(currentMatch, "the current analysis version must be statically discoverable");
-
-const expectedSupportedVersions = JSON.parse(supportedMatch[1]);
+assert.deepEqual(JSON.parse(packagedCompatibility), compatibility);
 assert.deepEqual(
   Object.keys(metadata).sort(),
   [
@@ -54,8 +47,8 @@ assert.deepEqual(
 assert.equal(metadata.schema, "maillume-extension-release-v1");
 assert.equal(metadata.extension_version, manifest.version);
 assert.equal(metadata.source_revision, expectedRevision);
-assert.equal(metadata.current_analysis_version, currentMatch[1]);
-assert.deepEqual(metadata.supported_analysis_versions, expectedSupportedVersions);
+assert.equal(metadata.current_analysis_version, compatibility.current_analysis_version);
+assert.deepEqual(metadata.supported_analysis_versions, compatibility.supported_analysis_versions);
 assert.ok(
   metadata.supported_analysis_versions.includes(metadata.current_analysis_version),
   "the packaged extension must support the packaged server contract",

@@ -1,3 +1,5 @@
+import { isSafeSupabaseUrl } from "../supabase/url";
+
 const SELF_SOURCE = "'self'";
 
 type ContentSecurityPolicyOptions = {
@@ -55,9 +57,7 @@ export function getCspConnectSources(supabaseUrl?: string): string[] {
   try {
     const url = new URL(candidate);
     if (
-      (url.protocol !== "https:" && url.protocol !== "http:")
-      || url.username
-      || url.password
+      !isSafeSupabaseUrl(candidate)
     ) {
       return sources;
     }

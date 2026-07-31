@@ -21,7 +21,13 @@ Captured message content crosses from the toolbar action to the tab-specific pan
 
 Chrome 116 or newer is required for programmatic, tab-specific side-panel opening.
 
-The panel accepts the versioned `analysis-v6` through `analysis-v10` classification and score-factor contracts, sends its extension ID/version and accepted analysis versions, verifies that factor contributions sum to the risk index, requires valid evidence coverage from `analysis-v9` onward, and rejects unsafe detected-link schemes. Version 0.4.0 adds stable per-browser rotation, rolling inactivity expiry, and simplified connection settings. Installed 0.3.9 clients remain compatible with analysis and pairing while the Store update rolls out.
+The panel accepts the versioned `analysis-v6` through `analysis-v12` classification and score-factor contracts, sends its extension ID/version and accepted analysis versions, verifies that factor contributions sum to the risk index, requires valid evidence coverage from `analysis-v9` onward, and rejects unsafe detected-link schemes. Version 0.4.0 added stable per-browser rotation, rolling inactivity expiry, and simplified connection settings. Version 0.4.1 adds bounded analysis-response handling and the corresponding privacy disclosure. Installed 0.3.9 clients remain compatible with analysis and pairing while the Store update rolls out.
+
+Analysis replies are read as a stream and rejected above 256 KiB even when a deployment omits or lies about `Content-Length`. Before rendering, the panel also bounds response text, score factors, signals, and detected links; it never silently truncates an accepted server result. Rendering repeats the factor, signal, and text caps as a defensive fallback.
+
+## Local panel modules
+
+The side panel uses ordered, packaged local scripts rather than a bundler or remote imports. Generated `sidepanel-compatibility.js` projects the canonical TypeScript compatibility contract, `sidepanel-copy.js` contains localized status copy, `sidepanel-contract.js` validates server responses before rendering, `sidepanel-capture.js` manages one-time capture handoffs, `sidepanel-connection.js` owns permissions, local storage, expiry, and device pairing, and `sidepanel-render.js` performs DOM-only state transitions. `sidepanel.js` is the event-wiring coordinator. This split preserves the extension's Manifest V3 and deterministic packaging model.
 
 ## Troubleshooting the manual beta
 

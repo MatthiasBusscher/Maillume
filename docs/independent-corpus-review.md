@@ -1,29 +1,35 @@
 # Independent Heuristic Corpus Review
 
-This document records the Phase 1 independent evaluation corpus and its first
-`analysis-v7` baseline. The corpus was written before any new detection rule,
-weight, threshold, or analysis-version change.
+This document records the independent evaluation corpus and its initial
+60-case `analysis-v7` baseline. A later structural expansion adds independently
+written scenarios without changing any of the original locked cases or their
+expectations.
 
 It is a repository evaluation set, not a production dataset or a claim of
 real-world accuracy.
 
 ## Corpus inventory
 
-The corpus contains 60 genuinely distinct scenarios:
+The corpus contains 108 genuinely distinct scenarios:
 
 | Split | Phishing | Spam | Legitimate | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Development | 8 | 4 | 8 | 20 |
-| Validation | 8 | 4 | 8 | 20 |
-| Locked holdout | 8 | 4 | 8 | 20 |
-| **Total** | **24** | **12** | **24** | **60** |
+| Development | 12 | 12 | 12 | 36 |
+| Validation | 12 | 12 | 12 | 36 |
+| Locked holdout | 12 | 12 | 12 | 36 |
+| **Total** | **36** | **36** | **36** | **108** |
 
-Every category contains equal English and Dutch representation. Across the
-corpus, 30 cases are English and 30 are Dutch. Paste, Chrome capture,
-screenshot/OCR, and parsed `.eml` inputs are all represented. The set includes
-complete and incomplete evidence, sender-authentication summaries, attachments,
-displayed-link mismatches, an IP-literal destination, punycode, a nested
-redirect parameter, URL user information, and a non-default port.
+Every split contains 18 English and 18 Dutch cases, and all four sources are
+represented. The 48-case expansion contributes 16 cases per split: eight spam,
+four subtle phishing, and four legitimate hard negatives, with eight cases per
+language and exactly four per source. The set includes complete and incomplete
+evidence, sender-authentication summaries, attachments, displayed-link
+mismatches, an IP-literal destination, punycode, a nested redirect parameter,
+URL user information, and a non-default port.
+
+The expansion was authored as new synthetic scenarios, not translations or
+format variants. Its new locked cases are sealed and have not been scored or
+used to tune detection behavior.
 
 The source modules are deliberately separate:
 
@@ -62,10 +68,11 @@ Apply this checklist to every new or changed case:
   be documented and accompanied by a new corpus revision.
 
 `src/lib/evaluation/independent-corpus.test.ts` enforces the corpus size, class
-balance, split isolation, language and source coverage, distinct bodies,
-provenance, reserved infrastructure, and evidence-availability coverage.
+balance, split isolation, expansion-specific language and source distributions,
+distinct bodies, provenance, reserved infrastructure, and evidence-availability
+coverage.
 
-## Frozen pre-tuning baseline
+## Frozen Phase 1 pre-tuning baseline
 
 Generated on 28 July 2026 with:
 
@@ -131,10 +138,12 @@ The main pre-tuning error clusters are:
 6. a newsletter hard negative where subscription context does not suppress a
    promotion match.
 
-The locked holdout is frozen at the corpus revision above. Detection work may
-use development cases directly and validation cases for iteration checks. It
-must not inspect and tune individual rules against locked outcomes; the locked
-aggregate is reserved for release comparison.
+The original 20-case locked holdout is frozen at the corpus revision above.
+Detection work may use development cases directly and validation cases for
+iteration checks. It must not inspect and tune individual rules against locked
+outcomes; the locked aggregate is reserved for release comparison. The 16 new
+locked scenarios added in the structural expansion are likewise sealed and
+remain intentionally unscored until an independently planned evaluation.
 
 ## Reproduction
 

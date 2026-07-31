@@ -431,6 +431,65 @@ for (const result of oauthConsentLures) {
   assert.notEqual(result.risk_level, "low", "An unsolicited application-consent lure must not be low risk");
 }
 
+const quietSensitiveActionLures = [
+  {
+    id: "quiet work-account access confirmation",
+    factorId: "credential_request",
+    input: {
+      body: "The committee archive is ready. Sign in with your work account to confirm that your access should remain enabled.",
+      evidenceTruncated: true,
+    },
+  },
+  {
+    id: "broad reader consent",
+    factorId: "mfa_or_oauth_request",
+    input: {
+      body: "Continue with your work account and allow the archive reader to view your files and mailbox before folders can be restored.",
+      evidenceTruncated: true,
+    },
+  },
+  {
+    id: "Dutch sensitive-record refresh",
+    factorId: "identity_reverification",
+    input: {
+      locale: "nl" as const,
+      body: "Voor het jaarlijkse overzicht vragen wij u uw BSN, rekeningnummer en burgerlijke staat in het formulier bij te werken.",
+      evidenceTruncated: true,
+    },
+  },
+] as const;
+for (const fixture of quietSensitiveActionLures) {
+  const result = analyzeEmailHeuristic(fixture.input);
+  assert.ok(
+    result.score_factors.some((factor) => factor.id === fixture.factorId),
+    `${fixture.id}: sensitive action must remain visible`,
+  );
+  assert.equal(result.classification, "likely_phishing", `${fixture.id}: must not be treated as benign`);
+  assert.notEqual(result.risk_level, "low", `${fixture.id}: must not be low risk`);
+}
+
+const requestedResetConfirmation = analyzeEmailHeuristic({
+  senderEmail: "accounts@volunteer-portal.example",
+  body: "We received the password reset request you made from the volunteer portal. Finish only from the portal you already use; otherwise ignore this confirmation.",
+});
+assert.ok(
+  !requestedResetConfirmation.score_factors.some((factor) => factor.id === "credential_request"),
+  "A requested reset confirmation that directs the user to an established portal is not a credential request",
+);
+assert.equal(requestedResetConfirmation.risk_level, "low");
+
+const specificCommercialSpam = [
+  "We can sell a verified list of procurement managers for your next campaign. Ask for this month's pricing.",
+  "Our remote bookkeepers will close your books for half the usual rate and include a free reconciliation.",
+  "Start with profitable mining and receive a stable monthly crypto stream with installation help.",
+  "Word lid van onze prijzenclub en maak kans op een vakantie of geldprijs. Schrijf u in voor het welkomstpakket.",
+];
+for (const body of specificCommercialSpam) {
+  const result = analyzeEmailHeuristic({ body });
+  assert.equal(result.classification, "likely_spam", "Specific unsolicited commercial offers must be identified as spam");
+  assert.equal(result.risk_level, "medium", "Specific unsolicited commercial offers must be medium risk");
+}
+
 const hiddenUnicodeCredentialLures = [
   analyzeEmailHeuristic({
     locale: "en",

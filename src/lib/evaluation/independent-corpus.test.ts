@@ -19,22 +19,44 @@ const splits = {
   locked: INDEPENDENT_HOLDOUT,
 };
 
-assert.equal(INDEPENDENT_CORPUS.length, 60);
-assert.equal(new Set(INDEPENDENT_CORPUS.map((item) => item.id)).size, 60);
+assert.equal(INDEPENDENT_CORPUS.length, 108);
+assert.equal(new Set(INDEPENDENT_CORPUS.map((item) => item.id)).size, 108);
 
 for (const [split, cases] of Object.entries(splits)) {
-  assert.equal(cases.length, 20, `${split} must contain 20 distinct cases`);
+  assert.equal(cases.length, 36, `${split} must contain 36 distinct cases`);
   assert.ok(cases.every((item) => item.split === split));
   assert.deepEqual(
     countBy(cases.map((item) => item.classification)),
-    { phishing: 8, spam: 4, legitimate: 8 },
+    { phishing: 12, spam: 12, legitimate: 12 },
     `${split} must keep the required class balance`,
+  );
+  assert.deepEqual(
+    countByValue(cases.map((item) => item.locale)),
+    { en: 18, nl: 18 },
+    `${split} must keep equal English and Dutch representation`,
+  );
+  const expansionCases = cases.slice(20);
+  assert.equal(expansionCases.length, 16, `${split} must add exactly 16 cases`);
+  assert.deepEqual(
+    countBy(expansionCases.map((item) => item.classification)),
+    { phishing: 4, spam: 8, legitimate: 4 },
+    `${split} expansion must have the requested class mix`,
+  );
+  assert.deepEqual(
+    countByValue(expansionCases.map((item) => item.locale)),
+    { en: 8, nl: 8 },
+    `${split} expansion must keep equal English and Dutch representation`,
+  );
+  assert.deepEqual(
+    countByValue(expansionCases.map((item) => item.source)),
+    { paste: 4, screenshot: 4, chrome: 4, eml: 4 },
+    `${split} expansion must include exactly four cases for each source`,
   );
 }
 
 assert.deepEqual(
   countBy(INDEPENDENT_CORPUS.map((item) => item.classification)),
-  { phishing: 24, spam: 12, legitimate: 24 },
+  { phishing: 36, spam: 36, legitimate: 36 },
 );
 
 for (const expectation of EVALUATION_EXPECTATIONS) {
@@ -126,7 +148,7 @@ for (const item of INDEPENDENT_CORPUS) {
   }
 }
 
-console.log("Independent 60-case corpus structure passed.");
+console.log("Independent 108-case corpus structure passed.");
 
 function countBy(
   values: EvaluationExpectation[],
@@ -137,4 +159,11 @@ function countBy(
       values.filter((value) => value === expectation).length,
     ]),
   ) as Record<EvaluationExpectation, number>;
+}
+
+function countByValue<T extends string>(values: T[]): Record<T, number> {
+  return values.reduce((counts, value) => {
+    counts[value] = (counts[value] ?? 0) + 1;
+    return counts;
+  }, {} as Record<T, number>);
 }

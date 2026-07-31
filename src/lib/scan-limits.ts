@@ -1,17 +1,14 @@
-export const MAX_SCREENSHOT_SIZE_BYTES = 5 * 1024 * 1024;
-export const MAX_SCREENSHOT_PIXELS = 20_000_000;
-export const MAX_SCREENSHOT_DIMENSION = 8_000;
-export const MAX_EML_SIZE_BYTES = 2 * 1024 * 1024;
-export const DEFAULT_ANALYSIS_MAX_REQUEST_BYTES = 32 * 1024;
+import { PUBLIC_CONTRACT } from "./contracts/public-contract";
 
-export const SUPPORTED_SCREENSHOT_MIME_TYPES = [
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/gif",
-] as const;
+export const MAX_SCREENSHOT_SIZE_BYTES = PUBLIC_CONTRACT.limits.screenshotBytes;
+export const MAX_SCREENSHOT_PIXELS = PUBLIC_CONTRACT.limits.screenshotPixels;
+export const MAX_SCREENSHOT_DIMENSION = PUBLIC_CONTRACT.limits.screenshotDimension;
+export const MAX_EML_SIZE_BYTES = PUBLIC_CONTRACT.limits.emlBytes;
+export const DEFAULT_ANALYSIS_MAX_REQUEST_BYTES = PUBLIC_CONTRACT.limits.defaultAnalysisRequestBytes;
 
-export const SUPPORTED_EML_MIME_TYPES = ["message/rfc822"] as const;
+export const SUPPORTED_SCREENSHOT_MIME_TYPES = PUBLIC_CONTRACT.uploads.screenshotMimeTypes;
+
+export const SUPPORTED_EML_MIME_TYPES = PUBLIC_CONTRACT.uploads.emlMimeTypes;
 
 export const SCREENSHOT_ACCEPT = SUPPORTED_SCREENSHOT_MIME_TYPES.join(",");
 export const EML_ACCEPT = ".eml,message/rfc822";

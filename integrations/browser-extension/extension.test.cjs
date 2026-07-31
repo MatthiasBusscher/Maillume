@@ -6,6 +6,20 @@ const vm = require("node:vm");
 
 const extensionDir = __dirname;
 
+function loadPanelScripts(context) {
+  for (const file of [
+    "sidepanel-compatibility.js",
+    "sidepanel-copy.js",
+    "sidepanel-contract.js",
+    "sidepanel-render.js",
+    "sidepanel-capture.js",
+    "sidepanel-connection.js",
+    "sidepanel.js",
+  ]) {
+    vm.runInContext(fs.readFileSync(path.join(extensionDir, file), "utf8"), context, { filename: file });
+  }
+}
+
 function event() {
   return { listener: undefined, addListener(callback) { this.listener = callback; } };
 }
@@ -413,6 +427,32 @@ function createPanelElement() {
   };
 }
 
+function createStreamingJsonResponse(payload, status, { chunks, contentLength } = {}) {
+  const responseChunks = chunks || [new TextEncoder().encode(JSON.stringify(payload))];
+  let index = 0;
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: {
+      get(name) {
+        return name.toLowerCase() === "content-length" ? contentLength ?? null : null;
+      },
+    },
+    body: {
+      getReader() {
+        return {
+          async read() {
+            if (index >= responseChunks.length) return { done: true };
+            return { done: false, value: responseChunks[index++] };
+          },
+          async cancel() {},
+          releaseLock() {},
+        };
+      },
+    },
+  };
+}
+
 async function testPanelSendsCapturedLinkMetadata() {
   const runtime = event();
   const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "manualSetup", "connectionState", "connect", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"];
@@ -461,7 +501,7 @@ async function testPanelSendsCapturedLinkMetadata() {
     },
     analysis_mode: "heuristic",
     analysis_provider: "heuristic",
-    analysis_version: "analysis-v10",
+    analysis_version: "analysis-v12",
     disclaimer: "This is an automated risk assessment.",
     privacy: {
       stored: false,
@@ -471,11 +511,13 @@ async function testPanelSendsCapturedLinkMetadata() {
   };
   let responsePayload = validResponse;
   let responseStatus = 200;
+  let responseChunks;
+  let responseContentLength;
   let permissionGranted = true;
   let requestHeaders;
   let pairingStartPayload;
   let pairingMode = false;
-  let capabilityLatestVersion = "0.4.0";
+  let capabilityLatestVersion = "0.4.1";
   let lifecyclePairingResponse = true;
   let openedApprovalUrl;
   const pairingId = "40000000-0000-4000-8000-000000000004";
@@ -486,7 +528,7 @@ async function testPanelSendsCapturedLinkMetadata() {
       i18n: { getUILanguage: () => "en-US" },
       runtime: {
         id: "bjiiailjalkfjimkjdikoockjlnjolle",
-        getManifest: () => ({ version: "0.4.0" }),
+        getManifest: () => ({ version: "0.4.1" }),
         onMessage: runtime,
         sendMessage: async () => responses.shift(),
       },
@@ -517,7 +559,7 @@ async function testPanelSendsCapturedLinkMetadata() {
             ok: true,
             status: 200,
             json: async () => ({
-              analysis_version: "analysis-v10",
+              analysis_version: "analysis-v12",
               api_version: "v1",
               extension: {
                 id: "bjiiailjalkfjimkjdikoockjlnjolle",
@@ -525,7 +567,7 @@ async function testPanelSendsCapturedLinkMetadata() {
                 minimum_analysis_version: "0.3.8",
                 minimum_pairing_version: "0.3.9",
                 pairing_available: true,
-                supported_analysis_versions: ["analysis-v10"],
+                supported_analysis_versions: ["analysis-v12"],
               },
             }),
           };
@@ -575,18 +617,19 @@ async function testPanelSendsCapturedLinkMetadata() {
       }
       requestPayload = JSON.parse(options.body);
       requestHeaders = options.headers;
-      return {
-        ok: responseStatus >= 200 && responseStatus < 300,
-        status: responseStatus,
-        json: async () => responsePayload,
-      };
+      return createStreamingJsonResponse(responsePayload, responseStatus, {
+        chunks: responseChunks,
+        contentLength: responseContentLength,
+      });
     },
     navigator: { platform: "macOS" },
     setTimeout,
+    TextDecoder,
+    Uint8Array,
     URL,
   };
   vm.createContext(context);
-  vm.runInContext(fs.readFileSync(path.join(extensionDir, "sidepanel.js"), "utf8"), context);
+  loadPanelScripts(context);
   await new Promise((resolve) => setTimeout(resolve, 100));
   await flush();
   assert.equal(elements.get("body").value, "Captured once");
@@ -623,9 +666,9 @@ async function testPanelSendsCapturedLinkMetadata() {
       destinationUrl: "https://bit.ly/synthetic-review",
     }],
   });
-  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.0");
+  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.1");
   assert.equal(requestHeaders["X-Maillume-Extension-Id"], "bjiiailjalkfjimkjdikoockjlnjolle");
-  assert.equal(requestHeaders["X-Maillume-Analysis-Versions"].includes("analysis-v10"), true);
+  assert.equal(requestHeaders["X-Maillume-Analysis-Versions"].includes("analysis-v12"), true);
   assert.equal(elements.get("reviewStep").hidden, true, "successful analysis must collapse the captured-detail step");
   assert.equal(elements.get("analyze").hidden, true, "successful analysis must replace the analyze action with the result");
   assert.equal(elements.get("result").hidden, false);
@@ -676,6 +719,20 @@ async function testPanelSendsCapturedLinkMetadata() {
         },
       },
     },
+    {
+      ...validResponse,
+      result: {
+        ...validResponse.result,
+        suspicious_signals: Array(101).fill("Too many signals"),
+      },
+    },
+    {
+      ...validResponse,
+      result: {
+        ...validResponse.result,
+        short_explanation: "x".repeat(2_049),
+      },
+    },
   ]) {
     assert.equal(context.isAnalysisResponse(invalidResponse), false);
   }
@@ -684,6 +741,36 @@ async function testPanelSendsCapturedLinkMetadata() {
   await elements.get("analyze").dispatch("click");
   assert.equal(elements.get("result").hidden, true, "the panel must reject an invalid API envelope");
   assert.equal(elements.get("status").textContent, "The extension and deployment use different analysis versions. Update the extension from the official source, then reload it in chrome://extensions.");
+
+  responsePayload = validResponse;
+  responseContentLength = String(256 * 1024 + 1);
+  await elements.get("analyze").dispatch("click");
+  assert.equal(elements.get("result").hidden, true, "an oversized declared response must not reach rendering");
+  assert.equal(elements.get("status").textContent, "The deployment returned an analysis response that is too large to display safely.");
+
+  responseContentLength = "1";
+  responseChunks = [new Uint8Array(256 * 1024 + 1)];
+  await elements.get("analyze").dispatch("click");
+  assert.equal(elements.get("result").hidden, true, "an oversized streamed response with a false Content-Length must not reach parsing or rendering");
+  assert.equal(elements.get("status").textContent, "The deployment returned an analysis response that is too large to display safely.");
+
+  responseContentLength = undefined;
+  await elements.get("analyze").dispatch("click");
+  assert.equal(elements.get("result").hidden, true, "an oversized streamed response without Content-Length must not reach parsing or rendering");
+  assert.equal(elements.get("status").textContent, "The deployment returned an analysis response that is too large to display safely.");
+  responseChunks = undefined;
+
+  context.renderResult({
+    ...validResponse.result,
+    short_explanation: "x".repeat(2_048 + 1),
+    score_factors: Array.from({ length: 100 + 1 }, () => ({
+      id: "factor", family: "style", contribution: 1, label: "x".repeat(2_048 + 1),
+    })),
+    suspicious_signals: Array(100 + 1).fill("x".repeat(2_048 + 1)),
+  });
+  assert.equal(elements.get("factors").children.length, 100, "rendering must cap factor nodes even if validation is bypassed");
+  assert.equal(elements.get("signals").children.length, 100, "rendering must cap signal nodes even if validation is bypassed");
+  assert.equal(elements.get("explanation").textContent.length, 2_048, "rendering must cap direct text even if validation is bypassed");
 
   runtime.listener({ type: "capture-ready", tabId: 22, captureId: "capture-7" });
   await flush();
@@ -753,9 +840,23 @@ async function testPanelSendsCapturedLinkMetadata() {
   assert.equal(localStorage.browserConnectionId, "mlb_12345678123441238123123456789abc");
   assert.equal(elements.get("connectionState").textContent, "Connected through your Maillume account.");
   assert.equal(elements.get("apiKey").value, "", "a managed browser credential must never be copied into the manual key field");
+  assert.equal(elements.get("apiKeyVisibility").disabled, true, "a managed browser credential must disable the manual key visibility control");
+  await elements.get("apiKeyVisibility").dispatch("click");
+  assert.equal(elements.get("apiKey").type, "password", "the disabled visibility control must not change the managed credential field state");
+  assert.equal(elements.get("apiKeyVisibility").getAttribute("aria-pressed"), "false");
+  assert.equal(elements.get("analyze").disabled, false, "a concealed managed credential must remain usable for analysis");
+  pairingMode = false;
+  responseStatus = 200;
+  responsePayload = validResponse;
+  await elements.get("analyze").dispatch("click");
+  assert.equal(requestHeaders.Authorization, `Bearer ${pairedKey}`, "analysis must use the managed credential held outside the manual field");
   assert.equal(elements.get("connect").hidden, true, "an active browser connection must not offer another connection action");
   assert.equal(elements.get("reset").hidden, false, "an active browser connection must retain an explicit removal action");
-  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.0");
+  await elements.get("reset").dispatch("click");
+  assert.equal(localStorage.apiKey, undefined, "removing a browser connection must clear its stored credential");
+  assert.equal(localStorage.connectionKind, undefined, "removing a browser connection must clear its connection kind");
+  assert.equal(elements.get("apiKeyVisibility").disabled, false, "removing a browser connection must restore manual key visibility control");
+  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.1");
 }
 
 (async () => {

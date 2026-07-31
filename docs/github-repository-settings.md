@@ -69,6 +69,16 @@ Enable these controls when the repository becomes public:
 
 Keep the full-history Gitleaks job as a required pull-request check even when GitHub secret scanning is enabled. Review Dependabot and CodeQL alerts before each release; do not auto-merge dependency updates.
 
+The active `Protect main` ruleset must require the exact check-run contexts
+published by the reusable CI workflow:
+
+- `verify / checks`
+- `verify / Full-history secret scan`
+
+GitHub matches required status checks by their complete context name. If the
+calling job or reusable-workflow job is renamed, update the ruleset in the same
+change so successful checks are not reported as missing.
+
 ## Verification
 
 Before announcing the public repository:

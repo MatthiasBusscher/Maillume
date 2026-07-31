@@ -43,6 +43,11 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - `POST /api/analyze` accepts normalized scan input from pasted text, OCR, or `.eml` parsing.
    - Uses the server-side `analyzeEmail` provider interface.
    - Uses local heuristics in public demo mode.
+   - English heuristic mode may add one visible statistical similarity factor
+     from a bundled model trained offline on the CC BY 4.0 MeAJOR v2.0 corpus.
+     The model cannot update at runtime, retain scans, or contribute hidden
+     points. Dutch scans remain deterministic-only because the licensed corpus
+     does not provide adequate Dutch coverage.
    - Selects AI mode only when self-hosted environment variables are set.
    - Accepts evidence IDs from optional AI providers, then derives links, score, level, and classification server-side.
    - Does not persist raw scan content or scan results.
@@ -58,6 +63,9 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
 5. Data Layer
    - No database is required for scanning.
    - Ordinary scans never become training or evaluation data.
+   - Optional offline model training uses only the reviewed anonymized
+     third-party corpus documented in `docs/training-data.md`; raw training data
+     is ignored by Git and excluded from application and extension packages.
    - Optional feedback uses a separate strict schema containing labels and high-level categories only.
    - Production feedback storage uses a server-only Supabase service-role key, Row Level Security, and automatic expiry. The scanner remains available when feedback is disabled.
    - Maintainer calibration uses a security-definer aggregate function that suppresses small cells, caps identical hourly signatures, filters test versions, and never returns raw feedback rows.
@@ -299,7 +307,7 @@ type AnalyzeResponse = {
   result: EmailAnalysisResult;
   analysis_mode: "heuristic" | "ai";
   analysis_provider: "heuristic" | "openai" | "anthropic" | "openai-compatible";
-  analysis_version: "analysis-v10";
+  analysis_version: "analysis-v12";
   disclaimer: string;
   privacy: {
     stored: false;

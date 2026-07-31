@@ -1,26 +1,24 @@
-export type RiskLevel = "low" | "medium" | "high";
-export type AssessmentClassification =
-  | "likely_phishing"
-  | "likely_spam"
-  | "likely_legitimate"
-  | "uncertain";
-export type EvidenceFamily = "identity" | "destination" | "intent" | "delivery" | "style";
-export type AnalysisMode = "heuristic" | "ai";
-export type AiProviderName = "openai" | "anthropic" | "openai-compatible";
+import { PUBLIC_CONTRACT } from "./contracts/public-contract";
+
+export type RiskLevel = (typeof PUBLIC_CONTRACT.analysis.riskLevels)[number];
+export type AssessmentClassification = (typeof PUBLIC_CONTRACT.analysis.classifications)[number];
+export type EvidenceFamily = (typeof PUBLIC_CONTRACT.analysis.evidenceFamilies)[number];
+export type AnalysisMode = (typeof PUBLIC_CONTRACT.analysis.modes)[number];
+export type AiProviderName = (typeof PUBLIC_CONTRACT.analysis.aiProviders)[number];
 export type AnalysisProviderName = "heuristic" | AiProviderName;
-export type AnalysisLocale = "en" | "nl";
+export type AnalysisLocale = (typeof PUBLIC_CONTRACT.analysis.locales)[number];
 
 export const ANALYSIS_DISCLAIMERS = {
   en: "This is an automated risk assessment and should not be considered a guarantee.",
   nl: "Dit is een geautomatiseerde risicobeoordeling en geen garantie.",
 } as const satisfies Record<AnalysisLocale, string>;
 export const ANALYSIS_DISCLAIMER = ANALYSIS_DISCLAIMERS.en;
-export const ANALYSIS_PIPELINE_VERSION = "analysis-v10";
-export const ANALYSIS_ENVELOPE_VERSION = "analysis-envelope-v2";
+export const ANALYSIS_PIPELINE_VERSION = PUBLIC_CONTRACT.analysis.pipelineVersion;
+export const ANALYSIS_ENVELOPE_VERSION = PUBLIC_CONTRACT.analysis.envelopeVersion;
 
-export const MAX_SCAN_BODY_LENGTH = 20_000;
+export const MAX_SCAN_BODY_LENGTH = PUBLIC_CONTRACT.limits.scanBodyCharacters;
 
-export type ScanSource = "paste" | "screenshot" | "eml" | "chrome";
+export type ScanSource = (typeof PUBLIC_CONTRACT.analysis.sources)[number];
 export type WebScanSource = Exclude<ScanSource, "chrome">;
 
 export type EmailLinkPair = {
@@ -28,17 +26,9 @@ export type EmailLinkPair = {
   destinationUrl: string;
 };
 
-export type AttachmentRiskType = "executable" | "macro_enabled" | "double_extension";
+export type AttachmentRiskType = (typeof PUBLIC_CONTRACT.analysis.attachmentRiskTypes)[number];
 
-export const EMAIL_AUTHENTICATION_VERDICTS = [
-  "pass",
-  "fail",
-  "softfail",
-  "neutral",
-  "none",
-  "temperror",
-  "permerror",
-] as const;
+export const EMAIL_AUTHENTICATION_VERDICTS = PUBLIC_CONTRACT.analysis.emailAuthenticationVerdicts;
 
 export type EmailAuthenticationVerdict = (typeof EMAIL_AUTHENTICATION_VERDICTS)[number];
 

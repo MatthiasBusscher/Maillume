@@ -8,6 +8,7 @@ import {
   type NormalizedScanInput,
   type ScanSource,
 } from "../types";
+import { PUBLIC_CONTRACT } from "../contracts/public-contract";
 
 type ValidationResult =
   | {
@@ -20,11 +21,9 @@ type ValidationResult =
       fieldErrors?: Partial<Record<keyof NormalizedScanInput, string>>;
     };
 
-const SOURCES = new Set<ScanSource>(["paste", "screenshot", "eml", "chrome"]);
-const LOCALES = new Set<AnalysisLocale>(["en", "nl"]);
-const ATTACHMENT_RISK_TYPES = new Set<AttachmentRiskType>([
-  "executable", "macro_enabled", "double_extension",
-]);
+const SOURCES = new Set<ScanSource>(PUBLIC_CONTRACT.analysis.sources);
+const LOCALES = new Set<AnalysisLocale>(PUBLIC_CONTRACT.analysis.locales);
+const ATTACHMENT_RISK_TYPES = new Set<AttachmentRiskType>(PUBLIC_CONTRACT.analysis.attachmentRiskTypes);
 
 export function validateAnalyzeRequest(payload: unknown): ValidationResult {
   if (!payload || typeof payload !== "object") {
@@ -67,11 +66,11 @@ export function validateAnalyzeRequest(payload: unknown): ValidationResult {
     fieldErrors.body = `Email content must be ${MAX_SCAN_BODY_LENGTH} characters or less.`;
   }
 
-  if (senderEmail && senderEmail.length > 320) {
+  if (senderEmail && senderEmail.length > PUBLIC_CONTRACT.limits.senderEmailCharacters) {
     fieldErrors.senderEmail = "Sender email is too long.";
   }
 
-  if (subject && subject.length > 300) {
+  if (subject && subject.length > PUBLIC_CONTRACT.limits.subjectCharacters) {
     fieldErrors.subject = "Subject is too long.";
   }
 
@@ -169,7 +168,7 @@ function normalizeAttachmentRiskTypes(value: unknown): AttachmentRiskType[] | nu
 
 function normalizeLinks(value: unknown): string[] | null {
   if (value === undefined) return [];
-  if (!Array.isArray(value) || value.length > 20) return null;
+  if (!Array.isArray(value) || value.length > PUBLIC_CONTRACT.limits.linkItems) return null;
 
   const links: string[] = [];
   for (const item of value) {
@@ -184,7 +183,7 @@ function normalizeLinks(value: unknown): string[] | null {
 
 function normalizeLinkPairs(value: unknown): EmailLinkPair[] | null {
   if (value === undefined) return [];
-  if (!Array.isArray(value) || value.length > 20) return null;
+  if (!Array.isArray(value) || value.length > PUBLIC_CONTRACT.limits.linkItems) return null;
 
   const pairs: EmailLinkPair[] = [];
   for (const item of value) {
@@ -202,7 +201,7 @@ function normalizeLinkPairs(value: unknown): EmailLinkPair[] | null {
 }
 
 function normalizeHttpUrl(value: string): string | null {
-  if (value.length > 2_048) return null;
+  if (value.length > PUBLIC_CONTRACT.limits.linkCharacters) return null;
   try {
     const url = new URL(value);
     return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
