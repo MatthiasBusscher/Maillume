@@ -1,0 +1,52 @@
+{
+  "schema": "maillume-v12-holdout-evaluation-v1",
+  "candidate_commit": "b8285c9",
+  "analysis_version": "analysis-v12",
+  "corpus_revision": "sha256:aec2ab43e12c04841725e88c88fcb4490528e00726e4fa8c18d6245c5d4bc2ea",
+  "cases": 36,
+  "assessment": {
+    "passed": false,
+    "phishingRecall": {
+      "numerator": 8,
+      "denominator": 12,
+      "value": 0.6666666666666666
+    },
+    "spamRecall": {
+      "numerator": 10,
+      "denominator": 12,
+      "value": 0.8333333333333334
+    },
+    "phishingPrecision": {
+      "numerator": 8,
+      "denominator": 9,
+      "value": 0.8888888888888888
+    },
+    "spamPrecision": {
+      "numerator": 10,
+      "denominator": 10,
+      "value": 1
+    },
+    "legitimateNonLow": {
+      "numerator": 1,
+      "denominator": 12,
+      "value": 0.08333333333333333
+    },
+    "legitimateHigh": {
+      "numerator": 0,
+      "denominator": 12,
+      "value": 0
+    },
+    "languageGaps": {
+      "phishingRecall": 0.33333333333333337,
+      "spamRecall": 0,
+      "legitimateNonLow": 0.16666666666666666
+    },
+    "failures": [
+      "phishing recall 66.7% (8/12) is below 90.0%",
+      "spam recall 83.3% (10/12) is below 90.0%",
+      "phishing precision 88.9% (8/9) is below 90.0%",
+      "phishingRecall language gap 33.3% exceeds 10.0%",
+      "legitimateNonLow language gap 16.7% exceeds 10.0%"
+    ]
+  }
+}

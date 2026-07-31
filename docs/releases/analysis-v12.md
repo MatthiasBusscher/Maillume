@@ -53,9 +53,28 @@ release protocol are frozen before the one-time scoring run.
 
 ## Fresh holdout result
 
-Pending the one-time post-freeze evaluation. The exact numerators,
-denominators, corpus SHA-256 revision, and benchmark comparison will be recorded
-here without retuning against the holdout.
+The candidate frozen at commit `b8285c9` did not pass its one-time fresh
+holdout evaluation:
+
+- phishing recall: 66.7% (8/12);
+- spam recall: 83.3% (10/12);
+- phishing precision: 88.9% (8/9);
+- spam precision: 100.0% (10/10);
+- legitimate non-low rate: 8.3% (1/12);
+- legitimate high-risk rate: 0.0% (0/12);
+- phishing-recall English/Dutch gap: 33.3 percentage points; and
+- legitimate non-low English/Dutch gap: 16.7 percentage points.
+
+The frozen corpus revision is
+`sha256:aec2ab43e12c04841725e88c88fcb4490528e00726e4fa8c18d6245c5d4bc2ea`.
+The exact machine-readable result is stored in
+[`analysis-v12-holdout.json`](analysis-v12-holdout.json). No detector rule was
+changed after observing this result.
+
+This candidate is therefore not releasable as `analysis-v12` and must not be
+described as meeting the 90% gates. Further detector work must use broader
+development evidence and a newly authored untouched holdout; this failed
+holdout cannot be reused as proof.
 
 ## Existing regression inventory and performance
 
