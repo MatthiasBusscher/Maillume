@@ -98,8 +98,19 @@ The frozen derived-model artifact has SHA-256
 `33457877ed01b360689628ae35f177c204728af16ee818e43e818f388d0b36d3`.
 
 These are binary unwanted/benign results, not phishing-versus-spam or Dutch
-results. The candidate remains blocked pending the untouched TREC-7 evaluation,
-a new application-level bilingual holdout, and the complete release gate.
+results.
+
+After the model and integration were frozen, the one-time 44,096-case TREC-7
+evaluation reported 92.5% precision, 83.7% recall, and an 8.55% false-positive
+rate. It therefore failed the 90% recall and 2% false-positive gates. The exact
+result is stored in
+[`meajor-v1-holdout.json`](meajor-v1-holdout.json). No model parameter,
+threshold, or detector behavior will be changed using this spent holdout.
+
+This candidate remains blocked. A later candidate may treat TREC-7 as
+development data only if it is evaluated against a different, explicitly
+licensed untouched corpus. A new application-level bilingual holdout and the
+complete release gate are also still required.
 
 ## Existing regression inventory and performance
 
