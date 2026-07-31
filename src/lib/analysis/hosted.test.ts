@@ -99,14 +99,14 @@ async function main() {
   const successResponse = createHostedAnalysisSuccessResponse(
     input,
     success,
-    { "X-Maillume-Analysis-Version": "analysis-v11" },
+    { "X-Maillume-Analysis-Version": "analysis-v12" },
   );
   assert.equal(successResponse.headers.get("cache-control"), "no-store");
   assert.equal(successResponse.headers.get("x-ratelimit-limit"), "25");
   assert.equal(successResponse.headers.get("x-ratelimit-remaining"), "21");
   assert.equal(
     successResponse.headers.get("x-maillume-analysis-version"),
-    "analysis-v11",
+    "analysis-v12",
   );
 
   const retryFinalize = rpcSequence([

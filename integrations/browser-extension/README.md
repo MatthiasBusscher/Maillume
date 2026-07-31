@@ -21,7 +21,7 @@ Captured message content crosses from the toolbar action to the tab-specific pan
 
 Chrome 116 or newer is required for programmatic, tab-specific side-panel opening.
 
-The panel accepts the versioned `analysis-v6` through `analysis-v11` classification and score-factor contracts, sends its extension ID/version and accepted analysis versions, verifies that factor contributions sum to the risk index, requires valid evidence coverage from `analysis-v9` onward, and rejects unsafe detected-link schemes. Version 0.4.0 adds stable per-browser rotation, rolling inactivity expiry, and simplified connection settings. Installed 0.3.9 clients remain compatible with analysis and pairing while the Store update rolls out.
+The panel accepts the versioned `analysis-v6` through `analysis-v12` classification and score-factor contracts, sends its extension ID/version and accepted analysis versions, verifies that factor contributions sum to the risk index, requires valid evidence coverage from `analysis-v9` onward, and rejects unsafe detected-link schemes. Version 0.4.0 adds stable per-browser rotation, rolling inactivity expiry, and simplified connection settings. Installed 0.3.9 clients remain compatible with analysis and pairing while the Store update rolls out.
 
 ## Local panel modules
 

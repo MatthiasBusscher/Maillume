@@ -475,7 +475,7 @@ async function testPanelSendsCapturedLinkMetadata() {
     },
     analysis_mode: "heuristic",
     analysis_provider: "heuristic",
-    analysis_version: "analysis-v11",
+    analysis_version: "analysis-v12",
     disclaimer: "This is an automated risk assessment.",
     privacy: {
       stored: false,
@@ -531,7 +531,7 @@ async function testPanelSendsCapturedLinkMetadata() {
             ok: true,
             status: 200,
             json: async () => ({
-              analysis_version: "analysis-v11",
+              analysis_version: "analysis-v12",
               api_version: "v1",
               extension: {
                 id: "bjiiailjalkfjimkjdikoockjlnjolle",
@@ -539,7 +539,7 @@ async function testPanelSendsCapturedLinkMetadata() {
                 minimum_analysis_version: "0.3.8",
                 minimum_pairing_version: "0.3.9",
                 pairing_available: true,
-                supported_analysis_versions: ["analysis-v11"],
+                supported_analysis_versions: ["analysis-v12"],
               },
             }),
           };
@@ -639,7 +639,7 @@ async function testPanelSendsCapturedLinkMetadata() {
   });
   assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.0");
   assert.equal(requestHeaders["X-Maillume-Extension-Id"], "bjiiailjalkfjimkjdikoockjlnjolle");
-  assert.equal(requestHeaders["X-Maillume-Analysis-Versions"].includes("analysis-v11"), true);
+  assert.equal(requestHeaders["X-Maillume-Analysis-Versions"].includes("analysis-v12"), true);
   assert.equal(elements.get("reviewStep").hidden, true, "successful analysis must collapse the captured-detail step");
   assert.equal(elements.get("analyze").hidden, true, "successful analysis must replace the analyze action with the result");
   assert.equal(elements.get("result").hidden, false);

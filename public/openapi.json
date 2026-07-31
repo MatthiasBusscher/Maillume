@@ -240,7 +240,7 @@
         "required": true,
         "schema": {
           "type": "string",
-          "example": "analysis-v10,analysis-v11"
+          "example": "analysis-v11,analysis-v12"
         }
       }
     },
@@ -262,7 +262,7 @@
         ],
         "properties": {
           "analysis_version": {
-            "const": "analysis-v11"
+            "const": "analysis-v12"
           },
           "api_version": {
             "const": "v1"
@@ -789,7 +789,7 @@
             ]
           },
           "analysis_version": {
-            "const": "analysis-v11"
+            "const": "analysis-v12"
           },
           "disclaimer": {
             "type": "string"

@@ -551,7 +551,7 @@ function main() {
   assert.match(runtimeAuditWorkflow, /inputs\.confirm == 'AUDIT'/);
   assert.match(runtimeAuditWorkflow, /environment: production/);
   assert.match(runtimeAuditWorkflow, /envs: AUDIT_MARKER/);
-  assert.match(runtimeAuditWorkflow, /payload\.analysis_version !== "analysis-v11"/);
+  assert.match(runtimeAuditWorkflow, /payload\.analysis_version !== "analysis-v12"/);
   assert.match(runtimeAuditWorkflow, /payload\.result\?\.evidence_coverage/);
   assert.match(runtimeAuditScript, /ReadonlyRootfs/);
   assert.match(

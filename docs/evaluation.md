@@ -1,6 +1,6 @@
 # Synthetic Evaluation
 
-Maillume uses repository-only synthetic and sanitized public-advisory corpora to calibrate `analysis-v11` without retaining or collecting users' email.
+Maillume uses repository-only synthetic and sanitized public-advisory corpora to calibrate `analysis-v12` without retaining or collecting users' email.
 
 The risk score is a versioned, capped index of observed evidence. It is not the probability that a message is malicious and these synthetic checks are not a claim of real-world accuracy.
 
@@ -40,6 +40,21 @@ The locked split must maintain:
 - an English/Dutch gap no larger than ten percentage points for each metric.
 
 These gates catch code regressions against known synthetic scenarios. Public-beta testing and cautious user messaging remain necessary because new attacks and real email distributions differ from the corpus.
+
+For `analysis-v12`, the separate fresh release holdout also requires at least
+90% phishing recall, phishing precision, spam recall, and spam precision. A
+malicious case counts as recalled only when it receives the correct
+classification above low risk. Legitimate non-low and high-risk rates must stay
+at or below 10% and 2%, and English/Dutch gaps must stay within ten percentage
+points. All denominators and numerators are reported so a balanced average
+cannot hide a weak class.
+
+The v12 holdout contains 36 frozen public-advisory adaptations: 12 phishing, 12
+spam, and 12 legitimate hard negatives, balanced equally across English/Dutch
+and across paste, Chrome, screenshot, and `.eml` sources. Its structure can be
+validated without running the detector. The one-time scoring command is
+`npm run eval:v12-holdout`; it must run only after detector logic, contract
+metadata, and release documentation are frozen.
 
 ## Public Advisory Regressions
 
@@ -90,6 +105,7 @@ aggregate cells; the command cannot retrieve raw feedback rows.
 npm run test:analysis
 npm run eval:heuristic
 npm run bench:heuristic
+npm run eval:v12-holdout
 ```
 
 This validates corpus shape and split isolation, applies the locked gates, reports cross-input classification, median/p95 score deltas, and format-enriched factor agreement, checks factor sums and URL/domain regressions, and verifies AI evidence normalization with synthetic outputs.
