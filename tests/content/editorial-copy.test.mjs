@@ -172,3 +172,29 @@ test("privacy copy names active authentication and operational providers", () =>
   assert.match(privacy, /Inloggen met e-mailadres en wachtwoord/);
   assert.match(privacy, /tweestapsverificatie met een authenticatie-app/);
 });
+
+test("privacy notice covers retention, rights, transfers, and extension link capture in both languages", () => {
+  const privacy = read("src/lib/i18n/trust-privacy.ts");
+  const privacyPage = read("src/app/privacy/page.tsx");
+  const extensionPrivacy = read("integrations/browser-extension/PRIVACY.md");
+
+  for (const phrase of [
+    "Purposes and legal bases",
+    "Data categories and recipients",
+    "Retention",
+    "International transfers",
+    "Autoriteit Persoonsgegevens",
+    "Doeleinden en grondslagen",
+    "Gegevenscategorieën en ontvangers",
+    "Bewaartermijnen",
+    "Internationale doorgiften",
+  ]) {
+    assert.match(privacy, new RegExp(phrase), phrase);
+  }
+
+  assert.match(privacy, /detected HTTP\(S\) link destinations/);
+  assert.match(privacy, /gevonden HTTP\(S\)-linkbestemmingen/);
+  assert.match(privacyPage, /autoriteitpersoonsgegevens\.nl/);
+  assert.match(extensionPrivacy, /detected HTTP\(S\) link destinations/);
+  assert.match(extensionPrivacy, /not separately rendered in the review fields/);
+});
