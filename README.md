@@ -55,7 +55,7 @@ Follow the [web-beta release checklist](https://github.com/MatthiasBusscher/Mail
 
 ## Quick Start
 
-Requirements: Node.js 22+ and npm.
+Requirements: Node.js 24+ and npm.
 
 ```bash
 git clone https://github.com/MatthiasBusscher/Maillume.git

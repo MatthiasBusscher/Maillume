@@ -43,3 +43,8 @@ updates:
         update-types:
           - minor
           - patch
+    # Runtime-major upgrades require an explicit LTS compatibility review.
+    ignore:
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
