@@ -15,9 +15,16 @@ test("paste analysis renders a structured result and disclaimer", async ({ page 
   await page.getByRole("button", { name: "Analyze email" }).click();
 
   await expect(page.getByText("Risk score")).toBeVisible();
+  const recommendedAction = page.getByRole("heading", { name: "Recommended action", exact: true });
+  await expect(recommendedAction).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Evidence coverage", exact: true }),
   ).toBeVisible();
+  const evidenceCoverage = page.getByRole("heading", { name: "Evidence coverage", exact: true });
+  const [actionBox, coverageBox] = await Promise.all([recommendedAction.boundingBox(), evidenceCoverage.boundingBox()]);
+  expect(actionBox).not.toBeNull();
+  expect(coverageBox).not.toBeNull();
+  expect(actionBox!.y).toBeLessThan(coverageBox!.y);
   await expect(
     page.getByText("Maillume received the main message evidence needed for this assessment."),
   ).toBeVisible();
@@ -76,13 +83,23 @@ test("language switching updates the scanner", async ({ page }) => {
   expect(footerBox!.y + footerBox!.height).toBeGreaterThanOrEqual(viewportHeight - 1);
 });
 
-test("Dutch routes render server-side and persist across navigation", async ({ page }) => {
+test("explicit locale routes stay authoritative across navigation", async ({ page }) => {
   await page.goto("/nl/platform");
   await expect(page.locator("html")).toHaveAttribute("lang", "nl");
   await expect(page.getByRole("link", { name: "Prijzen" }).first()).toHaveAttribute("href", "/nl/pricing");
 
   await page.goto("/pricing");
-  await expect(page).toHaveURL(/\/nl\/pricing$/);
+  await expect(page).toHaveURL(/\/pricing$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+
+  await page.goto("/self-hosted");
+  await expect(page).toHaveURL(/\/self-hosted$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+
+  await page.goto("/nl");
+  await expect(page.getByRole("link", { name: "Ontdek self-hosting" })).toHaveAttribute("href", "/nl/self-hosted");
+  await page.getByRole("link", { name: "Ontdek self-hosting" }).click();
+  await expect(page).toHaveURL(/\/nl\/self-hosted$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "nl");
 
   const apiResponse = await page.request.get("/api/health");
@@ -109,6 +126,16 @@ test("Dutch input controls stay inside their buttons on mobile", async ({ page }
   await expect(uploadButton).toBeVisible();
   expect(await uploadButton.evaluate((button) => button.scrollWidth <= button.clientWidth)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(321);
+});
+
+test("mobile scanner brings a completed assessment into view", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByLabel("Email content").fill("Verify your password immediately at https://microsoft-login-alert.example/verify");
+  await page.getByRole("button", { name: "Analyze email" }).click();
+
+  const result = page.locator("#scan-result");
+  await expect(result.getByRole("heading", { name: "Recommended action", exact: true })).toBeVisible();
+  await expect.poll(async () => result.evaluate((element) => element.getBoundingClientRect().top)).toBeLessThan(80);
 });
 
 test("marketing language redirects use the configured public origin", async ({ page, request }) => {
@@ -143,6 +170,13 @@ test("Dutch marketing preview and app navigation are visibly localized", async (
     "Geautomatiseerde risicobeoordeling. Dit resultaat is geen garantie.",
   ]) {
     await expect(preview.getByText(text, { exact: true })).toBeVisible();
+  }
+  for (const text of [
+    "Kies het e-mailbericht dat voor je staat.",
+    "Plak tekst, scan een screenshot of open een .eml-bestand.",
+    "Lees de actie en controleer daarna zelfstandig.",
+  ]) {
+    await expect(page.getByText(text, { exact: true })).toBeVisible();
   }
   for (const text of [
     "Email analysis",

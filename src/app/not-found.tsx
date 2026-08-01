@@ -6,7 +6,7 @@ import { getAppHref } from "@/lib/site";
 import { accountEn } from "@/lib/i18n/account-en";
 import { accountNl } from "@/lib/i18n/account-nl";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
-import { localizePath } from "@/lib/i18n/site-locale";
+import { localizeHref, localizePath } from "@/lib/i18n/site-locale";
 
 export default async function NotFound() {
   const locale = await getRequestSiteLocale();
@@ -22,7 +22,7 @@ export default async function NotFound() {
           <Link href={localizePath("/", locale)} className="inline-flex h-11 items-center gap-2 bg-[#dfff52] px-4 text-sm font-bold text-[#111711] hover:bg-white">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" /> {copy.backHome}
           </Link>
-          <a href={getAppHref()} className="inline-flex h-11 items-center gap-2 border border-white/35 px-4 text-sm font-semibold text-white hover:border-white">
+          <a href={localizeHref(getAppHref(), locale)} className="inline-flex h-11 items-center gap-2 border border-white/35 px-4 text-sm font-semibold text-white hover:border-white">
             <ScanSearch className="h-4 w-4 text-[#dfff52]" aria-hidden="true" /> {copy.openScanner}
           </a>
         </div>

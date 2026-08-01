@@ -12,7 +12,7 @@ import { SiteLanguageLinks } from "@/components/site-header";
 import { accountEn } from "@/lib/i18n/account-en";
 import { accountNl } from "@/lib/i18n/account-nl";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
-import { localizePath } from "@/lib/i18n/site-locale";
+import { localizeHref, localizePath } from "@/lib/i18n/site-locale";
 import { getAppHref, getMarketingHref } from "@/lib/site";
 import { getSupabaseAdminConfig } from "@/lib/supabase/admin";
 import { arePasskeysEnabled } from "@/lib/supabase/config";
@@ -91,7 +91,7 @@ export default async function AccountPage({
             <p className="mt-4 text-sm leading-7 text-[#59655a]">{copy.noSessionBody}</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link href={localizePath("/auth/sign-in", locale)} className="inline-flex h-11 items-center gap-2 bg-[#111711] px-4 text-sm font-semibold text-white hover:bg-[#087b72]"><UserRound className="h-4 w-4" aria-hidden="true" /> {copy.signIn}</Link>
-              <a href={getAppHref()} className="inline-flex h-11 items-center gap-2 border border-[#111711] px-4 text-sm font-semibold text-[#111711] hover:bg-[#eef1eb]"><ScanSearch className="h-4 w-4" aria-hidden="true" /> {copy.openScanner}</a>
+              <a href={localizeHref(getAppHref(), locale)} className="inline-flex h-11 items-center gap-2 border border-[#111711] px-4 text-sm font-semibold text-[#111711] hover:bg-[#eef1eb]"><ScanSearch className="h-4 w-4" aria-hidden="true" /> {copy.openScanner}</a>
             </div>
           </div>
         </section>
@@ -104,7 +104,7 @@ export default async function AccountPage({
     <main className="flex min-h-screen flex-col bg-[#eef1eb]">
       <header className="border-b border-[#aeb6ac] bg-white">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-6">
-          <a href={getMarketingHref()}><BrandMark /></a>
+          <a href={localizeHref(getMarketingHref(), locale)}><BrandMark /></a>
           <div className="flex items-center gap-2">
             <AccountLanguageLinks locale={locale} mutationToken={languageToken ?? undefined} />
             <form action="/auth/sign-out" method="post">
@@ -124,7 +124,7 @@ export default async function AccountPage({
             <ScanSearch className="h-5 w-5 text-[#ff705f]" aria-hidden="true" />
             <h2 className="mt-5 text-xl font-semibold text-[#111711]">{copy.assessmentTitle}</h2>
             <p className="mt-3 text-sm leading-6 text-[#59655a]">{copy.assessmentBody}</p>
-            <a href={getAppHref()} className="mt-6 inline-flex h-10 items-center bg-[#111711] px-4 text-sm font-semibold text-white hover:bg-[#087b72]">{copy.openScanner}</a>
+            <a href={localizeHref(getAppHref(), locale)} className="mt-6 inline-flex h-10 items-center bg-[#111711] px-4 text-sm font-semibold text-white hover:bg-[#087b72]">{copy.openScanner}</a>
           </div>
           <div className="border border-[#aeb6ac] bg-[#dfff52] p-6">
             <ShieldCheck className="h-5 w-5 text-[#087b72]" aria-hidden="true" />

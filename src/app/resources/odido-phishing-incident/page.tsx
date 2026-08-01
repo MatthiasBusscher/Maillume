@@ -8,6 +8,7 @@ import { getAppHref } from "@/lib/site";
 import { incidentNl } from "@/lib/i18n/marketing-pages";
 import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
+import { localizeHref, localizePath } from "@/lib/i18n/site-locale";
 
 const NOS_REPORT_URL =
   "https://nos.nl/artikel/2602283-odido-hackers-kwamen-binnen-via-phishing-deden-zich-voor-als-ict-afdeling";
@@ -15,14 +16,15 @@ const NOS_REPORT_URL =
 export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: locale === "nl" ? incidentNl["What the Odido phishing incident teaches us"] : "What the Odido phishing incident teaches us", description: locale === "nl" ? incidentNl["How email phishing, internal IT impersonation, and MFA manipulation can form one attack."] : "How email phishing, internal IT impersonation, and MFA manipulation can form one attack." }; }
 
 export default async function OdidoIncidentPage() {
-  const copy = (await getRequestSiteLocale()) === "nl" ? incidentNl : {};
+  const locale = await getRequestSiteLocale();
+  const copy = locale === "nl" ? incidentNl : {};
   return translateMarketingTree((
     <main className="min-h-screen bg-[#f7f8f4] text-[#111711]">
       <SiteHeader />
       <article>
         <header className="border-b border-[#111711] bg-[#111711] text-white">
           <div className="mx-auto max-w-5xl px-5 py-16 sm:px-6 sm:py-24 lg:px-8">
-            <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#dfff52] hover:text-white">
+            <Link href={localizePath("/", locale)} className="inline-flex items-center gap-2 text-sm font-semibold text-[#dfff52] hover:text-white">
               <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Maillume
             </Link>
             <p className="mt-12 font-mono text-[11px] uppercase text-[#dfff52]">Incident notes · February 2026</p>
@@ -69,7 +71,7 @@ export default async function OdidoIncidentPage() {
               <p className="mt-3">
                 Maillume can provide a second opinion on the email portion and make suspicious signals easier to see. It cannot verify a caller&apos;s identity, inspect an organization&apos;s internal systems, or guarantee that an email is safe. It should be one part of a broader verification process.
               </p>
-              <a href={getAppHref()} className="mt-6 inline-flex h-11 items-center bg-[#dfff52] px-4 text-sm font-bold text-[#111711] hover:bg-[#ccea42]">
+              <a href={localizeHref(getAppHref(), locale)} className="mt-6 inline-flex h-11 items-center bg-[#dfff52] px-4 text-sm font-bold text-[#111711] hover:bg-[#ccea42]">
                 Check an email
               </a>
             </section>

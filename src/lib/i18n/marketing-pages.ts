@@ -3,6 +3,12 @@ import type { MarketingDictionary } from "./marketing-translate";
 const nl: MarketingDictionary = {
   "Shine a light on suspicious email": "Werpt licht op verdachte e-mail",
   "See the risk before you act.": "Zie het risico voordat je handelt.",
+  "Choose the email in front of you.": "Kies het e-mailbericht dat voor je staat.",
+  "Open a message yourself. Maillume never reads a mailbox in the background.": "Open zelf een bericht. Maillume leest nooit op de achtergrond een mailbox.",
+  "Paste text, scan a screenshot, or open an .eml file.": "Plak tekst, scan een screenshot of open een .eml-bestand.",
+  "Source files stay in your browser; only the normalized text needed for this check is processed once.": "Bronbestanden blijven in je browser; alleen de genormaliseerde tekst die voor deze controle nodig is, wordt eenmalig verwerkt.",
+  "Read the action, then verify independently.": "Lees de actie en controleer daarna zelfstandig.",
+  "Use a known contact channel before you click, reply, or approve anything.": "Gebruik een bekend contactkanaal voordat je klikt, antwoordt of iets goedkeurt.",
   "Uploaded files stay in your browser": "Geüploade bestanden blijven in je browser",
   "Signals you can inspect": "Inzicht in meegewogen signalen",
   "A clearer risk assessment": "Een heldere risicobeoordeling",

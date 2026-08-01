@@ -10,7 +10,7 @@ import { getAppHref, getMarketingHref } from "@/lib/site";
 import { accountEn } from "@/lib/i18n/account-en";
 import { accountNl } from "@/lib/i18n/account-nl";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
-import { localizePath } from "@/lib/i18n/site-locale";
+import { localizeHref, localizePath } from "@/lib/i18n/site-locale";
 import { arePasskeysEnabled, getPublicSupabaseConfig } from "@/lib/supabase/config";
 import { areAccountsEnabled } from "@/lib/accounts/config";
 
@@ -31,7 +31,7 @@ export default async function SignInPage({
   const dictionary = locale === "nl" ? accountNl : accountEn;
   const copy = dictionary.signIn;
   const configured = getPublicSupabaseConfig() !== null;
-  const marketingHref = getMarketingHref();
+  const marketingHref = localizeHref(getMarketingHref(), locale);
   const resolvedSearchParams = await searchParams;
   const safeNext = getSafeOAuthRedirectUrl(
     resolvedSearchParams.next ?? localizePath("/account", locale),
@@ -78,7 +78,7 @@ export default async function SignInPage({
             marketingHref={marketingHref}
             nextPath={nextPath}
             passkeysEnabled={arePasskeysEnabled()}
-            scannerHref={getAppHref()}
+            scannerHref={localizeHref(getAppHref(), locale)}
           />
         </div>
       </section>

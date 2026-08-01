@@ -9,7 +9,7 @@ import {
   SOURCE_REPOSITORY_URL,
 } from "@/lib/site";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
-import { localizePath } from "@/lib/i18n/site-locale";
+import { localizeHref, localizePath } from "@/lib/i18n/site-locale";
 import { getOperatorProfile } from "@/lib/operator";
 
 export async function SiteFooter() {
@@ -33,7 +33,7 @@ export async function SiteFooter() {
         <FooterColumn
           title="Product"
           links={[
-            { href: getAppHref(), label: "Scanner", external: true },
+            { href: localizeHref(getAppHref(), locale), label: "Scanner", external: true },
             { href: page("/platform"), label: "Platform" },
             { href: page("/chrome-extension"), label: nl ? "Chrome-extensie" : "Chrome extension" },
             { href: page("/pricing"), label: nl ? "Prijzen" : "Pricing" },

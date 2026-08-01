@@ -46,21 +46,13 @@ export function ResultPanel({
 function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
   return (
     <div className="flex h-full min-h-[34rem] flex-col">
-      <div className="flex items-start gap-3 border-b border-[#d5d9de] pb-4">
-        <span
-          className="flex h-8 w-8 flex-none items-center justify-center bg-[#bdebf0] font-mono text-xs font-bold text-[#173b40]"
-          aria-hidden="true"
-        >
-          02
-        </span>
-        <div>
-          <p className="font-mono text-[11px] uppercase text-[#087b72]">
-            {dictionary.result.title}
-          </p>
-          <h2 className="mt-1 text-xl font-semibold text-[#111711] sm:text-2xl">
-            {dictionary.empty.title}
-          </h2>
-        </div>
+      <div className="border-b border-[#d5d9de] pb-4">
+        <p className="font-mono text-[11px] uppercase text-[#087b72]">
+          {dictionary.result.title}
+        </p>
+        <h2 className="mt-1 text-xl font-semibold text-[#111711] sm:text-2xl">
+          {dictionary.empty.title}
+        </h2>
       </div>
 
       <div className="border-b border-[#d5d9de] py-8">
@@ -108,24 +100,16 @@ function AnalysisResult({
 }: Omit<ResultPanelProps, "result"> & { result: EmailAnalysisResult }) {
   return (
     <div>
-      <div className="mb-6 flex items-start gap-3 border-b border-[#d5d9de] pb-5">
-        <span
-          className="flex h-8 w-8 flex-none items-center justify-center bg-[#bdebf0] font-mono text-xs font-bold text-[#173b40]"
-          aria-hidden="true"
-        >
-          02
-        </span>
-        <div>
-          <p className="font-mono text-[11px] uppercase text-[#087b72]">
-            {dictionary.result.title}
-          </p>
-          <h2 className="mt-1 text-xl font-semibold text-[#111711] sm:text-2xl">
-            {dictionary.result.summaryTitle}
-          </h2>
-          <p className="mt-2 font-mono text-[10px] uppercase text-[#59646f]">
-            {dictionary.result.classification}: {dictionary.result.classifications[result.classification]}
-          </p>
-        </div>
+      <div className="mb-6 border-b border-[#d5d9de] pb-5">
+        <p className="font-mono text-[11px] uppercase text-[#087b72]">
+          {dictionary.result.title}
+        </p>
+        <h2 className="mt-1 text-xl font-semibold text-[#111711] sm:text-2xl">
+          {dictionary.result.summaryTitle}
+        </h2>
+        <p className="mt-2 font-mono text-[10px] uppercase text-[#59646f]">
+          {dictionary.result.classification}: {dictionary.result.classifications[result.classification]}
+        </p>
       </div>
 
       <RiskMeter
@@ -136,6 +120,14 @@ function AnalysisResult({
           levels: dictionary.result.levels,
         }}
       />
+
+      <section aria-labelledby="recommended-action-title" className="my-5 border-l-4 border-[#dfff52] bg-[#111711] px-4 py-5 text-white">
+        <h3 id="recommended-action-title" className="mb-2 flex items-center gap-2 text-sm font-semibold">
+          <ShieldCheck className="h-4 w-4 text-[#dfff52]" aria-hidden="true" />
+          {dictionary.result.recommendedAction}
+        </h3>
+        <p className="text-sm leading-6 text-[#d9dfe3]">{result.recommended_action}</p>
+      </section>
 
       <EvidenceCoverageSummary dictionary={dictionary} result={result} />
 
@@ -206,14 +198,6 @@ function AnalysisResult({
             {dictionary.result.noLinks}
           </p>
         )}
-      </section>
-
-      <section className="my-6 border-l-4 border-[#dfff52] bg-[#111711] px-4 py-5 text-white">
-        <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-          <ShieldCheck className="h-4 w-4 text-[#dfff52]" aria-hidden="true" />
-          {dictionary.result.recommendedAction}
-        </h3>
-        <p className="text-sm leading-6 text-[#d9dfe3]">{result.recommended_action}</p>
       </section>
 
       {feedbackEnabled && analysisVersion ? (

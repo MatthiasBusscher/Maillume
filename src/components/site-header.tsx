@@ -4,7 +4,7 @@ import { Github, LogIn, Menu, ScanSearch } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { getAppHref, getAppRouteHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
 import { getRequestPathname, getRequestSiteLocale } from "@/lib/i18n/request-locale";
-import { localizeHref, localizePath } from "@/lib/i18n/site-locale";
+import { localizeHref, localizePath, stripSiteLocale } from "@/lib/i18n/site-locale";
 import { areAccountsEnabled } from "@/lib/accounts/config";
 
 export async function SiteHeader() {
@@ -20,19 +20,33 @@ export async function SiteHeader() {
   };
   const appHref = localizeHref(getAppHref(), locale);
   const signInHref = localizeHref(getAppRouteHref("/auth/sign-in"), locale);
-  const navigation = copy.navigation.map(([href, label]) => ({ href: localizePath(href, locale), label }));
+  const currentPath = stripSiteLocale(pathname);
+  const navigation = copy.navigation.map(([href, label]) => ({
+    current: currentPath === href,
+    href: localizePath(href, locale),
+    label,
+  }));
   const accountsEnabled = areAccountsEnabled();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[#cbd0c5] bg-[#f7f8f4]/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-6 px-5 sm:px-6 lg:px-8">
-        <Link href={localizePath("/", locale)} className="flex-none" aria-label={copy.home}>
+    <header className="sticky top-0 z-40 border-b border-[#cbd0c5] bg-[#f7f8f4]/95 shadow-[0_1px_0_rgba(17,23,17,0.04)] backdrop-blur">
+      <div className="mx-auto flex h-[4.5rem] max-w-[1440px] items-center justify-between gap-6 px-5 sm:px-6 lg:px-8">
+        <Link href={localizePath("/", locale)} className="flex-none rounded-sm" aria-label={copy.home}>
           <BrandMark />
         </Link>
 
-        <nav className="hidden items-center gap-5 text-sm font-semibold text-[#434c43] lg:flex" aria-label={copy.mainNav}>
+        <nav className="hidden items-center gap-1 text-sm font-semibold text-[#434c43] lg:flex" aria-label={copy.mainNav}>
           {navigation.map((item) => (
-            <Link key={item.href} href={item.href} className="transition hover:text-[#087b72]">
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={item.current ? "page" : undefined}
+              className={`rounded-sm px-3 py-2 transition ${
+                item.current
+                  ? "bg-[#111711] text-white"
+                  : "hover:bg-[#e4e9e1] hover:text-[#087b72]"
+              }`}
+            >
               {item.label}
             </Link>
           ))}
@@ -40,7 +54,7 @@ export async function SiteHeader() {
             href={SOURCE_REPOSITORY_URL}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 transition hover:text-[#087b72]"
+            className="inline-flex items-center gap-2 rounded-sm px-3 py-2 transition hover:bg-[#e4e9e1] hover:text-[#087b72]"
           >
             <Github className="h-4 w-4" aria-hidden="true" />
             GitHub
@@ -81,7 +95,12 @@ export async function SiteHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="border-b border-[#d8dcd3] px-3 py-3 text-sm font-semibold text-[#2b342c]"
+                  aria-current={item.current ? "page" : undefined}
+                  className={`border-b border-[#d8dcd3] px-3 py-3 text-sm font-semibold transition ${
+                    item.current
+                      ? "bg-[#111711] text-white"
+                      : "text-[#2b342c] hover:bg-[#e4e9e1]"
+                  }`}
                 >
                   {item.label}
                 </Link>
@@ -123,7 +142,7 @@ export function SiteLanguageLinks({ locale, pathname }: { locale: "en" | "nl"; p
   return (
     <div className="inline-flex border border-[#aeb6ac] bg-white p-1" aria-label={locale === "nl" ? "Taal" : "Language"}>
       {(["en", "nl"] as const).map((option) => (
-        <Link key={option} href={`/language/${option}?next=${encodeURIComponent(pathname)}`} className={`flex h-8 min-w-9 items-center justify-center px-2 text-xs font-semibold ${option === locale ? "bg-[#111711] text-white" : "text-[#434c43] hover:bg-[#e9ede6]"}`} aria-current={option === locale ? "true" : undefined}>
+        <Link key={option} href={`/language/${option}?next=${encodeURIComponent(pathname)}`} className={`flex h-8 min-w-9 items-center justify-center px-2 text-xs font-semibold transition ${option === locale ? "bg-[#111711] text-white" : "text-[#434c43] hover:bg-[#e9ede6]"}`} aria-current={option === locale ? "true" : undefined}>
           {option.toUpperCase()}
         </Link>
       ))}

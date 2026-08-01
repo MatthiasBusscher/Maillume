@@ -109,17 +109,10 @@ export async function middleware(request: NextRequest) {
     return secureResponse(NextResponse.redirect(targetUrl, 308));
   }
 
-  const cookieLocale = request.cookies.get(SITE_LOCALE_COOKIE)?.value;
-  const locale: SiteLocale = pathLocale ?? (isSiteLocale(cookieLocale) ? cookieLocale : DEFAULT_SITE_LOCALE);
-
-  if (
-    !pathLocale &&
-    locale !== DEFAULT_SITE_LOCALE &&
-    shouldUseLocalizedPage(request)
-  ) {
-    targetUrl.pathname = localizePath(originalPathname, locale);
-    return secureResponse(NextResponse.redirect(targetUrl, 307));
-  }
+  // The address bar is the source of truth for language. A saved preference can
+  // make the language switcher convenient, but it must never silently turn an
+  // explicit English URL such as /self-hosted into /nl/self-hosted.
+  const locale: SiteLocale = pathLocale ?? DEFAULT_SITE_LOCALE;
 
   const requestHeaders = createRequestHeaders();
   requestHeaders.set(SITE_LOCALE_HEADER, locale);

@@ -68,19 +68,11 @@ export function ScanInputForm({
   subject,
 }: ScanInputFormProps) {
   return (
-    <form onSubmit={onSubmit} className="min-w-0 border-b border-[#aeb6bf] p-5 sm:p-7 lg:border-b-0 lg:border-r">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-[#d5d9de] pb-5">
-        <div className="flex items-start gap-3">
-          <span
-            className="flex h-8 w-8 flex-none items-center justify-center bg-[#dfff52] font-mono text-xs font-bold text-[#111711]"
-            aria-hidden="true"
-          >
-            01
-          </span>
-          <div>
-            <p className="font-mono text-[11px] uppercase text-[#087b72]">{dictionary.form.eyebrow}</p>
-            <h2 className="mt-1 text-xl font-semibold text-[#111711] sm:text-2xl">{dictionary.form.title}</h2>
-          </div>
+    <form onSubmit={onSubmit} className="min-w-0 border-b border-[#aeb6bf] p-5 sm:p-7 lg:border-b-0 lg:border-r lg:p-8">
+      <div className="mb-7 flex flex-wrap items-start justify-between gap-4 border-b border-[#d5d9de] pb-5">
+        <div>
+          <p className="font-mono text-[11px] uppercase text-[#087b72]">{dictionary.form.eyebrow}</p>
+          <h2 className="mt-1 text-xl font-semibold text-[#111711] sm:text-2xl">{dictionary.form.title}</h2>
         </div>
         <button
           type="button"

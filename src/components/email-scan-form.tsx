@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 
 import {
   type AnalyzeErrorResponse,
@@ -85,6 +85,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileStatus, setFileStatus] = useState("");
+  const resultPanelRef = useRef<HTMLElement>(null);
   const requestPayload = useMemo(
     () => ({
       source: activeMode,
@@ -110,6 +111,15 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
     : requestIsTooLarge
       ? dictionary.form.requestTooLarge
       : "";
+
+  useEffect(() => {
+    if (!result || !window.matchMedia("(max-width: 1023px)").matches) return;
+
+    resultPanelRef.current?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+  }, [result]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -315,7 +325,7 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
   }
 
   return (
-    <div data-testid="scanner-workspace" className="overflow-hidden border border-[#aeb6bf] bg-white lg:grid lg:grid-cols-[minmax(0,1.06fr)_minmax(390px,0.94fr)]">
+    <div data-testid="scanner-workspace" className="overflow-hidden border border-[#aeb6bf] bg-white shadow-[0_20px_55px_rgba(17,23,17,0.08)] lg:grid lg:grid-cols-[minmax(0,1.06fr)_minmax(400px,0.94fr)]">
       <ScanInputForm
         activeMode={activeMode}
         body={body}
@@ -343,7 +353,14 @@ export function EmailScanForm({ dictionary, feedbackEnabled, locale, maxRequestB
         subject={subject}
       />
 
-      <section aria-live="polite" aria-busy={isAnalyzing} className="min-w-0 bg-[#f5f7f2] p-5 sm:p-7">
+      <section
+        ref={resultPanelRef}
+        id="scan-result"
+        aria-label={dictionary.result.title}
+        aria-live="polite"
+        aria-busy={isAnalyzing}
+        className="min-w-0 scroll-mt-4 bg-[#f5f7f2] p-5 sm:p-7 lg:p-8"
+      >
         <ResultPanel
           analysisVersion={analysisVersion}
           dictionary={dictionary}
