@@ -1,5 +1,4 @@
 import {
-  AlertTriangle,
   DatabaseZap,
   Info,
   Link2,
@@ -131,12 +130,12 @@ function AnalysisResult({
 
       <EvidenceCoverageSummary dictionary={dictionary} result={result} />
 
-      <section className="border-b border-[#d5d9de] py-5">
-        <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#26313b]">
+      <section aria-labelledby="score-explanation-title" className="border-b border-[#d5d9de] py-5">
+        <h3 id="score-explanation-title" className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#26313b]">
           <ScanLine className="h-4 w-4 text-[#087b72]" aria-hidden="true" />
-          {dictionary.result.scoreBasisTitle}
+          {dictionary.result.scoreExplanationTitle}
         </h3>
-        <p className="text-sm leading-6 text-[#59646f]">{dictionary.result.scoreBasisBody}</p>
+        <p className="text-sm leading-6 text-[#59646f]">{result.short_explanation}</p>
         {result.score_factors.length > 0 ? (
           <ul className="mt-4 divide-y divide-[#d5d9de] border-y border-[#d5d9de]">
             {result.score_factors.map((factor) => (
@@ -148,36 +147,17 @@ function AnalysisResult({
               </li>
             ))}
           </ul>
-        ) : null}
-      </section>
-
-      <section className="border-b border-[#d5d9de] py-5">
-        <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#26313b]">
-          <Info className="h-4 w-4 text-[#087b72]" aria-hidden="true" />
-          {dictionary.result.explanation}
-        </h3>
-        <p className="text-sm leading-6 text-[#59646f]">{result.short_explanation}</p>
-      </section>
-
-      <section className="border-b border-[#d5d9de] py-5">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#26313b]">
-          <AlertTriangle className="h-4 w-4 text-[#d76b16]" aria-hidden="true" />
-          {dictionary.result.suspiciousSignals}
-        </h3>
-        {result.suspicious_signals.length > 0 ? (
-          <ul className="divide-y divide-[#d5d9de] border-y border-[#d5d9de] bg-white">
-            {result.suspicious_signals.map((signal) => (
-              <li key={signal} className="flex gap-3 px-3 py-3 text-sm leading-6 text-[#414c57]">
-                <span className="mt-2 h-2 w-2 flex-none bg-[#ff705f]" aria-hidden="true" />
-                <span>{signal}</span>
-              </li>
-            ))}
-          </ul>
         ) : (
-          <p className="border-y border-[#d5d9de] bg-white px-3 py-3 text-sm text-[#59646f]">
+          <p className="mt-4 border-l-4 border-[#bfc7c2] bg-white px-3 py-3 text-sm leading-6 text-[#59646f]">
             {dictionary.result.noSignals}
           </p>
         )}
+        <details className="mt-4 border-t border-[#d5d9de] pt-4">
+          <summary className="cursor-pointer text-sm font-semibold text-[#245b61] underline decoration-[#8ca09a] underline-offset-4">
+            {dictionary.result.scoreBasisTitle}
+          </summary>
+          <p className="mt-3 text-sm leading-6 text-[#59646f]">{dictionary.result.scoreBasisBody}</p>
+        </details>
       </section>
 
       <section className="border-b border-[#d5d9de] py-5">
