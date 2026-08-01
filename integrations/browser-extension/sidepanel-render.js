@@ -1,8 +1,10 @@
 // DOM-only state transitions. This module never reads storage or performs network I/O.
 /* eslint-disable @typescript-eslint/no-unused-vars -- classic extension scripts share one ordered global scope */
 function setStatus(message, isError = false) {
-  elements.status.textContent = message;
-  elements.status.style.color = isError ? "#8f251b" : "#4f5b50";
+  for (const statusElement of [elements.status, elements.settingsStatus]) {
+    statusElement.textContent = message;
+    statusElement.style.color = isError ? "#8f251b" : "#4f5b50";
+  }
 }
 
 function clearMessageData() {
@@ -127,7 +129,8 @@ function updateConnectionState() {
   const connected = Boolean(committedApiKey && committedEndpoint && !isExpired(committedApiKeyExpiresAt));
   const browserConnected = connected && committedConnectionKind === "browser";
   const copy = getDynamicCopy();
-  elements.connectionState.textContent = browserConnected ? copy.connectionStateConnected : connected ? copy.connectionStateManual : copy.connectionStateDisconnected;
+  const state = browserConnected ? copy.connectionStateConnected : connected ? copy.connectionStateManual : copy.connectionStateDisconnected;
+  elements.connectionState.textContent = state;
   elements.connectionState.dataset.connected = String(connected);
   elements.connect.hidden = browserConnected;
   elements.connect.textContent = committedConnectionKind === "browser" ? copy.reconnectButton : copy.connectButton;
@@ -136,7 +139,10 @@ function updateConnectionState() {
 
 function updateAnalyzeState() {
   const endpoint = normalizeEndpoint(elements.endpoint.value);
-  elements.analyze.disabled = !(elements.body.value.trim() && committedApiKey && endpoint && endpoint === committedEndpoint && isCredentialInputCurrent() && !isExpired(committedApiKeyExpiresAt));
+  const hasBody = Boolean(elements.body.value.trim());
+  const hasSavedCredential = Boolean(committedApiKey);
+  const readyToAnalyze = hasSavedCredential && endpoint && endpoint === committedEndpoint && isCredentialInputCurrent() && !isExpired(committedApiKeyExpiresAt);
+  elements.analyze.disabled = !hasBody || (hasSavedCredential && !readyToAnalyze);
 }
 
 function isCredentialInputCurrent() {

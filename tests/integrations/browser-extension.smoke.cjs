@@ -111,6 +111,7 @@ async function run() {
     assert.equal(closeResult.success, true, "the smoke harness must be able to stop the service worker");
 
     const panelPage = await context.newPage();
+    await panelPage.setViewportSize({ width: 320, height: 900 });
     await panelPage.addInitScript((sourceTabId) => {
       const originalQuery = chrome.tabs.query.bind(chrome.tabs);
       chrome.tabs.query = (query) => query?.active && query.currentWindow
@@ -122,11 +123,45 @@ async function run() {
     assert.ok(restartedWorker, "opening the panel must restart the suspended service worker");
     assert.equal(await restartedWorker.evaluate(() => globalThis.__maillumeSmokeSentinel || null), null, "the panel must wake a fresh service-worker global");
     assert.equal(await panelPage.locator("h1").textContent(), "Maillume");
+    const brandLogo = panelPage.locator("header .brand-logo");
+    assert.equal(await brandLogo.count(), 1, "the header must use the packaged Maillume brand mark");
+    assert.equal(await brandLogo.getAttribute("src"), "icons/icon-48.png");
+    assert.equal(await brandLogo.getAttribute("alt"), "", "the visible product name remains the accessible label");
+    assert.equal(await brandLogo.getAttribute("width"), "48");
+    assert.equal(await brandLogo.getAttribute("height"), "48");
+    assert.equal(await panelPage.locator("#scannerView").isVisible(), true, "the scanner must be the default panel view");
+    assert.equal(await panelPage.locator("#settingsView").isHidden(), true, "connection controls must stay out of the scanner by default");
+    assert.equal(await panelPage.locator("#settingsToggle").getAttribute("aria-expanded"), "false");
+    assert.equal(await panelPage.locator("#scannerView #connectionState").count(), 0, "browser connection state must live only in Settings");
+    assert.equal(await panelPage.locator("#scannerView #destination").count(), 0, "deployment state must live only in Settings");
     assert.equal(await panelPage.locator("#endpoint").inputValue(), "https://app.maillume.io");
-    assert.equal(await panelPage.locator("#analyze").isDisabled(), true);
     assert.equal(await panelPage.locator("#result").isHidden(), true);
     assert.equal(await panelPage.locator("#capture").count(), 1);
     assert.equal(await panelPage.locator("#capture").textContent(), "Use current message");
+    assert.equal(await panelPage.locator(".number").count(), 0, "the narrow panel must not reserve a numbered gutter");
+    assert.equal(await panelPage.locator("#captureStep").getAttribute("aria-labelledby"), "captureHeading");
+    assert.equal(await panelPage.locator("#reviewStep").getAttribute("aria-labelledby"), "reviewHeading");
+    assert.equal(await panelPage.locator("#captureHeading").textContent(), "Capture the open message");
+    assert.equal(await panelPage.locator("#reviewHeading").textContent(), "Review the captured details");
+    assert.equal(await panelPage.locator("#captureHelpToggle").getAttribute("aria-expanded"), "true");
+    await panelPage.locator("#captureHelpToggle").click();
+    assert.equal(await panelPage.locator("#captureHelpToggle").getAttribute("aria-expanded"), "false");
+    await panelPage.locator("#captureHelpToggle").click();
+    assert.equal(await panelPage.locator("#captureHelpToggle").getAttribute("aria-expanded"), "true");
+    await assertPanelFitsViewport(panelPage);
+    await panelPage.setViewportSize({ width: 280, height: 900 });
+    await assertPanelFitsViewport(panelPage);
+    await panelPage.locator("#settingsToggle").click();
+    assert.equal(await panelPage.locator("#scannerView").isHidden(), true, "Settings must replace rather than lengthen the scan workflow");
+    assert.equal(await panelPage.locator("#settingsView").isVisible(), true);
+    assert.equal(await panelPage.locator("#settingsToggle").getAttribute("aria-expanded"), "true");
+    assert.equal(await panelPage.locator("#connectionState").isVisible(), true, "connection state must be available in Settings");
+    assert.equal(await panelPage.locator("#destination").isVisible(), true, "deployment state must be available in Settings");
+    await assertPanelFitsViewport(panelPage, ["#settingsBack", "#endpoint", "#connect"]);
+    await panelPage.locator("#settingsBack").click();
+    assert.equal(await panelPage.locator("#scannerView").isVisible(), true);
+    assert.equal(await panelPage.locator("#settingsView").isHidden(), true);
+    assert.equal(await panelPage.locator("#settingsToggle").getAttribute("aria-expanded"), "false");
     assert.deepEqual(
       await panelPage.locator("script[src]").evaluateAll((scripts) => scripts.map((script) => script.getAttribute("src"))),
       [
@@ -142,6 +177,9 @@ async function run() {
     );
     const recoveredBody = await waitForPanelBody(panelPage, "Window selection text");
     assert.equal(recoveredBody, "Window selection text");
+    assert.equal(await panelPage.locator("#analyze").isEnabled(), true, "a captured message without a connection must offer a clear next step");
+    await panelPage.locator("#analyze").click();
+    assert.equal(await panelPage.locator("#status").textContent(), "Connect this browser first, or use Advanced manual setup.");
 
     const rememberedKey = `mlm_${"r".repeat(43)}`;
     await panelPage.evaluate(async (apiKey) => {
@@ -149,9 +187,9 @@ async function run() {
       await chrome.storage.session.remove(["apiKey"]);
     }, rememberedKey);
     await panelPage.reload();
+    await panelPage.locator("#settingsToggle").click();
     assert.equal(await panelPage.locator("#apiKey").inputValue(), rememberedKey);
     assert.equal(await panelPage.locator("#rememberApiKey").isChecked(), true);
-    await panelPage.getByText("Connection settings", { exact: true }).click();
     await panelPage.getByText("Advanced manual setup", { exact: true }).click();
     await panelPage.locator("#apiKeyVisibility").click();
     assert.equal(await panelPage.locator("#apiKey").getAttribute("type"), "text");
@@ -176,7 +214,8 @@ async function run() {
       ]);
     }, { apiKey: managedKey, expiresAt: managedExpiry, hardExpiresAt: managedHardExpiry });
     await panelPage.reload();
-    await panelPage.getByText("Connection settings", { exact: true }).click();
+    assert.equal(await panelPage.locator("#scannerView").isVisible(), true, "a connected browser must return to the scan workflow after reload");
+    await panelPage.locator("#settingsToggle").click();
     assert.equal(await panelPage.locator("#apiKey").inputValue(), "", "a managed key must remain outside the manual field after reopening the panel");
     assert.equal(await panelPage.locator("#apiKeyVisibility").isDisabled(), true, "a managed key must disable the manual field visibility control");
     await panelPage.locator("#apiKeyVisibility").evaluate((element) => element.click());
@@ -215,6 +254,22 @@ async function waitForPanelBody(panelPage, expectedBody) {
     session: await chrome.storage.session.get(null),
   }));
   throw new Error(`The panel did not recover the capture after worker suspension: ${JSON.stringify(diagnostics)}`);
+}
+
+async function assertPanelFitsViewport(panelPage, selectors = ["#capture", "#subject", "#sender", "#body", "#analyze"]) {
+  const layout = await panelPage.evaluate((activeSelectors) => ({
+    innerWidth: window.innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    controls: activeSelectors.map((selector) => {
+      const rect = document.querySelector(selector)?.getBoundingClientRect();
+      return { selector, left: rect?.left, right: rect?.right };
+    }),
+  }), selectors);
+  assert.ok(layout.scrollWidth <= layout.innerWidth, `side panel must not scroll horizontally at ${layout.innerWidth}px`);
+  for (const control of layout.controls) {
+    assert.equal(Number.isFinite(control.left), true, `${control.selector} must be visible`);
+    assert.ok(control.left >= 0 && control.right <= layout.innerWidth, `${control.selector} must fit within the narrow panel`);
+  }
 }
 
 async function triggerCaptureWithRetry({ browserSession, extensionId, messageTarget, prepareSelection, tabId, worker }) {

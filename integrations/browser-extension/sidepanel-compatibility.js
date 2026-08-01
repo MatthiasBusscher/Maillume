@@ -3,7 +3,7 @@
 const MAILLUME_EXTENSION_COMPATIBILITY = Object.freeze({
   "schema": "maillume-extension-compatibility-v1",
   "extension_id": "bjiiailjalkfjimkjdikoockjlnjolle",
-  "extension_version": "0.4.1",
+  "extension_version": "0.4.2",
   "current_analysis_version": "analysis-v12",
   "supported_analysis_versions": [
     "analysis-v6",

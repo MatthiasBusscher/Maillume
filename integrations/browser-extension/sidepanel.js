@@ -2,7 +2,7 @@
 // copy, capture handoff, credential handling, response validation, and rendering.
 /* eslint-disable @typescript-eslint/no-unused-vars -- classic extension scripts share one ordered global scope */
 const elements = Object.fromEntries(
-  ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "manualSetup", "connectionState", "connect", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"]
+  ["scannerView", "settingsView", "settingsToggle", "settingsBack", "settingsHeading", "capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "manualSetup", "connectionState", "connect", "save", "reset", "destination", "analyze", "status", "settingsStatus", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"]
     .map((id) => [id, document.getElementById(id)]),
 );
 let activeTabId;
@@ -57,6 +57,27 @@ async function initialize() {
   if (!Number.isInteger(activeTabId)) return setStatus(getDynamicCopy().noTab, true);
   await queueCaptureOperation(() => consumeCapture(activeTabId));
 }
+
+function showSettings() {
+  elements.scannerView.hidden = true;
+  elements.settingsView.hidden = false;
+  elements.settingsToggle.setAttribute("aria-expanded", "true");
+  elements.settingsHeading.focus?.();
+}
+
+function showScanner() {
+  elements.settingsView.hidden = true;
+  elements.scannerView.hidden = false;
+  elements.settingsToggle.setAttribute("aria-expanded", "false");
+  elements.capture.focus?.();
+}
+
+elements.settingsToggle.addEventListener("click", () => {
+  if (elements.settingsView.hidden) showSettings();
+  else showScanner();
+});
+
+elements.settingsBack.addEventListener("click", showScanner);
 
 elements.connect.addEventListener("click", async () => {
   const copy = getDynamicCopy();

@@ -87,6 +87,21 @@ test("API-key controls make one-time copy and lost-key replacement visible", () 
   assert.match(dutch, /Verloren sleutel vervangen/);
 });
 
+test("account recovery copy explains legacy browser connections without false attribution", () => {
+  const manager = read("src/components/api-key-manager.tsx");
+  const recovery = read("src/lib/browser-connection-recovery.ts");
+  const english = read("src/lib/i18n/account-en.ts");
+  const dutch = read("src/lib/i18n/account-nl.ts");
+
+  assert.match(manager, /shouldShowBrowserConnectionRecovery/);
+  assert.match(recovery, /credential_kind === "browser" && key\.status === "active"/);
+  assert.match(recovery, /credential_kind === "developer" && key\.status === "active"/);
+  assert.match(english, /Maillume cannot tell which API key belongs to a browser/);
+  assert.match(english, /does not reveal, reuse, or transfer the old key/);
+  assert.match(dutch, /niet vaststellen welke API-sleutel bij een browser hoort/);
+  assert.match(dutch, /niet getoond, hergebruikt of overgezet/);
+});
+
 test("Dutch terminology and account tone remain consistent", () => {
   const dictionary = read("src/lib/i18n/dictionary.ts");
   const account = read("src/lib/i18n/account-nl.ts");
@@ -122,6 +137,10 @@ test("privacy and authentication copy describe the real data flow", () => {
   assert.match(accountNl, /Log in of maak een account/);
   assert.match(read("src/components/email-auth-form.tsx"), /mode === "sign-in" \|\| mode === "forgot"/);
   assert.match(extension, /Review the captured details/);
+  assert.match(extension, /id="settingsToggle"/);
+  assert.match(extension, /aria-controls="settingsView"/);
+  assert.match(extension, /id="settingsView"/);
+  assert.doesNotMatch(extension, /class="connection-summary"/);
   assert.match(extension, /Connect this browser/);
   assert.match(extension, /Advanced manual setup/);
   assert.match(extension, /Remember manual key on this device/);

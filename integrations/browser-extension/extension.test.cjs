@@ -455,8 +455,9 @@ function createStreamingJsonResponse(payload, status, { chunks, contentLength } 
 
 async function testPanelSendsCapturedLinkMetadata() {
   const runtime = event();
-  const ids = ["capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "manualSetup", "connectionState", "connect", "save", "reset", "destination", "analyze", "status", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"];
+  const ids = ["scannerView", "settingsView", "settingsToggle", "settingsBack", "settingsHeading", "capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "manualSetup", "connectionState", "connect", "save", "reset", "destination", "analyze", "status", "settingsStatus", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"];
   const elements = new Map(ids.map((id) => [id, createPanelElement()]));
+  elements.get("settingsView").hidden = true;
   const localStorage = { endpoint: "https://app.maillume.io" };
   const sessionStorage = { apiKey: `mlm_${"a".repeat(43)}` };
   const getStored = (storage, keys) => Object.fromEntries(keys.filter((key) => storage[key] !== undefined).map((key) => [key, storage[key]]));
@@ -517,7 +518,7 @@ async function testPanelSendsCapturedLinkMetadata() {
   let requestHeaders;
   let pairingStartPayload;
   let pairingMode = false;
-  let capabilityLatestVersion = "0.4.1";
+  let capabilityLatestVersion = "0.4.2";
   let lifecyclePairingResponse = true;
   let openedApprovalUrl;
   const pairingId = "40000000-0000-4000-8000-000000000004";
@@ -528,7 +529,7 @@ async function testPanelSendsCapturedLinkMetadata() {
       i18n: { getUILanguage: () => "en-US" },
       runtime: {
         id: "bjiiailjalkfjimkjdikoockjlnjolle",
-        getManifest: () => ({ version: "0.4.1" }),
+        getManifest: () => ({ version: "0.4.2" }),
         onMessage: runtime,
         sendMessage: async () => responses.shift(),
       },
@@ -633,12 +634,22 @@ async function testPanelSendsCapturedLinkMetadata() {
   await new Promise((resolve) => setTimeout(resolve, 100));
   await flush();
   assert.equal(elements.get("body").value, "Captured once");
+  await elements.get("settingsToggle").dispatch("click");
+  assert.equal(elements.get("scannerView").hidden, true, "settings must replace the scanner view instead of expanding it");
+  assert.equal(elements.get("settingsView").hidden, false);
+  assert.equal(elements.get("settingsToggle").getAttribute("aria-expanded"), "true");
+  await elements.get("settingsBack").dispatch("click");
+  assert.equal(elements.get("scannerView").hidden, false);
+  assert.equal(elements.get("settingsView").hidden, true);
+  assert.equal(elements.get("settingsToggle").getAttribute("aria-expanded"), "false");
   assert.equal(elements.get("rememberApiKey").checked, false, "an existing session-only key must remain session-only until the user opts in");
   await elements.get("apiKeyVisibility").dispatch("click");
   assert.equal(elements.get("apiKey").type, "text");
   assert.equal(elements.get("apiKeyVisibility").getAttribute("aria-pressed"), "true");
   await elements.get("apiKeyVisibility").dispatch("click");
   assert.equal(elements.get("apiKey").type, "password");
+  await elements.get("settingsToggle").dispatch("click");
+  assert.equal(elements.get("settingsView").hidden, false, "manual setup must remain inside the dedicated Settings view");
   permissionGranted = false;
   await elements.get("save").dispatch("click");
   assert.equal(elements.get("status").textContent, "Chrome did not grant access to that deployment.");
@@ -648,6 +659,9 @@ async function testPanelSendsCapturedLinkMetadata() {
   assert.equal(localStorage.apiKey, `mlm_${"a".repeat(43)}`);
   assert.equal(sessionStorage.apiKey, undefined);
   assert.equal(elements.get("status").textContent, "Deployment and API key saved in this Chrome profile for restarts and updates.");
+  assert.equal(elements.get("settingsStatus").textContent, "Deployment and API key saved in this Chrome profile for restarts and updates.");
+  assert.equal(elements.get("scannerView").hidden, false, "a successful connection must return to the scanner");
+  assert.equal(elements.get("settingsView").hidden, true, "a successful connection must close Settings");
   await elements.get("captureHelpToggle").dispatch("click");
   assert.equal(elements.get("captureHelp").hidden, true);
   assert.equal(elements.get("captureHelpToggle").textContent, "Show instructions");
@@ -666,7 +680,7 @@ async function testPanelSendsCapturedLinkMetadata() {
       destinationUrl: "https://bit.ly/synthetic-review",
     }],
   });
-  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.1");
+  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.2");
   assert.equal(requestHeaders["X-Maillume-Extension-Id"], "bjiiailjalkfjimkjdikoockjlnjolle");
   assert.equal(requestHeaders["X-Maillume-Analysis-Versions"].includes("analysis-v12"), true);
   assert.equal(elements.get("reviewStep").hidden, true, "successful analysis must collapse the captured-detail step");
@@ -856,7 +870,7 @@ async function testPanelSendsCapturedLinkMetadata() {
   assert.equal(localStorage.apiKey, undefined, "removing a browser connection must clear its stored credential");
   assert.equal(localStorage.connectionKind, undefined, "removing a browser connection must clear its connection kind");
   assert.equal(elements.get("apiKeyVisibility").disabled, false, "removing a browser connection must restore manual key visibility control");
-  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.1");
+  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.2");
 }
 
 (async () => {

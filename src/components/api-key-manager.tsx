@@ -3,6 +3,7 @@
 import { Check, Copy, Eye, EyeOff, KeyRound, Plus, RotateCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import { shouldShowBrowserConnectionRecovery } from "@/lib/browser-connection-recovery";
 import type {
   AccountApiUsage,
   ApiKeyLifetimeDays,
@@ -164,6 +165,7 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
     : 0;
   const browserConnections = keys.filter((key) => key.credential_kind === "browser");
   const developerKeys = keys.filter((key) => key.credential_kind === "developer");
+  const showBrowserConnectionRecovery = shouldShowBrowserConnectionRecovery(keys);
   const inactiveCount = keys.filter((key) => key.status !== "active").length;
   const visibleBrowserConnections = browserConnections.filter(
     (key) => showInactive || key.status === "active",
@@ -300,6 +302,13 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
       ) : (
         <p className="border-b border-[#aeb6ac] px-6 py-5 text-sm text-[#59655a]">{labels.browserEmpty}</p>
       )}
+      {showBrowserConnectionRecovery ? (
+        <aside aria-labelledby="browser-recovery-title" className="border-b border-[#aeb6ac] border-l-4 border-l-[#c38122] bg-[#fff6e7] px-6 py-5">
+          <h4 id="browser-recovery-title" className="text-sm font-semibold text-[#5f4111]">{labels.browserRecoveryTitle}</h4>
+          <p className="mt-2 max-w-3xl text-xs leading-5 text-[#714812]">{labels.browserRecoveryBody}</p>
+          <p className="mt-2 max-w-3xl text-xs leading-5 text-[#714812]">{labels.browserRecoveryAction}</p>
+        </aside>
+      ) : null}
 
       <div className="border-b border-[#d8dcd3] bg-[#f9faf7] px-5 py-4">
         <h3 className="text-sm font-semibold text-[#111711]">{labels.developerTitle}</h3>
