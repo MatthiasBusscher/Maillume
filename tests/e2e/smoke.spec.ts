@@ -28,7 +28,12 @@ test("paste analysis renders a structured result and disclaimer", async ({ page 
   await expect(
     page.getByText("Maillume received the main message evidence needed for this assessment."),
   ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Suspicious signals", exact: true })).toBeVisible();
+  const scoreExplanation = page.getByRole("heading", { name: "Why this score", exact: true });
+  await expect(scoreExplanation).toBeVisible();
+  await expect(
+    page.getByText("The sender appears to imitate a known brand domain.", { exact: true }),
+  ).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "Suspicious signals", exact: true })).toHaveCount(0);
   await expect(page.getByRole("meter")).toHaveAttribute("aria-valuenow", /\d+/);
   await expect(
     page.getByText("This is an automated risk assessment and should not be considered a guarantee."),
@@ -49,7 +54,7 @@ test("language switching updates the scanner", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Beschikbare bewijslast", exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Verdachte signalen", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Waarom deze score", exact: true })).toBeVisible();
   await expect(page.getByText(/Klik niet, antwoord niet|Controleer de afzender|Er zijn weinig waarschuwingstekens/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Help de detectie verbeteren" })).toBeVisible();
 

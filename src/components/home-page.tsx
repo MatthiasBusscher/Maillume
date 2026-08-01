@@ -126,38 +126,40 @@ export function ScannerPage({
       </header>
 
       <section className="border-b border-[#aeb6ac] bg-[#f7f8f4]">
-        <div className="mx-auto grid max-w-[1480px] gap-7 px-5 py-9 sm:px-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end lg:px-8 lg:py-12">
+        <div className="mx-auto flex max-w-[1480px] flex-col gap-5 px-5 py-6 sm:px-6 sm:py-7 lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:px-8">
           <div className="max-w-4xl">
-            <div className="mb-4 flex items-center gap-3 font-mono text-[11px] uppercase text-[#087b72]">
+            <div className="flex items-center gap-3 font-mono text-[10px] uppercase text-[#087b72]">
               <span className="h-px w-8 bg-[#087b72]" aria-hidden="true" />
               {dictionary.app.audience}
             </div>
-            <h1 className="text-3xl font-semibold leading-[1.04] text-[#111711] sm:text-4xl">
+            <h1 className="mt-3 text-2xl font-semibold leading-tight text-[#111711] sm:text-3xl">
               {dictionary.app.workspaceTitle}
             </h1>
-            <p className="mt-4 max-w-3xl text-base leading-7 text-[#4f5b50]">
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#4f5b50] sm:text-base">
               {dictionary.app.hero}
             </p>
           </div>
 
-          <aside className="border border-[#111711] bg-[#111711] text-white">
-            <div className="flex items-center justify-between border-b border-white/20 px-4 py-3">
-              <p className="font-mono text-[10px] uppercase text-[#dfff52]">Maillume</p>
-              <span className="h-2 w-2 bg-[#dfff52]" aria-hidden="true" />
-            </div>
-            <div className="grid grid-cols-2">
-              <div className="border-r border-white/20 p-4">
-                <Database className="h-4 w-4 text-[#dfff52]" aria-hidden="true" />
-                <p className="mt-4 font-mono text-[10px] uppercase text-[#aeb9ad]">{dictionary.app.privacyStatus}</p>
-                <p className="mt-1 text-sm font-semibold text-white">{dictionary.app.privacyValue}</p>
-              </div>
-              <div className="p-4">
-                <ScanSearch className="h-4 w-4 text-[#ff705f]" aria-hidden="true" />
-                <p className="mt-4 font-mono text-[10px] uppercase text-[#aeb9ad]">{dictionary.app.assessmentStatus}</p>
-                <p className="mt-1 text-sm font-semibold text-white">{dictionary.app.assessmentValue}</p>
+          <div className="flex shrink-0 flex-wrap gap-2 font-mono text-[10px] uppercase lg:justify-end">
+            <div className="flex min-w-[154px] items-center gap-2 border border-[#aeb6ac] bg-white px-3 py-2.5">
+              <Database className="h-4 w-4 flex-none text-[#087b72]" aria-hidden="true" />
+              <div>
+                <p className="text-[#59646f]">{dictionary.app.privacyStatus}</p>
+                <p className="mt-0.5 font-sans text-sm font-semibold normal-case text-[#26313b]">
+                  {dictionary.app.privacyValue}
+                </p>
               </div>
             </div>
-          </aside>
+            <div className="flex min-w-[140px] items-center gap-2 border border-[#aeb6ac] bg-white px-3 py-2.5">
+              <ScanSearch className="h-4 w-4 flex-none text-[#d76b16]" aria-hidden="true" />
+              <div>
+                <p className="text-[#59646f]">{dictionary.app.assessmentStatus}</p>
+                <p className="mt-0.5 font-sans text-sm font-semibold normal-case text-[#26313b]">
+                  {dictionary.app.assessmentValue}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

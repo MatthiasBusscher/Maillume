@@ -111,7 +111,7 @@ export const dictionaries = {
         medium: "Medium",
         high: "High",
       },
-      explanation: "Explanation",
+      scoreExplanationTitle: "Why this score",
       scoreBasisTitle: "How this score works",
       scoreBasisBody:
         "This is a versioned risk index, not the probability that the email is malicious. Contributions are capped by independent evidence family so repeated wording cannot inflate the result without limit.",
@@ -143,7 +143,6 @@ export const dictionaries = {
         parsed: "Parsed .eml",
       },
       points: "points",
-      suspiciousSignals: "Suspicious signals",
       noSignals: "No clear suspicious signals were found in the evidence Maillume could inspect. This does not confirm that the message is safe.",
       detectedLinks: "Detected links",
       noLinks: "No links detected.",
@@ -297,7 +296,7 @@ export const dictionaries = {
         medium: "Middel",
         high: "Hoog",
       },
-      explanation: "Uitleg",
+      scoreExplanationTitle: "Waarom deze score",
       scoreBasisTitle: "Hoe deze score werkt",
       scoreBasisBody:
         "Dit is een versiegebonden risico-index, niet de kans dat de e-mail kwaadaardig is. Bijdragen zijn begrensd per onafhankelijke signaalgroep, zodat herhaalde woorden de uitkomst niet onbeperkt verhogen.",
@@ -329,7 +328,6 @@ export const dictionaries = {
         parsed: "Verwerkt .eml-bestand",
       },
       points: "punten",
-      suspiciousSignals: "Verdachte signalen",
       noSignals: "In de onderzochte gegevens zijn geen duidelijke verdachte signalen gevonden. Dit bevestigt niet dat het bericht veilig is.",
       detectedLinks: "Gevonden links",
       noLinks: "Geen links gevonden.",
