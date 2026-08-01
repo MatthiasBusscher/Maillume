@@ -42,6 +42,8 @@ After applying it:
 
 The production workflow refuses deployment unless the operator explicitly confirms both pairing migrations. Extension `0.3.9` remains analysis- and pairing-compatible while the Store update rolls out. Extension `0.4.0` falls back to the legacy 90-day request while a deployment still advertises `0.3.9`, preventing a Store-first rollout interruption. A legacy connection's next lifecycle reconnect is treated as a new browser because it has no stable installation identifier.
 
+Legacy browser pairings cannot be retrospectively attached to a managed browser connection: their short-lived approval records are purged and do not retain a created-key identifier, while API key names and usage metadata are not proof of browser ownership. The account page therefore gives conditional recovery guidance rather than guessing. The user reconnects from the Chrome profile, confirms the new managed connection works, and then explicitly removes the old developer key. Reconnecting never reveals, reuses, transfers, or automatically revokes the older key.
+
 ## Migration and verification
 
 This is a forward-only cutover because the migration removes the per-key quota RPCs. Deploy the corresponding application image first, then immediately apply `20260714183000_harden_api_key_lifecycle.sql`. During that short interval hosted API-key requests and key management may return `503`, while anonymous web scans remain available.

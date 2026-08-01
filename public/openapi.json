@@ -283,7 +283,7 @@
                 "const": "bjiiailjalkfjimkjdikoockjlnjolle"
               },
               "latest_version": {
-                "const": "0.4.1"
+                "const": "0.4.2"
               },
               "minimum_analysis_version": {
                 "type": "string"

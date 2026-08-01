@@ -67,6 +67,7 @@ async function commitConnection({ apiKey, connectionKind, endpoint, expiresAt, h
   updateConnectionState();
   updateDestination();
   updateAnalyzeState();
+  if (typeof showScanner === "function") showScanner();
   return "saved";
 }
 

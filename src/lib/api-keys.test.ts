@@ -13,6 +13,7 @@ import {
   normalizeApiKeyLifetimeDays,
   normalizeApiKeyName,
 } from "./api-keys";
+import { shouldShowBrowserConnectionRecovery } from "./browser-connection-recovery";
 
 function main() {
   const first = createApiKey();
@@ -54,6 +55,18 @@ function main() {
     inactive_after: "2026-04-01T00:00:00.000Z",
     revoked_at: null,
   }, new Date("2026-04-01T00:00:00.000Z")), "expired");
+  assert.equal(shouldShowBrowserConnectionRecovery([
+    { credential_kind: "developer", status: "active" },
+  ]), true, "an active older developer credential needs a non-attributing recovery path");
+  assert.equal(shouldShowBrowserConnectionRecovery([
+    { credential_kind: "browser", status: "active" },
+    { credential_kind: "developer", status: "active" },
+  ]), false, "a managed browser connection makes recovery guidance unnecessary");
+  assert.equal(shouldShowBrowserConnectionRecovery([
+    { credential_kind: "developer", status: "expired" },
+    { credential_kind: "developer", status: "revoked" },
+  ]), false, "inactive developer records must not suggest a usable extension recovery");
+  assert.equal(shouldShowBrowserConnectionRecovery([]), false);
 
   console.log("Checked hosted API key contracts.");
 }

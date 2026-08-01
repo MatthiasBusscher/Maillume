@@ -25,7 +25,7 @@ export const PUBLIC_CONTRACT = {
   },
   extension: {
     officialId: "bjiiailjalkfjimkjdikoockjlnjolle",
-    currentVersion: "0.4.1",
+    currentVersion: "0.4.2",
     minimumAnalysisVersion: "0.3.8",
     minimumPairingVersion: "0.3.9",
     supportedAnalysisVersions: ["analysis-v6", "analysis-v7", "analysis-v8", "analysis-v9", "analysis-v10", "analysis-v11", "analysis-v12"],
