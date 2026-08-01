@@ -81,6 +81,7 @@ function main() {
   const nextConfigContent = readProjectFile("next.config.ts");
   const cspConfig = readProjectFile("src/lib/security/csp.ts");
   const dockerfileContent = readProjectFile("Dockerfile");
+  const verifyWorkflowContent = readProjectFile(".github/workflows/verify.yml");
   const dockerIgnoreContent = readProjectFile(".dockerignore");
   const gitIgnoreContent = readProjectFile(".gitignore");
   const noticeContent = readProjectFile("NOTICE");
@@ -377,7 +378,8 @@ function main() {
   assert.match(dockerfileContent, /USER nextjs/);
   assert.match(dockerfileContent, /rm -rf \/usr\/local\/lib\/node_modules\/npm/);
   assert.match(dockerfileContent, /# syntax=docker\/dockerfile:1\.7@sha256:[0-9a-f]{64}/);
-  assert.equal((dockerfileContent.match(/FROM node:22-alpine@sha256:[0-9a-f]{64}/g) ?? []).length, 3);
+  assert.equal((dockerfileContent.match(/FROM node:24-alpine@sha256:[0-9a-f]{64}/g) ?? []).length, 3);
+  assert.match(verifyWorkflowContent, /node-version: 24/);
   assert.match(gitIgnoreContent, /^\.training-data$/m);
   assert.match(dockerIgnoreContent, /^\.training-data$/m);
   assert.match(noticeContent, /10\.5281\/zenodo\.18471483/);
