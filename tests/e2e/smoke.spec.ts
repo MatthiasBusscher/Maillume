@@ -212,7 +212,7 @@ test("Dutch marketing preview and app navigation are visibly localized", async (
   await expect(page.getByText("Checks risk patterns and returns structured JSON.", { exact: true })).toHaveCount(0);
 
   await page.goto("/nl/pricing");
-  await expect(page.getByText("Beschikbaar in de publieke bèta", { exact: true })).toBeVisible();
+  await expect(page.getByText("Nu beschikbaar", { exact: true })).toBeVisible();
 
   await page.goto("/nl/app");
   await expect(page.getByLabel("Maillume website")).toHaveAttribute("href", "http://127.0.0.1:3100/nl");

@@ -18,8 +18,8 @@ const plans = [
     name: "Cloud Free",
     price: "EUR 0",
     cadence: "forever",
-    description: "An explainable risk assessment for everyday suspicious email.",
-    status: "Available in public beta",
+    description: "A clear second opinion for suspicious email.",
+    status: "Available now",
     accent: true,
     features: [
       "No account required",
@@ -75,7 +75,7 @@ export default async function PricingPage() {
       <PageIntro
         eyebrow="Pricing"
         title="The safety workflow stays free."
-        description="Core built-in checks are free and need no account. Optional accounts and quota-limited API keys are available; managed AI and paid plans are not for sale."
+        description="Core built-in checks are free and need no account. Optional accounts provide secure, revocable API access; Maillume does not sell certainty."
       />
 
       <section className="border-b border-[#cbd0c5] py-16 sm:py-20">
@@ -121,7 +121,7 @@ export default async function PricingPage() {
           </div>
 
           <div className="mt-5 border border-[#aeb6ac] bg-[#eef1eb] p-5 text-sm leading-6 text-[#4f5b50]">
-            <strong className="text-[#111711]">About the Plus price:</strong> No launch price has been set. We will first measure provider costs, useful allowances, tax, support, and real beta demand.
+            <strong className="text-[#111711]">About the Plus price:</strong> No launch price has been set. We will only introduce it when it offers useful managed capacity or support without overstating what a risk assessment can know.
           </div>
         </div>
       </section>

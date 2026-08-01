@@ -11,7 +11,7 @@ import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizePath } from "@/lib/i18n/site-locale";
 
-export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: "Platform", description: locale === "nl" ? "Bekijk wat beschikbaar is in de publieke Maillume-webbèta en wat later volgt." : "See what is available in the Maillume public web beta and what follows later." }; }
+export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: locale === "nl" ? "Zo werkt Maillume" : "How Maillume works", description: locale === "nl" ? "Bekijk hoe Maillume een bericht controleert, wat het kan aangeven en wat het bewust niet doet." : "See how Maillume checks a message, what it can tell you, and what it deliberately does not do." }; }
 
 const roadmap = [
   { status: "Available", title: "Chrome extension", description: "Install the official extension from the Chrome Web Store and connect it with a revocable Maillume API key.", guide: true },
@@ -25,13 +25,13 @@ export default async function PlatformPage() {
     <main className="min-h-screen bg-[#f7f8f4]">
       <SiteHeader />
       <PageIntro
-        eyebrow="Maillume Platform"
-        title="The web scanner comes first."
-        description="The public beta starts with anonymous built-in checks. Accounts are optional for managing revocable API keys; hosted AI and scan history remain off."
+        eyebrow="How Maillume works"
+        title="A clear second opinion before you act."
+        description="Choose one message, start the check deliberately, and get an explanation you can inspect. Accounts are optional for integrations; hosted AI and scan history remain off."
         actions={
           <>
-            <a href="#today" className="inline-flex h-12 items-center gap-2 bg-[#dfff52] px-5 text-sm font-bold text-[#111711] hover:bg-white">See the beta boundary <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
-            <a href={SOURCE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center gap-2 border border-white/35 px-5 text-sm font-semibold text-white hover:border-white hover:bg-white/10"><Github className="h-4 w-4" aria-hidden="true" /> Follow development</a>
+            <a href="#today" className="inline-flex h-12 items-center gap-2 bg-[#dfff52] px-5 text-sm font-bold text-[#111711] hover:bg-white">See what Maillume checks <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+            <a href={SOURCE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center gap-2 border border-white/35 px-5 text-sm font-semibold text-white hover:border-white hover:bg-white/10"><Github className="h-4 w-4" aria-hidden="true" /> Read the source</a>
           </>
         }
       />
@@ -39,13 +39,13 @@ export default async function PlatformPage() {
       <section className="border-b border-[#cbd0c5] bg-white py-20 sm:py-24" id="today">
         <div className="mx-auto grid max-w-[1440px] gap-12 px-5 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
           <div>
-            <p className="font-mono text-[10px] uppercase text-[#087b72]">Current public beta</p>
-            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">A focused check before you act.</h2>
+            <p className="font-mono text-[10px] uppercase text-[#087b72]">Available today</p>
+            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">One focused check. Clear boundaries.</h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
               Paste an email, use a screenshot, or open an exported .eml file. Maillume applies the same explainable, versioned risk index to each input and returns a practical next step.
             </p>
             <p className="mt-4 border-l-4 border-[#c78c32] bg-[#fff0cf] px-4 py-3 text-sm leading-6 text-[#714812]">
-              Email and Google sign-in, TOTP protection, and quota-limited API keys are available. They never create scan history. Maintainer-hosted AI remains unavailable.
+              Email and Google sign-in, TOTP protection, and quota-limited API keys are available for people who need integrations. They never create scan history. Maintainer-hosted AI remains unavailable.
             </p>
             <ul className="mt-7 space-y-3">
               <PlatformCheck>Anonymous paste, screenshot, and .eml checks</PlatformCheck>
@@ -58,8 +58,8 @@ export default async function PlatformPage() {
 
           <div className="overflow-hidden border border-[#111711] bg-[#111711] text-white">
             <div className="flex h-11 items-center justify-between border-b border-white/20 px-4">
-              <span className="font-mono text-[10px] uppercase text-[#dfff52]">Public beta boundary</span>
-              <span className="font-mono text-[9px] text-[#849083]">web + API</span>
+              <span className="font-mono text-[10px] uppercase text-[#dfff52]">Service boundary</span>
+              <span className="font-mono text-[9px] text-[#849083]">web + Chrome</span>
             </div>
             <dl className="divide-y divide-white/15 p-5 text-sm">
               <BetaBoundary label="Scanner" value={locale === "nl" ? "Anoniem beschikbaar" : "Available anonymously"} />
@@ -80,7 +80,7 @@ export default async function PlatformPage() {
               <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">Nothing scans a mailbox in the background.</h2>
             </div>
             <p className="max-w-3xl text-xl leading-8 text-[#d2e6e2]">
-              Maillume does not crawl a mailbox, silently score incoming email, or use a maintainer-owned AI key in the hosted beta. You choose the message, start the check, and receive an automated risk indicator rather than a guarantee.
+              Maillume does not crawl a mailbox, silently score incoming email, or use a maintainer-owned AI key in the hosted service. You choose the message, start the check, and receive an automated risk indicator rather than a guarantee.
             </p>
           </div>
 
@@ -119,10 +119,10 @@ export default async function PlatformPage() {
       <section className="bg-[#dfff52]">
         <div className="mx-auto flex max-w-[1440px] flex-col gap-7 px-5 py-14 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div>
-            <p className="font-mono text-[10px] uppercase text-[#59655a]">Follow the public beta</p>
-            <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-[#111711]">Early feedback should improve the web scanner before Maillume asks for more access.</h2>
-          </div>
-          <a href={SOURCE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="inline-flex h-12 flex-none items-center justify-center gap-2 bg-[#111711] px-5 text-sm font-semibold text-white hover:bg-[#087b72]"><Github className="h-4 w-4" aria-hidden="true" /> View the roadmap</a>
+              <p className="font-mono text-[10px] uppercase text-[#59655a]">Open development</p>
+              <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-[#111711]">Help make the next check clearer, calmer, and easier to act on.</h2>
+            </div>
+          <a href={SOURCE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="inline-flex h-12 flex-none items-center justify-center gap-2 bg-[#111711] px-5 text-sm font-semibold text-white hover:bg-[#087b72]"><Github className="h-4 w-4" aria-hidden="true" /> Help improve Maillume</a>
         </div>
       </section>
       <SiteFooter />
