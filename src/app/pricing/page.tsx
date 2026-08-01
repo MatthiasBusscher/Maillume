@@ -9,6 +9,7 @@ import { getAppHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
 import { pricingNl } from "@/lib/i18n/marketing-pages";
 import { translateMarketingTree } from "@/lib/i18n/marketing-translate";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
+import { localizeHref, localizePath } from "@/lib/i18n/site-locale";
 
 export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: locale === "nl" ? "Prijzen" : "Pricing", description: locale === "nl" ? pricingNl["Simple, honest pricing for Maillume Cloud and the open-source self-hosted scanner."] : "Simple, honest pricing for Maillume Cloud and the open-source self-hosted scanner." }; }
 
@@ -66,7 +67,8 @@ const plans = [
 ];
 
 export default async function PricingPage() {
-  const copy = (await getRequestSiteLocale()) === "nl" ? pricingNl : {};
+  const locale = await getRequestSiteLocale();
+  const copy = locale === "nl" ? pricingNl : {};
   return translateMarketingTree((
     <main className="min-h-screen bg-[#f7f8f4]">
       <SiteHeader />
@@ -104,7 +106,7 @@ export default async function PricingPage() {
                   ))}
                 </ul>
                 <Link
-                  href={plan.href}
+                  href={localizeHref(plan.href, locale)}
                   className={`mt-8 inline-flex h-11 items-center justify-center gap-2 px-4 text-sm font-bold transition ${
                     plan.accent
                       ? "bg-[#111711] text-white hover:bg-[#087b72]"
@@ -153,7 +155,7 @@ export default async function PricingPage() {
             <ServerCog className="h-5 w-5 flex-none text-[#dfff52]" aria-hidden="true" />
             <div>
               <h2 className="font-semibold">Need full infrastructure control?</h2>
-              <Link href="/self-hosted" className="mt-2 inline-flex items-center gap-2 text-sm text-[#b8c4b6] hover:text-white">
+              <Link href={localizePath("/self-hosted", locale)} className="mt-2 inline-flex items-center gap-2 text-sm text-[#b8c4b6] hover:text-white">
                 Compare the self-hosted setup <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>

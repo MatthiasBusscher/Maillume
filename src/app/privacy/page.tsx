@@ -5,6 +5,7 @@ import { TrustList, TrustPage, TrustSection } from "@/components/trust-page";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { trustPrivacyCopy } from "@/lib/i18n/trust-privacy";
 import { getPublicBetaOperatorProfile } from "@/lib/operator";
+import { localizePath } from "@/lib/i18n/site-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,7 @@ export default async function PrivacyPage() {
           <a className="font-semibold text-[#087b72] underline" href={`mailto:${operator.privacyEmail}`}>{operator.privacyEmail}</a>.
         </p>
         <p>{sections.contact.complaintPrefix}{" "}<a href={supervisoryAuthorityUrl} target="_blank" rel="noreferrer" className="font-semibold text-[#087b72] underline">{sections.contact.complaintLinkText}</a>{sections.contact.complaintSuffix}</p>
-        <p>{sections.contact.linkPrefix} <Link href="/security" className="font-semibold text-[#087b72] underline">{sections.contact.linkText}</Link>, {sections.contact.linkSuffix}</p>
+        <p>{sections.contact.linkPrefix} <Link href={localizePath("/security", locale)} className="font-semibold text-[#087b72] underline">{sections.contact.linkText}</Link>, {sections.contact.linkSuffix}</p>
       </TrustSection>
     </TrustPage>
   );

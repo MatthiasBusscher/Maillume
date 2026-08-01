@@ -34,10 +34,10 @@ export default async function SelfHostedPage() {
 
       <section className="border-b border-[#cbd0c5] bg-white">
         <div className="mx-auto grid max-w-[1440px] divide-y divide-[#cbd0c5] px-5 sm:grid-cols-2 sm:divide-x sm:divide-y-0 sm:px-6 lg:grid-cols-4 lg:px-8">
-          <SelfHostedBenefit icon={ServerCog} title="Data boundary" description="Operate the application in your own environment." />
-          <SelfHostedBenefit icon={KeyRound} title="Bring your key" description="Choose a supported AI or compatible endpoint." />
-          <SelfHostedBenefit icon={Braces} title="Open source" description="Inspect and modify the AGPL-3.0 codebase." />
-          <SelfHostedBenefit icon={ShieldCheck} title="Same guardrails" description="Keep no-store responses, limits, and disclaimers." />
+          <SelfHostedBenefit index="01" icon={ServerCog} title="Data boundary" description="Operate the application in your own environment." />
+          <SelfHostedBenefit index="02" icon={KeyRound} title="Bring your key" description="Choose a supported AI or compatible endpoint." />
+          <SelfHostedBenefit index="03" icon={Braces} title="Open source" description="Inspect and modify the AGPL-3.0 codebase." />
+          <SelfHostedBenefit index="04" icon={ShieldCheck} title="Same guardrails" description="Keep no-store responses, limits, and disclaimers." />
         </div>
       </section>
 
@@ -157,18 +157,21 @@ npm run dev`}</code></pre>
   ), copy);
 }
 
-function SelfHostedBenefit({ description, icon: Icon, title }: { description: string; icon: typeof ServerCog; title: string }) {
+function SelfHostedBenefit({ description, icon: Icon, index, title }: { description: string; icon: typeof ServerCog; index: string; title: string }) {
   return (
     <div className="py-7 sm:px-5 first:pl-0 last:pr-0">
-      <Icon className="h-5 w-5 text-[#087b72]" aria-hidden="true" />
-      <h2 className="mt-4 font-semibold text-[#111711]">{title}</h2>
+      <div className="flex items-center justify-between gap-4">
+        <Icon className="h-5 w-5 text-[#087b72]" aria-hidden="true" />
+        <span className="font-mono text-[10px] text-[#758075]">{index}</span>
+      </div>
+      <h2 className="mt-5 font-semibold text-[#111711]">{title}</h2>
       <p className="mt-2 text-sm leading-6 text-[#59655a]">{description}</p>
     </div>
   );
 }
 
 function QuickStep({ number, text }: { number: string; text: string }) {
-  return <li className="grid grid-cols-[42px_1fr] gap-4 border-b border-[#cbd0c5] py-4 text-sm leading-6 text-[#4f5b50]"><span className="font-mono text-[10px] text-[#087b72]">{number}</span>{text}</li>;
+  return <li className="border-b border-[#cbd0c5] py-4 text-sm leading-6 text-[#4f5b50]"><span className="mr-3 inline-flex h-5 min-w-5 items-center justify-center bg-[#e4e9e1] px-1 font-mono text-[10px] font-semibold text-[#087b72]">{number}</span>{text}</li>;
 }
 
 function CheckItem({ children }: { children: React.ReactNode }) {

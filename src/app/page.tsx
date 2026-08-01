@@ -1,8 +1,8 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Braces,
   Check,
+  ClipboardPaste,
   Database,
   Eye,
   FileSearch,
@@ -10,7 +10,7 @@ import {
   LockKeyhole,
   ScanSearch,
   ServerCog,
-  ShieldQuestion,
+  ShieldCheck,
 } from "lucide-react";
 
 import { ScannerPreview } from "@/components/scanner-preview";
@@ -100,11 +100,26 @@ export default async function MarketingHomePage() {
       </section>
 
       <section className="border-b border-[#cbd0c5] bg-[#dfff52]">
-        <div className="mx-auto grid max-w-[1440px] grid-cols-1 divide-y divide-[#111711]/25 px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6 lg:px-8">
-          <StatusItem icon={LockKeyhole} label="Uploaded files stay in your browser" />
-          <StatusItem icon={ShieldQuestion} label="Signals you can inspect" />
-          <StatusItem icon={Braces} label="AGPL-3.0 open source" />
-        </div>
+        <ol className="mx-auto grid max-w-[1440px] list-none grid-cols-1 divide-y divide-[#111711]/25 px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6 lg:px-8">
+          <QuickStartItem
+            icon={LockKeyhole}
+            number="01"
+            title="Choose the email in front of you."
+            detail="Open a message yourself. Maillume never reads a mailbox in the background."
+          />
+          <QuickStartItem
+            icon={ClipboardPaste}
+            number="02"
+            title="Paste text, scan a screenshot, or open an .eml file."
+            detail="Source files stay in your browser; only the normalized text needed for this check is processed once."
+          />
+          <QuickStartItem
+            icon={ShieldCheck}
+            number="03"
+            title="Read the action, then verify independently."
+            detail="Use a known contact channel before you click, reply, or approve anything."
+          />
+        </ol>
       </section>
 
       <section className="border-b border-[#cbd0c5] py-20 sm:py-24">
@@ -178,7 +193,7 @@ export default async function MarketingHomePage() {
               <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
                 Deploy the AGPL application on your own infrastructure. Keep the predictable heuristic mode, or connect an AI provider with a server-side key you own.
               </p>
-              <Link href="/self-hosted" className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">
+              <Link href={localizePath("/self-hosted", locale)} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">
                 Explore self-hosting <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
@@ -228,12 +243,16 @@ export default async function MarketingHomePage() {
   ), copy);
 }
 
-function StatusItem({ icon: Icon, label }: { icon: typeof Check; label: string }) {
+function QuickStartItem({ detail, icon: Icon, number, title }: { detail: string; icon: typeof Check; number: string; title: string }) {
   return (
-    <div className="flex min-h-16 items-center gap-3 py-4 sm:px-5 first:pl-0 last:pr-0">
-      <Icon className="h-4 w-4 flex-none" strokeWidth={2.25} aria-hidden="true" />
-      <span className="text-sm font-semibold text-[#111711]">{label}</span>
-    </div>
+    <li className="grid min-h-[132px] grid-cols-[2.2rem_1fr] gap-x-3 gap-y-2 py-5 sm:px-5 first:pl-0 last:pr-0">
+      <span className="font-mono text-[11px] font-semibold text-[#455045]">{number}</span>
+      <Icon className="h-4 w-4 text-[#087b72]" strokeWidth={2.25} aria-hidden="true" />
+      <div className="col-start-2">
+        <h2 className="text-sm font-semibold leading-5 text-[#111711]">{title}</h2>
+        <p className="mt-2 text-xs leading-5 text-[#455045]">{detail}</p>
+      </div>
+    </li>
   );
 }
 
