@@ -680,14 +680,14 @@ test("marketing routes accurately distinguish available and future features", as
 
   await page.goto("/pricing");
   await expect(page.getByRole("heading", { name: "The safety workflow stays free." })).toBeVisible();
-  await expect(page.getByText("Available in public beta", { exact: true })).toBeVisible();
+  await expect(page.getByText("Available now", { exact: true })).toBeVisible();
   await expect(page.getByText("Planned, not for sale")).toBeVisible();
 
   await page.goto("/self-hosted");
   await expect(page.getByRole("heading", { name: /Your infrastructure/ })).toBeVisible();
 
   await page.goto("/platform");
-  await expect(page.getByRole("heading", { name: "The web scanner comes first." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "A clear second opinion before you act." })).toBeVisible();
   await expect(page.getByText("Optional", { exact: true })).toBeVisible();
   await expect(page.getByText("Available", { exact: true })).toBeVisible();
   await expect(page.getByText("Chrome Web Store", { exact: true })).toBeVisible();
