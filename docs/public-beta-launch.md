@@ -93,10 +93,13 @@ bucket, so do not bypass the Tunnel for testing.
 ## 5. Deploy And Verify The Approved Image
 
 1. Merge the reviewed pull request. Wait for CI, full-history Gitleaks,
-   dependency checks, container scan, and browser checks to pass.
-2. In GitHub Actions, choose **Build production image** → **Run workflow**,
-   set `deploy` to `true`, then approve the protected `production`
-   environment.
+   dependency checks, container scan, and browser checks to pass. Confirm the
+   automatic main-branch image build succeeds; if GitHub skipped it because of
+   a commit-message instruction, choose **Build production image** → **Run
+   workflow** on `main` with `release_action=build` and wait for it to pass.
+2. In GitHub Actions, choose **Build production image** → **Run workflow** on
+   `main`, set `release_action=deploy`, then approve the protected
+   `production` environment.
 3. Confirm the workflow deploys the immutable GHCR digest and reports the
    exact approved commit revision.
 4. Verify through Cloudflare, not the VPS origin:
