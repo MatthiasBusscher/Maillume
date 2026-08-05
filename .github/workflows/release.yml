@@ -5,11 +5,14 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
-      deploy:
-        description: Deploy the verified image to production
+      release_action:
+        description: Build a verified SHA image or deploy an existing verified SHA image
         required: true
-        default: false
-        type: boolean
+        default: build
+        type: choice
+        options:
+          - build
+          - deploy
       feedback_summary_migration_applied:
         description: Confirm the production feedback-summary migration is applied
         required: true
@@ -30,7 +33,7 @@ permissions: {}
 
 jobs:
   verify:
-    if: github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release_action == 'build'))
     uses: ./.github/workflows/verify.yml
     with:
       upload-integration-artifacts: true
@@ -40,7 +43,7 @@ jobs:
 
   image:
     needs: verify
-    if: github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release_action == 'build'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -171,7 +174,7 @@ jobs:
 
   preflight:
     name: Verify deployment prerequisites
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && inputs.release_action == 'deploy' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -204,7 +207,7 @@ jobs:
   resolve:
     name: Resolve verified image
     needs: preflight
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && inputs.release_action == 'deploy' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -226,7 +229,12 @@ jobs:
           IMAGE_TAG: ghcr.io/matthiasbusscher/maillume:sha-${{ github.sha }}
         run: |
           set -euo pipefail
-          digest_json="$(docker buildx imagetools inspect "$IMAGE_TAG" --format '{{json .Manifest.Digest}}')"
+          if ! digest_json="$(docker buildx imagetools inspect "$IMAGE_TAG" --format '{{json .Manifest.Digest}}' 2>&1)"; then
+            printf '%s\n' "$digest_json" >&2
+            echo "No verified image exists for this main commit." >&2
+            echo "Run this workflow on main with release_action=build, wait for it to pass, then run it again with release_action=deploy." >&2
+            exit 1
+          fi
           digest="${digest_json#\"}"
           digest="${digest%\"}"
           if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
@@ -237,7 +245,7 @@ jobs:
 
   deploy:
     needs: resolve
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && inputs.release_action == 'deploy' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     permissions:
