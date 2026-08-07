@@ -11,12 +11,12 @@ export async function SiteHeader() {
   const [locale, pathname] = await Promise.all([getRequestSiteLocale(), getRequestPathname()]);
   const copy = locale === "nl" ? {
     home: "Maillume-startpagina", mainNav: "Hoofdnavigatie", mobileNav: "Mobiele navigatie",
-    menu: "Menu openen", signIn: "Inloggen", scan: "Controleer een e-mail", openScanner: "Scanner openen",
-    navigation: [["/platform", "Platform"], ["/chrome-extension", "Chrome-extensie"], ["/self-hosted", "In eigen beheer"], ["/pricing", "Prijzen"]] as const,
+    menu: "Menu openen", signIn: "Inloggen", scan: "Controleer een e-mail", openScanner: "Scanner openen", github: "GitHub openen",
+    navigation: [["/platform", "Zo werkt het"], ["/chrome-extension", "Chrome-extensie"], ["/self-hosted", "In eigen beheer"], ["/pricing", "Prijzen"]] as const,
   } : {
     home: "Maillume home", mainNav: "Main navigation", mobileNav: "Mobile navigation",
-    menu: "Open menu", signIn: "Sign in", scan: "Check an email", openScanner: "Open scanner",
-    navigation: [["/platform", "Platform"], ["/chrome-extension", "Chrome extension"], ["/self-hosted", "Self-hosted"], ["/pricing", "Pricing"]] as const,
+    menu: "Open menu", signIn: "Sign in", scan: "Check an email", openScanner: "Open scanner", github: "Open GitHub",
+    navigation: [["/platform", "How it works"], ["/chrome-extension", "Chrome extension"], ["/self-hosted", "Self-hosted"], ["/pricing", "Pricing"]] as const,
   };
   const appHref = localizeHref(getAppHref(), locale);
   const signInHref = localizeHref(getAppRouteHref("/auth/sign-in"), locale);
@@ -35,16 +35,16 @@ export async function SiteHeader() {
           <BrandMark />
         </Link>
 
-        <nav className="hidden items-center gap-1 text-sm font-semibold text-[#434c43] lg:flex" aria-label={copy.mainNav}>
+        <nav className="hidden items-center gap-4 text-sm font-semibold xl:flex" aria-label={copy.mainNav}>
           {navigation.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               aria-current={item.current ? "page" : undefined}
-              className={`rounded-sm px-3 py-2 transition ${
+              className={`relative px-1 py-2 transition after:absolute after:inset-x-1 after:bottom-0 after:h-0.5 ${
                 item.current
-                  ? "bg-[#111711] text-white"
-                  : "hover:bg-[#e4e9e1] hover:text-[#087b72]"
+                  ? "text-[#087b72] after:bg-[#087b72]"
+                  : "text-[#59655a] after:bg-transparent hover:text-[#111711] hover:after:bg-[#aeb6ac]"
               }`}
             >
               {item.label}
@@ -54,19 +54,20 @@ export async function SiteHeader() {
             href={SOURCE_REPOSITORY_URL}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-sm px-3 py-2 transition hover:bg-[#e4e9e1] hover:text-[#087b72]"
+            aria-label={copy.github}
+            title="GitHub"
+            className="inline-flex h-9 w-9 items-center justify-center text-[#59655a] transition hover:bg-[#e4e9e1] hover:text-[#111711]"
           >
             <Github className="h-4 w-4" aria-hidden="true" />
-            GitHub
           </a>
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-1 xl:flex">
           <SiteLanguageLinks locale={locale} pathname={pathname} />
           {accountsEnabled ? (
             <Link
               href={signInHref}
-              className="inline-flex h-10 items-center gap-2 border border-[#aeb6ac] px-4 text-sm font-semibold text-[#2b342c] transition hover:border-[#111711] hover:bg-white"
+              className="inline-flex h-10 items-center gap-2 px-3 text-sm font-semibold text-[#2b342c] transition hover:text-[#087b72]"
             >
               <LogIn className="h-4 w-4" aria-hidden="true" />
               {copy.signIn}
@@ -81,7 +82,7 @@ export async function SiteHeader() {
           </a>
         </div>
 
-        <details className="group relative lg:hidden">
+        <details className="group relative xl:hidden">
           <summary
             className="flex h-10 w-10 cursor-pointer list-none items-center justify-center border border-[#aeb6ac] bg-white text-[#111711] [&::-webkit-details-marker]:hidden"
             title={copy.menu}
@@ -98,24 +99,27 @@ export async function SiteHeader() {
                   aria-current={item.current ? "page" : undefined}
                   className={`border-b border-[#d8dcd3] px-3 py-3 text-sm font-semibold transition ${
                     item.current
-                      ? "bg-[#111711] text-white"
+                      ? "border-l-2 border-l-[#087b72] bg-[#eaf6f5] text-[#17645e]"
                       : "text-[#2b342c] hover:bg-[#e4e9e1]"
                   }`}
                 >
                   {item.label}
                 </Link>
               ))}
+            </nav>
+            <div className="mt-3 flex items-center justify-between border-t border-[#d8dcd3] pt-3">
               <a
                 href={SOURCE_REPOSITORY_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="border-b border-[#d8dcd3] px-3 py-3 text-sm font-semibold text-[#2b342c]"
+                className="inline-flex h-10 items-center gap-2 px-3 text-sm font-semibold text-[#2b342c] transition hover:bg-[#e4e9e1]"
               >
+                <Github className="h-4 w-4" aria-hidden="true" />
                 GitHub
               </a>
-            </nav>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <div className="col-span-2"><SiteLanguageLinks locale={locale} pathname={pathname} /></div>
+              <SiteLanguageLinks locale={locale} pathname={pathname} />
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
               {accountsEnabled ? (
                 <Link
                   href={signInHref}

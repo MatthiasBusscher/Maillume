@@ -43,8 +43,8 @@ test("launch copy reflects optional accounts without advertising hosted AI", () 
   assert.match(platform, /Accounts are optional/);
   assert.match(platform, /Maintainer-hosted AI remains unavailable/);
   assert.doesNotMatch(platform, /Accounts, API keys, Google sign-in.*unavailable/);
-  assert.match(pricing, /Optional accounts and quota-limited API keys are available/);
-  assert.match(pricing, /managed AI and paid plans are not for sale/);
+  assert.match(pricing, /Optional accounts provide secure, revocable API access/);
+  assert.match(pricing, /does not sell certainty/);
   assert.doesNotMatch(translations, /Accounts, API keys, Google sign-in.*unavailable/);
   assert.doesNotMatch(translations, /Authentication, API keys, quotas.*remain disabled/);
   assert.doesNotMatch(translations, /Account, API, and managed AI features remain disabled/);
@@ -68,6 +68,12 @@ test("Chrome extension instructions cover both languages and the Store release b
   assert.match(instructions, /Verbinding niet ingesteld/);
   assert.match(header, /\["\/chrome-extension", "Chrome extension"\]/);
   assert.match(header, /\["\/chrome-extension", "Chrome-extensie"\]/);
+  assert.match(header, /\["\/platform", "How it works"\]/);
+  assert.match(header, /\["\/platform", "Zo werkt het"\]/);
+  assert.match(header, /\["\/pricing", "Pricing"\]/);
+  assert.match(header, /\["\/pricing", "Prijzen"\]/);
+  assert.match(header, /SOURCE_REPOSITORY_URL/);
+  assert.match(header, /aria-label=\{copy\.github\}/);
   assert.match(platform, /Installation guide/);
   assert.match(platform, /Chrome Web Store/);
   assert.doesNotMatch(platform, /Manual beta|review follows later|not yet available/i);
