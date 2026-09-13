@@ -38,7 +38,7 @@
     "@supabase/supabase-js": "^2.112.2",
     "jsqr": "1.4.0",
     "lucide-react": "^0.577.0",
-    "next": "^15.5.23",
+    "next": "^15.5.24",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tesseract.js": "^7.0.0",
