@@ -44,7 +44,7 @@ export async function verifyPublicDeployment({
   }, { attempts, delayMs });
 
   await Promise.all([
-    verifyPage(fetchImpl, new URL("/auth/sign-in", appOrigin), "application sign-in"),
+    verifyRetiredAccountLink(fetchImpl, new URL("/auth/sign-in?source=release-check", appOrigin)),
     verifyPage(fetchImpl, new URL("/app", appOrigin), "scanner workspace"),
     verifyPage(fetchImpl, new URL("/", marketingOrigin), "marketing site", {
       rejectEmailObfuscation: true,
@@ -75,6 +75,18 @@ async function verifyPage(fetchImpl, url, label, { rejectEmailObfuscation = fals
         `Public ${label} contains Cloudflare Email Address Obfuscation markup that can break React hydration.`,
       );
     }
+  }
+}
+
+// Accounts were retired: old sign-in links must land on the scanner without carrying query values.
+async function verifyRetiredAccountLink(fetchImpl, url) {
+  const response = await fetchImpl(url, { redirect: "manual" });
+  if (response.status !== 308) {
+    throw new Error(`Retired sign-in link returned HTTP ${response.status} instead of a 308 redirect.`);
+  }
+  const location = new URL(response.headers.get("location") ?? "", url);
+  if (location.origin !== url.origin || location.pathname !== "/app" || location.search) {
+    throw new Error("Retired sign-in link must redirect to the scanner without query values.");
   }
 }
 

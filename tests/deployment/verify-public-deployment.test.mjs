@@ -57,6 +57,31 @@ test("waits until the public route serves the approved revision", async (t) => {
   assert.equal(result.revision, revision);
 });
 
+test("rejects a sign-in page that still renders instead of redirecting", async (t) => {
+  const server = await createServer((request, response) => {
+    response.setHeader("X-Content-Type-Options", "nosniff");
+    response.setHeader("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'");
+    response.setHeader("Cache-Control", "no-store");
+    response.setHeader("Content-Type", "application/json");
+    if (request.url?.startsWith("/api/health")) {
+      response.end(JSON.stringify({ status: "ok", revision, analysis_version: "analysis-v12" }));
+      return;
+    }
+    if (request.url === "/api/analyze") {
+      response.end(JSON.stringify({ analysis_version: "analysis-v12", result: { risk_score: 0, evidence_coverage: evidenceCoverage } }));
+      return;
+    }
+    response.end("ok");
+  }, { retiredSignIn: false });
+  t.after(() => server.close());
+
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  await assert.rejects(
+    verifyPublicDeployment({ appUrl: origin, marketingUrl: origin, expectedRevision: revision, attempts: 1, delayMs: 0 }),
+    /Retired sign-in link returned HTTP 200/,
+  );
+});
+
 test("rejects unexpected public health fields", async (t) => {
   const server = await createServer((request, response) => {
     response.setHeader("Cache-Control", "no-store");
@@ -170,9 +195,17 @@ test("rejects missing or malformed public evidence coverage", async () => {
   }
 });
 
-function createServer(handler) {
+function createServer(handler, { retiredSignIn = true } = {}) {
   return new Promise((resolve, reject) => {
-    const server = http.createServer(handler);
+    const server = http.createServer((request, response) => {
+      if (retiredSignIn && request.url?.startsWith("/auth/sign-in")) {
+        response.statusCode = 308;
+        response.setHeader("Location", "/app");
+        response.end();
+        return;
+      }
+      handler(request, response);
+    });
     server.once("error", reject);
     server.listen(0, "127.0.0.1", () => resolve(server));
   });
