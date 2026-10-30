@@ -18,11 +18,10 @@ export function MfaSessionGate({ children, labels, locale }: { children: ReactNo
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
-    if (!supabase) {
-      setFailed(true);
-      return;
-    }
-    void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data, error }) => {
+    const assurance = supabase
+      ? supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      : Promise.reject(new Error("Supabase is not configured"));
+    void assurance.then(({ data, error }) => {
       if (error || !data?.currentLevel || !data.nextLevel) {
         setFailed(true);
         return;
@@ -67,8 +66,9 @@ export function AccountSecurityManager({ canManage, labels, passkeysEnabled }: {
   }, [passkeysEnabled]);
 
   useEffect(() => {
+    // loadSecurity is shared with post-action refreshes and only updates state after awaiting Supabase.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (canManage) void loadSecurity();
-    else setIsLoading(false);
   }, [canManage, loadSecurity]);
 
   if (!canManage) {

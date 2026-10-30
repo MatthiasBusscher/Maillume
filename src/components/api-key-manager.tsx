@@ -56,6 +56,8 @@ export function ApiKeyManager({ labels, locale }: { labels: AccountDictionary["a
     }
   }, [labels.unavailable]);
 
+  // loadKeys is shared with post-action refreshes and only updates state after awaiting the API.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void loadKeys(); }, [loadKeys]);
 
   useEffect(() => {

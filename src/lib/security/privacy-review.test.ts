@@ -51,7 +51,7 @@ function main() {
   const authCallbackContent = readProjectFile("src/app/auth/callback/route.ts");
   const authRedirectContent = readProjectFile("src/app/auth/callback/redirect.ts");
   const oauthReturnContent = readProjectFile("src/lib/auth/oauth-return.ts");
-  const middlewareContent = readProjectFile("src/middleware.ts");
+  const proxyContent = readProjectFile("src/proxy.ts");
   const accountPageContent = readProjectFile("src/app/account/page.tsx");
   const accountDeletionContent = readProjectFile("src/app/account/delete/route.ts");
   const accountDeletionTokenContent = readProjectFile(
@@ -223,7 +223,7 @@ function main() {
     "the anonymous beta must reject OAuth callbacks before exchanging a session code",
   );
   assert.match(authCallbackContent, /hasOAuthErrorReturn\(requestUrl\)/);
-  assert.match(middlewareContent, /hasOAuthErrorReturn\(request\.nextUrl\)/);
+  assert.match(proxyContent, /hasOAuthErrorReturn\(request\.nextUrl\)/);
   assert.match(oauthReturnContent, /OAUTH_PROVIDER_FAILURE_CODE = "oauth_provider_failed"/);
   assert.doesNotMatch(oauthReturnContent, /searchParams\.get\("error_description"\)/);
   assert.match(accountDeletionContent, /getUser\(\)/);
@@ -258,7 +258,7 @@ function main() {
     hostedApiRoute.indexOf("if (!areAccountsEnabled())") < hostedApiRoute.indexOf("getBearerToken"),
     "the anonymous beta must reject hosted API calls before reading credentials or request content",
   );
-  assert.match(middlewareContent, /if \(!areAccountsEnabled\(\)\) \{\s*return response;/);
+  assert.match(proxyContent, /if \(!areAccountsEnabled\(\)\) \{\s*return response;/);
   assert.match(operatorConfig, /getPublicBetaOperatorProfile/);
   assert.match(operatorConfig, /Public-beta operator configuration is incomplete/);
   assert.match(clientIdentifier, /cf-connecting-ip/);
@@ -361,10 +361,10 @@ function main() {
   assert.match(cspConfig, /'nonce-\$\{nonce\}'/);
   assert.match(cspConfig, /'strict-dynamic'/);
   assert.doesNotMatch(cspConfig, /script-src[^\n]*unsafe-inline/);
-  assert.match(middlewareContent, /headers\.set\("x-nonce", nonce\)/);
-  assert.match(middlewareContent, /headers\.set\("Content-Security-Policy", contentSecurityPolicy\)/);
-  assert.match(middlewareContent, /response\.headers\.set\("Content-Security-Policy", contentSecurityPolicy\)/);
-  assert.match(middlewareContent, /supabaseUrl: process\.env\.NEXT_PUBLIC_SUPABASE_URL/);
+  assert.match(proxyContent, /headers\.set\("x-nonce", nonce\)/);
+  assert.match(proxyContent, /headers\.set\("Content-Security-Policy", contentSecurityPolicy\)/);
+  assert.match(proxyContent, /response\.headers\.set\("Content-Security-Policy", contentSecurityPolicy\)/);
+  assert.match(proxyContent, /supabaseUrl: process\.env\.NEXT_PUBLIC_SUPABASE_URL/);
   assert.match(cspConfig, /url\.origin/);
   assert.match(cspConfig, /url\.protocol === "https:" \? "wss:" : "ws:"/);
   assert.doesNotMatch(cspConfig, /supabase\.co|connect-src \*/);
