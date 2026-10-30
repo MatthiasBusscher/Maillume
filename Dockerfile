@@ -34,7 +34,9 @@ ENV NEXT_PUBLIC_MARKETING_URL=$NEXT_PUBLIC_MARKETING_URL \
 
 LABEL org.opencontainers.image.revision=$BUILD_REVISION
 
-RUN addgroup --system --gid 1001 nodejs \
+# The pinned base digest can lag Alpine security fixes; pull them into the runtime image.
+RUN apk upgrade --no-cache \
+  && addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 --ingroup nodejs nextjs \
   && rm -rf /usr/local/lib/node_modules/npm \
   && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/pnpm
