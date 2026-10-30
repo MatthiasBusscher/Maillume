@@ -14,7 +14,7 @@ test("paste analysis renders a structured result and disclaimer", async ({ page 
     .fill("Verify your password immediately at https://microsoft-login-alert.example/verify");
   await page.getByRole("button", { name: "Analyze email" }).click();
 
-  await expect(page.getByText("Risk score")).toBeVisible();
+  await expect(page.getByText("Risk score", { exact: true })).toBeVisible();
   const recommendedAction = page.getByRole("heading", { name: "Recommended action", exact: true });
   await expect(recommendedAction).toBeVisible();
   await expect(
@@ -298,7 +298,7 @@ test("eml upload is parsed and can be analyzed", async ({ page }) => {
   await expect(page.getByLabel("Email content")).toHaveValue(/Verify your password immediately/);
 
   await page.getByRole("button", { name: "Analyze email" }).click();
-  await expect(page.getByText("Risk score")).toBeVisible();
+  await expect(page.getByText("Risk score", { exact: true })).toBeVisible();
 });
 
 test("eml attachment analysis sends only coarse risk categories", async ({ page }) => {
@@ -329,7 +329,7 @@ ignored bytes
 
   expect(payload.attachmentRiskTypes).toEqual(["double_extension", "executable"]);
   expect(JSON.stringify(payload)).not.toContain("private-invoice.pdf.exe");
-  await expect(page.getByText("Risk score")).toBeVisible();
+  await expect(page.getByText("Risk score", { exact: true })).toBeVisible();
 });
 
 test("screenshot mode validates unsupported files before OCR", async ({ page }) => {
@@ -768,7 +768,9 @@ test("an OAuth code returned to the app root is recovered by the callback route"
   });
 
   expect(response.status()).toBe(307);
-  const callbackLocation = new URL(response.headers().location);
+  // Next.js 16 emits same-origin redirects as relative paths; they must never leave the host.
+  expect(response.headers().location).toMatch(/^\/(?!\/)/);
+  const callbackLocation = new URL(response.headers().location, "https://app.maillume.io");
   expect(callbackLocation.pathname).toBe("/auth/callback");
   expect(callbackLocation.searchParams.get("code")).toBe("synthetic-code");
 });
@@ -781,7 +783,8 @@ test("anonymous beta discards OAuth callback values and returns to the scanner",
   });
 
   expect(rootResponse.status()).toBe(307);
-  const rootLocation = new URL(rootResponse.headers().location);
+  expect(rootResponse.headers().location).toMatch(/^\/(?!\/)/);
+  const rootLocation = new URL(rootResponse.headers().location, "https://app.maillume.io");
   expect(rootLocation.pathname).toBe("/app");
   expect(rootLocation.search).toBe("");
 

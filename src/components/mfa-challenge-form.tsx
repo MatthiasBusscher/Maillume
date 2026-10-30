@@ -21,17 +21,14 @@ export function MfaChallengeForm({
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
-    if (!supabase) {
-      setError(labels.unavailable);
-      return;
-    }
-    void supabase.auth.mfa.listFactors().then(({ data, error: factorsError }) => {
-      if (factorsError || !data.totp.length) {
+    const listFactors = supabase ? supabase.auth.mfa.listFactors() : Promise.resolve(null);
+    void listFactors.then((result) => {
+      if (!result || result.error || !result.data.totp.length) {
         setError(labels.unavailable);
         return;
       }
-      setFactors(data.totp);
-      setFactorId(data.totp[0].id);
+      setFactors(result.data.totp);
+      setFactorId(result.data.totp[0].id);
     });
   }, [labels.unavailable]);
 

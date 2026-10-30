@@ -1,27 +1,19 @@
-import { FlatCompat } from "@eslint/eslintrc";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [
-  {
-    ignores: [
-      ".analysis-tests/**",
-      ".heuristic-tests/**",
-      ".training-data/**",
-      ".next/**",
-      "next-env.d.ts",
-      "node_modules/**",
-      "public/ocr/**",
-    ],
-  },
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
-];
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  globalIgnores([
+    ".analysis-tests/**",
+    ".heuristic-tests/**",
+    ".training-data/**",
+    ".next/**",
+    "next-env.d.ts",
+    "node_modules/**",
+    "public/ocr/**",
+  ]),
+]);
 
 export default eslintConfig;

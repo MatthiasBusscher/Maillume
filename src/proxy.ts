@@ -19,7 +19,7 @@ import {
 } from "@/lib/i18n/site-locale";
 import { createContentSecurityPolicy } from "@/lib/security/csp";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const contentSecurityPolicy = createContentSecurityPolicy({
     isDevelopment: process.env.NODE_ENV !== "production",
