@@ -3,14 +3,13 @@ import { ArrowLeft, ScanSearch } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
 import { getAppHref } from "@/lib/site";
-import { accountEn } from "@/lib/i18n/account-en";
-import { accountNl } from "@/lib/i18n/account-nl";
+import { notFoundCopy } from "@/lib/i18n/not-found";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizeHref, localizePath } from "@/lib/i18n/site-locale";
 
 export default async function NotFound() {
   const locale = await getRequestSiteLocale();
-  const copy = (locale === "nl" ? accountNl : accountEn).notFound;
+  const copy = notFoundCopy[locale];
   return (
     <main className="grid min-h-screen place-items-center bg-[#111711] px-5 py-12 text-white">
       <div className="w-full max-w-3xl border-y border-white/25 py-10 sm:py-14">

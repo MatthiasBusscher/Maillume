@@ -9,7 +9,6 @@ import {
 import {
   LATEST_BROWSER_EXTENSION_VERSION,
   MINIMUM_ANALYSIS_EXTENSION_VERSION,
-  MINIMUM_PAIRING_EXTENSION_VERSION,
   OFFICIAL_BROWSER_EXTENSION_ID,
   SUPPORTED_EXTENSION_ANALYSIS_VERSIONS,
 } from "../extension-compatibility";
@@ -33,7 +32,6 @@ assert.deepEqual(EMAIL_AUTHENTICATION_VERDICTS, PUBLIC_CONTRACT.analysis.emailAu
 assert.equal(OFFICIAL_BROWSER_EXTENSION_ID, PUBLIC_CONTRACT.extension.officialId);
 assert.equal(LATEST_BROWSER_EXTENSION_VERSION, PUBLIC_CONTRACT.extension.currentVersion);
 assert.equal(MINIMUM_ANALYSIS_EXTENSION_VERSION, PUBLIC_CONTRACT.extension.minimumAnalysisVersion);
-assert.equal(MINIMUM_PAIRING_EXTENSION_VERSION, PUBLIC_CONTRACT.extension.minimumPairingVersion);
 assert.deepEqual(SUPPORTED_EXTENSION_ANALYSIS_VERSIONS, PUBLIC_CONTRACT.extension.supportedAnalysisVersions);
 assert.equal(MAX_SCREENSHOT_SIZE_BYTES, PUBLIC_CONTRACT.limits.screenshotBytes);
 assert.equal(MAX_SCREENSHOT_PIXELS, PUBLIC_CONTRACT.limits.screenshotPixels);

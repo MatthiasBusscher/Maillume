@@ -18,7 +18,6 @@ export default defineConfig({
     command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
     env: {
       ANALYSIS_MODE: "heuristic",
-      ACCOUNTS_ENABLED: "false",
       FEEDBACK_STORAGE: "memory",
       MAILLUME_OPERATOR_LEGAL_NAME: "Example B.V.",
       MAILLUME_OPERATOR_REGISTERED_ADDRESS: "Example street 1, 1234 AB Amsterdam",

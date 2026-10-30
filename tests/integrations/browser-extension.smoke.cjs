@@ -132,7 +132,6 @@ async function run() {
     assert.equal(await panelPage.locator("#scannerView").isVisible(), true, "the scanner must be the default panel view");
     assert.equal(await panelPage.locator("#settingsView").isHidden(), true, "connection controls must stay out of the scanner by default");
     assert.equal(await panelPage.locator("#settingsToggle").getAttribute("aria-expanded"), "false");
-    assert.equal(await panelPage.locator("#scannerView #connectionState").count(), 0, "browser connection state must live only in Settings");
     assert.equal(await panelPage.locator("#scannerView #destination").count(), 0, "deployment state must live only in Settings");
     assert.equal(await panelPage.locator("#endpoint").inputValue(), "https://app.maillume.io");
     assert.equal(await panelPage.locator("#result").isHidden(), true);
@@ -155,9 +154,9 @@ async function run() {
     assert.equal(await panelPage.locator("#scannerView").isHidden(), true, "Settings must replace rather than lengthen the scan workflow");
     assert.equal(await panelPage.locator("#settingsView").isVisible(), true);
     assert.equal(await panelPage.locator("#settingsToggle").getAttribute("aria-expanded"), "true");
-    assert.equal(await panelPage.locator("#connectionState").isVisible(), true, "connection state must be available in Settings");
+    assert.equal(await panelPage.locator("#connect, #apiKey, #manualSetup").count(), 0, "the anonymous panel must not offer account connection or API-key controls");
     assert.equal(await panelPage.locator("#destination").isVisible(), true, "deployment state must be available in Settings");
-    await assertPanelFitsViewport(panelPage, ["#settingsBack", "#endpoint", "#connect"]);
+    await assertPanelFitsViewport(panelPage, ["#settingsBack", "#endpoint", "#save"]);
     await panelPage.locator("#settingsBack").click();
     assert.equal(await panelPage.locator("#scannerView").isVisible(), true);
     assert.equal(await panelPage.locator("#settingsView").isHidden(), true);
@@ -178,55 +177,33 @@ async function run() {
     const recoveredBody = await waitForPanelBody(panelPage, "Window selection text");
     assert.equal(recoveredBody, "Window selection text");
     assert.equal(await panelPage.locator("#analyze").isEnabled(), true, "a captured message without a connection must offer a clear next step");
-    await panelPage.locator("#analyze").click();
-    assert.equal(await panelPage.locator("#status").textContent(), "Connect this browser first, or use Advanced manual setup.");
 
-    const rememberedKey = `mlm_${"r".repeat(43)}`;
-    await panelPage.evaluate(async (apiKey) => {
-      await chrome.storage.local.set({ apiKey });
-      await chrome.storage.session.remove(["apiKey"]);
-    }, rememberedKey);
-    await panelPage.reload();
-    await panelPage.locator("#settingsToggle").click();
-    assert.equal(await panelPage.locator("#apiKey").inputValue(), rememberedKey);
-    assert.equal(await panelPage.locator("#rememberApiKey").isChecked(), true);
-    await panelPage.getByText("Advanced manual setup", { exact: true }).click();
-    await panelPage.locator("#apiKeyVisibility").click();
-    assert.equal(await panelPage.locator("#apiKey").getAttribute("type"), "text");
-    assert.equal(await panelPage.locator("#apiKeyVisibility").getAttribute("aria-pressed"), "true");
-
-    const managedKey = `mlm_${"b".repeat(43)}`;
-    const managedExpiry = new Date(Date.now() + 90 * 86_400_000).toISOString();
-    const managedHardExpiry = new Date(Date.now() + 365 * 86_400_000).toISOString();
-    await panelPage.evaluate(async ({ apiKey, expiresAt, hardExpiresAt }) => {
+    // Upgrading from an account-based 0.4.x release must wipe its stored credentials.
+    await panelPage.evaluate(async () => {
       await chrome.storage.local.set({
-        apiKey,
-        apiKeyExpiresAt: expiresAt,
-        apiKeyHardExpiresAt: hardExpiresAt,
+        apiKey: `mlm_${"b".repeat(43)}`,
+        apiKeyExpiresAt: new Date(Date.now() + 90 * 86_400_000).toISOString(),
+        browserConnectionId: "mlb_12345678123441238123123456789abc",
         connectionKind: "browser",
         endpoint: "https://app.maillume.io",
       });
-      await chrome.storage.session.remove([
-        "apiKey",
-        "apiKeyExpiresAt",
-        "apiKeyHardExpiresAt",
-        "connectionKind",
-      ]);
-    }, { apiKey: managedKey, expiresAt: managedExpiry, hardExpiresAt: managedHardExpiry });
+      await chrome.storage.session.set({ apiKey: `mlm_${"r".repeat(43)}` });
+    });
     await panelPage.reload();
-    assert.equal(await panelPage.locator("#scannerView").isVisible(), true, "a connected browser must return to the scan workflow after reload");
-    await panelPage.locator("#settingsToggle").click();
-    assert.equal(await panelPage.locator("#apiKey").inputValue(), "", "a managed key must remain outside the manual field after reopening the panel");
-    assert.equal(await panelPage.locator("#apiKeyVisibility").isDisabled(), true, "a managed key must disable the manual field visibility control");
-    await panelPage.locator("#apiKeyVisibility").evaluate((element) => element.click());
-    assert.equal(await panelPage.locator("#apiKey").getAttribute("type"), "password", "the managed credential visibility control must not switch field state");
-    assert.equal(await panelPage.locator("#apiKeyVisibility").getAttribute("aria-pressed"), "false");
-    assert.equal(await panelPage.locator("#connectionState").textContent(), "Connected through your Maillume account.");
-    assert.equal(await panelPage.locator("#connect").isHidden(), true, "a healthy stored browser connection must not offer another connection action");
-    assert.equal(await panelPage.locator("#reset").isVisible(), true, "the connected state must retain a removal action");
-    await panelPage.locator("#reset").click();
-    assert.deepEqual(await panelPage.evaluate(async () => chrome.storage.local.get(["apiKey", "connectionKind"])), {}, "removing a browser connection must clear local credential state");
-    assert.equal(await panelPage.locator("#apiKeyVisibility").isDisabled(), false, "removing a browser connection must restore manual key visibility control");
+    await panelPage.locator("#settingsToggle").waitFor();
+    const deadline = Date.now() + 5_000;
+    let stored;
+    do {
+      stored = await panelPage.evaluate(async () => ({
+        local: await chrome.storage.local.get(null),
+        session: await chrome.storage.session.get(["apiKey"]),
+      }));
+    } while ((stored.local.apiKey || stored.session.apiKey) && Date.now() < deadline);
+    for (const key of ["apiKey", "apiKeyExpiresAt", "browserConnectionId", "connectionKind"]) {
+      assert.equal(stored.local[key], undefined, `legacy ${key} must be removed on upgrade`);
+    }
+    assert.equal(stored.session.apiKey, undefined, "a legacy session key must be removed on upgrade");
+    assert.equal(stored.local.endpoint, "https://app.maillume.io", "the chosen deployment survives the upgrade");
 
     await panelPage.locator("#reviewStep").evaluate((element) => { element.hidden = true; });
     assert.equal(await panelPage.locator("#reviewStep").isHidden(), true, "the review step must collapse after analysis");
@@ -237,7 +214,7 @@ async function run() {
     fs.rmSync(userDataDir, { force: true, recursive: true });
   }
 
-  console.log("Captured selections and verified in-panel recapture plus remembered-key visibility in Playwright Chromium.");
+  console.log("Captured selections and verified in-panel recapture plus legacy credential removal in Playwright Chromium.");
 }
 
 async function waitForPanelBody(panelPage, expectedBody) {

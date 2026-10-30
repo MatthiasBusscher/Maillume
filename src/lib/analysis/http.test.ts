@@ -44,21 +44,29 @@ async function main() {
   assert.equal(oversized.ok, false);
   if (!oversized.ok) assert.equal(oversized.failure.status, 413);
 
-  let capturedLimit = 0;
-  let capturedWindow = 0;
+  const capturedBuckets: Array<{ bucketName?: string; maxRequests: number; windowMs: number }> = [];
   const allowed = enforceAnalysisRequestLimit(new Request("https://example.test/api/analyze"), {
     env: {
+      ANALYSIS_DAILY_REQUEST_LIMIT: "40",
       ANALYSIS_REQUEST_LIMIT: "7",
       ANALYSIS_REQUEST_WINDOW_SECONDS: "12",
     },
-    enforce: (_request, options) => {
-      capturedLimit = options.maxRequests;
-      capturedWindow = options.windowMs;
+    enforce: (_request, { bucketName, maxRequests, windowMs }) => {
+      capturedBuckets.push({ bucketName, maxRequests, windowMs });
     },
   });
   assert.equal(allowed, null);
-  assert.equal(capturedLimit, 7);
-  assert.equal(capturedWindow, 12_000);
+  assert.deepEqual(capturedBuckets, [
+    { bucketName: undefined, maxRequests: 7, windowMs: 12_000 },
+    { bucketName: "daily", maxRequests: 40, windowMs: 86_400_000 },
+  ]);
+
+  const defaultBuckets: number[] = [];
+  enforceAnalysisRequestLimit(new Request("https://example.test/api/analyze"), {
+    env: {},
+    enforce: (_request, { maxRequests }) => { defaultBuckets.push(maxRequests); },
+  });
+  assert.deepEqual(defaultBuckets, [20, 300]);
 
   const limited = enforceAnalysisRequestLimit(new Request("https://example.test/api/analyze"), {
     enforce: () => {

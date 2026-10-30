@@ -14,8 +14,8 @@ import { localizePath } from "@/lib/i18n/site-locale";
 export async function generateMetadata(): Promise<Metadata> { const locale = await getRequestSiteLocale(); return { title: locale === "nl" ? "Zo werkt Maillume" : "How Maillume works", description: locale === "nl" ? "Bekijk hoe Maillume een bericht controleert, wat het kan aangeven en wat het bewust niet doet." : "See how Maillume checks a message, what it can tell you, and what it deliberately does not do." }; }
 
 const roadmap = [
-  { status: "Available", title: "Chrome extension", description: "Install the official extension from the Chrome Web Store and connect it with a revocable Maillume API key.", guide: true },
-  { status: "Later", title: "Hosted AI and paid plans", description: "Managed AI and paid plans remain unavailable until costs, privacy, abuse controls, billing, and real demand have been validated.", guide: false },
+  { status: "Available", title: "Chrome extension", description: "Install the official extension from the Chrome Web Store and check a message right away. No account needed.", guide: true },
+  { status: "Not planned", title: "Accounts, hosted AI, and paid plans", description: "Maillume stays a free, anonymous tool. There are no accounts or subscriptions, and the hosted service does not use a maintainer-owned AI key.", guide: false },
 ];
 
 export default async function PlatformPage() {
@@ -27,7 +27,7 @@ export default async function PlatformPage() {
       <PageIntro
         eyebrow="How Maillume works"
         title="A clear second opinion before you act."
-        description="Choose one message, start the check deliberately, and get an explanation you can inspect. Accounts are optional for integrations; hosted AI and scan history remain off."
+        description="Choose one message, start the check deliberately, and get an explanation you can inspect. No account, no hosted AI, and no scan history."
         actions={
           <>
             <a href="#today" className="inline-flex h-12 items-center gap-2 bg-[#dfff52] px-5 text-sm font-bold text-[#111711] hover:bg-white">See what Maillume checks <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
@@ -45,12 +45,12 @@ export default async function PlatformPage() {
               Paste an email, use a screenshot, or open an exported .eml file. Maillume applies the same explainable, versioned risk index to each input and returns a practical next step.
             </p>
             <p className="mt-4 border-l-4 border-[#c78c32] bg-[#fff0cf] px-4 py-3 text-sm leading-6 text-[#714812]">
-              Email and Google sign-in, TOTP protection, and quota-limited API keys are available for people who need integrations. They never create scan history. Maintainer-hosted AI remains unavailable.
+              Maillume has no accounts. The web scanner, the Chrome extension, and the analysis API all work anonymously under fair-use limits per connection. Maintainer-hosted AI remains unavailable.
             </p>
             <ul className="mt-7 space-y-3">
               <PlatformCheck>Anonymous paste, screenshot, and .eml checks</PlatformCheck>
               <PlatformCheck>Built-in checks based on visible warning signs</PlatformCheck>
-              <PlatformCheck>Optional accounts with TOTP and revocable API keys</PlatformCheck>
+              <PlatformCheck>Official Chrome extension without an account</PlatformCheck>
               <PlatformCheck>No scan history or retained source files</PlatformCheck>
               <PlatformCheck>Automated-assessment disclaimer in every result</PlatformCheck>
             </ul>
@@ -65,7 +65,7 @@ export default async function PlatformPage() {
               <BetaBoundary label="Scanner" value={locale === "nl" ? "Anoniem beschikbaar" : "Available anonymously"} />
               <BetaBoundary label="Analysis" value={locale === "nl" ? "Ingebouwde controles" : "Built-in checks"} />
               <BetaBoundary label="Retention" value={locale === "nl" ? "Geen scangeschiedenis" : "No scan history"} />
-              <BetaBoundary label="Accounts and API" value={locale === "nl" ? "Optioneel" : "Optional"} />
+              <BetaBoundary label="Accounts" value={locale === "nl" ? "Niet nodig" : "Not needed"} />
               <BetaBoundary label="Chrome extension" value="Chrome Web Store" />
             </dl>
           </div>
@@ -87,7 +87,7 @@ export default async function PlatformPage() {
           <div className="mt-14 grid border-y border-white/35 md:grid-cols-3 md:divide-x md:divide-white/25">
             <Principle icon={MailCheck} title="User initiated" description="No background mailbox harvesting or silent scanning." />
             <Principle icon={ShieldCheck} title="Explicit boundary" description="The public service accepts only the current web request and stores no scan history." />
-            <Principle icon={PlugZap} title="Official Chrome extension" description="Install it from the Chrome Web Store, then connect it with a revocable Maillume API key." />
+            <Principle icon={PlugZap} title="Official Chrome extension" description="Install it from the Chrome Web Store and check messages without an account." />
           </div>
         </div>
       </section>

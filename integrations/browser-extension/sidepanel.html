@@ -13,7 +13,7 @@
         <h1>Maillume</h1>
         <p data-nl="E-mail beoordelen">Review an email</p>
       </div>
-      <button id="settingsToggle" type="button" class="settings-toggle" aria-label="Open connection settings" data-nl-aria-label="Verbindingsinstellingen openen" aria-controls="settingsView" aria-expanded="false">
+      <button id="settingsToggle" type="button" class="settings-toggle" aria-label="Open settings" data-nl-aria-label="Instellingen openen" aria-controls="settingsView" aria-expanded="false">
         <svg class="settings-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2Z"/><path d="M19.2 13.4a7.4 7.4 0 0 0 .1-1.4 7.4 7.4 0 0 0-.1-1.4l2-1.5-2-3.4-2.4 1a8.6 8.6 0 0 0-2.4-1.4L14 2.7h-4l-.4 2.6a8.6 8.6 0 0 0-2.4 1.4l-2.4-1-2 3.4 2 1.5a7.4 7.4 0 0 0-.1 1.4 7.4 7.4 0 0 0 .1 1.4l-2 1.5 2 3.4 2.4-1a8.6 8.6 0 0 0 2.4 1.4l.4 2.6h4l.4-2.6a8.6 8.6 0 0 0 2.4-1.4l2.4 1 2-3.4-2-1.5Z"/></svg>
       </button>
     </header>
@@ -75,37 +75,17 @@
             <span data-nl="Terug naar e-mailcontrole">Back to email review</span>
           </button>
           <p class="settings-page-eyebrow" data-nl="Instellingen">Settings</p>
-          <h2 id="settingsHeading" tabindex="-1" data-nl="Verbindingsinstellingen">Connection settings</h2>
-          <p data-nl="Beheer de veilige verbinding van dit Chrome-profiel. E-mailinhoud en resultaten worden hier niet opgeslagen.">Manage this Chrome profile’s secure connection. Email content and results are not stored here.</p>
+          <h2 id="settingsHeading" tabindex="-1" data-nl="Omgeving">Deployment</h2>
+          <p data-nl="Kies waar berichten worden geanalyseerd. Standaard is dat app.maillume.io.">Choose where messages are analyzed. The default is app.maillume.io.</p>
         </div>
 
         <div class="settings fields">
           <label><span data-nl="Maillume-omgeving">Maillume deployment</span> <input id="endpoint" type="url" value="https://app.maillume.io" /></label>
-          <section class="automatic-connection">
-            <h3 data-nl="Veilig verbinden met je account">Connect securely with your account</h3>
-            <p data-nl="Maillume opent een korte goedkeuringspagina en verbindt deze browser na jouw toestemming. Je hoeft geen API-sleutel te kopiëren.">Maillume opens a short approval page and connects this browser after your permission. You do not need to copy an API key.</p>
-            <p id="connectionState" class="connection-state" data-nl="Deze browser is niet verbonden.">This browser is not connected.</p>
-            <p id="destination" class="destination"></p>
-            <button id="connect" type="button" data-nl="Deze browser verbinden">Connect this browser</button>
-            <button id="reset" type="button" class="danger" data-nl="Verbinding verwijderen" hidden>Remove connection</button>
-          </section>
-          <details id="manualSetup" class="advanced-setup">
-            <summary data-nl="Geavanceerde handmatige configuratie">Advanced manual setup</summary>
-            <div class="fields">
-              <p class="small" data-nl="Gebruik dit alleen voor oudere omgevingen, ontwikkeling of herstel. Voor app.maillume.io is veilig verbinden met je account de aanbevolen methode.">Use this only for older deployments, development, or recovery. For app.maillume.io, secure account connection is the recommended method.</p>
-              <label><span data-nl="API-sleutel">API key</span>
-                <span class="secret-field">
-                  <input id="apiKey" type="password" autocomplete="off" placeholder="mlm_..." />
-                  <button id="apiKeyVisibility" type="button" class="icon-button" aria-label="Show API key" data-nl-aria-label="API-sleutel tonen" aria-pressed="false">
-                    <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m4 4 16 16"/></svg>
-                  </button>
-                </span>
-              </label>
-              <label class="remember-key"><input id="rememberApiKey" type="checkbox" checked /> <span data-nl="Handmatige sleutel op dit apparaat onthouden">Remember manual key on this device</span></label>
-              <button id="save" type="button" class="secondary" data-nl="Handmatige verbinding opslaan">Save manual connection</button>
-            </div>
-          </details>
-          <p class="small" data-nl="De omgeving en browserverbinding worden lokaal in dit Chrome-profiel opgeslagen. Berichtinhoud en resultaten worden nooit opgeslagen.">The deployment and browser connection are stored locally in this Chrome profile. Message content and results are never stored.</p>
+          <p id="destination" class="destination"></p>
+          <p class="small" data-nl="Wijzig dit alleen als je je eigen Maillume-installatie gebruikt. Chrome vraagt één keer om toegang tot de gekozen omgeving.">Only change this if you run your own Maillume installation. Chrome asks once for access to the chosen deployment.</p>
+          <button id="save" type="button" class="secondary" data-nl="Omgeving opslaan">Save deployment</button>
+          <button id="reset" type="button" class="secondary" data-nl="Standaard herstellen" hidden>Restore default</button>
+          <p class="small" data-nl="Er is geen account nodig. Alleen de gekozen omgeving wordt in dit Chrome-profiel opgeslagen; berichtinhoud en resultaten nooit.">No account is needed. Only the chosen deployment is stored in this Chrome profile; message content and results never are.</p>
         </div>
         <p id="settingsStatus" class="settings-status" role="status" aria-live="polite"></p>
       </section>

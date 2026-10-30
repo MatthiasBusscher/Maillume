@@ -14,12 +14,7 @@ import { PageIntro } from "@/components/page-intro";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getRequestSiteLocale } from "@/lib/i18n/request-locale";
-import { localizeHref } from "@/lib/i18n/site-locale";
-import {
-  BROWSER_EXTENSION_SOURCE_URL,
-  BROWSER_EXTENSION_STORE_URL,
-  getAppRouteHref,
-} from "@/lib/site";
+import { BROWSER_EXTENSION_SOURCE_URL, BROWSER_EXTENSION_STORE_URL } from "@/lib/site";
 
 const copy = {
   en: {
@@ -42,15 +37,13 @@ const copy = {
       { title: "Analyze and act", text: "Start the analysis to receive the same explainable risk score, signals, and recommended next step as the web scanner." },
     ],
     installEyebrow: "Getting started",
-    installTitle: "Connect the extension in four steps.",
+    installTitle: "Start checking in three steps. No account needed.",
     requirementsTitle: "Before you start",
-    requirements: ["Chrome 116 or newer", "A Maillume account with two-factor authentication", "A Gmail or Outlook webmail account for message capture"],
-    accountCta: "Open your Maillume account",
+    requirements: ["Chrome 116 or newer", "A Gmail or Outlook webmail account for message capture"],
     installSteps: [
       { title: "Add Maillume to Chrome", text: "Open the official Chrome Web Store listing, choose Add to Chrome, and pin Maillume to the Chrome toolbar for easier access." },
       { title: "Open a message", text: "Open one message in Gmail or Outlook and click the Maillume icon to open the side panel." },
-      { title: "Connect this browser", text: "Choose Connect this browser. Sign in to Maillume, review the browser request, and approve it with two-factor authentication. No API key needs to be copied." },
-      { title: "Analyze deliberately", text: "Return to the side panel, review the captured subject, sender, and text, then choose Analyze message." },
+      { title: "Analyze deliberately", text: "Review the captured subject, sender, and text, then choose Analyze message. The first time, Chrome asks once to let Maillume reach app.maillume.io." },
     ],
     useEyebrow: "Using the extension",
     useTitle: "Review every message before analysis.",
@@ -66,17 +59,17 @@ const copy = {
     privacyItems: [
       { title: "No background scanning", text: "The extension acts only after you click it and does not crawl or monitor your mailbox." },
       { title: "No stored messages or results", text: "Captured message content and completed assessments are not written to extension storage or Maillume scan history." },
-      { title: "One revocable browser connection", text: "This Chrome profile receives its own credential. Reconnecting replaces it, and you can revoke the browser from your Maillume account at any time." },
-      { title: "Deployment-specific permission", text: "Chrome asks for access only to the Maillume deployment you choose. Removing the connection also removes that access." },
+      { title: "No account, no credential", text: "The extension works anonymously. It stores only which Maillume deployment to use, never a password, API key, or identifier for you." },
+      { title: "Deployment-specific permission", text: "Chrome asks for access only to the Maillume deployment you choose, the first time you analyze a message. Choosing another deployment removes the previous access." },
     ],
     updatesEyebrow: "Updates and removal",
     updatesTitle: "Chrome handles updates automatically.",
-    updatesText: "Store-installed extensions receive updates through Chrome. To disconnect, choose Remove connection in the side panel. You can remove the extension at any time from Chrome's extension settings, while the source remains public for inspection.",
+    updatesText: "Store-installed extensions receive updates through Chrome. You can remove the extension at any time from Chrome's extension settings, while the source remains public for inspection.",
     sourceCta: "Inspect the extension source",
     troubleshootingEyebrow: "Troubleshooting",
-    troubleshootingTitle: "Two common setup messages.",
+    troubleshootingTitle: "Two common messages.",
     troubleshootingItems: [
-      { title: "Connection not configured", text: "Open Connection settings and choose Connect this browser. Sign in, approve the request, and return to the side panel." },
+      { title: "Chrome did not grant access", text: "Choose Analyze message again and allow access to app.maillume.io when Chrome asks. Maillume needs it to send the reviewed text for analysis." },
       { title: "More than one message is expanded", text: "Collapse the other message or select the exact text you want to assess before clicking Maillume again." },
     ],
     finalEyebrow: "Ready to check a message?",
@@ -102,15 +95,13 @@ const copy = {
       { title: "Analyseren en handelen", text: "Start de analyse voor dezelfde uitlegbare risicoscore, signalen en aanbevolen vervolgstap als in de webscanner." },
     ],
     installEyebrow: "Aan de slag",
-    installTitle: "Verbind de extensie in vier stappen.",
+    installTitle: "Begin in drie stappen. Geen account nodig.",
     requirementsTitle: "Dit heb je nodig",
-    requirements: ["Chrome 116 of nieuwer", "Een Maillume-account met tweefactorauthenticatie", "Een Gmail- of Outlook-webmailaccount om berichten vast te leggen"],
-    accountCta: "Open je Maillume-account",
+    requirements: ["Chrome 116 of nieuwer", "Een Gmail- of Outlook-webmailaccount om berichten vast te leggen"],
     installSteps: [
       { title: "Voeg Maillume toe aan Chrome", text: "Open de officiële vermelding in de Chrome Web Store, kies Toevoegen aan Chrome en zet Maillume vast in de Chrome-werkbalk voor eenvoudige toegang." },
       { title: "Open een bericht", text: "Open één bericht in Gmail of Outlook en klik op het Maillume-pictogram om het zijpaneel te openen." },
-      { title: "Verbind deze browser", text: "Kies Deze browser verbinden. Log in bij Maillume, controleer het browserverzoek en keur het goed met tweefactorauthenticatie. Je hoeft geen API-sleutel te kopiëren." },
-      { title: "Analyseer bewust", text: "Ga terug naar het zijpaneel, controleer het vastgelegde onderwerp, de afzender en de tekst en kies daarna Bericht analyseren." },
+      { title: "Analyseer bewust", text: "Controleer het vastgelegde onderwerp, de afzender en de tekst en kies daarna Bericht analyseren. De eerste keer vraagt Chrome eenmalig of Maillume app.maillume.io mag bereiken." },
     ],
     useEyebrow: "De extensie gebruiken",
     useTitle: "Controleer elk bericht vóór de analyse.",
@@ -126,17 +117,17 @@ const copy = {
     privacyItems: [
       { title: "Geen scans op de achtergrond", text: "De extensie komt alleen in actie nadat je erop klikt en doorzoekt of bewaakt je mailbox niet." },
       { title: "Geen opgeslagen berichten of resultaten", text: "Vastgelegde berichtinhoud en voltooide beoordelingen worden niet in extensieopslag of Maillume-scanhistorie geschreven." },
-      { title: "Eén intrekbare browserverbinding", text: "Dit Chrome-profiel krijgt een eigen sleutel. Opnieuw verbinden vervangt die sleutel en je kunt de browser altijd vanuit je Maillume-account intrekken." },
-      { title: "Machtiging per omgeving", text: "Chrome vraagt alleen toegang tot de Maillume-omgeving die jij kiest. Als je de verbinding verwijdert, wordt die toegang ook verwijderd." },
+      { title: "Geen account, geen sleutel", text: "De extensie werkt anoniem. Ze bewaart alleen welke Maillume-omgeving ze gebruikt, nooit een wachtwoord, API-sleutel of kenmerk van jou." },
+      { title: "Machtiging per omgeving", text: "Chrome vraagt alleen toegang tot de Maillume-omgeving die jij kiest, de eerste keer dat je een bericht analyseert. Kies je een andere omgeving, dan vervalt de vorige toegang." },
     ],
     updatesEyebrow: "Bijwerken en verwijderen",
     updatesTitle: "Chrome verwerkt updates automatisch.",
-    updatesText: "Extensies uit de Store ontvangen updates via Chrome. Kies Verbinding verwijderen in het zijpaneel als je wilt ontkoppelen. Je kunt de extensie altijd verwijderen via de extensie-instellingen van Chrome; de broncode blijft openbaar om te inspecteren.",
+    updatesText: "Extensies uit de Store ontvangen updates via Chrome. Je kunt de extensie altijd verwijderen via de extensie-instellingen van Chrome; de broncode blijft openbaar om te inspecteren.",
     sourceCta: "Bekijk de broncode van de extensie",
     troubleshootingEyebrow: "Problemen oplossen",
-    troubleshootingTitle: "Twee veelvoorkomende meldingen bij het instellen.",
+    troubleshootingTitle: "Twee veelvoorkomende meldingen.",
     troubleshootingItems: [
-      { title: "Verbinding niet ingesteld", text: "Open Verbindingsinstellingen en kies Deze browser verbinden. Log in, keur het verzoek goed en ga terug naar het zijpaneel." },
+      { title: "Chrome gaf geen toegang", text: "Kies opnieuw Bericht analyseren en sta toegang tot app.maillume.io toe als Chrome erom vraagt. Maillume heeft die nodig om de gecontroleerde tekst te laten analyseren." },
       { title: "Er zijn meerdere berichten uitgeklapt", text: "Klap het andere bericht in of selecteer de exacte tekst die je wilt beoordelen voordat je opnieuw op Maillume klikt." },
     ],
     finalEyebrow: "Klaar om een bericht te controleren?",
@@ -152,7 +143,6 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ChromeExtensionPage() {
   const locale = await getRequestSiteLocale();
   const text = copy[locale];
-  const accountHref = localizeHref(getAppRouteHref("/account"), locale);
 
   return (
     <main className="min-h-screen bg-[#f7f8f4]">
@@ -215,9 +205,6 @@ export default async function ChromeExtensionPage() {
               <ul className="mt-4 space-y-3">
                 {text.requirements.map((item) => <CheckItem key={item}>{item}</CheckItem>)}
               </ul>
-              <a href={accountHref} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#087b72] hover:text-[#111711]">
-                <KeyRound className="h-4 w-4" aria-hidden="true" /> {text.accountCta} <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </a>
             </div>
           </div>
           <ol className="border-t border-[#111711]">

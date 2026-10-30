@@ -1,9 +1,5 @@
-import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { getPublicSupabaseConfig } from "@/lib/supabase/config";
-import { areAccountsEnabled } from "@/lib/accounts/config";
-import { getOAuthFailureUrl, hasOAuthErrorReturn } from "@/lib/auth/oauth-return";
 import {
   DEFAULT_SITE_LOCALE,
   getPathLocale,
@@ -19,12 +15,11 @@ import {
 } from "@/lib/i18n/site-locale";
 import { createContentSecurityPolicy } from "@/lib/security/csp";
 
-export async function proxy(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const contentSecurityPolicy = createContentSecurityPolicy({
     isDevelopment: process.env.NODE_ENV !== "production",
     nonce,
-    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
   });
   const createRequestHeaders = () => {
     const headers = new Headers(request.headers);
@@ -42,21 +37,6 @@ export async function proxy(request: NextRequest) {
   const originalPathname = request.nextUrl.pathname;
   const pathLocale = getPathLocale(originalPathname);
 
-  if (isAppHostname && originalPathname === "/") {
-    if (hasOAuthErrorReturn(request.nextUrl)) {
-      if (!areAccountsEnabled()) {
-        targetUrl.pathname = "/app";
-        targetUrl.search = "";
-        return secureResponse(NextResponse.redirect(targetUrl, 307));
-      }
-      return secureResponse(NextResponse.redirect(getOAuthFailureUrl(targetUrl.origin), 307));
-    }
-    if (request.nextUrl.searchParams.has("code")) {
-      targetUrl.pathname = "/auth/callback";
-      return secureResponse(NextResponse.redirect(targetUrl, 307));
-    }
-  }
-
   if (hostname === "maillume.nl" || hostname === "www.maillume.nl") {
     targetUrl.protocol = "https:";
     targetUrl.hostname = "maillume.io";
@@ -65,14 +45,11 @@ export async function proxy(request: NextRequest) {
     return secureResponse(NextResponse.redirect(targetUrl, 301));
   }
 
-  if (
-    (hostname === "maillume.io" || hostname === "www.maillume.io")
-    && /^\/(?:auth|account)(?:\/|$)/.test(stripSiteLocale(originalPathname))
-  ) {
-    targetUrl.protocol = "https:";
-    targetUrl.hostname = "app.maillume.io";
-    targetUrl.port = "";
-    return secureResponse(NextResponse.redirect(targetUrl, 307));
+  // Accounts were retired; old sign-in, account, and extension-approval links land on the scanner.
+  if (/^\/(?:auth|account)(?:\/|$)/.test(stripSiteLocale(originalPathname))) {
+    targetUrl.pathname = localizePath("/app", pathLocale ?? DEFAULT_SITE_LOCALE);
+    targetUrl.search = "";
+    return secureResponse(NextResponse.redirect(targetUrl, 308));
   }
 
   if (hostname === "www.maillume.io") {
@@ -140,46 +117,7 @@ export async function proxy(request: NextRequest) {
 
     return secureResponse(nextResponse);
   };
-  let response = createResponse();
-
-  if (!areAccountsEnabled()) {
-    return response;
-  }
-
-  const config = getPublicSupabaseConfig();
-
-  if (!config) {
-    return response;
-  }
-
-  const supabase = createServerClient(config.url, config.publishableKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet, headers) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-
-        const nextResponse = createResponse();
-
-        cookiesToSet.forEach(({ name, options, value }) => {
-          nextResponse.cookies.set(name, value, options);
-        });
-        Object.entries(headers).forEach(([name, value]) => {
-          nextResponse.headers.set(name, value);
-        });
-        response = nextResponse;
-      },
-    },
-  });
-
-  try {
-    await supabase.auth.getClaims();
-  } catch {
-    // Authentication is optional; an auth outage must not block anonymous scanning.
-  }
-
-  return response;
+  return createResponse();
 }
 
 function setLocalePreferenceCookies(
@@ -207,10 +145,6 @@ function shouldUseLocalizedPage(request: NextRequest, pathname = request.nextUrl
   if (request.method !== "GET" && request.method !== "HEAD") return false;
   return ![
     "/api/",
-    "/auth/callback",
-    "/auth/sign-out",
-    "/account/api-keys",
-    "/account/delete",
     "/language/",
   ].some((prefix) => pathname === prefix.replace(/\/$/, "") || pathname.startsWith(prefix));
 }

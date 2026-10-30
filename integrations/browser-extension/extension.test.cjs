@@ -455,11 +455,12 @@ function createStreamingJsonResponse(payload, status, { chunks, contentLength } 
 
 async function testPanelSendsCapturedLinkMetadata() {
   const runtime = event();
-  const ids = ["scannerView", "settingsView", "settingsToggle", "settingsBack", "settingsHeading", "capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "apiKey", "apiKeyVisibility", "rememberApiKey", "manualSetup", "connectionState", "connect", "save", "reset", "destination", "analyze", "status", "settingsStatus", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"];
+  const ids = ["scannerView", "settingsView", "settingsToggle", "settingsBack", "settingsHeading", "capture", "captureHelp", "captureHelpToggle", "reviewStep", "subject", "sender", "body", "endpoint", "save", "reset", "destination", "analyze", "status", "settingsStatus", "result", "score", "level", "classification", "explanation", "coverageSection", "coverageSummary", "coverage", "factors", "signals", "action"];
   const elements = new Map(ids.map((id) => [id, createPanelElement()]));
   elements.get("settingsView").hidden = true;
-  const localStorage = { endpoint: "https://app.maillume.io" };
-  const sessionStorage = { apiKey: `mlm_${"a".repeat(43)}` };
+  // Credentials left behind by the account-based 0.4.x releases must be wiped on start-up.
+  const localStorage = { apiKey: `mlm_${"a".repeat(43)}`, apiKeyExpiresAt: "2027-01-01T00:00:00.000Z", connectionKind: "browser", browserConnectionId: "mlb_12345678123441238123123456789abc" };
+  const sessionStorage = { apiKey: `mlm_${"b".repeat(43)}`, extensionPairing: { endpoint: "https://app.maillume.io" } };
   const getStored = (storage, keys) => Object.fromEntries(keys.filter((key) => storage[key] !== undefined).map((key) => [key, storage[key]]));
   const setStored = async (storage, values) => { Object.assign(storage, values); };
   const removeStored = async (storage, keys) => { keys.forEach((key) => { delete storage[key]; }); };
@@ -516,20 +517,14 @@ async function testPanelSendsCapturedLinkMetadata() {
   let responseContentLength;
   let permissionGranted = true;
   let requestHeaders;
-  let pairingStartPayload;
-  let pairingMode = false;
-  let capabilityLatestVersion = "0.4.2";
-  let lifecyclePairingResponse = true;
-  let openedApprovalUrl;
-  const pairingId = "40000000-0000-4000-8000-000000000004";
-  const deviceCode = `mlp_${"d".repeat(43)}`;
-  const pairedKey = `mlm_${"p".repeat(43)}`;
+  let requestCount = 0;
+  let requestedOrigins;
   const context = {
     chrome: {
       i18n: { getUILanguage: () => "en-US" },
       runtime: {
         id: "bjiiailjalkfjimkjdikoockjlnjolle",
-        getManifest: () => ({ version: "0.4.2" }),
+        getManifest: () => ({ version: "0.5.0" }),
         onMessage: runtime,
         sendMessage: async () => responses.shift(),
       },
@@ -537,9 +532,8 @@ async function testPanelSendsCapturedLinkMetadata() {
         local: { get: async (keys) => getStored(localStorage, keys), set: async (values) => setStored(localStorage, values), remove: async (keys) => removeStored(localStorage, keys) },
         session: { get: async (keys) => getStored(sessionStorage, keys), set: async (values) => setStored(sessionStorage, values), remove: async (keys) => removeStored(sessionStorage, keys) },
       },
-      permissions: { request: async () => permissionGranted, remove: async () => true },
+      permissions: { request: async ({ origins }) => { requestedOrigins = origins; return permissionGranted; }, remove: async () => true },
       tabs: {
-        create: async ({ url }) => { openedApprovalUrl = url; return {}; },
         query: async () => [{ id: 22 }],
       },
     },
@@ -553,69 +547,8 @@ async function testPanelSendsCapturedLinkMetadata() {
     console,
     crypto: { randomUUID: () => "12345678-1234-4123-8123-123456789abc" },
     fetch: async (url, options = {}) => {
-      if (pairingMode) {
-        const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString();
-        if (url.endsWith("/api/v1/capabilities")) {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => ({
-              analysis_version: "analysis-v12",
-              api_version: "v1",
-              extension: {
-                id: "bjiiailjalkfjimkjdikoockjlnjolle",
-                latest_version: capabilityLatestVersion,
-                minimum_analysis_version: "0.3.8",
-                minimum_pairing_version: "0.3.9",
-                pairing_available: true,
-                supported_analysis_versions: ["analysis-v12"],
-              },
-            }),
-          };
-        }
-        if (options.method === "POST") {
-          pairingStartPayload = JSON.parse(options.body);
-          requestHeaders = options.headers;
-          return {
-            ok: true,
-            status: 201,
-            json: async () => ({
-              device_code: deviceCode,
-              expires_at: expiresAt,
-              expires_in: 600,
-              interval: 1,
-              pairing_id: pairingId,
-              user_code: "2345-6789",
-              verification_uri_complete: `https://app.maillume.io/account/connect-extension/${pairingId}?code=2345-6789`,
-            }),
-          };
-        }
-        requestHeaders = options.headers;
-        return {
-          headers: { get: () => null },
-          ok: true,
-          status: 201,
-          json: async () => ({
-            key: {
-              created_at: new Date().toISOString(),
-              expires_at: new Date(Date.now() + 365 * 86_400_000).toISOString(),
-              id: "50000000-0000-4000-8000-000000000005",
-              key_prefix: pairedKey.slice(0, 12),
-              monthly_quota: 25,
-              name: "Chrome extension · macOS",
-              rotated_from_id: null,
-              ...(lifecyclePairingResponse
-                ? {
-                    credential_kind: "browser",
-                    inactive_after: new Date(Date.now() + 90 * 86_400_000).toISOString(),
-                  }
-                : {}),
-            },
-            plaintext: pairedKey,
-            status: "connected",
-          }),
-        };
-      }
+      requestCount += 1;
+      assert.equal(url, `${localStorage.endpoint ?? "https://app.maillume.io"}/api/v1/analyze`);
       requestPayload = JSON.parse(options.body);
       requestHeaders = options.headers;
       return createStreamingJsonResponse(responsePayload, responseStatus, {
@@ -623,7 +556,6 @@ async function testPanelSendsCapturedLinkMetadata() {
         contentLength: responseContentLength,
       });
     },
-    navigator: { platform: "macOS" },
     setTimeout,
     TextDecoder,
     Uint8Array,
@@ -642,26 +574,35 @@ async function testPanelSendsCapturedLinkMetadata() {
   assert.equal(elements.get("scannerView").hidden, false);
   assert.equal(elements.get("settingsView").hidden, true);
   assert.equal(elements.get("settingsToggle").getAttribute("aria-expanded"), "false");
-  assert.equal(elements.get("rememberApiKey").checked, false, "an existing session-only key must remain session-only until the user opts in");
-  await elements.get("apiKeyVisibility").dispatch("click");
-  assert.equal(elements.get("apiKey").type, "text");
-  assert.equal(elements.get("apiKeyVisibility").getAttribute("aria-pressed"), "true");
-  await elements.get("apiKeyVisibility").dispatch("click");
-  assert.equal(elements.get("apiKey").type, "password");
-  await elements.get("settingsToggle").dispatch("click");
-  assert.equal(elements.get("settingsView").hidden, false, "manual setup must remain inside the dedicated Settings view");
+  for (const key of ["apiKey", "apiKeyExpiresAt", "connectionKind", "browserConnectionId"]) {
+    assert.equal(localStorage[key], undefined, `legacy ${key} must be removed from local storage`);
+  }
+  assert.equal(sessionStorage.apiKey, undefined, "a legacy session key must be removed");
+  assert.equal(sessionStorage.extensionPairing, undefined, "a legacy pairing must be removed");
+  assert.equal(elements.get("endpoint").value, "https://app.maillume.io");
+  assert.equal(elements.get("reset").hidden, true, "the default deployment needs no restore action");
+
+  elements.get("endpoint").value = "not a url";
+  await elements.get("save").dispatch("click");
+  assert.equal(elements.get("status").textContent, "Enter an HTTPS deployment URL, or an HTTP localhost URL for local testing.");
+  elements.get("endpoint").value = "https://maillume.example.test/";
+  await elements.get("save").dispatch("click");
+  assert.equal(localStorage.endpoint, "https://maillume.example.test");
+  assert.equal(elements.get("status").textContent, "Deployment saved: https://maillume.example.test");
+  assert.equal(elements.get("reset").hidden, false);
+  await elements.get("reset").dispatch("click");
+  assert.equal(localStorage.endpoint, undefined, "restoring the default must not store a redundant endpoint");
+  assert.equal(elements.get("endpoint").value, "https://app.maillume.io");
+  assert.equal(elements.get("status").textContent, "Restored the default deployment, app.maillume.io.");
+  await elements.get("settingsBack").dispatch("click");
+
   permissionGranted = false;
-  await elements.get("save").dispatch("click");
-  assert.equal(elements.get("status").textContent, "Chrome did not grant access to that deployment.");
+  await elements.get("analyze").dispatch("click");
+  assert.deepEqual(plain(requestedOrigins), ["https://app.maillume.io/*"]);
+  assert.equal(requestCount, 0, "nothing may be sent without the deployment permission");
+  assert.equal(elements.get("status").textContent, "Chrome did not grant access to the Maillume deployment, so the message was not sent.");
+  assert.equal(elements.get("analyze").disabled, false, "a denied permission must leave analysis available to retry");
   permissionGranted = true;
-  elements.get("rememberApiKey").checked = true;
-  await elements.get("save").dispatch("click");
-  assert.equal(localStorage.apiKey, `mlm_${"a".repeat(43)}`);
-  assert.equal(sessionStorage.apiKey, undefined);
-  assert.equal(elements.get("status").textContent, "Deployment and API key saved in this Chrome profile for restarts and updates.");
-  assert.equal(elements.get("settingsStatus").textContent, "Deployment and API key saved in this Chrome profile for restarts and updates.");
-  assert.equal(elements.get("scannerView").hidden, false, "a successful connection must return to the scanner");
-  assert.equal(elements.get("settingsView").hidden, true, "a successful connection must close Settings");
   await elements.get("captureHelpToggle").dispatch("click");
   assert.equal(elements.get("captureHelp").hidden, true);
   assert.equal(elements.get("captureHelpToggle").textContent, "Show instructions");
@@ -680,7 +621,8 @@ async function testPanelSendsCapturedLinkMetadata() {
       destinationUrl: "https://bit.ly/synthetic-review",
     }],
   });
-  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.2");
+  assert.equal(requestHeaders.Authorization, undefined, "anonymous analysis must not send a credential");
+  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.5.0");
   assert.equal(requestHeaders["X-Maillume-Extension-Id"], "bjiiailjalkfjimkjdikoockjlnjolle");
   assert.equal(requestHeaders["X-Maillume-Analysis-Versions"].includes("analysis-v12"), true);
   assert.equal(elements.get("reviewStep").hidden, true, "successful analysis must collapse the captured-detail step");
@@ -814,64 +756,15 @@ async function testPanelSendsCapturedLinkMetadata() {
     true,
     "selected text must be marked as incomplete evidence",
   );
-  assert.equal(elements.get("result").hidden, true, "a revoked key must not leave a stale result visible");
-  assert.equal(elements.get("status").textContent, "The deployment rejected the API key.");
+  assert.equal(elements.get("result").hidden, true, "an error must not leave a stale result visible");
+  assert.equal(elements.get("status").textContent, "The deployment returned HTTP 401.");
 
   responseStatus = 429;
   await elements.get("analyze").dispatch("click");
-  assert.equal(elements.get("result").hidden, true, "a quota response must not leave a stale result visible");
-  assert.equal(elements.get("status").textContent, "This request was limited. Check account usage or wait before trying again.");
-
-  pairingMode = true;
-  capabilityLatestVersion = "0.3.9";
-  lifecyclePairingResponse = false;
-  await elements.get("connect").dispatch("click");
-  assert.deepEqual(pairingStartPayload, {
-    lifetimeDays: 90,
-    locale: "en",
-    name: "Chrome extension · macOS",
-  }, "0.4.0 must retain a legacy pairing request until the lifecycle server is deployed");
-  assert.equal(localStorage.apiKey, pairedKey, "legacy rollout pairing must remain usable");
-
-  capabilityLatestVersion = "0.4.0";
-  lifecyclePairingResponse = true;
-  await elements.get("connect").dispatch("click");
-  assert.equal(
-    openedApprovalUrl,
-    `https://app.maillume.io/account/connect-extension/${pairingId}?code=2345-6789`,
-  );
-  assert.deepEqual(pairingStartPayload, {
-    browserConnectionId: "mlb_12345678123441238123123456789abc",
-    lifetimeDays: 365,
-    locale: "en",
-    name: "Chrome extension · macOS",
-  });
-  assert.equal(localStorage.apiKey, pairedKey, "approved pairing must save the dedicated browser key");
-  assert.match(localStorage.apiKeyExpiresAt, /^\d{4}-\d{2}-\d{2}T/);
-  assert.equal(sessionStorage.extensionPairing, undefined, "completed pairing state must be removed");
-  assert.equal(elements.get("status").textContent, "This browser is connected and ready to analyze messages.");
-  assert.equal(localStorage.connectionKind, "browser");
-  assert.equal(localStorage.browserConnectionId, "mlb_12345678123441238123123456789abc");
-  assert.equal(elements.get("connectionState").textContent, "Connected through your Maillume account.");
-  assert.equal(elements.get("apiKey").value, "", "a managed browser credential must never be copied into the manual key field");
-  assert.equal(elements.get("apiKeyVisibility").disabled, true, "a managed browser credential must disable the manual key visibility control");
-  await elements.get("apiKeyVisibility").dispatch("click");
-  assert.equal(elements.get("apiKey").type, "password", "the disabled visibility control must not change the managed credential field state");
-  assert.equal(elements.get("apiKeyVisibility").getAttribute("aria-pressed"), "false");
-  assert.equal(elements.get("analyze").disabled, false, "a concealed managed credential must remain usable for analysis");
-  pairingMode = false;
-  responseStatus = 200;
-  responsePayload = validResponse;
-  await elements.get("analyze").dispatch("click");
-  assert.equal(requestHeaders.Authorization, `Bearer ${pairedKey}`, "analysis must use the managed credential held outside the manual field");
-  assert.equal(elements.get("connect").hidden, true, "an active browser connection must not offer another connection action");
-  assert.equal(elements.get("reset").hidden, false, "an active browser connection must retain an explicit removal action");
-  await elements.get("reset").dispatch("click");
-  assert.equal(localStorage.apiKey, undefined, "removing a browser connection must clear its stored credential");
-  assert.equal(localStorage.connectionKind, undefined, "removing a browser connection must clear its connection kind");
-  assert.equal(elements.get("apiKeyVisibility").disabled, false, "removing a browser connection must restore manual key visibility control");
-  assert.equal(requestHeaders["X-Maillume-Extension-Version"], "0.4.2");
+  assert.equal(elements.get("result").hidden, true, "a rate-limit response must not leave a stale result visible");
+  assert.equal(elements.get("status").textContent, "Too many analyses in a short time. Wait a minute and try again.");
 }
+
 
 (async () => {
   await testCapturePriorityAndMetadata();
@@ -880,7 +773,7 @@ async function testPanelSendsCapturedLinkMetadata() {
   testOpenMessageExtractors();
   testInactiveInputSelectionFallback();
   await testPanelSendsCapturedLinkMetadata();
-  console.log("Browser extension capture, pairing, expiry, API-response, and handoff checks passed.");
+  console.log("Browser extension capture, deployment, anonymous analysis, API-response, and handoff checks passed.");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

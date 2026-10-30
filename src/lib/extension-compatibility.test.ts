@@ -9,7 +9,6 @@ import {
   isBrowserExtensionVersion,
   LATEST_BROWSER_EXTENSION_VERSION,
   MINIMUM_ANALYSIS_EXTENSION_VERSION,
-  MINIMUM_PAIRING_EXTENSION_VERSION,
   OFFICIAL_BROWSER_EXTENSION_ID,
 } from "./extension-compatibility";
 
@@ -67,7 +66,6 @@ if (invalidClient.compatible) throw new Error("Expected an invalid extension cli
 assert.equal(invalidClient.reason, "invalid_client");
 assert.equal(
   evaluateExtensionCompatibility(clientHeaders(), {
-    minimumVersion: MINIMUM_PAIRING_EXTENSION_VERSION,
   }).compatible,
   true,
 );
@@ -77,7 +75,5 @@ assert.equal(capabilities.analysis_version, "analysis-v12");
 assert.equal(capabilities.extension.id, OFFICIAL_BROWSER_EXTENSION_ID);
 assert.equal(capabilities.extension.latest_version, LATEST_BROWSER_EXTENSION_VERSION);
 assert.equal(capabilities.extension.minimum_analysis_version, MINIMUM_ANALYSIS_EXTENSION_VERSION);
-assert.equal(capabilities.extension.minimum_pairing_version, MINIMUM_PAIRING_EXTENSION_VERSION);
-assert.equal(capabilities.extension.pairing_available, true);
 
 console.log("Checked browser extension compatibility contracts.");

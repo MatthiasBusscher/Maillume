@@ -15,8 +15,6 @@ const response = specification.components.schemas.AnalyzeResponse;
 const result = specification.components.schemas.AnalysisResult;
 const coverage = specification.components.schemas.EvidenceCoverage;
 const capabilities = specification.components.schemas.CapabilitiesResponse;
-const pairingStart = specification.components.schemas.ExtensionPairingStartRequest;
-const pairingRedeem = specification.components.schemas.ExtensionPairingRedeemResponse;
 
 assert.equal(request.properties.body.maxLength, 20_000);
 assert.equal(request.properties.evidenceTruncated.type, "boolean");
@@ -58,7 +56,6 @@ assert.equal(capabilities.properties.analysis_version.const, compatibility.curre
 assert.equal(capabilities.properties.extension.properties.id.const, compatibility.extension_id);
 assert.equal(capabilities.properties.extension.properties.latest_version.const, compatibility.extension_version);
 assert.equal(capabilities.properties.extension.properties.minimum_analysis_version.type, "string");
-assert.equal(capabilities.properties.extension.properties.minimum_pairing_version.const, compatibility.minimum_pairing_extension_version);
 assert.deepEqual(
   capabilities.properties.extension.properties.supported_analysis_versions.items.pattern,
   "^analysis-v[1-9][0-9]{0,2}$",
@@ -67,13 +64,10 @@ assert.equal(
   compatibility.supported_analysis_versions.includes(compatibility.current_analysis_version),
   true,
 );
-assert.deepEqual(pairingStart.properties.lifetimeDays.enum, [30, 90, 180, 365]);
-assert.equal(pairingStart.properties.browserConnectionId.pattern, "^mlb_[a-f0-9]{32}$");
-assert.equal(pairingRedeem.properties.plaintext.pattern, "^mlm_[A-Za-z0-9_-]{43}$");
-assert.equal(pairingRedeem.properties.key.properties.credential_kind.const, "browser");
-assert.equal(pairingRedeem.properties.key.properties.inactive_after.format, "date-time");
 assert.ok(specification.paths["/api/v1/capabilities"].get);
-assert.ok(specification.paths["/api/v1/extension-pairing"].post);
-assert.ok(specification.paths["/api/v1/extension-pairing"].put);
+assert.equal(specification.paths["/api/v1/extension-pairing"], undefined, "browser pairing was retired with accounts");
+assert.deepEqual(specification.paths["/api/v1/analyze"].post.security, [], "hosted analysis is anonymous");
+assert.equal(specification.components.securitySchemes, undefined);
+assert.equal(compatibility.minimum_pairing_extension_version, undefined);
 
-console.log("OpenAPI analysis, compatibility, and extension-pairing contracts passed.");
+console.log("OpenAPI analysis, compatibility, and anonymous-access contracts passed.");

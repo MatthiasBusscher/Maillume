@@ -4,7 +4,6 @@ import { ANALYSIS_PIPELINE_VERSION } from "./types";
 export const OFFICIAL_BROWSER_EXTENSION_ID: string = PUBLIC_CONTRACT.extension.officialId;
 export const LATEST_BROWSER_EXTENSION_VERSION: string = PUBLIC_CONTRACT.extension.currentVersion;
 export const MINIMUM_ANALYSIS_EXTENSION_VERSION: string = PUBLIC_CONTRACT.extension.minimumAnalysisVersion;
-export const MINIMUM_PAIRING_EXTENSION_VERSION: string = PUBLIC_CONTRACT.extension.minimumPairingVersion;
 export const SUPPORTED_EXTENSION_ANALYSIS_VERSIONS = PUBLIC_CONTRACT.extension.supportedAnalysisVersions;
 
 export const EXTENSION_CLIENT_HEADERS = PUBLIC_CONTRACT.extension.clientHeaders;
@@ -31,8 +30,6 @@ export function getExtensionCapabilities() {
       id: OFFICIAL_BROWSER_EXTENSION_ID,
       latest_version: LATEST_BROWSER_EXTENSION_VERSION,
       minimum_analysis_version: MINIMUM_ANALYSIS_EXTENSION_VERSION,
-      minimum_pairing_version: MINIMUM_PAIRING_EXTENSION_VERSION,
-      pairing_available: true,
       supported_analysis_versions: [...SUPPORTED_EXTENSION_ANALYSIS_VERSIONS],
     },
   } as const;

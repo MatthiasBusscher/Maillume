@@ -33,6 +33,9 @@ export const ANALYSIS_NO_STORE_HEADERS = {
 
 const DEFAULT_REQUEST_LIMIT = 20;
 const DEFAULT_REQUEST_WINDOW_SECONDS = 60;
+// Analysis is anonymous, so a per-client daily ceiling bounds sustained scripted use
+// that stays just under the per-minute limit.
+const DEFAULT_DAILY_REQUEST_LIMIT = 300;
 
 export type AnalysisHttpFailure = {
   error: string;
@@ -61,6 +64,7 @@ type ExecutionDependencies = {
 type RequestLimitDependencies = {
   enforce?: typeof enforceRequestRateLimit;
   env?: {
+    ANALYSIS_DAILY_REQUEST_LIMIT?: string;
     ANALYSIS_REQUEST_LIMIT?: string;
     ANALYSIS_REQUEST_WINDOW_SECONDS?: string;
   };
@@ -120,6 +124,15 @@ export function enforceAnalysisRequestLimit(
           DEFAULT_REQUEST_WINDOW_SECONDS,
           86_400,
         ) * 1_000,
+    });
+    enforce(request, {
+      bucketName: "daily",
+      maxRequests: readPositiveInteger(
+        environment.ANALYSIS_DAILY_REQUEST_LIMIT,
+        DEFAULT_DAILY_REQUEST_LIMIT,
+        100_000,
+      ),
+      windowMs: 86_400_000,
     });
     return null;
   } catch (error) {

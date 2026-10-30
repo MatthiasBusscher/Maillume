@@ -180,7 +180,7 @@ export default async function MarketingHomePage() {
               <p className="mt-5 font-mono text-[10px] uppercase text-[#687268]">Hosted by us</p>
               <h2 className="mt-3 text-3xl font-semibold text-[#111711]">Check an email without setting anything up.</h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
-                The hosted scanner uses built-in checks based on visible warning signs. Anonymous scans need no account; an optional account lets you manage API keys without creating scan history.
+                The hosted scanner uses built-in checks based on visible warning signs. Scans are anonymous: there is no account to create and no scan history to keep.
               </p>
               <a href={appHref} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#087b72] hover:text-[#111711]">
                 Open Maillume <ArrowRight className="h-4 w-4" aria-hidden="true" />

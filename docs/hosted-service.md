@@ -1,5 +1,7 @@
 # Hosted Service Architecture
 
+> **Superseded (October 2026):** Maillume removed accounts, API keys, browser pairing, and all paid plans. The scanner, Chrome extension, and `/api/v1/analyze` are free and anonymous; see [integrations.md](integrations.md) and [releases/accounts-removal.md](releases/accounts-removal.md). The rest of this document is kept as a historical record.
+
 Status: active architecture record. Optional email/Google authentication, TOTP MFA, feature-gated passkeys, hashed integration API keys, aggregate quotas, and the official Chrome Web Store extension are implemented. A provider-neutral entitlement reconciliation model is implemented but inactive. Hosted AI, billing-provider adapters, paid-entitlement persistence, checkout, and payments are not implemented.
 
 ## Decision Summary
