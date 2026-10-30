@@ -13,6 +13,11 @@ updates:
         update-types:
           - minor
           - patch
+    # @types/node majors track Node releases; keep them on the production runtime (Node 24).
+    ignore:
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /
