@@ -179,7 +179,7 @@ export default async function ChromeExtensionPage() {
           <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
             <div>
               <p className="font-mono text-[10px] uppercase text-[#087b72]">{text.howEyebrow}</p>
-              <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">{text.howTitle}</h2>
+              <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl sm:leading-10">{text.howTitle}</h2>
               <p className="mt-5 text-base leading-7 text-[#59655a]">{text.howDescription}</p>
             </div>
             <div className="grid border-t border-[#aeb6ac] md:grid-cols-3 md:border-l md:border-t-0">
@@ -199,7 +199,7 @@ export default async function ChromeExtensionPage() {
         <div className="mx-auto grid max-w-[1440px] gap-12 px-5 sm:px-6 lg:grid-cols-[0.72fr_1.28fr] lg:px-8">
           <div>
             <p className="font-mono text-[10px] uppercase text-[#087b72]">{text.installEyebrow}</p>
-            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">{text.installTitle}</h2>
+            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl sm:leading-10">{text.installTitle}</h2>
             <div className="mt-8 border border-[#aeb6ac] bg-white p-5">
               <h3 className="font-semibold text-[#111711]">{text.requirementsTitle}</h3>
               <ul className="mt-4 space-y-3">
@@ -225,7 +225,7 @@ export default async function ChromeExtensionPage() {
         <div className="mx-auto grid max-w-[1440px] gap-12 px-5 sm:px-6 lg:grid-cols-[0.72fr_1.28fr] lg:px-8">
           <div>
             <p className="font-mono text-[10px] uppercase text-[#dfff52]">{text.useEyebrow}</p>
-            <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">{text.useTitle}</h2>
+            <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl sm:leading-10">{text.useTitle}</h2>
           </div>
           <ol className="border-t border-white/35">
             {text.useSteps.map((step, index) => (

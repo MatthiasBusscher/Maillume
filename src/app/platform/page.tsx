@@ -40,7 +40,7 @@ export default async function PlatformPage() {
         <div className="mx-auto grid max-w-[1440px] gap-12 px-5 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
           <div>
             <p className="font-mono text-[10px] uppercase text-[#087b72]">Available today</p>
-            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">One focused check. Clear boundaries.</h2>
+            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl sm:leading-10">One focused check. Clear boundaries.</h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
               Paste an email, use a screenshot, or open an exported .eml file. Maillume applies the same explainable, versioned risk index to each input and returns a practical next step.
             </p>
@@ -77,7 +77,7 @@ export default async function PlatformPage() {
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr]">
             <div>
               <p className="font-mono text-[10px] uppercase text-[#dfff52]">A deliberate privacy boundary</p>
-              <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">Nothing scans a mailbox in the background.</h2>
+              <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl sm:leading-10">Nothing scans a mailbox in the background.</h2>
             </div>
             <p className="max-w-3xl text-xl leading-8 text-[#d2e6e2]">
               Maillume does not crawl a mailbox, silently score incoming email, or use a maintainer-owned AI key in the hosted service. You choose the message, start the check, and receive an automated risk indicator rather than a guarantee.

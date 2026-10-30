@@ -45,7 +45,7 @@ export default async function SelfHostedPage() {
         <div className="mx-auto grid max-w-[1440px] gap-12 px-5 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-8">
           <div>
             <p className="font-mono text-[10px] uppercase text-[#087b72]">Community quickstart</p>
-            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">From clone to local scanner.</h2>
+            <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl sm:leading-10">From clone to local scanner.</h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-[#59655a]">
               Heuristic mode needs no AI account. Add a server-side provider configuration only when your deployment needs it.
             </p>
@@ -81,7 +81,7 @@ npm run dev`}</code></pre>
           <div className="grid gap-10 lg:grid-cols-[0.7fr_1.3fr]">
             <div>
               <p className="font-mono text-[10px] uppercase text-[#dfff52]">Choose the analysis boundary</p>
-              <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">Two modes, one result contract.</h2>
+              <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl sm:leading-10">Two modes, one result contract.</h2>
             </div>
             <div className="overflow-x-auto border border-white/35">
               <table className="w-full min-w-[640px] border-collapse text-left text-sm">
