@@ -59,7 +59,7 @@ export default async function MarketingHomePage() {
         <div className="pointer-events-none absolute inset-y-0 left-[8%] w-px bg-white/10" />
         <div className="pointer-events-none absolute inset-y-0 right-[13%] w-px bg-white/10" />
         <div className="pointer-events-none absolute inset-x-0 top-[30%] h-px bg-white/10" />
-        <div className="pointer-events-none absolute -top-24 left-[42%] hidden h-[900px] w-[34%] -skew-x-12 border-x border-[#dfff52]/15 bg-[#dfff52]/[0.04] lg:block" aria-hidden="true" />
+        <div className="pointer-events-none absolute -top-24 left-[42%] hidden h-[900px] w-[34%] -skew-x-12 border-x border-[#dfff52]/15 bg-[#dfff52]/4 lg:block" aria-hidden="true" />
 
         <div className="relative z-10 mx-auto grid min-h-[calc(100svh-7rem)] max-w-[1440px] gap-12 px-5 pb-0 pt-14 sm:px-6 sm:pt-16 lg:min-h-[660px] lg:grid-cols-[minmax(340px,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:gap-12 lg:px-8 lg:py-16 xl:grid-cols-[minmax(420px,0.78fr)_minmax(0,1.22fr)] xl:gap-16">
           <div className="max-w-[680px] lg:max-w-[520px] lg:self-center">
@@ -67,7 +67,7 @@ export default async function MarketingHomePage() {
               <span className="h-px w-8 bg-[#dfff52]" aria-hidden="true" />
               Shine a light on suspicious email
             </div>
-            <h1 className="mt-5 text-5xl font-semibold leading-[0.96] text-white sm:text-6xl lg:text-7xl">
+            <h1 className="mt-5 text-5xl font-semibold leading-[0.96] text-white sm:text-6xl sm:leading-none lg:text-7xl lg:leading-none">
               See the risk before you act.
             </h1>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -127,7 +127,7 @@ export default async function MarketingHomePage() {
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-20">
             <div>
               <p className="font-mono text-[11px] uppercase text-[#087b72]">A clearer risk assessment</p>
-              <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">
+              <h2 className="mt-4 text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl sm:leading-10">
                 Suspicious emails rarely look suspicious everywhere.
               </h2>
             </div>
@@ -156,7 +156,7 @@ export default async function MarketingHomePage() {
         <div className="mx-auto grid max-w-[1440px] gap-14 px-5 py-20 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8 lg:py-24">
           <div>
             <p className="font-mono text-[11px] uppercase text-[#dfff52]">What leaves the browser</p>
-            <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">
+            <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl sm:leading-10">
               Your file stays local. The analysis text is processed once.
             </h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-[#eaf5f2]">
@@ -222,7 +222,7 @@ export default async function MarketingHomePage() {
         <div className="mx-auto flex max-w-[1440px] flex-col gap-8 px-5 py-16 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div>
             <p className="font-mono text-[10px] uppercase text-[#455045]">Open development</p>
-            <h2 className="mt-3 max-w-3xl text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl">
+            <h2 className="mt-3 max-w-3xl text-3xl font-semibold leading-tight text-[#111711] sm:text-4xl sm:leading-10">
               Read the code, challenge the scoring, and help make suspicious email easier to understand.
             </h2>
           </div>

@@ -44,7 +44,7 @@ export function ResultPanel({
 
 function EmptyResult({ dictionary }: { dictionary: Dictionary }) {
   return (
-    <div className="flex h-full min-h-[34rem] flex-col">
+    <div className="flex h-full min-h-136 flex-col">
       <div className="border-b border-[#d5d9de] pb-4">
         <p className="font-mono text-[11px] uppercase text-[#087b72]">
           {dictionary.result.title}

@@ -1,40 +1,91 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-  color-scheme: light;
-  background: #eef1eb;
+@theme {
+  /* Keep the Tailwind CSS v3 system font stacks; v4.3 swapped them for explicit platform fonts. */
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /*
+    v3 line heights were absolute, so children with arbitrary sizes such as text-[10px]
+    inherited them unchanged. v4 uses ratios; keep the absolute v3 values.
+  */
+  --text-xs--line-height: 1rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
+  --shadow-soft: 0 18px 55px rgba(15, 23, 42, 0.08);
 }
 
-* {
-  box-sizing: border-box;
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  /* Tailwind CSS v4 resets buttons to the default cursor; keep the v3 pointer. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
-html {
-  scroll-behavior: smooth;
+/*
+  Tailwind CSS v4 uses native cascade layers, so unlayered rules beat every utility.
+  Base styles live in the base layer to keep utilities such as font-sans authoritative.
+*/
+@layer base {
+  :root {
+    color-scheme: light;
+    background: #eef1eb;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: #eef1eb;
+    color: #111711;
+    font-family:
+      Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+
+  ::selection {
+    background: #dfff52;
+    color: #111711;
+  }
 }
 
-body {
-  margin: 0;
-  background: #eef1eb;
-  color: #111711;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-}
-
-button,
-input,
-textarea {
-  font: inherit;
-}
-
-::selection {
-  background: #dfff52;
-  color: #111711;
-}
-
+/*
+  Deliberately unlayered: as in v3, the keyboard focus ring must win over
+  outline-hidden utilities.
+*/
 :focus-visible {
   outline: 2px solid #087b72;
   outline-offset: 3px;

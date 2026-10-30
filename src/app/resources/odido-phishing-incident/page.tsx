@@ -28,7 +28,7 @@ export default async function OdidoIncidentPage() {
               <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Maillume
             </Link>
             <p className="mt-12 font-mono text-[11px] uppercase text-[#dfff52]">Incident notes · February 2026</p>
-            <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-tight sm:text-6xl">
+            <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-tight sm:text-6xl sm:leading-none">
               A phishing email can be the first step, not the whole attack.
             </h1>
             <p className="mt-7 max-w-3xl text-lg leading-8 text-[#d9e0d7]">

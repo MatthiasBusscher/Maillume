@@ -22,12 +22,11 @@ This is a lightweight engineering review of direct npm dependency metadata befor
 
 | Package | Declared license |
 | --- | --- |
-| `@eslint/eslintrc` | MIT |
 | `@playwright/test` | Apache-2.0 |
+| `@tailwindcss/postcss` | MIT |
 | `@types/node` | MIT |
 | `@types/react` | MIT |
 | `@types/react-dom` | MIT |
-| `autoprefixer` | MIT |
 | `eslint` | MIT |
 | `eslint-config-next` | MIT |
 | `postcss` | MIT |

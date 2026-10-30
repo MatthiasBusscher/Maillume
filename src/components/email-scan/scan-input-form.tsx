@@ -150,7 +150,7 @@ export function ScanInputForm({
             onChange={(event) => onSubjectChange(event.target.value)}
             maxLength={300}
             placeholder={dictionary.form.subjectPlaceholder}
-            className="h-11 border border-[#b7bec5] bg-[#fafbfb] px-3 font-sans text-sm normal-case text-[#111711] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
+            className="h-11 border border-[#b7bec5] bg-[#fafbfb] px-3 font-sans text-sm normal-case text-[#111711] outline-hidden transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
           />
         </label>
 
@@ -161,7 +161,7 @@ export function ScanInputForm({
             onChange={(event) => onSenderEmailChange(event.target.value)}
             maxLength={320}
             placeholder={dictionary.form.senderPlaceholder}
-            className="h-11 border border-[#b7bec5] bg-[#fafbfb] px-3 font-sans text-sm normal-case text-[#111711] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
+            className="h-11 border border-[#b7bec5] bg-[#fafbfb] px-3 font-sans text-sm normal-case text-[#111711] outline-hidden transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
           />
         </label>
       </div>
@@ -182,7 +182,7 @@ export function ScanInputForm({
           readOnly={isExtracting}
           aria-invalid={Boolean(inputLimitError)}
           aria-describedby="scan-request-size"
-          className="min-h-72 resize-y border border-[#b7bec5] bg-[#fafbfb] px-3 py-3 font-sans text-sm leading-6 normal-case text-[#111711] outline-none transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
+          className="min-h-72 resize-y border border-[#b7bec5] bg-[#fafbfb] px-3 py-3 font-sans text-sm leading-6 normal-case text-[#111711] outline-hidden transition placeholder:text-[#99a2ab] focus:border-[#087b72] focus:ring-2 focus:ring-[#bdebf0]"
         />
       </label>
 
@@ -234,7 +234,7 @@ function ModeButton({ active, icon, label, onClick }: { active: boolean; icon: R
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex min-h-12 min-w-0 items-center justify-center gap-1.5 px-1.5 py-2 text-center text-xs font-semibold leading-4 transition sm:gap-2 sm:px-3 sm:text-sm ${
+      className={`inline-flex min-h-12 min-w-0 items-center justify-center gap-1.5 px-1.5 py-2 text-center text-xs font-semibold leading-4 transition sm:gap-2 sm:px-3 sm:text-sm sm:leading-5 ${
         active
           ? "bg-[#111711] text-white shadow-[inset_0_3px_0_#dfff52]"
           : "bg-white text-[#4e5965] hover:bg-[#eef2f3] hover:text-[#111711]"
@@ -242,7 +242,7 @@ function ModeButton({ active, icon, label, onClick }: { active: boolean; icon: R
       aria-pressed={active}
     >
       <span className="flex-none">{icon}</span>
-      <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
+      <span className="min-w-0 wrap-anywhere">{label}</span>
     </button>
   );
 }

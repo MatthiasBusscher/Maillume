@@ -113,7 +113,7 @@ export function ScannerPage({
               <span className="h-px w-8 bg-[#087b72]" aria-hidden="true" />
               {dictionary.app.audience}
             </div>
-            <h1 className="mt-3 text-2xl font-semibold leading-tight text-[#111711] sm:text-3xl">
+            <h1 className="mt-3 text-2xl font-semibold leading-tight text-[#111711] sm:text-3xl sm:leading-9">
               {dictionary.app.workspaceTitle}
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#4f5b50] sm:text-base">
@@ -147,7 +147,7 @@ export function ScannerPage({
       <section
         id="scanner"
         tabIndex={-1}
-        className="mx-auto w-full max-w-[1480px] flex-1 scroll-mt-6 px-5 py-6 outline-none sm:px-6 lg:px-8 lg:py-8"
+        className="mx-auto w-full max-w-[1480px] flex-1 scroll-mt-6 px-5 py-6 outline-hidden sm:px-6 lg:px-8 lg:py-8"
       >
         <EmailScanForm
           dictionary={dictionary}

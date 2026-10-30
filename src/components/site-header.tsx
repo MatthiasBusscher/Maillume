@@ -26,9 +26,9 @@ export async function SiteHeader() {
   }));
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[#cbd0c5] bg-[#f7f8f4]/95 shadow-[0_1px_0_rgba(17,23,17,0.04)] backdrop-blur">
-      <div className="mx-auto flex h-[4.5rem] max-w-[1440px] items-center justify-between gap-6 px-5 sm:px-6 lg:px-8">
-        <Link href={localizePath("/", locale)} className="flex-none rounded-sm" aria-label={copy.home}>
+    <header className="sticky top-0 z-40 border-b border-[#cbd0c5] bg-[#f7f8f4]/95 shadow-[0_1px_0_rgba(17,23,17,0.04)] backdrop-blur-sm">
+      <div className="mx-auto flex h-18 max-w-[1440px] items-center justify-between gap-6 px-5 sm:px-6 lg:px-8">
+        <Link href={localizePath("/", locale)} className="flex-none rounded-xs" aria-label={copy.home}>
           <BrandMark />
         </Link>
 

@@ -258,7 +258,7 @@ function FeedbackChoice({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`inline-flex min-h-10 min-w-0 items-center justify-center gap-2 px-3 py-2 text-xs font-semibold leading-4 transition sm:text-sm ${
+      className={`inline-flex min-h-10 min-w-0 items-center justify-center gap-2 px-3 py-2 text-xs font-semibold leading-4 transition sm:text-sm sm:leading-5 ${
         active
           ? "bg-[#111711] text-white shadow-[inset_0_3px_0_#dfff52]"
           : "bg-white text-[#4e5965] hover:bg-[#eef2f3] hover:text-[#111711]"
