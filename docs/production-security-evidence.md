@@ -92,18 +92,10 @@ the browser.
 
 Apply all migrations to the production project, then retain redacted evidence
 that database linting and the SQL lifecycle tests pass. Verify RLS, function
-grants, feedback expiry, API-key quota/refund behavior, deletion cascades, and
-that the service-role secret exists only in the VPS application environment.
+grants, feedback expiry, and that the service-role secret exists only in the VPS
+application environment.
 
-For production authentication, record the exact Site URL and redirect allowlist
-without secrets. The allowlist must contain only:
-
-```text
-https://app.maillume.io/auth/callback
-```
-
-Complete the real email, Google OAuth, MFA, sign-out, API-key, and deletion
-matrix in `docs/authentication.md` before enabling accounts for public use.
+Maillume has no accounts. Record that every Supabase Auth provider is disabled.
 
 ## Vulnerability And Dependency Review
 

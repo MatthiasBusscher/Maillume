@@ -681,17 +681,18 @@ test("marketing routes accurately distinguish available and future features", as
   await page.goto("/pricing");
   await expect(page.getByRole("heading", { name: "The safety workflow stays free." })).toBeVisible();
   await expect(page.getByText("Available now", { exact: true })).toBeVisible();
-  await expect(page.getByText("Planned, not for sale")).toBeVisible();
+  await expect(page.getByText("Planned, not for sale")).toHaveCount(0);
+  await expect(page.getByText("No paid plan is planned", { exact: false })).toHaveCount(1);
 
   await page.goto("/self-hosted");
   await expect(page.getByRole("heading", { name: /Your infrastructure/ })).toBeVisible();
 
   await page.goto("/platform");
   await expect(page.getByRole("heading", { name: "A clear second opinion before you act." })).toBeVisible();
-  await expect(page.getByText("Optional", { exact: true })).toBeVisible();
+  await expect(page.getByText("Not needed", { exact: true })).toBeVisible();
   await expect(page.getByText("Available", { exact: true })).toBeVisible();
   await expect(page.getByText("Chrome Web Store", { exact: true })).toBeVisible();
-  await expect(page.getByText("Later", { exact: true })).toBeVisible();
+  await expect(page.getByText("Not planned", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Installation guide" })).toHaveAttribute("href", "/chrome-extension");
 
   await page.goto("/chrome-extension");
@@ -711,8 +712,8 @@ test("marketing routes accurately distinguish available and future features", as
   await expect(page.getByRole("link", { name: "Toevoegen aan Chrome" })).toHaveCount(3);
 });
 
-test("public beta hides accounts and rejects account APIs before request processing", async ({ page, request }) => {
-  for (const path of ["/auth/sign-in", "/auth/forgot-password", "/auth/mfa", "/auth/update-password", "/account", "/nl/auth/sign-in", "/nl/auth/forgot-password", "/nl/account"]) {
+test("retired account links land on the scanner without leaking query values", async ({ page, request }) => {
+  for (const path of ["/auth/sign-in", "/auth/forgot-password", "/auth/mfa", "/account", "/account/connect-extension/40000000-0000-4000-8000-000000000004", "/nl/auth/sign-in", "/nl/account"]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/(?:nl\/)?app$/);
   }
@@ -721,15 +722,43 @@ test("public beta hides accounts and rejects account APIs before request process
   await expect(page.getByRole("link", { name: "Sign in" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Account" })).toHaveCount(0);
 
+  const rawQuery = "error=access_denied&error_description=sensitive-provider-detail&code=synthetic-code";
   for (const response of [
-    await request.get("/account/api-keys"),
-    await request.post("/account/delete", { data: "x".repeat(8_192), headers: { "Content-Type": "text/plain" } }),
-    await request.post("/account/language", { data: "x".repeat(8_192), headers: { "Content-Type": "text/plain" } }),
-    await request.post("/api/v1/analyze", { data: "x".repeat(8_192), headers: { "Content-Type": "text/plain" } }),
+    await request.get(`/auth/callback?${rawQuery}`, { maxRedirects: 0 }),
+    await request.post("/account/delete", { form: { confirm: "delete" }, maxRedirects: 0 }),
+    await request.post("/account/api-keys", { data: { name: "Browser" }, maxRedirects: 0 }),
   ]) {
-    expect(response.status()).toBe(404);
-    expect(response.headers()["cache-control"]).toContain("no-store");
+    expect(response.status()).toBe(308);
+    expect(response.headers().location).toMatch(/^\/(?!\/)/);
+    const location = new URL(response.headers().location, "https://app.maillume.io");
+    expect(location.pathname).toBe("/app");
+    expect(location.search).toBe("");
   }
+  expect((await request.post("/api/v1/extension-pairing", { data: {} })).status()).toBe(404);
+});
+
+test("the versioned analysis API is anonymous and ignores credentials", async ({ request }) => {
+  const data = { source: "chrome", subject: "Synthetic invoice", senderEmail: "billing@notice.example", body: "Please review the attached invoice before Friday.", locale: "en" };
+  const headers = {
+    "X-Maillume-Analysis-Versions": "analysis-v11,analysis-v12",
+    "X-Maillume-Extension-Id": "bjiiailjalkfjimkjdikoockjlnjolle",
+    "X-Maillume-Extension-Version": "0.5.0",
+  };
+  for (const extraHeaders of [{}, { Authorization: `Bearer mlm_${"x".repeat(43)}` }] as Record<string, string>[]) {
+    const response = await request.post("/api/v1/analyze", { data, headers: { ...headers, ...extraHeaders } });
+    expect(response.status()).toBe(200);
+    expect(response.headers()["cache-control"]).toContain("no-store");
+    const payload = await response.json();
+    expect(payload.analysis_version).toBe("analysis-v12");
+    expect(payload.privacy.stored).toBe(false);
+  }
+
+  const outdated = await request.post("/api/v1/analyze", { data, headers: { ...headers, "X-Maillume-Extension-Version": "0.3.0" } });
+  expect(outdated.status()).toBe(426);
+
+  const capabilities = await (await request.get("/api/v1/capabilities")).json();
+  expect(capabilities.extension.pairing_available).toBeUndefined();
+  expect(capabilities.extension.latest_version).toBe("0.5.0");
 });
 
 test("trust pages are publicly accessible", async ({ page }) => {
@@ -761,108 +790,14 @@ test("the app subdomain root resolves to the scanner workspace", async ({ reques
   expect(await response.text()).toContain("Inspect a suspicious email");
 });
 
-test("an OAuth code returned to the app root is recovered by the callback route", async ({ request }) => {
+test("an OAuth-style code on the app root no longer starts a sign-in flow", async ({ request }) => {
   const response = await request.get("/?code=synthetic-code", {
     headers: { Host: "app.maillume.io" },
     maxRedirects: 0,
   });
 
-  expect(response.status()).toBe(307);
-  // Next.js 16 emits same-origin redirects as relative paths; they must never leave the host.
-  expect(response.headers().location).toMatch(/^\/(?!\/)/);
-  const callbackLocation = new URL(response.headers().location, "https://app.maillume.io");
-  expect(callbackLocation.pathname).toBe("/auth/callback");
-  expect(callbackLocation.searchParams.get("code")).toBe("synthetic-code");
-});
-
-test("anonymous beta discards OAuth callback values and returns to the scanner", async ({ page, request }) => {
-  const rawQuery = "error=access_denied&error_description=sensitive-provider-detail&state=synthetic-state";
-  const rootResponse = await request.get(`/?${rawQuery}`, {
-    headers: { Host: "app.maillume.io" },
-    maxRedirects: 0,
-  });
-
-  expect(rootResponse.status()).toBe(307);
-  expect(rootResponse.headers().location).toMatch(/^\/(?!\/)/);
-  const rootLocation = new URL(rootResponse.headers().location, "https://app.maillume.io");
-  expect(rootLocation.pathname).toBe("/app");
-  expect(rootLocation.search).toBe("");
-
-  const callbackResponse = await request.get(`/auth/callback?${rawQuery}`, {
-    maxRedirects: 0,
-  });
-  expect(callbackResponse.status()).toBe(307);
-  const callbackLocation = new URL(callbackResponse.headers().location);
-  expect(callbackLocation.pathname).toBe("/app");
-  expect(callbackLocation.search).toBe("");
-
-  const callbackCodeResponse = await request.get("/auth/callback?code=synthetic-code", {
-    maxRedirects: 0,
-  });
-  expect(callbackCodeResponse.status()).toBe(307);
-  expect(new URL(callbackCodeResponse.headers().location, callbackCodeResponse.url()).pathname).toBe("/app");
-
-  await page.goto("/auth/sign-in?error=oauth_provider_failed");
-  await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByText("sensitive-provider-detail")).toHaveCount(0);
-});
-
-test("account deletion rejects cross-origin requests", async ({ request }) => {
-  const response = await request.post("/account/delete", {
-    form: { confirm: "delete" },
-    headers: { Origin: "https://attacker.example" },
-  });
-
-  expect(response.status()).toBe(404);
-  expect(response.headers()["cache-control"]).toContain("no-store");
-});
-
-test("sign-out rejects cross-origin requests", async ({ request }) => {
-  const response = await request.post("/auth/sign-out", {
-    form: { csrf: "invalid" },
-    headers: { Origin: "https://attacker.example" },
-  });
-
-  expect(response.status()).toBe(403);
-  expect(response.headers()["cache-control"]).toContain("no-store");
-});
-
-test("password updates stay unavailable while accounts are disabled", async ({ request }) => {
-  for (const path of ["/auth/update-password", "/nl/auth/update-password"]) {
-    const response = await request.get(path, { maxRedirects: 0 });
-    expect(response.status()).toBe(307);
-    expect(new URL(response.headers().location, response.url()).pathname).toMatch(/\/(?:nl\/)?app$/);
-  }
-});
-
-test("account mutations remain unavailable regardless of origin or body size", async ({ request }) => {
-  const missingDeletionOrigin = await request.post("/account/delete", {
-    form: { confirm: "delete" },
-  });
-  expect(missingDeletionOrigin.status()).toBe(404);
-
-  const missingApiKeyOrigin = await request.post("/account/api-keys", {
-    data: { lifetimeDays: 30, name: "Browser" },
-  });
-  expect(missingApiKeyOrigin.status()).toBe(404);
-
-  const oversizedDeletion = await request.post("/account/delete", {
-    data: `confirm=delete&padding=${"x".repeat(1_024)}`,
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Origin: "http://127.0.0.1:3100",
-    },
-  });
-  expect(oversizedDeletion.status()).toBe(404);
-
-  const oversizedApiKeyMutation = await request.post("/account/api-keys", {
-    data: JSON.stringify({ lifetimeDays: 30, name: "x".repeat(4_096) }),
-    headers: {
-      "Content-Type": "application/json",
-      Origin: "http://127.0.0.1:3100",
-    },
-  });
-  expect(oversizedApiKeyMutation.status()).toBe(404);
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toContain("Inspect a suspicious email");
 });
 
 test("health endpoint exposes no dependency or secret details", async ({ request }) => {
@@ -902,20 +837,20 @@ test("canonical domain redirects preserve path and query", async ({ request }) =
   }
 });
 
-test("marketing account routes redirect to the canonical app host", async ({ request }) => {
-  for (const path of [
-    "/account?source=redirect-test",
-    "/nl/account?source=redirect-test",
-    "/auth/sign-in?source=redirect-test",
-    "/nl/auth/sign-in?source=redirect-test",
+test("marketing-host account links redirect to the localized scanner", async ({ request }) => {
+  for (const [path, scanner] of [
+    ["/account?source=redirect-test", "/app"],
+    ["/nl/account?source=redirect-test", "/nl/app"],
+    ["/auth/sign-in?source=redirect-test", "/app"],
+    ["/nl/auth/sign-in?source=redirect-test", "/nl/app"],
   ]) {
     const response = await request.get(path, {
       headers: { Host: "maillume.io" },
       maxRedirects: 0,
     });
 
-    expect(response.status()).toBe(307);
-    expect(response.headers().location).toBe(`https://app.maillume.io${path}`);
+    expect(response.status()).toBe(308);
+    expect(response.headers().location).toBe(scanner);
   }
 });
 
@@ -981,12 +916,12 @@ test("primary pages fit mobile and desktop viewports without horizontal overflow
   }
 });
 
-test("hosted API stays unavailable during the anonymous public beta", async ({ request }) => {
+test("anonymous hosted API applies the same request validation as the web scanner", async ({ request }) => {
   const response = await request.post("/api/v1/analyze", {
-    data: { source: "paste", body: "Synthetic message" },
+    data: { source: "paste", body: "x".repeat(40_000) },
   });
 
-  expect(response.status()).toBe(404);
+  expect(response.status()).toBe(413);
   expect(response.headers()["cache-control"]).toContain("no-store");
 });
 
@@ -1012,7 +947,7 @@ test("hosted API publishes its machine-readable contract", async ({ request }) =
   expect(response.ok()).toBe(true);
   const specification = await response.json();
   expect(specification.openapi).toBe("3.1.0");
-  expect(specification.paths["/api/v1/analyze"].post.security).toEqual([{ apiKey: [] }]);
+  expect(specification.paths["/api/v1/analyze"].post.security).toEqual([]);
   expect(specification.components.schemas.AnalysisResult.required).toEqual(expect.arrayContaining(["classification", "score_factors"]));
   expect(specification.components.schemas.AnalysisResult.required).toContain("evidence_coverage");
   expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v12");

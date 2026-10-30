@@ -7,7 +7,7 @@ import {
   SITE_LOCALE_COOKIE,
 } from "@/lib/i18n/site-locale";
 import { getAppRouteHref, getMarketingHref } from "@/lib/site";
-import { getPublicAppOrigin } from "@/app/auth/callback/origin";
+import { getPublicAppOrigin } from "@/lib/public-origin";
 
 export async function GET(
   request: Request,
@@ -44,7 +44,7 @@ export async function GET(
 }
 
 function getPublicOrigin(request: Request, requestUrl: URL, nextPath: string) {
-  if (/^\/(?:app|account|auth)(?:\/|$)/.test(nextPath)) {
+  if (/^\/app(?:\/|$)/.test(nextPath)) {
     const configuredAppHref = getAppRouteHref("/");
     return getPublicAppOrigin({
       configuredAppUrl: configuredAppHref.startsWith("http") ? configuredAppHref : undefined,

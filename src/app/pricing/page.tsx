@@ -17,7 +17,7 @@ const plans = [
   {
     name: "Cloud Free",
     price: "EUR 0",
-    cadence: "forever",
+    cadence: "free, no subscriptions",
     description: "A clear second opinion for suspicious email.",
     status: "Available now",
     accent: true,
@@ -26,27 +26,11 @@ const plans = [
       "Built-in checks based on visible warning signs",
       "Paste, screenshot, and .eml inputs",
       "English and Dutch interface",
-      "Optional account and quota-limited API keys",
+      "Official Chrome extension, no account needed",
       "No scan history",
     ],
     cta: "Check an email",
     href: getAppHref(),
-  },
-  {
-    name: "Plus",
-    price: "To be decided",
-    cadence: "not for sale",
-    description: "Managed convenience for people who want Maillume closer to their inbox.",
-    status: "Planned, not for sale",
-    features: [
-      "Everything in Cloud Free",
-      "Managed AI allowance with hard limits",
-      "Managed Chrome extension convenience",
-      "Account preferences",
-      "Priority product support",
-    ],
-    cta: "Read the roadmap",
-    href: "/platform",
   },
   {
     name: "Self-hosted",
@@ -75,12 +59,12 @@ export default async function PricingPage() {
       <PageIntro
         eyebrow="Pricing"
         title="The safety workflow stays free."
-        description="Core built-in checks are free and need no account. Optional accounts provide secure, revocable API access; Maillume does not sell certainty."
+        description="Maillume is a free, open-source project. Built-in checks need no account, nothing is for sale, and Maillume does not sell certainty."
       />
 
       <section className="border-b border-[#cbd0c5] py-16 sm:py-20">
         <div className="mx-auto max-w-[1440px] px-5 sm:px-6 lg:px-8">
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-2">
             {plans.map((plan) => (
               <article
                 key={plan.name}
@@ -119,10 +103,6 @@ export default async function PricingPage() {
               </article>
             ))}
           </div>
-
-          <div className="mt-5 border border-[#aeb6ac] bg-[#eef1eb] p-5 text-sm leading-6 text-[#4f5b50]">
-            <strong className="text-[#111711]">About the Plus price:</strong> No launch price has been set. We will only introduce it when it offers useful managed capacity or support without overstating what a risk assessment can know.
-          </div>
         </div>
       </section>
 
@@ -133,11 +113,11 @@ export default async function PricingPage() {
             <h2 className="mt-3 text-3xl font-semibold text-[#111711]">No small print hidden in the score.</h2>
           </div>
           <div className="border-t border-[#aeb6ac]">
-            <PricingQuestion question="Will free scans require an account?">
-              No. Anonymous heuristic scanning remains the free core. An optional email or Google account lets you protect and manage integration API keys, but it is never required to check an email.
+            <PricingQuestion question="Do I need an account?">
+              No. The web scanner and the Chrome extension both work anonymously. Maillume has no accounts, so there is no profile, password, or scan history to keep.
             </PricingQuestion>
-            <PricingQuestion question="Do paid plans make results more certain?">
-              No. Every mode remains an automated risk assessment and never a guarantee. Paid value must come from managed capacity, integrations, and support rather than inflated certainty claims.
+            <PricingQuestion question="Will there be a paid plan?">
+              No paid plan is planned. Maillume is a free, open-source project. Fair-use limits per connection keep the hosted scanner available for everyone.
             </PricingQuestion>
             <PricingQuestion question="Who pays for AI in a self-hosted deployment?">
               The operator supplies and pays for their own provider key. Maillume does not place a maintainer-owned key in the open-source application.
@@ -163,9 +143,9 @@ export default async function PricingPage() {
           <div className="flex gap-4 md:border-l md:border-white/20 md:pl-8">
             <Github className="h-5 w-5 flex-none text-[#dfff52]" aria-hidden="true" />
             <div>
-              <h2 className="font-semibold">Want to shape the plans?</h2>
+              <h2 className="font-semibold">Want to contribute?</h2>
               <a href={SOURCE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-2 text-sm text-[#b8c4b6] hover:text-white">
-                Join the open roadmap <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                Open the project on GitHub <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
             </div>
           </div>

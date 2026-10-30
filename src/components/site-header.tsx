@@ -1,32 +1,29 @@
 import Link from "next/link";
-import { Github, LogIn, Menu, ScanSearch } from "lucide-react";
+import { Github, Menu, ScanSearch } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
-import { getAppHref, getAppRouteHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
+import { getAppHref, SOURCE_REPOSITORY_URL } from "@/lib/site";
 import { getRequestPathname, getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizeHref, localizePath, stripSiteLocale } from "@/lib/i18n/site-locale";
-import { areAccountsEnabled } from "@/lib/accounts/config";
 
 export async function SiteHeader() {
   const [locale, pathname] = await Promise.all([getRequestSiteLocale(), getRequestPathname()]);
   const copy = locale === "nl" ? {
     home: "Maillume-startpagina", mainNav: "Hoofdnavigatie", mobileNav: "Mobiele navigatie",
-    menu: "Menu openen", signIn: "Inloggen", scan: "Controleer een e-mail", openScanner: "Scanner openen", github: "GitHub openen",
+    menu: "Menu openen", scan: "Controleer een e-mail", openScanner: "Scanner openen", github: "GitHub openen",
     navigation: [["/platform", "Zo werkt het"], ["/chrome-extension", "Chrome-extensie"], ["/self-hosted", "In eigen beheer"], ["/pricing", "Prijzen"]] as const,
   } : {
     home: "Maillume home", mainNav: "Main navigation", mobileNav: "Mobile navigation",
-    menu: "Open menu", signIn: "Sign in", scan: "Check an email", openScanner: "Open scanner", github: "Open GitHub",
+    menu: "Open menu", scan: "Check an email", openScanner: "Open scanner", github: "Open GitHub",
     navigation: [["/platform", "How it works"], ["/chrome-extension", "Chrome extension"], ["/self-hosted", "Self-hosted"], ["/pricing", "Pricing"]] as const,
   };
   const appHref = localizeHref(getAppHref(), locale);
-  const signInHref = localizeHref(getAppRouteHref("/auth/sign-in"), locale);
   const currentPath = stripSiteLocale(pathname);
   const navigation = copy.navigation.map(([href, label]) => ({
     current: currentPath === href,
     href: localizePath(href, locale),
     label,
   }));
-  const accountsEnabled = areAccountsEnabled();
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#cbd0c5] bg-[#f7f8f4]/95 shadow-[0_1px_0_rgba(17,23,17,0.04)] backdrop-blur">
@@ -64,15 +61,6 @@ export async function SiteHeader() {
 
         <div className="hidden items-center gap-1 xl:flex">
           <SiteLanguageLinks locale={locale} pathname={pathname} />
-          {accountsEnabled ? (
-            <Link
-              href={signInHref}
-              className="inline-flex h-10 items-center gap-2 px-3 text-sm font-semibold text-[#2b342c] transition hover:text-[#087b72]"
-            >
-              <LogIn className="h-4 w-4" aria-hidden="true" />
-              {copy.signIn}
-            </Link>
-          ) : null}
           <a
             href={appHref}
             className="inline-flex h-10 items-center gap-2 bg-[#111711] px-4 text-sm font-semibold text-white transition hover:bg-[#087b72]"
@@ -120,17 +108,9 @@ export async function SiteHeader() {
               <SiteLanguageLinks locale={locale} pathname={pathname} />
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              {accountsEnabled ? (
-                <Link
-                  href={signInHref}
-                  className="inline-flex h-10 items-center justify-center border border-[#aeb6ac] bg-white px-3 text-sm font-semibold"
-                >
-                  {copy.signIn}
-                </Link>
-              ) : null}
               <a
                 href={appHref}
-                className={`inline-flex h-10 items-center justify-center bg-[#111711] px-3 text-sm font-semibold text-white ${accountsEnabled ? "" : "col-span-2"}`}
+                className="col-span-2 inline-flex h-10 items-center justify-center bg-[#111711] px-3 text-sm font-semibold text-white"
               >
                 {copy.openScanner}
               </a>

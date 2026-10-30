@@ -9,7 +9,7 @@ Visitor
   -> Cloudflare DNS, DDoS protection, WAF, rate limit
   -> Cloudflare Tunnel (outbound connection from VPS)
   -> maillume:3000 on a private Docker network
-  -> Supabase Auth/feedback when configured
+  -> Supabase scan counts/feedback when configured
 ```
 
 - `https://maillume.io` is canonical and serves marketing pages.
@@ -55,11 +55,11 @@ NEXT_PUBLIC_MARKETING_URL=https://maillume.io
 NEXT_PUBLIC_APP_URL=https://app.maillume.io
 ANALYSIS_REQUEST_LIMIT=20
 ANALYSIS_REQUEST_WINDOW_SECONDS=60
+ANALYSIS_DAILY_REQUEST_LIMIT=300
 ANALYSIS_MAX_REQUEST_BYTES=32768
 TRUST_CF_CONNECTING_IP=true
 TRUSTED_PROXY_IP_HEADER=
 FEEDBACK_STORAGE=disabled
-ACCOUNTS_ENABLED=true
 MAILLUME_OPERATOR_LEGAL_NAME=<registered business name>
 MAILLUME_OPERATOR_REGISTERED_ADDRESS=<optional public business address>
 MAILLUME_OPERATOR_KVK=<Dutch Chamber of Commerce number>
@@ -104,30 +104,20 @@ workflow resolves and passes this digest automatically.
 
 Do not configure AI provider keys on the official public service. Build-time `NEXT_PUBLIC_` values are embedded in the image; the release workflow builds the official image with canonical defaults. Self-hosters needing different public values should build their own image.
 
-`ACCOUNTS_ENABLED` is server-only and defaults to `false`. The account-enabled public beta uses the exact value `true`; setting it to `false` returns the deployment to anonymous-only mode without disabling the scanner. Keep account acceptance evidence current in [authentication.md](authentication.md) and issue #79.
+Maillume has no accounts. Analysis is anonymous and bounded by `ANALYSIS_REQUEST_LIMIT`, `ANALYSIS_REQUEST_WINDOW_SECONDS`, and `ANALYSIS_DAILY_REQUEST_LIMIT` per trusted client identifier, plus the Cloudflare edge limits. A leftover `ACCOUNTS_ENABLED` value in `.env.production` is ignored and can be deleted.
 
 The public privacy, terms, and security pages require the `MAILLUME_OPERATOR_*` values at runtime. Create `support@maillume.io` in Google Workspace and make `privacy@maillume.io` and `security@maillume.io` aliases before setting the corresponding environment values. These are VPS runtime values, never GitHub build variables.
 
 Make `scripts/deploy-production.sh` executable. Authenticate Docker to GHCR using a read-only package token if the package is private.
 
-## 4. Configure Supabase Authentication
+## 4. Configure Supabase
 
-Anonymous scanning remains available when authentication is enabled.
+Supabase stores only the anonymous daily scan counts and optional, content-free feedback. It is not used for authentication.
 
-The account-enabled beta uses Supabase email signups and Google sign-in. If operations switch Maillume to anonymous-only mode, disable those providers in Supabase as well so users cannot initiate an Auth flow directly with the public browser configuration.
-
-1. Create a production Supabase project in an EU region and apply every migration in `supabase/migrations`, including the account-level API quota and expiring key lifecycle migration. Follow the verification and rollback notes in `docs/api-key-lifecycle.md`.
-2. Enable email/password sign-in, require email confirmation, configure branded SMTP/templates, and keep secure password changes enabled.
-3. Create a Google Web OAuth client and use the Supabase callback shown in its Google-provider settings as the Google authorized redirect URI.
-4. Enable Google in Supabase with only OpenID, email, and profile scopes.
-5. Set the Supabase site URL to `https://app.maillume.io` and allow only `https://app.maillume.io/auth/callback` in production. Keep localhost only in a separate development project.
-6. Add only the server-side Supabase secret to the VPS `.env.production`. Public Supabase values are embedded from GitHub repository variables during the image build.
-7. Confirm TOTP APIs are enabled and complete the MFA acceptance matrix in `docs/authentication.md`.
-8. Leave passkeys disabled for the first production image. Enable them only after configuring the WebAuthn relying party and completing the real-device matrix.
-9. Enable production sign-in only after email confirmation, password reset, Google sign-in, sign-out, session refresh, MFA challenge, and confirmation-gated account deletion pass.
-10. Verify Row Level Security is enabled. The feedback table accepts writes only through the server role and contains no scan-content columns.
-
-Complete the Google application identity checklist in `docs/google-oauth-branding.md`. The custom `auth.maillume.io` hostname is optional and adds recurring Supabase cost; Google brand verification should be completed even if the project remains on its Supabase hostname during public beta.
+1. Create a production Supabase project in an EU region and apply every migration in `supabase/migrations`.
+2. Add only the server-side `SUPABASE_URL` and `SUPABASE_SECRET_KEY` to the VPS `.env.production`. No public Supabase values are embedded in the image.
+3. Disable the email, Google, and other Auth providers so nobody can start a sign-in flow against the project directly.
+4. Verify Row Level Security is enabled. The counter and feedback tables accept writes only through the server role and contain no scan-content columns.
 
 Never prefix a Supabase server secret or AI provider key with `NEXT_PUBLIC_`.
 
@@ -173,13 +163,13 @@ the workflow configuration alone is not evidence for a deployed release.
 
 Use synthetic data only.
 
-1. Check `/api/health`, marketing, scanner, trust, auth, and resource routes through Cloudflare.
+1. Check `/api/health`, marketing, scanner, trust, and resource routes through Cloudflare.
 2. Confirm `maillume.nl` and `www.maillume.io` preserve paths while redirecting to canonical `.io` URLs.
 3. Confirm direct requests to the VPS IP cannot reach the app.
 4. Confirm `/api/analyze` and `/api/v1/analyze` return `Cache-Control: no-store`, reject oversized requests with `413`, and reject excess requests with `429` before analysis.
 5. Confirm production reports `analysis_mode: heuristic` and has no provider key.
 6. Confirm screenshot and `.eml` source files remain browser-side.
-7. Test email/password confirmation and recovery, Google authentication, TOTP enrollment/challenge, and account deletion with dedicated test accounts.
+7. Confirm that `/api/v1/analyze` answers without credentials and that old `/auth` and `/account` links redirect to the scanner.
 8. Rehearse deployment rollback and VPS restart recovery before the public announcement. Follow `docs/production-security-evidence.md` for the sanitized proof required by the release gate.
 
 ## Future Migration

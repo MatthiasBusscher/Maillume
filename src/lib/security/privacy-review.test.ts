@@ -46,23 +46,8 @@ function main() {
 
   const routeContent = readProjectFile("src/app/api/analyze/route.ts");
   const analysisHttp = readProjectFile("src/lib/analysis/http.ts");
-  const hostedAnalysis = readProjectFile("src/lib/analysis/hosted.ts");
   const feedbackRouteContent = readProjectFile("src/app/api/feedback/route.ts");
-  const authCallbackContent = readProjectFile("src/app/auth/callback/route.ts");
-  const authRedirectContent = readProjectFile("src/app/auth/callback/redirect.ts");
-  const oauthReturnContent = readProjectFile("src/lib/auth/oauth-return.ts");
   const proxyContent = readProjectFile("src/proxy.ts");
-  const accountPageContent = readProjectFile("src/app/account/page.tsx");
-  const accountDeletionContent = readProjectFile("src/app/account/delete/route.ts");
-  const accountDeletionTokenContent = readProjectFile(
-    "src/lib/security/account-deletion-token.ts",
-  );
-  const accountMutationTokenContent = readProjectFile(
-    "src/lib/security/account-mutation-token.ts",
-  );
-  const accountLanguageContent = readProjectFile("src/app/account/language/route.ts");
-  const accountConfig = readProjectFile("src/lib/accounts/config.ts");
-  const signOutRouteContent = readProjectFile("src/app/auth/sign-out/route.ts");
   const supabaseConfig = readProjectFile("supabase/config.toml");
   const accountRequestGuard = readProjectFile("src/lib/security/account-request.ts");
   const scannerPageContent = readProjectFile("src/app/app/page.tsx");
@@ -132,11 +117,6 @@ function main() {
     "supabase/migrations/20260721100000_limit_beta_api_quota.sql",
   );
   const hostedApiRoute = readProjectFile("src/app/api/v1/analyze/route.ts");
-  const accountApiKeysRoute = readProjectFile("src/app/account/api-keys/route.ts");
-  const extensionPairingRoute = readProjectFile("src/app/api/v1/extension-pairing/route.ts");
-  const extensionPairingApprovalRoute = readProjectFile(
-    "src/app/account/connect-extension/[pairingId]/resolve/route.ts",
-  );
   const extensionPairingMigration = readProjectFile(
     "supabase/migrations/20260730110000_create_extension_pairings.sql",
   );
@@ -211,54 +191,12 @@ function main() {
     /rest\/v1\/detection_feedback(?:\?|`)/,
   );
   assert.doesNotMatch(feedbackReportScript, /console\./);
-  assert.match(authCallbackContent, /getSafeOAuthRedirectUrl/);
-  assert.match(authRedirectContent, /decodeURIComponent\(candidate\)/);
-  assert.match(authRedirectContent, /UNSAFE_REDIRECT_CHARACTERS/);
-  assert.match(authRedirectContent, /destination\.origin === fallbackUrl\.origin/);
-  assert.match(authCallbackContent, /private, no-cache, no-store/);
-  assert.match(authCallbackContent, /if \(!areAccountsEnabled\(\)\)/);
+  assert.doesNotMatch(proxyContent, /@supabase|createServerClient|getClaims|auth\.getUser/);
+  assert.match(proxyContent, /\^\\\/\(\?:auth\|account\)/);
   assert.ok(
-    authCallbackContent.indexOf("if (!areAccountsEnabled())") <
-      authCallbackContent.indexOf("exchangeCodeForSession"),
-    "the anonymous beta must reject OAuth callbacks before exchanging a session code",
+    hostedApiRoute.indexOf("enforceAnalysisRequestLimit(request)") < hostedApiRoute.indexOf("parseAnalysisRequest(request)"),
+    "anonymous hosted API calls must be rate-limited before request content is read",
   );
-  assert.match(authCallbackContent, /hasOAuthErrorReturn\(requestUrl\)/);
-  assert.match(proxyContent, /hasOAuthErrorReturn\(request\.nextUrl\)/);
-  assert.match(oauthReturnContent, /OAUTH_PROVIDER_FAILURE_CODE = "oauth_provider_failed"/);
-  assert.doesNotMatch(oauthReturnContent, /searchParams\.get\("error_description"\)/);
-  assert.match(accountDeletionContent, /getUser\(\)/);
-  assert.match(accountDeletionContent, /admin\.auth\.admin\.deleteUser/);
-  assert.match(accountDeletionContent, /verifyAccountDeletionToken/);
-  assert.match(accountPageContent, /type="hidden" name="csrf" value=\{deletionToken/);
-  assert.match(accountDeletionTokenContent, /createAccountMutationToken\("delete"/);
-  assert.match(accountMutationTokenContent, /createHmac\("sha256", secret\)/);
-  assert.match(accountMutationTokenContent, /timingSafeEqual/);
-  assert.match(accountMutationTokenContent, /\$\{action\}/);
-  assert.match(accountPageContent, /mutationToken=\{languageToken/);
-  assert.match(accountPageContent, /name="csrf" value=\{signOutToken/);
-  assert.match(accountLanguageContent, /isAuthorizedAccountMutation\(\{\s*action: "language"/);
-  assert.match(accountDeletionContent, /ACCOUNT_DELETE_MAX_REQUEST_BYTES/);
-  assert.match(accountDeletionContent, /hasRecentAuthentication\(data\.user\.last_sign_in_at\)/);
-  assert.match(accountDeletionContent, /private, no-cache, no-store/);
-  assert.match(accountDeletionContent, /if \(!areAccountsEnabled\(\)\)/);
-  assert.ok(
-    accountDeletionContent.indexOf("if (!areAccountsEnabled())") <
-      accountDeletionContent.indexOf("const rawBody = await readBoundedRequestBody"),
-    "the anonymous beta must reject deletion before reading its request body",
-  );
-  assert.match(accountLanguageContent, /if \(!areAccountsEnabled\(\)\)/);
-  assert.ok(
-    accountLanguageContent.indexOf("if (!areAccountsEnabled())") <
-      accountLanguageContent.indexOf("const body = await readBoundedRequestBody"),
-    "the anonymous beta must reject language changes before reading their request body",
-  );
-  assert.match(accountConfig, /env\.ACCOUNTS_ENABLED === "true"/);
-  assert.match(accountApiKeysRoute, /if \(!areAccountsEnabled\(\)\) return disabledResponse\(\);/g);
-  assert.ok(
-    hostedApiRoute.indexOf("if (!areAccountsEnabled())") < hostedApiRoute.indexOf("getBearerToken"),
-    "the anonymous beta must reject hosted API calls before reading credentials or request content",
-  );
-  assert.match(proxyContent, /if \(!areAccountsEnabled\(\)\) \{\s*return response;/);
   assert.match(operatorConfig, /getPublicBetaOperatorProfile/);
   assert.match(operatorConfig, /Public-beta operator configuration is incomplete/);
   assert.match(clientIdentifier, /cf-connecting-ip/);
@@ -271,21 +209,6 @@ function main() {
     "client IP headers must be selected by the explicit trust gate before they are read",
   );
   assert.match(clientIdentifier, /if \(trustCloudflare === Boolean\(trustedProxyHeader\)\) return undefined/);
-  assert.ok(
-    accountDeletionContent.indexOf("getUser()") <
-      accountDeletionContent.indexOf("admin.auth.admin.deleteUser"),
-    "account deletion must verify the signed-in user before using the admin API",
-  );
-  assert.match(signOutRouteContent, /getPublicAppOrigin/);
-  assert.match(signOutRouteContent, /isStrictSameOriginMutation\(request, publicOrigin\)/);
-  assert.match(signOutRouteContent, /Cross-origin sign-out is not allowed/);
-  assert.match(signOutRouteContent, /isAuthorizedAccountMutation\(\{\s*action: "sign-out"/);
-  assert.match(signOutRouteContent, /const \{ error: signOutError \} = await supabase\.auth\.signOut/);
-  assert.ok(
-    signOutRouteContent.indexOf("isStrictSameOriginMutation(request, publicOrigin)") <
-      signOutRouteContent.indexOf("auth.signOut"),
-    "sign-out must reject a cross-origin request before clearing the session",
-  );
   for (const notificationType of [
     "password_changed",
     "email_changed",
@@ -364,7 +287,7 @@ function main() {
   assert.match(proxyContent, /headers\.set\("x-nonce", nonce\)/);
   assert.match(proxyContent, /headers\.set\("Content-Security-Policy", contentSecurityPolicy\)/);
   assert.match(proxyContent, /response\.headers\.set\("Content-Security-Policy", contentSecurityPolicy\)/);
-  assert.match(proxyContent, /supabaseUrl: process\.env\.NEXT_PUBLIC_SUPABASE_URL/);
+  assert.doesNotMatch(proxyContent, /supabaseUrl/);
   assert.match(cspConfig, /url\.origin/);
   assert.match(cspConfig, /url\.protocol === "https:" \? "wss:" : "ws:"/);
   assert.doesNotMatch(cspConfig, /supabase\.co|connect-src \*/);
@@ -431,7 +354,6 @@ function main() {
   assert.match(apiQuotaFixMigration, /on conflict on constraint api_usage_monthly_pkey/);
   assert.doesNotMatch(apiQuotaFixMigration, /on conflict \(api_key_id,/);
   assert.match(quotaRefundMigration, /greatest\(0, request_count - 1\)/);
-  assert.match(hostedAnalysis, /refund_account_api_quota/);
   assert.match(apiLifecycleMigration, /create table public\.api_account_limits/);
   assert.match(apiLifecycleMigration, /create table public\.api_account_usage_monthly/);
   assert.match(apiLifecycleMigration, /create table public\.api_quota_reservations/);
@@ -470,24 +392,12 @@ function main() {
   assert.match(betaQuotaMigration, /alter column monthly_quota set default 25/g);
   assert.match(betaQuotaMigration, /least\(monthly_quota, 25\)/g);
   assert.equal((apiMfaMigration.match(/auth\.jwt\(\) ->> 'aal'\) = 'aal2'/g) ?? []).length, 3);
-  assert.match(accountApiKeysRoute, /hasAal2Session/);
-  assert.match(accountApiKeysRoute, /create_hosted_api_key/);
-  assert.match(accountApiKeysRoute, /rotate_hosted_api_key/);
-  assert.match(accountApiKeysRoute, /revoke_hosted_api_key/);
-  assert.match(accountApiKeysRoute, /ACCOUNT_API_KEY_MAX_REQUEST_BYTES/);
-  assert.equal(
-    (accountApiKeysRoute.match(/isStrictSameOriginMutation\(request\)/g) ?? []).length,
-    3,
-  );
-  assert.doesNotMatch(accountApiKeysRoute, /\.insert\(|\.update\(/);
   assert.doesNotMatch(hostedApiRoute, /\.eq\("secret_hash"/);
   assert.doesNotMatch(apiAccessMigration, /^\s*(body|subject|sender_email|message_text|links|result|ip_address)\s+/im);
   assert.doesNotMatch(hostedApiRoute, /console\.|writeFile|appendFile|createWriteStream/);
-  assert.match(hostedApiRoute, /hashApiKey\(token\)/);
+  assert.doesNotMatch(hostedApiRoute, /authorization|Bearer|apiKey|api-keys/i);
+  assert.match(hostedApiRoute, /countSuccessfulAnalysis\(parsed\.value\)/);
   assert.match(hostedApiRoute, /parseAnalysisRequest\(request\)/);
-  assert.match(hostedAnalysis, /reserve_account_api_quota/);
-  assert.match(hostedAnalysis, /finalize_account_api_quota/);
-  assert.match(hostedAnalysis, /p_reservation_id/);
   assert.match(analysisHttp, /readBody\(request, getMaxRequestBytes\(\)\)/);
   assert.doesNotMatch(hostedApiRoute, /consume_api_quota|inspect_api_key_status/);
   assert.match(extensionPairingMigration, /create table public\.extension_pairings/);
@@ -501,25 +411,15 @@ function main() {
     extensionPairingMigration,
     /^\s*(api_key|plaintext|body|subject|sender_email|message_text|links|result|session|ip_address)\s+/im,
   );
-  assert.match(extensionPairingRoute, /EXTENSION_PAIRING_MAX_REQUEST_BYTES/);
-  assert.match(extensionPairingRoute, /hashExtensionPairingDeviceCode\(deviceCode\)/);
-  assert.match(extensionPairingRoute, /redeem_extension_pairing/);
-  assert.doesNotMatch(extensionPairingRoute, /console\.|writeFile|appendFile|createWriteStream/);
-  assert.match(extensionPairingApprovalRoute, /isStrictSameOriginMutation\(request, publicOrigin\)/);
-  assert.match(extensionPairingApprovalRoute, /isAuthorizedAccountMutation/);
-  assert.match(extensionPairingApprovalRoute, /getAuthenticatorAssuranceLevel\(\)/);
-  assert.match(extensionPairingApprovalRoute, /assurance\?\.currentLevel !== "aal2"/);
-  assert.match(extensionPairingApprovalRoute, /action: "extension-pairing"/);
   assert.match(extensionManifest, /"activeTab"/);
   assert.match(extensionManifest, /"minimum_chrome_version": "116"/);
   assert.doesNotMatch(extensionManifest, /"content_scripts"|"tabs"|mail\.google\.com|outlook\.office\.com/);
   assert.doesNotMatch(extensionPanel, /storage\.local\.set\([^)]*(?:body|result)[\s\S]*?\)/);
-  assert.match(extensionPanel, /storeApiKey\(\s*apiKey,\s*remember,/);
-  assert.match(extensionPanel, /storage\.local\.set\(\{ apiKey,/);
-  assert.match(extensionPanel, /storage\.session\.set\(\{ apiKey,/);
-  assert.match(extensionPanel, /storage\.session\.set\(\{ extensionPairing: pairing \}\)/);
+  assert.doesNotMatch(extensionPanel, /storage\.(?:local|session)\.set\(\{ (?:apiKey|extensionPairing|browserConnectionId)/);
+  assert.doesNotMatch(extensionPanel, /Authorization|Bearer/);
+  assert.match(extensionPanel, /clearLegacyCredentials\(\)/);
   assert.match(extensionPanel, /X-Maillume-Extension-Version/);
-  assert.match(extensionPanel, /rememberApiKey/);
+  assert.match(extensionPanel, /chrome\.permissions\.request\(\{ origins \}\)/);
   assert.match(extensionWorker, /setAccessLevel\?\.\(\{ accessLevel: "TRUSTED_CONTEXTS" \}\)/);
   const reusableWorkflowReference = "./.github/workflows/verify.yml";
   assertPinnedActions(ciWorkflow, ".github/workflows/ci.yml", [reusableWorkflowReference]);

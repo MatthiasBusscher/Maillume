@@ -32,14 +32,14 @@ Paste an email, add a screenshot, or open an exported `.eml` file. Maillume show
 - **Three input paths:** pasted text, browser-side screenshot OCR, and browser-side `.eml` parsing.
 - **Sender authentication:** `.eml` scans read the SPF, DKIM, and DMARC outcomes your provider recorded, plus reply and return-path routing. A failure is evidence; a pass is never scored as reassurance.
 - **No scan history:** email content and completed assessments are not written to a scan database.
-- **Useful without an account:** anonymous heuristic scanning is the permanent free core.
+- **No account, no subscription:** the web scanner, Chrome extension, and analysis API are free and anonymous.
 - **Self-hostable:** run the complete scanner in Docker and optionally connect your own AI provider.
 - **Bilingual from the start:** the web interface supports English and Dutch.
 - **Built in the open:** AGPL-3.0 source, public issues, security guidance, and a documented result contract.
 
 ## Project Status
 
-Maillume is in public beta. Anonymous scanning and optional account/API-key features are running in production. The official Chrome extension is available in the [Chrome Web Store](https://chromewebstore.google.com/detail/maillume/bjiiailjalkfjimkjdikoockjlnjolle).
+Maillume is a free, open-source public beta. Scanning is anonymous everywhere; there are no accounts or paid plans. The official Chrome extension is available in the [Chrome Web Store](https://chromewebstore.google.com/detail/maillume/bjiiailjalkfjimkjdikoockjlnjolle).
 
 | Capability | Status |
 | --- | --- |
@@ -47,9 +47,9 @@ Maillume is in public beta. Anonymous scanning and optional account/API-key feat
 | Paste, screenshot OCR, and `.eml` input | Available |
 | Local heuristic assessment | Available |
 | Self-hosted AI with an operator-owned key | Available from source |
-| Email/Google accounts, TOTP 2FA, and hosted API keys | Available; account optional |
-| Chrome extension | Available in the Chrome Web Store |
-| Maintainer-hosted AI and payments | Not implemented |
+| Anonymous versioned analysis API (`/api/v1/analyze`) | Available, rate-limited per client |
+| Chrome extension, no account needed | Available in the Chrome Web Store |
+| Accounts, maintainer-hosted AI, and payments | Not planned |
 
 Follow the [web-beta release checklist](https://github.com/MatthiasBusscher/Maillume/issues/40), [security verification](https://github.com/MatthiasBusscher/Maillume/issues/47), and completed [Chrome publication](https://github.com/MatthiasBusscher/Maillume/issues/39) work on GitHub.
 
@@ -187,7 +187,6 @@ docker run --rm --name maillume-local \
   --platform linux/amd64 \
   -p 127.0.0.1:3000:3000 \
   -e ANALYSIS_MODE=heuristic \
-  -e ACCOUNTS_ENABLED=false \
   "$IMAGE"
 ```
 
@@ -241,7 +240,7 @@ npm run build
 
 Reusable scoring fixtures must be synthetic or fully sanitized. The CI corpus contains 300 English/Dutch synthetic cases split by scenario into development and locked sets. It is a regression benchmark, not evidence of real-world accuracy. Never commit real private email content, inbox screenshots, raw `.eml` files, private headers, or credentials.
 
-Useful guides: [architecture](docs/architecture.md), [authentication](docs/authentication.md), [Google sign-in identity](docs/google-oauth-branding.md), [evaluation](docs/evaluation.md), [privacy-safe feedback](docs/feedback.md), [heuristic baseline](docs/heuristic-evaluation.md), [operations](docs/operations.md), [launch checklist](docs/launch-checklist.md), and [roadmap](docs/roadmap.md).
+Useful guides: [architecture](docs/architecture.md), [integrations and API](docs/integrations.md), [evaluation](docs/evaluation.md), [privacy-safe feedback](docs/feedback.md), [heuristic baseline](docs/heuristic-evaluation.md), [operations](docs/operations.md), [launch checklist](docs/launch-checklist.md), and [roadmap](docs/roadmap.md).
 
 ## Community and Security
 

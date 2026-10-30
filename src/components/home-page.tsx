@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -8,11 +8,9 @@ import {
   ExternalLink,
   Github,
   Heart,
-  LogIn,
   Menu,
   Scale,
   ScanSearch,
-  UserRound,
 } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
@@ -39,14 +37,10 @@ export function ScannerPage({
   feedbackEnabled,
   initialLocale,
   maxRequestBytes,
-  accountsEnabled,
-  userEmail,
 }: {
   feedbackEnabled: boolean;
   initialLocale: Locale;
   maxRequestBytes: number;
-  accountsEnabled: boolean;
-  userEmail?: string;
 }) {
   const [locale, setLocale] = useState<Locale>(initialLocale ?? DEFAULT_LOCALE);
   const dictionary = useMemo(() => dictionaries[locale], [locale]);
@@ -88,19 +82,6 @@ export function ScannerPage({
               locale={locale}
               onLocaleChange={changeLocale}
             />
-            {accountsEnabled ? (
-              <Link
-                href={localizePath(userEmail ? "/account" : "/auth/sign-in", locale)}
-                aria-label={userEmail ? dictionary.app.account : dictionary.app.signIn}
-                title={userEmail ? dictionary.app.account : dictionary.app.signIn}
-                className="inline-flex h-10 w-10 items-center justify-center gap-2 border border-white/30 text-sm font-semibold text-white transition hover:border-[#dfff52] hover:text-[#dfff52] sm:w-auto sm:px-3"
-              >
-                {userEmail ? <UserRound className="h-4 w-4" aria-hidden="true" /> : <LogIn className="h-4 w-4" aria-hidden="true" />}
-                <span className="hidden sm:inline">
-                  {userEmail ? dictionary.app.account : dictionary.app.signIn}
-                </span>
-              </Link>
-            ) : null}
             <details className="group relative">
               <summary
                 aria-label={dictionary.app.more}

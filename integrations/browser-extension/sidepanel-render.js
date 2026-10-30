@@ -95,58 +95,16 @@ function renderEvidenceCoverage(coverage) {
   elements.coverageSection.hidden = false;
 }
 
-function updateApiKeyVisibility() {
-  const concealed = committedConnectionKind === "browser" && !elements.apiKey.value.trim();
-  elements.apiKeyVisibility.disabled = concealed;
-  if (!concealed) return;
-  elements.apiKey.type = "password";
-  elements.apiKeyVisibility.setAttribute("aria-pressed", "false");
-  elements.apiKeyVisibility.setAttribute("aria-label", getDynamicCopy().showApiKey);
-  elements.apiKeyVisibility.setAttribute("title", getDynamicCopy().showApiKey);
-}
-
 function updateDestination() {
   const copy = getDynamicCopy();
   const endpoint = normalizeEndpoint(elements.endpoint.value);
   if (!endpoint) return void (elements.destination.textContent = copy.configureDestination);
-  if (endpoint !== committedEndpoint) return void (elements.destination.textContent = copy.unsavedDestination(endpoint));
-  if (!committedApiKey) return void (elements.destination.textContent = copy.destinationNeedsKey(endpoint));
-  if (!isCredentialInputCurrent()) return void (elements.destination.textContent = copy.unsavedKey(endpoint));
-  const daysUntilExpiry = getDaysUntilExpiry(committedApiKeyExpiresAt);
-  if (daysUntilExpiry !== null && daysUntilExpiry <= 0) {
-    elements.destination.textContent = committedConnectionKind === "browser" ? copy.browserDestinationExpired(endpoint) : copy.destinationExpired(endpoint);
-    return;
-  }
-  const warningDays = committedConnectionKind === "browser" ? 30 : 14;
-  if (daysUntilExpiry !== null && daysUntilExpiry <= warningDays) {
-    elements.destination.textContent = committedConnectionKind === "browser" ? copy.browserDestinationExpiring(endpoint, daysUntilExpiry) : copy.destinationExpiring(endpoint, daysUntilExpiry);
-    return;
-  }
-  elements.destination.textContent = copy.destination(endpoint);
-}
-
-function updateConnectionState() {
-  const connected = Boolean(committedApiKey && committedEndpoint && !isExpired(committedApiKeyExpiresAt));
-  const browserConnected = connected && committedConnectionKind === "browser";
-  const copy = getDynamicCopy();
-  const state = browserConnected ? copy.connectionStateConnected : connected ? copy.connectionStateManual : copy.connectionStateDisconnected;
-  elements.connectionState.textContent = state;
-  elements.connectionState.dataset.connected = String(connected);
-  elements.connect.hidden = browserConnected;
-  elements.connect.textContent = committedConnectionKind === "browser" ? copy.reconnectButton : copy.connectButton;
-  elements.reset.hidden = !committedApiKey && !committedEndpoint;
+  elements.destination.textContent = endpoint === committedEndpoint ? copy.destination(endpoint) : copy.unsavedDestination(endpoint);
+  elements.reset.hidden = committedEndpoint === DEFAULT_ENDPOINT && endpoint === DEFAULT_ENDPOINT;
 }
 
 function updateAnalyzeState() {
-  const endpoint = normalizeEndpoint(elements.endpoint.value);
-  const hasBody = Boolean(elements.body.value.trim());
-  const hasSavedCredential = Boolean(committedApiKey);
-  const readyToAnalyze = hasSavedCredential && endpoint && endpoint === committedEndpoint && isCredentialInputCurrent() && !isExpired(committedApiKeyExpiresAt);
-  elements.analyze.disabled = !hasBody || (hasSavedCredential && !readyToAnalyze);
-}
-
-function isCredentialInputCurrent() {
-  return committedConnectionKind === "browser" || elements.apiKey.value.trim() === committedApiKey;
+  elements.analyze.disabled = !elements.body.value.trim();
 }
 
 function setCapturePending(pending) {

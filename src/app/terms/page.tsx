@@ -20,7 +20,7 @@ export default async function TermsPage() {
     <TrustPage eyebrow={copy.eyebrow} title={copy.title} description={copy.description} updatedLabel={copy.updatedLabel} updatedDate={copy.updatedDate}>
       <TrustSection title={sections.assessment.title}>{sections.assessment.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</TrustSection>
       <TrustSection title={sections.use.title}><TrustList items={[...sections.use.items]} /></TrustSection>
-      <TrustSection title={sections.accounts.title}>{sections.accounts.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</TrustSection>
+      <TrustSection title={sections.fairUse.title}>{sections.fairUse.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</TrustSection>
       <TrustSection title={sections.availability.title}><p>{sections.availability.paragraph}</p></TrustSection>
       <TrustSection title={sections.openSource.title}><p>{sections.openSource.paragraph}</p></TrustSection>
       <TrustSection title={sections.completion.title}><p>{sections.completion.paragraph}</p></TrustSection>

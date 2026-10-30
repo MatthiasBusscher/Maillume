@@ -20,14 +20,8 @@ const compiledTestsRoot = resolve(process.cwd(), ".analysis-tests", "src", "lib"
  */
 function isSecurityTest(testPath) {
   return (
-    testPath.startsWith("accounts/") ||
-    testPath.startsWith("billing/") ||
     testPath.startsWith("security/") ||
-    testPath === "operator.test.js" ||
-    testPath === "auth/oauth-return.test.js" ||
-    testPath === "auth/authenticated-locale.test.js" ||
-    testPath === "i18n/account-locale.test.js" ||
-    testPath === "supabase/admin-config.test.js"
+    testPath === "operator.test.js"
   );
 }
 

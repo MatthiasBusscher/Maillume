@@ -1,5 +1,7 @@
 # Maillume GitHub Issue Roadmap
 
+> **Superseded (October 2026):** Maillume removed accounts, API keys, browser pairing, and all paid plans. The scanner, Chrome extension, and `/api/v1/analyze` are free and anonymous; see [integrations.md](integrations.md) and [releases/accounts-removal.md](releases/accounts-removal.md). The rest of this document is kept as a historical record.
+
 Implementation status: the scanner, optional accounts, TOTP, account-scoped API, and official Chrome Web Store extension are live. Authentication recovery and the English/Dutch editorial pass are accepted. GitHub milestones and issues are the source of truth.
 
 ## Release And Post-Launch Order

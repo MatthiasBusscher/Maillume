@@ -21,8 +21,6 @@ export const dictionaries = {
       audience: "Email risk workspace",
       workspaceTitle: "Inspect a suspicious email",
       website: "Website",
-      signIn: "Sign in",
-      account: "Account",
       more: "More options",
       hero:
         "Paste a message, scan a screenshot, or open an .eml file for a clear, structured second opinion.",
@@ -206,8 +204,6 @@ export const dictionaries = {
       audience: "Werkruimte voor e-mailrisico",
       workspaceTitle: "Onderzoek een verdachte e-mail",
       website: "Website",
-      signIn: "Inloggen",
-      account: "Account",
       more: "Meer opties",
       hero:
         "Plak een bericht, scan een screenshot of open een .eml-bestand voor een duidelijke, gestructureerde extra controle.",
