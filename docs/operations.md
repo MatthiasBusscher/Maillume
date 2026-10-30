@@ -56,10 +56,10 @@ nothing to expire — and the series is only useful over time.
 
 ## Immutable Image Inputs
 
-Production accepts Maillume and cloudflared images only by registry digest. The release workflow passes Maillume to the deployment script as `ghcr.io/matthiasbusscher/maillume@sha256:<64-hex-digest>`. Compose defaults to the official multi-platform digest resolved from Cloudflare's `2026.7.0` release on 14 July 2026:
+Production accepts Maillume and cloudflared images only by registry digest. The release workflow passes Maillume to the deployment script as `ghcr.io/matthiasbusscher/maillume@sha256:<64-hex-digest>`. Compose defaults to the official multi-platform digest resolved from Cloudflare's `2026.10.7` release on 30 October 2026 (Cloudflare's security advisory requires 2026.10.2 or later):
 
 ```dotenv
-CLOUDFLARED_IMAGE=cloudflare/cloudflared@sha256:5e49861633763e8933475477c20bae6039ed47f32c1d267a34babc347f28f0df
+CLOUDFLARED_IMAGE=cloudflare/cloudflared@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba
 ```
 
 `CLOUDFLARED_IMAGE` is optional unless you intentionally update the sidecar. Resolve any replacement from an official versioned Cloudflare image, record the release, and keep the full digest. The deployment script rejects tags such as `latest` and non-Cloudflare image repositories.

@@ -33,7 +33,7 @@ services:
         max-file: "3"
 
   cloudflared:
-    image: ${CLOUDFLARED_IMAGE:-cloudflare/cloudflared@sha256:5e49861633763e8933475477c20bae6039ed47f32c1d267a34babc347f28f0df}
+    image: ${CLOUDFLARED_IMAGE:-cloudflare/cloudflared@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba}
     init: true
     restart: unless-stopped
     command: tunnel --no-autoupdate run
