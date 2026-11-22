@@ -33,6 +33,16 @@ test("rejects a nonce that could inject another directive", () => {
   );
 });
 
+test("lets page views reach only the configured analytics origin", () => {
+  assert.match(
+    createContentSecurityPolicy({ nonce: "n", analyticsOrigin: "https://stats.example" }),
+    /connect-src 'self' https:\/\/stats\.example;/,
+  );
+  for (const analyticsOrigin of ["http://stats.example", "https://stats.example; connect-src *", "*"]) {
+    assert.match(createContentSecurityPolicy({ nonce: "n", analyticsOrigin }), /connect-src 'self';/);
+  }
+});
+
 test("keeps browser connections same-origin without Supabase configuration", () => {
   assert.deepEqual(getCspConnectSources(), ["'self'"]);
 });

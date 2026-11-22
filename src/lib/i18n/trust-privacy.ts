@@ -10,7 +10,7 @@ export const trustPrivacyCopy = {
     title: "Privacy notice",
     description: "Maillume is designed to assess one email at a time without creating a scan history or saving the message or result in application storage. This notice describes the official public-beta data flow; self-hosted operators are responsible for their own deployment notices.",
     updatedLabel: "Last updated",
-    updatedDate: "October 30, 2026",
+    updatedDate: "November 22, 2026",
     sections: {
       assessments: {
         title: "Email assessments",
@@ -43,6 +43,14 @@ export const trustPrivacyCopy = {
         paragraphs: [
           "Maillume counts how many assessments are completed each day, split only by input mode: pasted text, screenshot, .eml file, or Chrome extension. This is how the project can tell whether the scanner is used at all.",
           "A count is a single number for one day and one input mode. It records nothing about the message, the assessment, or you. No account, session, IP address, request identifier, score, result, or time of day is stored, so a count cannot be traced back to a person or to a specific scan. Maillume uses no third-party analytics, advertising, or tracking service.",
+        ],
+      },
+      visitStatistics: {
+        title: "Visit statistics",
+        paragraphs: [
+          "To see which pages people visit and how they find Maillume, the official website counts page views with Umami, an open-source analytics tool that the operator runs on its own server in the EU. It is not a third-party service, uses no cookies, and does not follow you across websites.",
+          "A page view records the page address without query string or fragment, the referring website, browser, operating system, device type, screen size, language, and country. Your IP address is used only at the moment of the visit to determine the country and to form an anonymous visitor code that changes every day; the IP address itself is not stored. Scan content, results, and anything you type into the scanner are never sent. If your browser sends a Do Not Track signal, no page view is recorded.",
+          "The legal basis is the operator's legitimate interest in understanding and improving the website, using the least identifying method available.",
         ],
       },
       feedback: {
@@ -116,7 +124,7 @@ export const trustPrivacyCopy = {
     title: "Privacyverklaring",
     description: "Maillume is ontworpen om telkens één e-mail te beoordelen zonder scangeschiedenis aan te maken of het bericht of resultaat in de applicatieopslag te bewaren. Deze verklaring beschrijft de gegevensstroom van de officiële publieke bèta; beheerders van zelfgehoste omgevingen zijn verantwoordelijk voor hun eigen verklaringen.",
     updatedLabel: "Laatst bijgewerkt",
-    updatedDate: "30 oktober 2026",
+    updatedDate: "22 november 2026",
     sections: {
       assessments: {
         title: "E-mailbeoordelingen",
@@ -149,6 +157,14 @@ export const trustPrivacyCopy = {
         paragraphs: [
           "Maillume telt hoeveel beoordelingen er per dag worden afgerond, alleen uitgesplitst naar invoermethode: geplakte tekst, screenshot, .eml-bestand of Chrome-extensie. Zo kan het project zien of de scanner überhaupt wordt gebruikt.",
           "Een telling is één getal voor één dag en één invoermethode. Er wordt niets vastgelegd over het bericht, de beoordeling of jou. Er wordt geen account, sessie, IP-adres, aanvraagkenmerk, score, resultaat of tijdstip opgeslagen, waardoor een telling niet te herleiden is naar een persoon of naar een specifieke scan. Maillume gebruikt geen analytics-, advertentie- of trackingdiensten van derden.",
+        ],
+      },
+      visitStatistics: {
+        title: "Bezoekstatistieken",
+        paragraphs: [
+          "Om te zien welke pagina's mensen bezoeken en hoe ze Maillume vinden, telt de officiële website paginaweergaven met Umami, een opensource-analysetool die de beheerder op een eigen server in de EU draait. Het is geen dienst van derden, gebruikt geen cookies en volgt je niet over andere websites.",
+          "Een paginaweergave legt vast: het paginaadres zonder zoekparameters of fragment, de verwijzende website, browser, besturingssysteem, apparaattype, schermgrootte, taal en land. Je IP-adres wordt alleen op het moment van het bezoek gebruikt om het land te bepalen en een anonieme bezoekerscode te vormen die elke dag verandert; het IP-adres zelf wordt niet opgeslagen. Scaninhoud, resultaten en alles wat je in de scanner invoert worden nooit verstuurd. Stuurt je browser een Do Not Track-signaal, dan wordt er geen paginaweergave vastgelegd.",
+          "De grondslag is het gerechtvaardigd belang van de beheerder om de website te begrijpen en te verbeteren, met de minst herleidbare methode die beschikbaar is.",
         ],
       },
       feedback: {
