@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
+import { getAnalyticsConfig } from "@/lib/analytics";
 import { getRequestPathname, getRequestSiteLocale } from "@/lib/i18n/request-locale";
 import { localizePath } from "@/lib/i18n/site-locale";
 
@@ -59,10 +61,26 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getRequestSiteLocale();
+  const analytics = getAnalyticsConfig();
+  const nonce = analytics ? (await headers()).get("x-nonce") ?? undefined : undefined;
 
   return (
     <html lang={locale}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        {analytics ? (
+          // Cookieless page views only. Query strings and hashes are never sent, and Do Not Track is respected.
+          <script
+            async
+            src={analytics.scriptUrl}
+            nonce={nonce}
+            data-website-id={analytics.websiteId}
+            data-exclude-search="true"
+            data-exclude-hash="true"
+            data-do-not-track="true"
+          />
+        ) : null}
+      </body>
     </html>
   );
 }

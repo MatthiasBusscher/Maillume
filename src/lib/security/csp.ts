@@ -3,12 +3,15 @@ import { isSafeSupabaseUrl } from "../supabase/url";
 const SELF_SOURCE = "'self'";
 
 type ContentSecurityPolicyOptions = {
+  // Origin of the optional Umami instance (see lib/analytics.ts); it receives page views.
+  analyticsOrigin?: string;
   isDevelopment?: boolean;
   nonce: string;
   supabaseUrl?: string;
 };
 
 export function createContentSecurityPolicy({
+  analyticsOrigin,
   isDevelopment = false,
   nonce,
   supabaseUrl,
@@ -29,6 +32,11 @@ export function createContentSecurityPolicy({
     scriptSources.push("'unsafe-eval'");
   }
 
+  const connectSources = getCspConnectSources(supabaseUrl);
+  if (analyticsOrigin && /^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(analyticsOrigin)) {
+    connectSources.push(analyticsOrigin);
+  }
+
   return [
     `default-src ${SELF_SOURCE}`,
     `base-uri ${SELF_SOURCE}`,
@@ -39,7 +47,7 @@ export function createContentSecurityPolicy({
     `style-src ${SELF_SOURCE} 'unsafe-inline'`,
     `img-src ${SELF_SOURCE} data: blob:`,
     `font-src ${SELF_SOURCE} data:`,
-    `connect-src ${getCspConnectSources(supabaseUrl).join(" ")}`,
+    `connect-src ${connectSources.join(" ")}`,
     `worker-src ${SELF_SOURCE} blob:`,
     `child-src ${SELF_SOURCE} blob:`,
     `manifest-src ${SELF_SOURCE}`,

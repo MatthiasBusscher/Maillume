@@ -13,11 +13,13 @@ import {
   stripSiteLocale,
   type SiteLocale,
 } from "@/lib/i18n/site-locale";
+import { getAnalyticsConfig } from "@/lib/analytics";
 import { createContentSecurityPolicy } from "@/lib/security/csp";
 
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const contentSecurityPolicy = createContentSecurityPolicy({
+    analyticsOrigin: getAnalyticsConfig()?.origin,
     isDevelopment: process.env.NODE_ENV !== "production",
     nonce,
   });
