@@ -74,9 +74,9 @@ The launch MVP is privacy-first: pasted text, screenshots, and `.eml` files can 
    - Organizations, delegated administrators, and cross-account key management remain out of scope. Each person manages up to five connected browsers and five developer keys within their own account.
 
 6. Deployment
-   - A standalone Next.js container runs on the Hostinger VPS behind Cloudflare Tunnel.
+   - A standalone Next.js container runs on the Hostinger VPS behind the operator's Caddy reverse proxy.
    - The production shape uses `maillume.io` for marketing and `app.maillume.io` for the scanner, with `maillume.nl` redirecting to the canonical `.io` domain.
-   - No web port or origin IP is exposed publicly; Cloudflare provides protected ingress and edge abuse controls.
+   - The app publishes no ports; Caddy terminates TLS, rate-limits `/api/`, and is the only web ingress.
    - Public deployment uses `ANALYSIS_MODE=heuristic` and no AI provider key.
    - Self-hosters can use `ANALYSIS_MODE=ai`, `AI_PROVIDER=openai|anthropic|openai-compatible`, and their own server-side provider key.
 

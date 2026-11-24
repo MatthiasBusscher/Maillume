@@ -10,7 +10,7 @@ export const trustPrivacyCopy = {
     title: "Privacy notice",
     description: "Maillume is designed to assess one email at a time without creating a scan history or saving the message or result in application storage. This notice describes the official public-beta data flow; self-hosted operators are responsible for their own deployment notices.",
     updatedLabel: "Last updated",
-    updatedDate: "November 22, 2026",
+    updatedDate: "November 24, 2026",
     sections: {
       assessments: {
         title: "Email assessments",
@@ -77,7 +77,7 @@ export const trustPrivacyCopy = {
       providers: {
         title: "Service providers and infrastructure",
         paragraphs: [
-          "The official deployment uses Hostinger for application hosting, Cloudflare for DNS, protected ingress, and abuse prevention, Supabase for aggregate scan counts and non-content feedback, Google Workspace for monitored contact mailboxes, GitHub for source development and releases, and UptimeRobot for content-free availability monitoring. These providers may process technical request, email-delivery, or operational data according to their role; that does not mean Maillume stores scan content or results in scan history or application storage.",
+          "The official deployment uses Hostinger for application hosting (the operator runs its own reverse proxy and visit statistics on that server), Hetzner for DNS, Supabase for aggregate scan counts and non-content feedback, Proton for monitored contact mailboxes, GitHub for source development and releases, and UptimeRobot for content-free availability monitoring. These providers may process technical request, email-delivery, or operational data according to their role; that does not mean Maillume stores scan content or results in scan history or application storage.",
           "If the hosted service enables an external AI provider in the future, normalized message text will be sent to that configured provider for the requested assessment. The provider and its processing terms must be disclosed before that mode is enabled.",
           "Production monitoring must exclude scan and feedback payloads. A provider is active only when it has been configured for the deployed service.",
         ],
@@ -124,7 +124,7 @@ export const trustPrivacyCopy = {
     title: "Privacyverklaring",
     description: "Maillume is ontworpen om telkens één e-mail te beoordelen zonder scangeschiedenis aan te maken of het bericht of resultaat in de applicatieopslag te bewaren. Deze verklaring beschrijft de gegevensstroom van de officiële publieke bèta; beheerders van zelfgehoste omgevingen zijn verantwoordelijk voor hun eigen verklaringen.",
     updatedLabel: "Laatst bijgewerkt",
-    updatedDate: "22 november 2026",
+    updatedDate: "24 november 2026",
     sections: {
       assessments: {
         title: "E-mailbeoordelingen",
@@ -191,7 +191,7 @@ export const trustPrivacyCopy = {
       providers: {
         title: "Dienstverleners en infrastructuur",
         paragraphs: [
-          "De officiële omgeving gebruikt Hostinger voor applicatiehosting, Cloudflare voor DNS, beveiligde toegang en misbruikpreventie, Supabase voor samengevoegde scantellingen en feedback zonder berichtinhoud, Google Workspace voor bewaakte contactmailboxen, GitHub voor broncodeontwikkeling en releases, en UptimeRobot voor beschikbaarheidsmonitoring zonder scaninhoud. Deze partijen kunnen technische aanvraag-, e-mailbezorgings- of operationele gegevens verwerken voor hun rol; dat betekent niet dat Maillume scaninhoud of resultaten in scangeschiedenis of applicatieopslag bewaart.",
+          "De officiële omgeving gebruikt Hostinger voor applicatiehosting (de beheerder draait daar ook een eigen reverse proxy en bezoekstatistieken), Hetzner voor DNS, Supabase voor samengevoegde scantellingen en feedback zonder berichtinhoud, Proton voor bewaakte contactmailboxen, GitHub voor broncodeontwikkeling en releases, en UptimeRobot voor beschikbaarheidsmonitoring zonder scaninhoud. Deze partijen kunnen technische aanvraag-, e-mailbezorgings- of operationele gegevens verwerken voor hun rol; dat betekent niet dat Maillume scaninhoud of resultaten in scangeschiedenis of applicatieopslag bewaart.",
           "Als de gehoste dienst in de toekomst een externe AI-aanbieder inschakelt, wordt genormaliseerde berichttekst voor de gevraagde beoordeling naar die ingestelde aanbieder gestuurd. De aanbieder en diens verwerkingsvoorwaarden moeten bekend worden gemaakt voordat deze modus wordt ingeschakeld.",
           "Productiemonitoring moet scan- en feedbackinhoud uitsluiten. Een aanbieder is alleen actief wanneer die voor de betreffende omgeving is ingesteld.",
         ],

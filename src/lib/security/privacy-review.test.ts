@@ -143,18 +143,12 @@ function main() {
   const runtimeAuditWorkflow = readProjectFile(
     ".github/workflows/production-runtime-audit.yml",
   );
-  const tunnelRestartWorkflow = readProjectFile(
-    ".github/workflows/tunnel-restart-rehearsal.yml",
-  );
   const deployScript = readProjectFile("scripts/deploy-production.sh");
   const rollbackScript = readProjectFile("scripts/rollback-production.sh");
   const rollbackRehearsalScript = readProjectFile(
     "scripts/rehearse-production-rollback.sh",
   );
   const runtimeAuditScript = readProjectFile("scripts/audit-production-runtime.sh");
-  const tunnelRestartScript = readProjectFile(
-    "scripts/rehearse-production-tunnel-restart.sh",
-  );
 
   assert.match(analysisHttp, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(routeContent, /console\./);
@@ -342,11 +336,8 @@ function main() {
   assert.match(composeContent, /read_only: true/);
   assert.match(composeContent, /no-new-privileges:true/);
   assert.match(composeContent, /max-size: 10m/);
-  assert.match(deploymentContent, /Tunnel token only in `\/opt\/maillume\/\.env\.infrastructure`/);
-  assert.doesNotMatch(
-    deploymentContent,
-    /Tunnel token only in `\/opt\/maillume\/\.env\.production`/,
-  );
+  assert.match(deploymentContent, /TRUSTED_PROXY_IP_HEADER=x-forwarded-for/);
+  assert.doesNotMatch(deploymentContent, /CLOUDFLARE_TUNNEL_TOKEN/);
   assert.match(apiAccessMigration, /enable row level security/gi);
   assert.match(apiAccessMigration, /secret_hash char\(64\)/);
   assert.match(apiAccessMigration, /consume_api_quota/);
@@ -430,12 +421,6 @@ function main() {
   assertPinnedActions(releaseWorkflow, ".github/workflows/release.yml", [reusableWorkflowReference]);
   assertPinnedActions(rollbackWorkflow, ".github/workflows/rollback-rehearsal.yml");
   assertPinnedActions(runtimeAuditWorkflow, ".github/workflows/production-runtime-audit.yml");
-  assertPinnedActions(tunnelRestartWorkflow, ".github/workflows/tunnel-restart-rehearsal.yml");
-  assert.match(tunnelRestartWorkflow, /environment: production/);
-  assert.match(tunnelRestartWorkflow, /inputs\.confirm == 'RESTART'/);
-  assert.match(tunnelRestartWorkflow, /EXPECTED_REVISION/);
-  assert.match(tunnelRestartScript, /compose restart cloudflared/);
-  assert.doesNotMatch(tunnelRestartScript, /docker logs|printenv|\.env\.production\)/);
   assert.doesNotMatch(ciWorkflow, /push:\s*\n\s*branches:/);
   assert.match(ciWorkflow, /uses:\s*\.\/\.github\/workflows\/verify\.yml/);
   assert.match(reusableVerificationWorkflow, /fetch-depth: 0/);
@@ -482,7 +467,7 @@ function main() {
   assert.match(productionEvidenceContent, /maillume-image-sbom/);
   assert.match(productionEvidenceContent, /time-bounded risk\s+acceptance/);
   assert.match(credentialManagementContent, /private password manager/);
-  assert.match(credentialManagementContent, /CLOUDFLARE_TUNNEL_TOKEN/);
+  assert.match(credentialManagementContent, /DNS provider account/);
   assert.match(credentialManagementContent, /Supabase server secret/);
   assert.match(publicBetaLaunchContent, /\*\*Block\*\* action with an HTTP\s+`429` response/);
   assert.doesNotMatch(publicBetaLaunchContent, /and a Managed Challenge/);
@@ -495,8 +480,10 @@ function main() {
   assert.match(releaseWorkflow, /github\.ref == 'refs\/heads\/main'/);
   assert.match(releaseWorkflow, /repository_digest="\$IMAGE_NAME@\$digest"/);
   assert.match(composeContent, /MAILLUME_IMAGE:\?Set MAILLUME_IMAGE to an immutable GHCR digest/);
-  assert.match(composeContent, /CLOUDFLARED_IMAGE:-cloudflare\/cloudflared@sha256:[0-9a-f]{64}/);
-  assert.doesNotMatch(composeContent, /cloudflare\/cloudflared:(?:latest|[\w.-]+)(?!@sha256)/);
+  // The app is reachable only through the reverse proxy's shared network, never a published port.
+  assert.doesNotMatch(composeContent, /cloudflared/);
+  assert.match(composeContent, /name: \$\{MAILLUME_EDGE_NETWORK:-maillume-edge\}\n\s+external: true/);
+  assert.match(deployScript, /TRUSTED_PROXY_IP_HEADER=\(x-forwarded-for\|x-real-ip\)/);
   assert.match(deployScript, /--env-file "\$production_env"/);
   assert.match(deployScript, /--env-file "\$infrastructure_env"/);
   assert.match(deployScript, /current_image_state_file="\.current-production-image"/);

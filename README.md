@@ -220,7 +220,7 @@ docker run --rm -p 3000:3000 \
   maillume:local
 ```
 
-See the [deployment guide](docs/deployment.md) for Docker Compose, Cloudflare Tunnel, and portable hosting.
+See the [deployment guide](docs/deployment.md) for Docker Compose, the reverse proxy setup, and portable hosting.
 
 ## Development
 
