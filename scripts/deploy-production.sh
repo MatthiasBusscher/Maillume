@@ -17,7 +17,6 @@ previous_image_state_file=".previous-production-image"
 previous_revision_state_file=".previous-production-revision"
 current_image=""
 current_revision=""
-cloudflared_image=""
 health_attempts="${DEPLOY_HEALTH_ATTEMPTS:-12}"
 health_delay_seconds="${DEPLOY_HEALTH_DELAY_SECONDS:-5}"
 
@@ -62,13 +61,15 @@ for required_env in "$production_env" "$infrastructure_env"; do
   fi
 done
 
-trust_cf_assignments="$(grep -Ec '^[[:space:]]*TRUST_CF_CONNECTING_IP=' "$production_env" || true)"
-if [ "$trust_cf_assignments" -ne 1 ] || \
-   ! grep -Eq '^[[:space:]]*TRUST_CF_CONNECTING_IP=true[[:space:]]*$' "$production_env"; then
-  echo "Hosted production requires TRUST_CF_CONNECTING_IP=true before deployment." >&2
+# The reverse proxy overwrites this header with the visitor's IP; without it every visitor would
+# share one fair-use bucket. Cloudflare header trust must stay off so the two can't be combined.
+proxy_header_assignments="$(grep -Ec '^[[:space:]]*TRUSTED_PROXY_IP_HEADER=' "$production_env" || true)"
+if [ "$proxy_header_assignments" -ne 1 ] || \
+   ! grep -Eq '^[[:space:]]*TRUSTED_PROXY_IP_HEADER=(x-forwarded-for|x-real-ip)[[:space:]]*$' "$production_env"; then
+  echo "Hosted production requires TRUSTED_PROXY_IP_HEADER=x-forwarded-for (or x-real-ip) before deployment." >&2
   exit 1
 fi
-if grep -Eq '^[[:space:]]*TRUSTED_PROXY_IP_HEADER=[[:space:]]*[^[:space:]#]' "$production_env"; then
+if grep -Eq '^[[:space:]]*TRUST_CF_CONNECTING_IP=[[:space:]]*true' "$production_env"; then
   echo "Hosted production must not combine Cloudflare and generic proxy header trust." >&2
   exit 1
 fi
@@ -151,19 +152,7 @@ wait_for_health() {
 MAILLUME_IMAGE="$image"
 export MAILLUME_IMAGE
 
-for configured_image in $(compose config --images); do
-  if is_image_digest "$configured_image" "cloudflare/cloudflared"; then
-    cloudflared_image="$configured_image"
-  fi
-done
-
-if [ -z "$cloudflared_image" ]; then
-  echo "CLOUDFLARED_IMAGE must be an official cloudflare/cloudflared@sha256 digest." >&2
-  exit 1
-fi
-
 docker pull "$image"
-docker pull "$cloudflared_image"
 compose up -d --remove-orphans
 
 if wait_for_health "$expected_revision"; then

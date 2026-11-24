@@ -7,6 +7,10 @@ services:
       - .env.production
     expose:
       - "3000"
+    networks:
+      default: {}
+      edge:
+        aliases: [maillume]
     mem_limit: 3g
     cpus: 2.0
     security_opt:
@@ -32,30 +36,11 @@ services:
         max-size: 10m
         max-file: "3"
 
-  cloudflared:
-    image: ${CLOUDFLARED_IMAGE:-cloudflare/cloudflared@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba}
-    init: true
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
-    env_file:
-      - .env.infrastructure
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      maillume:
-        condition: service_healthy
-    mem_limit: 256m
-    cpus: 0.5
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    logging:
-      driver: json-file
-      options:
-        max-size: 10m
-        max-file: "3"
-
 networks:
   default:
     name: maillume-production
+  # Shared with the host's reverse proxy (Caddy), which terminates TLS and reaches the app as
+  # `maillume:3000`. Created outside this project; the app publishes no ports itself.
+  edge:
+    name: ${MAILLUME_EDGE_NETWORK:-maillume-edge}
+    external: true

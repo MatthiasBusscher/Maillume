@@ -27,12 +27,10 @@ pass() {
 }
 
 app_container="$(compose ps -q maillume)"
-tunnel_container="$(compose ps -q cloudflared)"
 
 [ -n "$app_container" ] || fail "application container is missing"
-[ -n "$tunnel_container" ] || fail "Tunnel container is missing"
 
-for container in "$app_container" "$tunnel_container"; do
+for container in "$app_container"; do
   [ "$(docker inspect --format '{{.State.Running}}' "$container")" = "true" ] || \
     fail "a production container is not running"
   [ "$(docker inspect --format '{{.HostConfig.Privileged}}' "$container")" = "false" ] || \
@@ -79,12 +77,12 @@ if docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$app_con
 fi
 pass "hosted AI credentials are absent or empty"
 
-for container in "$app_container" "$tunnel_container"; do
+for container in "$app_container"; do
   if docker logs --since 20m "$container" 2>&1 | grep -Fq -- "$audit_marker"; then
     fail "synthetic scan content appeared in container logs"
   fi
 done
-pass "synthetic scan content is absent from application and Tunnel logs"
+pass "synthetic scan content is absent from application logs"
 
 disk_percent="$(df -P / | awk 'NR == 2 { gsub(/%/, "", $5); print $5 }')"
 case "$disk_percent" in

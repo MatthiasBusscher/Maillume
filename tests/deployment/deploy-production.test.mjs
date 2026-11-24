@@ -74,7 +74,25 @@ test("hosted deployment refuses to collapse clients into the shared bucket", (t)
   );
 
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /requires TRUST_CF_CONNECTING_IP=true/);
+  assert.match(result.stderr, /requires TRUSTED_PROXY_IP_HEADER=x-forwarded-for/);
+  assert.deepEqual(readDockerLog(sandbox), []);
+});
+
+test("hosted deployment accepts only a header the reverse proxy overwrites", (t) => {
+  const sandbox = createSandbox(t);
+  writeFileSync(
+    join(sandbox.directory, ".env.production"),
+    "TRUSTED_PROXY_IP_HEADER=cf-connecting-ip\n",
+  );
+
+  const result = runScript(
+    sandbox,
+    "deploy-production.sh",
+    [image("c"), revision("3")],
+  );
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /requires TRUSTED_PROXY_IP_HEADER=x-forwarded-for/);
   assert.deepEqual(readDockerLog(sandbox), []);
 });
 
@@ -134,30 +152,6 @@ test("rollback rehearsal restores the release active at the start", (t) => {
   assert.equal(readState(sandbox, ".previous-production-image"), previousImage);
 });
 
-test("Tunnel restart rehearsal waits for origin recovery", (t) => {
-  const sandbox = createSandbox(t);
-
-  const result = runScript(sandbox, "rehearse-production-tunnel-restart.sh");
-
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /Tunnel restart rehearsal completed/);
-  assert.deepEqual(readDockerLog(sandbox), ["restart:cloudflared"]);
-});
-
-test("Tunnel restart rehearsal fails when health does not recover", (t) => {
-  const sandbox = createSandbox(t);
-
-  const result = runScript(
-    sandbox,
-    "rehearse-production-tunnel-restart.sh",
-    [],
-    { FAIL_TUNNEL_HEALTH: "true" },
-  );
-
-  assert.equal(result.status, 1);
-  assert.match(result.stderr, /failed health checks/);
-});
-
 function createSandbox(t) {
   const directory = mkdtempSync(join(tmpdir(), "maillume-deploy-test-"));
   const scriptsDirectory = join(directory, "scripts");
@@ -169,7 +163,6 @@ function createSandbox(t) {
     "deploy-production.sh",
     "rollback-production.sh",
     "rehearse-production-rollback.sh",
-    "rehearse-production-tunnel-restart.sh",
   ]) {
     const target = join(scriptsDirectory, script);
     copyFileSync(join(repositoryRoot, "scripts", script), target);
@@ -178,9 +171,9 @@ function createSandbox(t) {
 
   writeFileSync(
     join(directory, ".env.production"),
-    "ANALYSIS_MODE=heuristic\nTRUST_CF_CONNECTING_IP=true\n",
+    "ANALYSIS_MODE=heuristic\nTRUSTED_PROXY_IP_HEADER=x-forwarded-for\n",
   );
-  writeFileSync(join(directory, ".env.infrastructure"), "CLOUDFLARE_TUNNEL_TOKEN=test\n");
+  writeFileSync(join(directory, ".env.infrastructure"), "MAILLUME_EDGE_NETWORK=maillume-edge\n");
   writeFileSync(join(directory, "docker-compose.production.yml"), "services: {}\n");
   writeFileSync(join(directory, "docker.log"), "");
 
@@ -195,28 +188,18 @@ if [ "$1" = "compose" ]; then
   action=""
   for argument in "$@"; do
     case "$argument" in
-      config|up|exec|restart|ps) action="$argument"; break ;;
+      up|exec) action="$argument"; break ;;
     esac
   done
   case "$action" in
-    config)
-      echo "cloudflare/cloudflared@sha256:${"d".repeat(64)}"
-      ;;
     up)
       printf 'up:%s\\n' "$MAILLUME_IMAGE" >> "$DOCKER_LOG"
       ;;
     exec)
-      if { [ -n "\${FAIL_HEALTH_IMAGE:-}" ] && \
-           [ "\${FAIL_HEALTH_IMAGE:-}" = "\${MAILLUME_IMAGE:-}" ]; } || \
-         [ "\${FAIL_TUNNEL_HEALTH:-}" = "true" ]; then
+      if [ -n "\${FAIL_HEALTH_IMAGE:-}" ] && \
+         [ "\${FAIL_HEALTH_IMAGE:-}" = "\${MAILLUME_IMAGE:-}" ]; then
         exit 1
       fi
-      ;;
-    restart)
-      printf 'restart:cloudflared\\n' >> "$DOCKER_LOG"
-      ;;
-    ps)
-      echo "cloudflared-container"
       ;;
   esac
   exit 0
@@ -251,8 +234,6 @@ function runScript(sandbox, script, args = [], extraEnv = {}) {
       DOCKER_LOG: join(sandbox.directory, "docker.log"),
       DEPLOY_HEALTH_ATTEMPTS: "1",
       DEPLOY_HEALTH_DELAY_SECONDS: "0",
-      RESTART_HEALTH_ATTEMPTS: "1",
-      RESTART_HEALTH_DELAY_SECONDS: "0",
     },
   });
 }

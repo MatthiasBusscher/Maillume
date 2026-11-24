@@ -8,7 +8,7 @@ Monitor these public endpoints from outside Hostinger every five minutes:
 - `https://app.maillume.io/app`
 - `https://app.maillume.io/api/health`
 
-Alert on two consecutive failures. Monitor VPS CPU, RAM, swap, disk, Docker health, restart count, and Cloudflare 5xx/rate-limit events. Alerts and telemetry may contain route, status, duration, release SHA, and aggregate counts, but never request bodies, email fields, OCR output, links, prompts, or results.
+Alert on two consecutive failures. Monitor VPS CPU, RAM, swap, disk, Docker health, restart count, and reverse-proxy 5xx/429 responses. Alerts and telemetry may contain route, status, duration, release SHA, and aggregate counts, but never request bodies, email fields, OCR output, links, prompts, or results.
 
 Initial thresholds:
 
@@ -49,25 +49,19 @@ nothing to expire — and the series is only useful over time.
 
 ## Routine Maintenance
 
-- Weekly: review container health, Cloudflare security events, Hostinger resource graphs, and backup completion.
-- Monthly: install OS updates, review the official `cloudflared` release and image vulnerabilities, update its verified digest when needed, inspect disk/log growth, and verify SSH/firewall users.
+- Weekly: review container health, Hostinger resource graphs, and backup completion.
+- Monthly: install OS updates, review the reverse proxy's release and image vulnerabilities, inspect disk/log growth, and verify SSH/firewall users.
 - Before major change: create a Hostinger snapshot, verify the previous image digest, and test rollback.
 - Quarterly: restore into a disposable environment and verify the documented recovery path.
 
 ## Immutable Image Inputs
 
-Production accepts Maillume and cloudflared images only by registry digest. The release workflow passes Maillume to the deployment script as `ghcr.io/matthiasbusscher/maillume@sha256:<64-hex-digest>`. Compose defaults to the official multi-platform digest resolved from Cloudflare's `2026.10.7` release on 30 October 2026 (Cloudflare's security advisory requires 2026.10.2 or later):
-
-```dotenv
-CLOUDFLARED_IMAGE=cloudflare/cloudflared@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba
-```
-
-`CLOUDFLARED_IMAGE` is optional unless you intentionally update the sidecar. Resolve any replacement from an official versioned Cloudflare image, record the release, and keep the full digest. The deployment script rejects tags such as `latest` and non-Cloudflare image repositories.
+Production accepts the Maillume image only by registry digest. The release workflow passes it to the deployment script as `ghcr.io/matthiasbusscher/maillume@sha256:<64-hex-digest>`, and the script rejects tags such as `latest` and other image repositories.
 
 ## DDoS or Abuse Response
 
-1. Confirm Cloudflare remains the only web ingress and inspect Security Events without exporting payloads.
-2. Tighten the `/api/` rate-limit action covering anonymous and authenticated analysis, or temporarily enable Under Attack Mode.
+1. Confirm the reverse proxy remains the only web ingress (the app publishes no ports) and look at aggregate request counts without exporting payloads.
+2. Tighten the reverse proxy's `/api/` rate limit, or block abusive networks at the Hostinger firewall.
 3. Reduce application analysis/concurrency limits if origin CPU is affected.
 4. Add Turnstile to analysis submission only if managed challenges and rate limits are insufficient.
 5. Never expose the VPS IP as a workaround. Rotate the origin IP if it becomes public and targeted.
@@ -95,20 +89,14 @@ it, restores the starting release, and verifies the public revision. Run it afte
 deploying a release that initialized both state slots. Production secrets remain
 limited to the protected `production` environment.
 
-## Tunnel And VPS Restart Recovery
-
-The protected **Rehearse production Tunnel restart** workflow requires the
-literal confirmation `RESTART`. It records the current public revision, restarts
-only the `cloudflared` sidecar, verifies the Tunnel and application internally,
-and confirms that the same revision recovers through the public Cloudflare edge.
-The workflow exposes no environment values or container logs.
+## VPS Restart Recovery
 
 A full VPS reboot remains an operator action because the deployment account must
 not have host-reboot privileges. From the Hostinger console or an SSH session as
 the administrative user, run `sudo reboot`, wait for SSH to return, and then
-verify `/api/health`, the scanner, authentication, Docker container health, and
-the Tunnel status. Record only timestamps, aggregate downtime, the release SHA,
-and pass/fail outcomes.
+verify `/api/health`, the scanner, Docker container health, and the reverse
+proxy. Record only timestamps, aggregate downtime, the release SHA, and
+pass/fail outcomes.
 
 ## Release Supply-Chain Evidence
 
@@ -124,8 +112,8 @@ has an SBOM, a clean scan, or a valid attestation.
 
 ## Compromised VPS
 
-1. Isolate the VPS at Cloudflare and Hostinger; do not attempt to keep serving traffic.
-2. Revoke the Tunnel token, deployment SSH key, GHCR token, Cloudflare DNS/WAF credential, Supabase server secret, Google OAuth client secret, Resend SMTP/API credential, and any configured AI provider key.
+1. Isolate the VPS at Hostinger (network firewall); do not attempt to keep serving traffic.
+2. Revoke the deployment SSH key, GHCR token, DNS provider tokens, Supabase server secret, Google OAuth client secret, Resend SMTP/API credential, and any configured AI provider key.
 3. Preserve provider and infrastructure audit evidence without copying private scan content.
 4. Reinstall from a clean Hostinger image instead of trusting an in-place cleanup.
 5. Redeploy a reviewed immutable image, recreate `.env.production` from rotated secrets, and restore only required configuration.

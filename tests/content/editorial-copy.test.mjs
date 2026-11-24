@@ -151,9 +151,11 @@ test("launch documentation no longer describes the active release as private", (
 test("privacy copy names active operational providers and no account processing", () => {
   const privacy = read("src/lib/i18n/trust-privacy.ts");
 
-  for (const provider of ["Hostinger", "Cloudflare", "Supabase", "Google Workspace", "GitHub", "UptimeRobot"]) {
+  for (const provider of ["Hostinger", "Hetzner", "Supabase", "Proton", "GitHub", "UptimeRobot"]) {
     assert.match(privacy, new RegExp(provider), provider);
   }
+  // Former providers must not linger in the notice after a migration.
+  assert.doesNotMatch(privacy, /Cloudflare|Google Workspace/);
 
   assert.doesNotMatch(privacy, /Resend|sign-in|two-factor|Inloggen met|tweestapsverificatie|API key|API-sleutel/);
 });
