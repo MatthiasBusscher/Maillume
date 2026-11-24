@@ -40,6 +40,21 @@ export async function recordScan(
   }
 
   const fetchImpl = options.fetchImpl ?? fetch;
+
+  if (config.mode === "postgrest") {
+    try {
+      await fetchImpl(`${config.postgrestUrl}/rpc/record_scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ p_input_mode: inputMode }),
+        cache: "no-store",
+      });
+    } catch {
+      // Intentionally ignored. See the note above.
+    }
+    return;
+  }
+
   const headers: Record<string, string> = {
     apikey: config.apiKey,
     "Content-Type": "application/json",

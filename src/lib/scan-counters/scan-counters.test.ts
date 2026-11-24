@@ -45,6 +45,31 @@ async function main() {
     assert.equal(getScanCounterConfig(env).mode, "disabled", JSON.stringify(env));
   }
 
+  // Self-hosted PostgREST: a private Docker service name may use plain HTTP; public hosts may not.
+  const postgrest = getScanCounterConfig({
+    SCAN_COUNTERS: "postgrest",
+    SCAN_COUNTER_POSTGREST_URL: "http://maillume-counts:3000/",
+  });
+  assert.deepEqual(postgrest, { mode: "postgrest", postgrestUrl: "http://maillume-counts:3000" });
+  assert.equal(
+    getScanCounterConfig({ SCAN_COUNTERS: "postgrest", SCAN_COUNTER_POSTGREST_URL: "https://counts.example.test" }).mode,
+    "postgrest",
+  );
+  for (const value of [
+    undefined,
+    "http://counts.example.test",
+    "http://user:pass@maillume-counts:3000",
+    "http://maillume-counts:3000/rpc",
+    "ftp://maillume-counts",
+    "not-a-url",
+  ]) {
+    assert.equal(
+      getScanCounterConfig({ SCAN_COUNTERS: "postgrest", SCAN_COUNTER_POSTGREST_URL: value }).mode,
+      "disabled",
+      String(value),
+    );
+  }
+
   const memoryCounters: MemoryScanCounter[] = [];
   const now = () => Date.parse("2026-07-24T22:15:00.000Z");
   await recordScan("paste", { config: { mode: "memory" }, memoryCounters, now });
@@ -71,6 +96,17 @@ async function main() {
   const body = JSON.parse(String(requests[0].init.body));
   assert.deepEqual(Object.keys(body), ["p_input_mode"]);
   assert.equal(body.p_input_mode, "screenshot");
+
+  // The self-hosted endpoint gets the same single field and no credentials.
+  await recordScan("chrome", { config: postgrest, fetchImpl });
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].url, "http://maillume-counts:3000/rpc/record_scan");
+  assert.deepEqual(JSON.parse(String(requests[1].init.body)), { p_input_mode: "chrome" });
+  assert.deepEqual(Object.keys(requests[1].init.headers as Record<string, string>), ["Content-Type"]);
+  await recordScan("paste", {
+    config: postgrest,
+    fetchImpl: (() => Promise.reject(new Error("network down"))) as unknown as typeof fetch,
+  });
 
   const disabled: Array<unknown> = [];
   await recordScan("paste", {

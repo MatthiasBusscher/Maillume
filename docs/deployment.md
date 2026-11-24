@@ -10,7 +10,7 @@ Visitor
   -> Hostinger network firewall and host firewall: only 80/443 open to the web
   -> Caddy: TLS, rate limit on /api/*, sets X-Forwarded-For to the visitor IP
   -> maillume:3000 on the shared `maillume-edge` Docker network (no published ports)
-  -> Supabase scan counts/feedback when configured
+  -> PostgREST + Postgres on the same host for the anonymous daily scan counts
 ```
 
 - `https://maillume.io` is canonical and serves marketing pages.
@@ -121,9 +121,11 @@ The public privacy, terms, and security pages require the `MAILLUME_OPERATOR_*` 
 
 Make `scripts/deploy-production.sh` executable. Authenticate Docker to GHCR using a read-only package token if the package is private.
 
-## 4. Configure Supabase
+## 4. Scan counters and feedback
 
-Supabase stores only the anonymous daily scan counts and optional, content-free feedback. It is not used for authentication.
+The official deployment counts scans in a Postgres database on its own host, behind PostgREST on a private network: `SCAN_COUNTERS=postgrest` and `SCAN_COUNTER_POSTGREST_URL=http://maillume-counts:3000`. See [self-hosted scan counters](self-hosted-scan-counters.md) for the schema, roles and PostgREST settings. Feedback storage stays disabled (`FEEDBACK_STORAGE=disabled`), so no Supabase project is needed.
+
+Deployments that prefer managed hosting can use Supabase instead. It stores only the anonymous daily scan counts and optional, content-free feedback, and is not used for authentication.
 
 1. Create a production Supabase project in an EU region and apply every migration in `supabase/migrations`.
 2. Add only the server-side `SUPABASE_URL` and `SUPABASE_SECRET_KEY` to the VPS `.env.production`. No public Supabase values are embedded in the image.
