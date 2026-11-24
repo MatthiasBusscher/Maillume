@@ -37,6 +37,8 @@ jobs:
     uses: ./.github/workflows/verify.yml
     with:
       upload-integration-artifacts: true
+      # The merged change already passed the database and browser checks in its pull request.
+      quick: true
     permissions:
       contents: read
       pull-requests: read
