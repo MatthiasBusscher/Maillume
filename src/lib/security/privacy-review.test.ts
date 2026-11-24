@@ -461,7 +461,8 @@ function main() {
   assert.match(operationsContent, /Rehearse production rollback/);
   assert.match(operationsContent, /maillume-image-sbom/);
   assert.match(operationsContent, /build\s+provenance attestation/);
-  assert.match(deploymentContent, /\*\*Block\*\* action and an HTTP `429` response/);
+  // The edge limiter must reject expensive analysis with 429, not merely challenge it.
+  assert.match(deploymentContent, /10 requests per 10 seconds per visitor on `\/api\/`, answered with HTTP `429`/);
   assert.match(productionEvidenceContent, /maillume-retention-check-20260718/);
   assert.match(productionEvidenceContent, /CF-Connecting-IP/);
   assert.match(productionEvidenceContent, /maillume-image-sbom/);
