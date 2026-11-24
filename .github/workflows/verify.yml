@@ -8,6 +8,13 @@ on:
         required: false
         default: false
         type: boolean
+      quick:
+        description: >-
+          Skip the slow database and browser checks. For main, where the same change already
+          passed them in its pull request; type, lint, unit, security and contract tests still run.
+        required: false
+        default: false
+        type: boolean
 
 permissions: {}
 
@@ -24,6 +31,23 @@ jobs:
         with:
           persist-credentials: false
 
+      # The local Supabase database takes minutes to start, so pull requests only start it when a
+      # change can affect it. Without a base commit (or if it can't be fetched) it always runs.
+      - name: Detect database changes
+        id: db
+        if: ${{ !inputs.quick }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          changed=true
+          if [ -n "$BASE_SHA" ] && git fetch --no-tags --depth=1 origin "$BASE_SHA"; then
+            if ! git diff --name-only "$BASE_SHA" HEAD | grep -qE '^(supabase/|\.github/workflows/verify\.yml$)'; then
+              changed=false
+            fi
+          fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "Database checks needed: $changed"
+
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -34,19 +58,23 @@ jobs:
         run: npm ci
 
       - name: Set up Supabase CLI
+        if: ${{ !inputs.quick && steps.db.outputs.changed == 'true' }}
         uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v1
         with:
           version: 2.109.1
 
       - name: Start local database
+        if: ${{ !inputs.quick && steps.db.outputs.changed == 'true' }}
         run: supabase start --ignore-health-check -x edge-runtime,gotrue,imgproxy,kong,logflare,mailpit,postgres-meta,postgrest,realtime,storage-api,studio,supavisor,vector
 
       - name: Database lifecycle tests
+        if: ${{ !inputs.quick && steps.db.outputs.changed == 'true' }}
         run: |
           supabase test db --local supabase/tests
           supabase db lint --local --level warning
 
       - name: Install Chromium
+        if: ${{ !inputs.quick }}
         run: npx playwright install --with-deps chromium
 
       - name: Typecheck
@@ -73,14 +101,17 @@ jobs:
           BUILD_REVISION: ${{ github.sha }}
 
       - name: Load browser extension
+        if: ${{ !inputs.quick }}
         run: npm run test:extension
 
       - name: Build public demo configuration
+        if: ${{ !inputs.quick }}
         run: npm run build
         env:
           ANALYSIS_MODE: heuristic
 
       - name: Browser smoke tests
+        if: ${{ !inputs.quick }}
         run: npm run test:smoke
 
       - name: Upload browser extension artifact
@@ -100,7 +131,7 @@ jobs:
           if-no-files-found: error
 
       - name: Stop local database
-        if: always()
+        if: ${{ always() && !inputs.quick && steps.db.outputs.changed == 'true' }}
         run: supabase stop --no-backup
 
   secrets:
