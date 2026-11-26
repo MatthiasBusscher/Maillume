@@ -136,7 +136,7 @@ Never prefix a Supabase server secret or AI provider key with `NEXT_PUBLIC_`.
 
 ## 5. Configure GitHub Deployment
 
-The `release.yml` workflow builds `ghcr.io/matthiasbusscher/maillume:sha-<full-commit>` and scans it with Trivy on every push to `main`. Pull requests are verified by `ci.yml`; that workflow does not run again after merge. If a main-branch push is skipped by GitHub because its commit message contains a CI-skip instruction, manually dispatch the workflow on `main` with `release_action=build` to produce the same verified image without deploying it. Production deployment runs only through a separate manual dispatch with `release_action=deploy`. That dispatch resolves the already verified SHA image to its immutable digest instead of rebuilding it, then requires approval from the protected `production` environment before SSH access.
+The `release.yml` workflow builds `ghcr.io/matthiasbusscher/maillume:sha-<full-commit>` and scans it with Trivy on every push to `main`. Pull requests are verified by `ci.yml`; that workflow does not run again after merge. If a main-branch push is skipped by GitHub because its commit message contains a CI-skip instruction, manually dispatch the workflow on `main` with `release_action=build` to produce the same verified image without deploying it. Production deployment runs only through a separate manual dispatch with `release_action=deploy`. That dispatch resolves the already verified SHA image to its immutable digest instead of rebuilding it, then requires approval from the protected `production` environment before the release is published to the server.
 
 The deployment dispatch also requires
 `feedback_summary_migration_applied=true`,
@@ -153,16 +153,44 @@ reaching production before browser clients can consume it. Apply and verify
 enabling their migration confirmations; the application deployment does not
 apply managed Supabase migrations automatically.
 
-Create a protected GitHub environment named `production`, require reviewer approval, and add:
+Create a protected GitHub environment named `production` and require reviewer approval. It needs no secrets: GitHub never connects to the server.
 
-- `PRODUCTION_HOST`: VPS SSH address.
-- `PRODUCTION_USER`: non-root deployment user.
-- `PRODUCTION_SSH_KEY`: dedicated private deployment key.
-- `PRODUCTION_SSH_FINGERPRINT`: the VPS host-key fingerprint, for example `SHA256:...`. Read it from the VPS console with `sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub -E sha256`; do not trust a fingerprint first observed over the same network connection it is meant to verify.
+### Pull-based delivery
+
+The VPS accepts SSH only over a private VPN, so it fetches approved releases itself. After approval, the deploy job records a GitHub deployment in the `maillume-vps` environment with the verified image digest as payload. On the VPS, `scripts/pull-production-deployment.sh` runs every two minutes as the deployment user. For a deployment it hasn't seen, it validates the commit and digest, downloads `docker-compose.production.yml` and the production scripts from exactly that commit, and runs `scripts/deploy-production.sh`. Each deployment is attempted once; a failed one waits for a new approval. The GitHub job then waits up to ten minutes for the public site to report the approved revision and records the deployment as successful or failed.
+
+Install the timer once, as root, after placing the script in `/opt/maillume/scripts`:
+
+```ini
+# /etc/systemd/system/maillume-pull-deploy.service
+[Unit]
+Description=Deploy the latest approved Maillume release
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+User=maillume
+WorkingDirectory=/opt/maillume
+ExecStart=/opt/maillume/scripts/pull-production-deployment.sh
+
+# /etc/systemd/system/maillume-pull-deploy.timer
+[Unit]
+Description=Check for approved Maillume releases every two minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+
+[Install]
+WantedBy=timers.target
+```
+
+Then `systemctl daemon-reload && systemctl enable --now maillume-pull-deploy.timer`. Read its output with `journalctl -u maillume-pull-deploy`. The script reads the public GitHub API without a token (one request per run) and needs `curl` and `python3` on the host.
 
 Add repository variables `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_PASSKEYS_ENABLED` before enabling production authentication. Keep the passkey variable `false` until its acceptance matrix passes. These public browser values are intentionally supplied while the image is built. Server secrets remain only in the VPS `.env.production` file.
 
-The protected deploy job checks out the approved commit and synchronizes only `docker-compose.production.yml` and `scripts/deploy-production.sh` before invoking the script. The VPS therefore never depends on a stale manual copy or a Git checkout. The remote deploy script pulls the immutable image, waits for `/api/health`, verifies that the running container reports the approved Git revision, and restores the previous image if health or revision checks fail. GitHub then verifies the same revision and analyzer version through Cloudflare, together with the public marketing and sign-in routes. GitHub Actions builds images; production never builds source code.
+The pull script takes `docker-compose.production.yml` and the production scripts from the approved commit, so the VPS never depends on a stale manual copy or a Git checkout. The deploy script pulls the immutable image, waits for `/api/health`, verifies that the running container reports the approved Git revision, and restores the previous image if health or revision checks fail. GitHub then verifies the same revision and analyzer version through the public domains, together with the public marketing and sign-in routes. GitHub Actions builds images; production never builds source code.
 
 The image job uploads a CycloneDX SBOM for every main-branch build. Once the
 repository is public, it also publishes a GitHub build provenance attestation
