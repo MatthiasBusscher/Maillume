@@ -150,7 +150,12 @@ function normalizeOrigin(value, label) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  verifyPublicDeployment({ expectedRevision: process.env.EXPECTED_REVISION })
+  verifyPublicDeployment({
+    expectedRevision: process.env.EXPECTED_REVISION,
+    // The release job waits longer than the defaults while the server pulls the release.
+    ...(process.env.VERIFY_ATTEMPTS ? { attempts: Number(process.env.VERIFY_ATTEMPTS) } : {}),
+    ...(process.env.VERIFY_DELAY_MS ? { delayMs: Number(process.env.VERIFY_DELAY_MS) } : {}),
+  })
     .then((health) => {
       console.log(`Public deployment verified: ${health.revision} (${health.analysis_version})`);
     })

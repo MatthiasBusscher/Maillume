@@ -89,6 +89,14 @@ it, restores the starting release, and verifies the public revision. Run it afte
 deploying a release that initialized both state slots. Production secrets remain
 limited to the protected `production` environment.
 
+The rollback rehearsal and the **Audit production runtime** workflow still connect
+over SSH. On the official VPS, SSH only accepts connections over a private VPN, so
+run them from an administrator session on that VPN instead:
+`./scripts/rehearse-production-rollback.sh` and
+`./scripts/audit-production-runtime.sh` in `/opt/maillume` as the deployment user.
+Releases themselves no longer need SSH (see "Pull-based delivery" in
+`docs/deployment.md`).
+
 ## VPS Restart Recovery
 
 A full VPS reboot remains an operator action because the deployment account must

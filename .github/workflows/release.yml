@@ -247,39 +247,47 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.release_action == 'deploy' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
+    timeout-minutes: 20
     permissions:
       contents: read
+      deployments: write
     steps:
       - name: Check out approved deployment artifacts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Synchronize deployment artifacts
-        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USER }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
-          source: docker-compose.production.yml,scripts/deploy-production.sh,scripts/rollback-production.sh,scripts/rehearse-production-rollback.sh
-          target: /opt/maillume
-          overwrite: true
-      - name: Deploy immutable image over SSH
-        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USER }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
-          script: |
-            set -eu
-            cd /opt/maillume
-            chmod 750 \
-              ./scripts/deploy-production.sh \
-              ./scripts/rollback-production.sh \
-              ./scripts/rehearse-production-rollback.sh
-            ./scripts/deploy-production.sh '${{ needs.resolve.outputs.image }}' '${{ github.sha }}'
-      - name: Verify public deployment revision
+      # The VPS accepts SSH only over its private VPN, so it pulls approved releases itself:
+      # scripts/pull-production-deployment.sh, run by a systemd timer, reads this deployment.
+      - name: Publish the approved release for the server to pull
+        id: deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE: ${{ needs.resolve.outputs.image }}
+        run: |
+          set -euo pipefail
+          id="$(jq -n --arg ref "$GITHUB_SHA" --arg image "$IMAGE" '{
+              ref: $ref,
+              environment: "maillume-vps",
+              auto_merge: false,
+              required_contexts: [],
+              production_environment: true,
+              description: ("Maillume " + $ref[0:7]),
+              payload: { image: $image }
+            }' | gh api "repos/$GITHUB_REPOSITORY/deployments" --input - --jq .id)"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "Deployment $id published for $IMAGE"
+      - name: Wait until the server has deployed it
         env:
           EXPECTED_REVISION: ${{ github.sha }}
+          VERIFY_ATTEMPTS: "60"
+          VERIFY_DELAY_MS: "10000"
         run: node scripts/verify-public-deployment.mjs
+      - name: Record the deployment result
+        if: always() && steps.deployment.outputs.id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
+          STATE: ${{ job.status == 'success' && 'success' || 'failure' }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses" \
+            -f state="$STATE" -f environment_url=https://app.maillume.io >/dev/null
