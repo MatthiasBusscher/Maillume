@@ -5,6 +5,12 @@ services:
     restart: unless-stopped
     env_file:
       - .env.production
+    environment:
+      # Local blocklist cache written by the blocklist-fetcher sidecar; see
+      # docs/blocklist-feeds.md. Matching is local-only.
+      MAILLUME_BLOCKLIST_CACHE: /app/blocklist/cache.json
+    volumes:
+      - blocklist:/app/blocklist:ro
     expose:
       - "3000"
     networks:
@@ -35,6 +41,43 @@ services:
       options:
         max-size: 10m
         max-file: "3"
+
+  # Refreshes the local blocklist cache (docs/blocklist-feeds.md) from the
+  # OpenPhish community feed every hour into the shared volume. A failed
+  # refresh is logged and retried next hour; a stale or missing cache makes
+  # the blocklist evidence factor contribute nothing.
+  blocklist-fetcher:
+    image: ${MAILLUME_IMAGE:?Set MAILLUME_IMAGE to an immutable GHCR digest}
+    init: true
+    restart: unless-stopped
+    volumes:
+      - blocklist:/app/blocklist
+    command:
+      - /bin/sh
+      - -c
+      - |
+        while :; do
+          node /app/scripts/fetch-blocklist-feeds.mjs /app/blocklist/cache.json \
+            || echo "blocklist refresh failed; retrying next hour" >&2
+          sleep 3600
+        done
+    mem_limit: 256m
+    cpus: 0.5
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  blocklist: {}
 
 networks:
   default:

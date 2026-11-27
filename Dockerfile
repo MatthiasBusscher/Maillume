@@ -45,6 +45,16 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Blocklist feed fetcher (docs/blocklist-feeds.md). Webpack inlines tldts into
+# the server bundle instead of keeping it external, so the traced standalone
+# node_modules does not contain it; copy the two packages the fetcher imports.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/fetch-blocklist-feeds.mjs ./scripts/fetch-blocklist-feeds.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/tldts ./node_modules/tldts
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/tldts-core ./node_modules/tldts-core
+# Mount point for the shared blocklist volume; the named volume inherits this
+# ownership, so the fetcher can write and the app can read it.
+RUN mkdir -p /app/blocklist && chown nextjs:nodejs /app/blocklist
+
 USER nextjs
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
