@@ -61,6 +61,10 @@ services:
             || echo "blocklist refresh failed; retrying next hour" >&2
           sleep 3600
         done
+    # The sidecar is a shell loop, not the web server: the image's HTTP
+    # healthcheck can never pass, so disable it instead of reporting unhealthy.
+    healthcheck:
+      disable: true
     mem_limit: 256m
     cpus: 0.5
     security_opt:
