@@ -8,22 +8,24 @@ message, and no scan content leaves the server.
 
 ## How it works
 
-1. `scripts/fetch-blocklist-feeds.mjs` downloads the key-less public feed:
+1. `scripts/fetch-blocklist-feeds.mjs` downloads the public feeds:
 
    | Feed | URL | Terms |
    | --- | --- | --- |
    | OpenPhish community feed | https://openphish.com/feed.txt | Free for non-commercial use with attribution |
+   | URLhaus (abuse.ch) | https://urlhaus-api.abuse.ch/v1/urls/recent/ | CC BY 4.0; requires an auth key |
 
-   Verify the current feed terms at the linked page before enabling the
+   Verify the current feed terms at the linked pages before enabling a
    feed. The generated cache file is deployment-local and excluded from
-   Git, packages, and the Docker image, so the feed is matched, never
+   Git, packages, and the Docker image, so the feeds are matched, never
    redistributed.
 
-   Other candidate feeds were evaluated and are intentionally not used:
-   URLhaus retired its key-less bulk downloads in November 2026 (HTTP 410)
-   and its API now requires an auth key, and PhishTank's downloadable
-   database requires an application key. Both could be added behind
-   configuration later if that tradeoff is accepted.
+   URLhaus retired its key-less bulk downloads (HTTP 410), so it is
+   fetched through its authenticated API only when `URLHAUS_AUTH_KEY` is
+   set in the environment; without the key the feed is skipped and the
+   cache stays a partial, OpenPhish-only one. PhishTank's downloadable
+   database also requires an application key and remains a possible
+   future opt-in.
 
 2. The script writes `blocklist-cache.json` (bounded: at most 20,000 URLs
    and 10,000 registrable domains) with the generation time, a maximum age
@@ -67,12 +69,29 @@ hour. Nothing runs on the host: no cron, no repository checkout, no Node.
   packages, because webpack inlines `tldts` into the server bundle instead
   of keeping it external.
 
-After the next approved release is pulled and deployed, verify on the VPS:
+After the next approved release is pulled and deployed, verify on the VPS
+(compose interpolation reads `MAILLUME_IMAGE` from the deploy env files, so
+manual commands need the same `--env-file` flags the deploy script uses):
 
 ```bash
-docker compose -f docker-compose.production.yml ps blocklist-fetcher
-docker compose -f docker-compose.production.yml logs --tail 20 blocklist-fetcher
+cd /opt/maillume
+sudo docker compose --env-file .env.production --env-file .env.infrastructure \
+  -f docker-compose.production.yml ps blocklist-fetcher
+sudo docker compose --env-file .env.production --env-file .env.infrastructure \
+  -f docker-compose.production.yml logs --tail 20 blocklist-fetcher
 ```
+
+To enable the URLhaus feed, add the abuse.ch auth key to
+`.env.infrastructure` on the VPS (a secret: never in the repository):
+
+```ini
+URLHAUS_AUTH_KEY=<key from abuse.ch>
+```
+
+The sidecar picks it up on the next `docker compose up`, and the fetcher
+logs then show a `urlhaus:` line next to `openphish:`. The key is passed
+through as an environment variable only; it is never logged or written to
+the cache file.
 
 The first refresh runs immediately when the sidecar starts, so the factor is
 active within seconds of deployment. If the sidecar is ever stopped, the
