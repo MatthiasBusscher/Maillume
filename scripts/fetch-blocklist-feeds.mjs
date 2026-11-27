@@ -6,19 +6,17 @@
  * This script runs out-of-band (VPS cron, scheduled task) so the scan path
  * itself stays offline: scans only ever read the generated JSON file.
  *
- * Source (key-less):
- *   - OpenPhish community feed   https://openphish.com/feed.txt
- *
- * URLhaus retired its key-less bulk downloads (HTTP 410, November 2026) and
- * its API now requires an auth key, so it is intentionally not used.
- * PhishTank's downloadable database likewise requires an application key;
- * it can be added behind configuration if that tradeoff is ever accepted.
+ * Sources:
+ *   - OpenPhish community feed   https://openphish.com/feed.txt   (key-less)
+ *   - URLhaus by abuse.ch         https://urlhaus-api.abuse.ch/    (needs an
+ *     auth key; set URLHAUS_AUTH_KEY in the environment — never logged,
+ *     never committed. Without it the feed is skipped.)
  *
  * Feed terms: the OpenPhish community edition is free for non-commercial
- * use with attribution. Verify the current terms at the linked page before
- * enabling the feed. The cache file is deployment-local and excluded from
- * Git, packages and the Docker image, so the feed is matched, never
- * redistributed.
+ * use with attribution, and URLhaus data is provided under CC BY 4.0.
+ * Verify the current terms at the linked pages before enabling a feed. The
+ * cache file is deployment-local and excluded from Git, packages and the
+ * Docker image, so the feeds are matched, never redistributed.
  *
  * Usage:
  *   node scripts/fetch-blocklist-feeds.mjs [outputPath] [--max-age hours]
@@ -40,8 +38,15 @@ const DEFAULT_MAX_AGE_HOURS = 72;
 const FEEDS = [
   {
     name: "openphish",
+    kind: "text",
     url: "https://openphish.com/feed.txt",
     license: "OpenPhish community feed, free for non-commercial use with attribution: https://openphish.com/terms.html",
+  },
+  {
+    name: "urlhaus",
+    kind: "api",
+    url: "https://urlhaus-api.abuse.ch/v1/urls/recent/",
+    license: "URLhaus by abuse.ch, CC BY 4.0: https://urlhaus.abuse.ch/",
   },
 ];
 
@@ -72,6 +77,34 @@ async function fetchFeedText(url) {
   return response.text();
 }
 
+/**
+ * URLhaus API (https://urlhaus-api.abuse.ch/): POST with the Auth-Key header
+ * returns JSON with query_status and a urls[] array. The key is a secret:
+ * it is read from the environment, never logged, never written anywhere.
+ */
+async function fetchUrlhausLines(url, authKey) {
+  const response = await fetch(url, {
+    method: "POST",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    headers: {
+      "auth-key": authKey,
+      "user-agent": "Maillume blocklist fetcher (https://maillume.io)",
+    },
+  });
+  if (!response.ok) {
+    // abuse.ch answers an invalid auth key with 405; make that diagnosable.
+    if (response.status === 401 || response.status === 403 || response.status === 405) {
+      throw new Error(`HTTP ${response.status} for ${url} (check URLHAUS_AUTH_KEY)`);
+    }
+    throw new Error(`HTTP ${response.status} for ${url}`);
+  }
+  const body = JSON.parse(await response.text());
+  if (body.query_status !== "ok" || !Array.isArray(body.urls)) {
+    throw new Error(`unexpected query_status: ${String(body.query_status)}`);
+  }
+  return body.urls.map((entry) => typeof entry?.url === "string" ? entry.url : "");
+}
+
 function parseArgs(argv) {
   const args = { output: process.env.MAILLUME_BLOCKLIST_CACHE ?? "blocklist-cache.json", maxAgeHours: DEFAULT_MAX_AGE_HOURS };
   const positional = [];
@@ -100,10 +133,17 @@ async function main() {
   const urls = new Set();
   const sources = [];
   const failures = [];
+  const urlhausAuthKey = process.env.URLHAUS_AUTH_KEY?.trim() ?? "";
 
   for (const feed of FEEDS) {
+    if (feed.kind === "api" && !urlhausAuthKey) {
+      process.stdout.write(`${feed.name}: skipped (URLHAUS_AUTH_KEY not set)\n`);
+      continue;
+    }
     try {
-      const text = await fetchFeedText(feed.url);
+      const text = feed.kind === "api"
+        ? (await fetchUrlhausLines(feed.url, urlhausAuthKey)).join("\n")
+        : await fetchFeedText(feed.url);
       let count = 0;
       for (const line of text.split("\n")) {
         const normalized = normalizeUrl(line);

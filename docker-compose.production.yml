@@ -52,6 +52,11 @@ services:
     restart: unless-stopped
     volumes:
       - blocklist:/app/blocklist
+    environment:
+      # Optional URLhaus (abuse.ch) API key, interpolated from the deploy
+      # env files. A secret: set it in .env.infrastructure on the VPS,
+      # never in the repository. Unset means the feed is skipped.
+      URLHAUS_AUTH_KEY: ${URLHAUS_AUTH_KEY:-}
     command:
       - /bin/sh
       - -c
