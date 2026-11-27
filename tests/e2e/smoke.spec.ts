@@ -113,7 +113,7 @@ test("explicit locale routes stay authoritative across navigation", async ({ pag
   expect(await apiResponse.json()).toEqual({
     status: "ok",
     revision: "development",
-    analysis_version: "analysis-v12",
+    analysis_version: "analysis-v13",
   });
 });
 
@@ -464,7 +464,7 @@ test("risk meter color follows the evidence-derived level instead of fixed score
         },
         analysis_mode: "heuristic",
         analysis_provider: "heuristic",
-        analysis_version: "analysis-v12",
+        analysis_version: "analysis-v13",
         disclaimer: "Automated assessment.",
         privacy: { stored: false, retention: "not_stored", message: "Not stored." },
       },
@@ -507,7 +507,7 @@ test("scanner rejects malformed evidence coverage instead of rendering a partial
         },
         analysis_mode: "heuristic",
         analysis_provider: "heuristic",
-        analysis_version: "analysis-v12",
+        analysis_version: "analysis-v13",
         disclaimer: "Automated assessment.",
         privacy: { stored: false, retention: "not_stored", message: "Not stored." },
       },
@@ -616,7 +616,7 @@ test("optional feedback sends labels without scan content", async ({ page }) => 
     feedbackKind: "false_positive",
     locale: "en",
     source: "paste",
-    analyzerVersion: "analysis-v12",
+    analyzerVersion: "analysis-v13",
     scoreBand: "high",
     signalCategories: ["urgency"],
   });
@@ -636,7 +636,7 @@ test("feedback controls work from the keyboard and reject content fields", async
       feedbackKind: "false_positive",
       locale: "en",
       source: "paste",
-      analyzerVersion: "analysis-v12",
+      analyzerVersion: "analysis-v13",
       scoreBand: "high",
       signalCategories: [],
       body: "must never be accepted",
@@ -740,7 +740,7 @@ test("retired account links land on the scanner without leaking query values", a
 test("the versioned analysis API is anonymous and ignores credentials", async ({ request }) => {
   const data = { source: "chrome", subject: "Synthetic invoice", senderEmail: "billing@notice.example", body: "Please review the attached invoice before Friday.", locale: "en" };
   const headers = {
-    "X-Maillume-Analysis-Versions": "analysis-v11,analysis-v12",
+    "X-Maillume-Analysis-Versions": "analysis-v11,analysis-v13",
     "X-Maillume-Extension-Id": "bjiiailjalkfjimkjdikoockjlnjolle",
     "X-Maillume-Extension-Version": "0.5.0",
   };
@@ -749,7 +749,7 @@ test("the versioned analysis API is anonymous and ignores credentials", async ({
     expect(response.status()).toBe(200);
     expect(response.headers()["cache-control"]).toContain("no-store");
     const payload = await response.json();
-    expect(payload.analysis_version).toBe("analysis-v12");
+    expect(payload.analysis_version).toBe("analysis-v13");
     expect(payload.privacy.stored).toBe(false);
   }
 
@@ -808,7 +808,7 @@ test("health endpoint exposes no dependency or secret details", async ({ request
   expect(await response.json()).toEqual({
     status: "ok",
     revision: "development",
-    analysis_version: "analysis-v12",
+    analysis_version: "analysis-v13",
   });
 });
 
@@ -950,7 +950,7 @@ test("hosted API publishes its machine-readable contract", async ({ request }) =
   expect(specification.paths["/api/v1/analyze"].post.security).toEqual([]);
   expect(specification.components.schemas.AnalysisResult.required).toEqual(expect.arrayContaining(["classification", "score_factors"]));
   expect(specification.components.schemas.AnalysisResult.required).toContain("evidence_coverage");
-  expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v12");
+  expect(specification.components.schemas.AnalyzeResponse.properties.analysis_version.const).toBe("analysis-v13");
 });
 
 test("primary public pages have no serious accessibility violations", async ({ page }) => {

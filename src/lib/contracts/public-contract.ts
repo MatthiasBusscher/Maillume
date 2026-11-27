@@ -7,7 +7,7 @@
  */
 export const PUBLIC_CONTRACT = {
   analysis: {
-    pipelineVersion: "analysis-v12",
+    pipelineVersion: "analysis-v13",
     envelopeVersion: "analysis-envelope-v2",
     apiVersion: "v1",
     sources: ["paste", "screenshot", "eml", "chrome"],
@@ -27,7 +27,7 @@ export const PUBLIC_CONTRACT = {
     officialId: "bjiiailjalkfjimkjdikoockjlnjolle",
     currentVersion: "0.5.0",
     minimumAnalysisVersion: "0.3.8",
-    supportedAnalysisVersions: ["analysis-v6", "analysis-v7", "analysis-v8", "analysis-v9", "analysis-v10", "analysis-v11", "analysis-v12"],
+    supportedAnalysisVersions: ["analysis-v6", "analysis-v7", "analysis-v8", "analysis-v9", "analysis-v10", "analysis-v11", "analysis-v12", "analysis-v13"],
     clientHeaders: {
       analysisVersions: "x-maillume-analysis-versions",
       extensionId: "x-maillume-extension-id",
