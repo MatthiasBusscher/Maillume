@@ -78,13 +78,14 @@ async function fetchFeedText(url) {
 }
 
 /**
- * URLhaus API (https://urlhaus-api.abuse.ch/): POST with the Auth-Key header
- * returns JSON with query_status and a urls[] array. The key is a secret:
+ * URLhaus API (https://urlhaus-api.abuse.ch/): GET with the Auth-Key header
+ * returns JSON with query_status and a urls[] array (the API answers a POST
+ * with query_status "http_get_expected" / HTTP 405). The key is a secret:
  * it is read from the environment, never logged, never written anywhere.
  */
 async function fetchUrlhausLines(url, authKey) {
   const response = await fetch(url, {
-    method: "POST",
+    method: "GET",
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     headers: {
       "auth-key": authKey,
