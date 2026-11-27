@@ -65,6 +65,8 @@ export const EVIDENCE_IDS = [
   "secrecy_pressure",
   "shared_document_lure",
   "repeated_approval_pressure",
+  "blocklisted_url",
+  "blocklisted_domain",
 ] as const;
 
 export type EvidenceId = (typeof EVIDENCE_IDS)[number];
@@ -86,6 +88,8 @@ export const DERIVED_EVIDENCE_IDS = [
   "brand_lookalike_destination",
   "brand_destination_mismatch",
   "hosted_destination",
+  "blocklisted_url",
+  "blocklisted_domain",
 ] as const satisfies readonly EvidenceId[];
 
 export type DerivedEvidenceId = (typeof DERIVED_EVIDENCE_IDS)[number];
@@ -162,6 +166,8 @@ const EVIDENCE: Record<EvidenceId, EvidenceDefinition> = {
   secrecy_pressure: evidence("style", 10, "Pressures the recipient to keep the request secret.", "Zet de ontvanger onder druk om het verzoek geheim te houden.", true),
   shared_document_lure: evidence("delivery", 10, "Uses shared content as a reason to grant access or sign in.", "Gebruikt gedeelde inhoud als reden om toegang te geven of in te loggen.", true),
   repeated_approval_pressure: evidence("style", 10, "Pushes the recipient to approve repeated sign-in prompts.", "Zet de ontvanger aan om herhaalde inlogmeldingen goed te keuren.", true),
+  blocklisted_url: evidence("destination", 25, "Links to a destination on a public phishing blocklist.", "Linkt naar een bestemming op een openbare phishing-blocklist.", true),
+  blocklisted_domain: evidence("destination", 10, "Uses a link domain that appeared on a public phishing blocklist.", "Gebruikt een linkdomein dat voorkwam op een openbare phishing-blocklist.", true),
 };
 
 const FAMILY_CAPS: Record<EvidenceFamily, number> = {

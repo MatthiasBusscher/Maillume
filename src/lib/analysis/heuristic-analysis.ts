@@ -15,6 +15,7 @@ import {
   type EvidenceId,
 } from "./evidence";
 import { createEvidenceCoverage } from "./evidence-coverage";
+import { collectFeedEvidence } from "./feed-evidence";
 import {
   collectUrlEvidence,
   getClaimedBrands,
@@ -625,6 +626,9 @@ export function collectHeuristicEvidence(input: EmailAnalysisInput | AnalysisEnv
     senderEmail: envelope.senderEmail,
     sensitiveRequest,
   })) {
+    evidence.add(id);
+  }
+  for (const id of collectFeedEvidence(links)) {
     evidence.add(id);
   }
 

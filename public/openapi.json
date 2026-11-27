@@ -88,7 +88,7 @@
         ],
         "properties": {
           "analysis_version": {
-            "const": "analysis-v12"
+            "const": "analysis-v13"
           },
           "api_version": {
             "const": "v1"
@@ -436,7 +436,7 @@
             ]
           },
           "analysis_version": {
-            "const": "analysis-v12"
+            "const": "analysis-v13"
           },
           "disclaimer": {
             "type": "string"
