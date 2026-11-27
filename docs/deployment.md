@@ -11,6 +11,7 @@ Visitor
   -> Caddy: TLS, rate limit on /api/*, sets X-Forwarded-For to the visitor IP
   -> maillume:3000 on the shared `maillume-edge` Docker network (no published ports)
   -> PostgREST + Postgres on the same host for the anonymous daily scan counts
+  -> blocklist-fetcher sidecar refreshing the local blocklist cache hourly (docs/blocklist-feeds.md)
 ```
 
 - `https://maillume.io` is canonical and serves marketing pages.

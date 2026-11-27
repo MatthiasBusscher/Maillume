@@ -52,19 +52,36 @@ The factor is deliberately conservative about availability:
 - feed availability is never a legitimacy signal: a message is never
   treated as safer because the cache is missing.
 
-## Scheduling
+## Scheduling in production
 
-Run the fetcher on a schedule that keeps the cache inside its max age, for
-example hourly on the VPS:
+The production compose file ships a `blocklist-fetcher` sidecar that uses the
+same immutable app image and refreshes the shared `blocklist` volume every
+hour. Nothing runs on the host: no cron, no repository checkout, no Node.
+
+- The **app service** mounts the volume read-only at `/app/blocklist` and
+  reads `MAILLUME_BLOCKLIST_CACHE=/app/blocklist/cache.json` (set by the
+  compose file).
+- The **fetcher sidecar** runs the fetcher script hourly into the same
+  volume. A failed refresh is logged to Docker and retried next hour.
+- The runtime image carries the fetcher script plus its two `tldts`
+  packages, because webpack inlines `tldts` into the server bundle instead
+  of keeping it external.
+
+After the next approved release is pulled and deployed, verify on the VPS:
 
 ```bash
-node scripts/fetch-blocklist-feeds.mjs
+docker compose -f docker-compose.production.yml ps blocklist-fetcher
+docker compose -f docker-compose.production.yml logs --tail 20 blocklist-fetcher
 ```
 
-The script exits non-zero when no feed could be fetched and writes a
-partial cache when only some feeds succeed, so a scheduler can alert on a
-broken refresh. The public deployment runs the Next.js server with the
-cache file reachable at the configured path.
+The first refresh runs immediately when the sidecar starts, so the factor is
+active within seconds of deployment. If the sidecar is ever stopped, the
+cache goes stale after `max_age_hours` (default 72) and the factor
+contributes nothing until it refreshes again.
+
+Self-hosters running the plain container (see the README quick start) can
+either run the same loop themselves or point `MAILLUME_BLOCKLIST_CACHE` at a
+file refreshed by any scheduler they already operate.
 
 ## Privacy
 
